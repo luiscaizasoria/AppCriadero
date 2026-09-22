@@ -1,0 +1,19 @@
+import React from 'react';
+import {View,Text} from 'react-native';
+
+
+export default function SaludScreen(){
+
+return(
+
+<View>
+
+<Text>
+🐔 Salud
+</Text>
+
+</View>
+
+);
+
+}
