@@ -3,7 +3,6 @@ import React, {
     useState
 } from 'react';
 
-
 import {
     View,
     Text,
@@ -13,18 +12,19 @@ import {
     Alert
 } from 'react-native';
 
-
 import {
     useFocusEffect
 } from '@react-navigation/native';
 
+import {
+    Ionicons
+} from '@expo/vector-icons';
 
 import {
     obtenerCatalogoPorCodigo,
     obtenerItemsCatalogo,
     eliminarItemCatalogo
 } from '../repositories/ConfiguracionRepository';
-
 
 import {
     COLORS
@@ -36,7 +36,6 @@ export default function CatalogoScreen({
     route,
     navigation
 }) {
-
 
     const {
         codigo,
@@ -78,7 +77,9 @@ export default function CatalogoScreen({
 
 
 
-                if(catalogoData){
+                if(
+                    catalogoData
+                ){
 
 
                     const itemsData =
@@ -91,21 +92,37 @@ export default function CatalogoScreen({
                         itemsData
                     );
 
+
+                }
+                else{
+
+
+                    setItems(
+                        []
+                    );
+
+
                 }
 
 
             }
             catch(error){
 
+
                 console.error(
                     'Error cargando catálogo:',
                     error
                 );
 
+
+                setItems(
+                    []
+                );
+
+
             }
 
         };
-
 
 
 
@@ -117,17 +134,19 @@ export default function CatalogoScreen({
                 cargar();
 
             },
-            []
+            [
+                codigo
+            ]
         )
 
     );
 
 
 
-
-
     const eliminar =
-        async(item)=>{
+        async(
+            item
+        ) => {
 
 
             Alert.alert(
@@ -139,22 +158,54 @@ export default function CatalogoScreen({
                 [
 
                     {
-                        text:'Cancelar'
+                        text:
+                            'Cancelar',
+
+                        style:
+                            'cancel'
                     },
 
 
                     {
-                        text:'Eliminar',
+                        text:
+                            'Eliminar',
+
+                        style:
+                            'destructive',
 
                         onPress:
-                            async()=>{
-
-                                await eliminarItemCatalogo(
-                                    item.id
-                                );
+                            async() => {
 
 
-                                cargar();
+                                try{
+
+
+                                    await eliminarItemCatalogo(
+                                        item.id
+                                    );
+
+
+                                    await cargar();
+
+
+                                }
+                                catch(error){
+
+
+                                    console.error(
+                                        'Error eliminando elemento:',
+                                        error
+                                    );
+
+
+                                    Alert.alert(
+                                        'Error',
+                                        'No fue posible eliminar el elemento.'
+                                    );
+
+
+                                }
+
 
                             }
 
@@ -166,8 +217,6 @@ export default function CatalogoScreen({
 
 
         };
-
-
 
 
 
@@ -198,8 +247,6 @@ export default function CatalogoScreen({
 
 
 
-
-
             {
                 items.length === 0
 
@@ -211,7 +258,11 @@ export default function CatalogoScreen({
                     }
                 >
 
-                    <Text>
+                    <Text
+                        style={
+                            styles.emptyText
+                        }
+                    >
                         No existen registros.
                     </Text>
 
@@ -221,7 +272,7 @@ export default function CatalogoScreen({
                 :
 
                 items.map(
-                    item=>(
+                    item => (
 
                         <View
 
@@ -235,12 +286,15 @@ export default function CatalogoScreen({
 
                         >
 
+
                             <Text
                                 style={
                                     styles.name
                                 }
                             >
+
                                 {item.nombre}
+
                             </Text>
 
 
@@ -253,11 +307,11 @@ export default function CatalogoScreen({
                                         styles.description
                                     }
                                 >
+
                                     {item.descripcion}
+
                                 </Text>
                             }
-
-
 
 
 
@@ -270,11 +324,16 @@ export default function CatalogoScreen({
 
                                 <TouchableOpacity
 
-                                    style={
+                                    style={[
+                                        styles.actionButton,
                                         styles.edit
+                                    ]}
+
+                                    activeOpacity={
+                                        0.8
                                     }
 
-                                    onPress={()=>
+                                    onPress={() =>
 
                                         navigation.navigate(
 
@@ -295,12 +354,28 @@ export default function CatalogoScreen({
 
                                 >
 
+
+                                    <Ionicons
+
+                                        name="create-outline"
+
+                                        size={
+                                            18
+                                        }
+
+                                        color="#FFFFFF"
+
+                                    />
+
+
                                     <Text
                                         style={
                                             styles.actionText
                                         }
                                     >
-                                        ✏️ Editar
+
+                                        Editar
+
                                     </Text>
 
 
@@ -308,26 +383,47 @@ export default function CatalogoScreen({
 
 
 
-
-
                                 <TouchableOpacity
 
-                                    style={
+                                    style={[
+                                        styles.actionButton,
                                         styles.delete
+                                    ]}
+
+                                    activeOpacity={
+                                        0.8
                                     }
 
-                                    onPress={()=>
-                                        eliminar(item)
+                                    onPress={() =>
+                                        eliminar(
+                                            item
+                                        )
                                     }
 
                                 >
+
+
+                                    <Ionicons
+
+                                        name="trash-outline"
+
+                                        size={
+                                            18
+                                        }
+
+                                        color="#FFFFFF"
+
+                                    />
+
 
                                     <Text
                                         style={
                                             styles.actionText
                                         }
                                     >
-                                        🗑️ Eliminar
+
+                                        Eliminar
+
                                     </Text>
 
 
@@ -346,15 +442,25 @@ export default function CatalogoScreen({
 
 
 
-
-
             <TouchableOpacity
 
-                style={
-                    styles.button
+                style={[
+                    styles.button,
+
+                    !catalogo
+                    &&
+                    styles.buttonDisabled
+                ]}
+
+                disabled={
+                    !catalogo
                 }
 
-                onPress={()=>
+                activeOpacity={
+                    0.8
+                }
+
+                onPress={() =>
 
 
                     navigation.navigate(
@@ -366,7 +472,8 @@ export default function CatalogoScreen({
                             catalogoId:
                                 catalogo?.id,
 
-                            item:null
+                            item:
+                                null
 
                         }
 
@@ -376,17 +483,32 @@ export default function CatalogoScreen({
 
             >
 
+
+                <Ionicons
+
+                    name="add"
+
+                    size={
+                        20
+                    }
+
+                    color="#FFFFFF"
+
+                />
+
+
                 <Text
                     style={
                         styles.buttonText
                     }
                 >
-                    ＋ Nuevo elemento
+
+                    Nuevo elemento
+
                 </Text>
 
 
             </TouchableOpacity>
-
 
 
         </ScrollView>
@@ -397,98 +519,190 @@ export default function CatalogoScreen({
 
 
 
-
 const styles =
 StyleSheet.create({
 
     container:{
+
         flex:1,
+
         backgroundColor:
             COLORS.background
+
     },
 
 
     content:{
-        padding:16
+
+        padding:16,
+
+        paddingBottom:40
+
     },
 
 
     title:{
+
         fontSize:26,
+
         fontWeight:'bold',
+
         color:
             COLORS.primary,
+
         marginBottom:20
+
     },
 
 
     card:{
+
         backgroundColor:
             COLORS.card,
+
         padding:16,
+
         borderRadius:14,
+
         marginBottom:12
+
     },
 
 
     name:{
+
         fontSize:17,
-        fontWeight:'bold'
+
+        fontWeight:'bold',
+
+        color:
+            COLORS.text
+
     },
 
 
     description:{
+
         marginTop:5,
+
         color:
             COLORS.textSecondary
+
     },
 
 
     actions:{
+
         flexDirection:'row',
+
         marginTop:15
+
+    },
+
+
+    actionButton:{
+
+        flexDirection:'row',
+
+        alignItems:'center',
+
+        justifyContent:'center',
+
+        paddingHorizontal:14,
+
+        paddingVertical:10,
+
+        borderRadius:10
+
     },
 
 
     edit:{
-        backgroundColor:'#4ea8de',
-        padding:10,
-        borderRadius:10,
+
+        backgroundColor:
+            '#4ea8de',
+
         marginRight:10
+
     },
 
 
     delete:{
-        backgroundColor:'#d9534f',
-        padding:10,
-        borderRadius:10
+
+        backgroundColor:
+            '#d9534f'
+
     },
 
 
     actionText:{
-        color:'#fff',
-        fontWeight:'bold'
+
+        color:'#FFFFFF',
+
+        fontWeight:'bold',
+
+        marginLeft:6
+
     },
 
 
     empty:{
+
         padding:30,
-        alignItems:'center'
+
+        alignItems:'center',
+
+        backgroundColor:
+            COLORS.card,
+
+        borderRadius:14,
+
+        marginBottom:15
+
+    },
+
+
+    emptyText:{
+
+        color:
+            COLORS.textSecondary
+
     },
 
 
     button:{
+
+        flexDirection:'row',
+
+        justifyContent:'center',
+
+        alignItems:'center',
+
         backgroundColor:
             COLORS.primary,
+
         padding:16,
-        borderRadius:14,
-        alignItems:'center'
+
+        borderRadius:14
+
+    },
+
+
+    buttonDisabled:{
+
+        opacity:0.5
+
     },
 
 
     buttonText:{
-        color:'#fff',
-        fontWeight:'bold'
+
+        color:'#FFFFFF',
+
+        fontWeight:'bold',
+
+        marginLeft:6
+
     }
 
 });

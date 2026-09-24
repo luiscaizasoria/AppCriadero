@@ -2,7 +2,6 @@ import React, {
     useState
 } from 'react';
 
-
 import {
     View,
     Text,
@@ -12,14 +11,12 @@ import {
     ActivityIndicator
 } from 'react-native';
 
-
 import {
     crearBackup,
     compartirBackup,
     seleccionarBackup,
     restaurarBackup
 } from '../repositories/BackupRepository';
-
 
 import {
     COLORS
@@ -69,31 +66,6 @@ export default function BackupScreen(){
 
             if(
                 mensaje ===
-                'NO_SE_RECIBIO_URI_DESTINO'
-            ){
-
-                return (
-                    'Android no devolvió la ubicación del archivo.'
-                );
-
-            }
-
-
-            if(
-                mensaje.startsWith(
-                    'FUNCION_NO_DISPONIBLE:'
-                )
-            ){
-
-                return (
-                    `Función no disponible: ${mensaje}`
-                );
-
-            }
-
-
-            if(
-                mensaje ===
                 'COMPARTIR_NO_DISPONIBLE'
             ){
 
@@ -111,6 +83,43 @@ export default function BackupScreen(){
 
                 return (
                     'El archivo seleccionado está vacío.'
+                );
+
+            }
+
+
+            if(
+                mensaje ===
+                'ARCHIVO_NO_ES_RESPALDO_VALIDO'
+            ){
+
+                return (
+                    'El archivo seleccionado no corresponde a un respaldo válido de Criadero Kikirikis.'
+                );
+
+            }
+
+
+            if(
+                mensaje ===
+                'MANIFEST_IMAGENES_INVALIDO'
+            ){
+
+                return (
+                    'La información de imágenes del respaldo está dañada.'
+                );
+
+            }
+
+
+            if(
+                mensaje.startsWith(
+                    'FUNCION_NO_DISPONIBLE:'
+                )
+            ){
+
+                return (
+                    `Función no disponible: ${mensaje}`
                 );
 
             }
@@ -152,7 +161,7 @@ export default function BackupScreen(){
 
                     'Respaldo creado',
 
-                    'El respaldo fue guardado correctamente en la ubicación seleccionada.'
+                    'El respaldo fue guardado correctamente. Incluye los datos y las imágenes disponibles del criadero.'
 
                 );
 
@@ -207,20 +216,6 @@ export default function BackupScreen(){
         async()=>{
 
 
-            if(
-                !rutaBackup
-            ){
-
-                Alert.alert(
-                    'Sin respaldo',
-                    'Primero cree un respaldo.'
-                );
-
-                return;
-
-            }
-
-
             try{
 
 
@@ -228,6 +223,15 @@ export default function BackupScreen(){
                     true
                 );
 
+
+                /*
+                    Si existe un respaldo creado durante
+                    esta sesión, se comparte ese.
+
+                    Si no existe, el repository crea
+                    automáticamente uno temporal con el
+                    estado actual de la aplicación.
+                */
 
                 await compartirBackup(
                     rutaBackup
@@ -284,16 +288,29 @@ export default function BackupScreen(){
                 );
 
 
-                await restaurarBackup(
-                    archivo
-                );
+                const resultado =
+                    await restaurarBackup(
+                        archivo
+                    );
+
+
+                const imagenes =
+                    resultado
+                        ?.imagenes
+                        ?.restauradas
+                    ||
+                    0;
 
 
                 Alert.alert(
 
                     'Restauración completa',
 
-                    'La información fue restaurada correctamente. Reinicie la aplicación.'
+                    imagenes > 0
+                        ?
+                        `La información fue restaurada correctamente junto con ${imagenes} imagen(es). Reinicie la aplicación para recargar todos los datos.`
+                        :
+                        'La información fue restaurada correctamente. Este respaldo no contenía imágenes o no había imágenes disponibles. Reinicie la aplicación para recargar todos los datos.'
 
                 );
 
@@ -358,18 +375,24 @@ export default function BackupScreen(){
 
                     'Restaurar respaldo',
 
-                    'Los datos actuales serán reemplazados. ¿Desea continuar?',
+                    'Los datos actuales serán reemplazados por el contenido del respaldo. Las imágenes incluidas también serán restauradas. ¿Desea continuar?',
 
                     [
 
                         {
-                            text:'Cancelar',
-                            style:'cancel'
+                            text:
+                                'Cancelar',
+
+                            style:
+                                'cancel'
                         },
 
                         {
-                            text:'Restaurar',
-                            style:'destructive',
+                            text:
+                                'Restaurar',
+
+                            style:
+                                'destructive',
 
                             onPress:
                                 () =>
@@ -433,7 +456,7 @@ export default function BackupScreen(){
                     styles.subtitle
                 }
             >
-                Cree una copia de seguridad y seleccione dónde guardarla en su teléfono.
+                Cree una copia de seguridad de los datos e imágenes del criadero.
             </Text>
 
 
@@ -456,10 +479,19 @@ export default function BackupScreen(){
 
                 <Text
                     style={
+                        styles.cardDescription
+                    }
+                >
+                    El respaldo incluye aves, jaulas, catálogos, finanzas, historial y fotografías disponibles.
+                </Text>
+
+
+                <Text
+                    style={
                         styles.label
                     }
                 >
-                    Último respaldo:
+                    Último respaldo creado en esta sesión:
                 </Text>
 
 
@@ -471,7 +503,7 @@ export default function BackupScreen(){
                     {
                         rutaBackup
                         ||
-                        'No creado'
+                        'No creado. También puede compartir directamente un nuevo respaldo.'
                     }
                 </Text>
 
@@ -492,11 +524,15 @@ export default function BackupScreen(){
                     >
 
                         <ActivityIndicator
+
                             size="small"
+
                             color={
                                 COLORS.primary
                             }
+
                         />
+
 
                         <Text
                             style={
@@ -551,11 +587,7 @@ export default function BackupScreen(){
                 style={[
                     styles.shareButton,
 
-                    (
-                        procesando ||
-                        !rutaBackup
-                    )
-                    &&
+                    procesando &&
                     styles.disabled
                 ]}
 
@@ -564,8 +596,7 @@ export default function BackupScreen(){
                 }
 
                 disabled={
-                    procesando ||
-                    !rutaBackup
+                    procesando
                 }
 
             >
@@ -575,7 +606,7 @@ export default function BackupScreen(){
                         styles.buttonText
                     }
                 >
-                    📤 Compartir último respaldo
+                    📤 Compartir respaldo
                 </Text>
 
             </TouchableOpacity>
@@ -624,111 +655,187 @@ const styles =
 StyleSheet.create({
 
     container:{
+
         flex:1,
+
         backgroundColor:
             COLORS.background,
+
         padding:20
+
     },
 
 
     title:{
+
         fontSize:28,
+
         fontWeight:'bold',
+
         color:
             COLORS.primary
+
     },
 
 
     subtitle:{
+
         marginTop:8,
+
         color:
             COLORS.textSecondary,
+
         lineHeight:20
+
     },
 
 
     card:{
+
         backgroundColor:
             COLORS.card,
+
         padding:18,
+
         borderRadius:16,
+
         marginTop:20
+
     },
 
 
     cardTitle:{
+
         fontSize:17,
+
         fontWeight:'bold',
+
         color:
             COLORS.text
+
+    },
+
+
+    cardDescription:{
+
+        marginTop:8,
+
+        color:
+            COLORS.textSecondary,
+
+        lineHeight:19
+
     },
 
 
     label:{
+
         marginTop:15,
-        fontWeight:'bold'
+
+        fontWeight:'bold',
+
+        color:
+            COLORS.text
+
     },
 
 
     path:{
+
         marginTop:5,
+
         color:
             COLORS.textSecondary,
+
         fontSize:12
+
     },
 
 
     processing:{
+
         flexDirection:'row',
+
         justifyContent:'center',
+
         alignItems:'center',
+
         marginTop:20
+
     },
 
 
     processingText:{
+
         marginLeft:10,
+
         color:
             COLORS.textSecondary
+
     },
 
 
     button:{
+
         backgroundColor:
             COLORS.primary,
+
         padding:16,
+
         borderRadius:14,
+
         marginTop:20,
+
         alignItems:'center'
+
     },
 
 
     shareButton:{
-        backgroundColor:'#4ea8de',
+
+        backgroundColor:
+            '#4ea8de',
+
         padding:16,
+
         borderRadius:14,
+
         marginTop:12,
+
         alignItems:'center'
+
     },
 
 
     restore:{
-        backgroundColor:'#d9534f',
+
+        backgroundColor:
+            '#d9534f',
+
         padding:16,
+
         borderRadius:14,
+
         marginTop:12,
+
         alignItems:'center'
+
     },
 
 
     disabled:{
+
         opacity:0.45
+
     },
 
 
     buttonText:{
+
         color:'#fff',
+
         fontWeight:'bold'
+
     }
 
 });

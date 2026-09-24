@@ -1,39 +1,52 @@
 import {
-DATABASE_VERSION,
-migrationV1
+    DATABASE_VERSION,
+    migrationV1
 } from './migrations';
 
+
 import {
-DATABASE_VERSION_V2,
-migrationV2
+    DATABASE_VERSION_V2,
+    migrationV2
 } from './migrationV2';
 
+
 import {
-DATABASE_VERSION_V3,
-migrationV3
+    DATABASE_VERSION_V3,
+    migrationV3
 } from './migrationV3';
 
+
 import {
-DATABASE_VERSION_V4,
-migrationV4
+    DATABASE_VERSION_V4,
+    migrationV4
 } from './migrationV4';
 
+
 import {
-DATABASE_VERSION_V5,
-migrationV5
+    DATABASE_VERSION_V5,
+    migrationV5
 } from './migrationV5';
 
+
 import {
-DATABASE_VERSION_V6,
-migrationV6
+    DATABASE_VERSION_V6,
+    migrationV6
 } from './migrationV6';
 
-import {
-ejecutarSeeders
-} from './seeders';
 
 import {
-getDatabase
+    DATABASE_VERSION_V7,
+    migrationV7
+} from './migrationV7';
+
+
+import {
+    ejecutarSeeders
+} from './seeders';
+
+
+import {
+    getDatabase
 } from './database';
 
 
@@ -44,10 +57,12 @@ export async function initDatabase() {
         await getDatabase();
 
 
+
     await db.execAsync(`
         PRAGMA journal_mode = WAL;
         PRAGMA foreign_keys = ON;
     `);
+
 
 
     const versionResult =
@@ -56,8 +71,10 @@ export async function initDatabase() {
         );
 
 
+
     let versionActual =
         versionResult?.user_version ?? 0;
+
 
 
     console.log(
@@ -69,14 +86,19 @@ export async function initDatabase() {
             V3: DATABASE_VERSION_V3,
             V4: DATABASE_VERSION_V4,
             V5: DATABASE_VERSION_V5,
-            V6: DATABASE_VERSION_V6
+            V6: DATABASE_VERSION_V6,
+            V7: DATABASE_VERSION_V7
         }
     );
 
 
+
+
+
     if(
-        versionActual < DATABASE_VERSION
-    ) {
+        versionActual <
+        DATABASE_VERSION
+    ){
 
         console.log(
             'SQLite - ejecutando migración V1'
@@ -106,9 +128,13 @@ export async function initDatabase() {
     }
 
 
+
+
+
     if(
-        versionActual < DATABASE_VERSION_V2
-    ) {
+        versionActual <
+        DATABASE_VERSION_V2
+    ){
 
         console.log(
             'SQLite - ejecutando migración V2'
@@ -138,9 +164,13 @@ export async function initDatabase() {
     }
 
 
+
+
+
     if(
-        versionActual < DATABASE_VERSION_V3
-    ) {
+        versionActual <
+        DATABASE_VERSION_V3
+    ){
 
         console.log(
             'SQLite - ejecutando migración V3'
@@ -170,9 +200,13 @@ export async function initDatabase() {
     }
 
 
+
+
+
     if(
-        versionActual < DATABASE_VERSION_V4
-    ) {
+        versionActual <
+        DATABASE_VERSION_V4
+    ){
 
         console.log(
             'SQLite - ejecutando migración V4'
@@ -202,9 +236,13 @@ export async function initDatabase() {
     }
 
 
+
+
+
     if(
-        versionActual < DATABASE_VERSION_V5
-    ) {
+        versionActual <
+        DATABASE_VERSION_V5
+    ){
 
         console.log(
             'SQLite - ejecutando migración V5'
@@ -234,9 +272,13 @@ export async function initDatabase() {
     }
 
 
+
+
+
     if(
-        versionActual < DATABASE_VERSION_V6
-    ) {
+        versionActual <
+        DATABASE_VERSION_V6
+    ){
 
         console.log(
             'SQLite - ejecutando migración V6'
@@ -266,12 +308,67 @@ export async function initDatabase() {
     }
 
 
+
+
+
+    if(
+        versionActual <
+        DATABASE_VERSION_V7
+    ){
+
+        console.log(
+            'SQLite - ejecutando migración V7'
+        );
+
+
+        await db.execAsync(`
+            BEGIN TRANSACTION;
+
+            ${migrationV7}
+
+            PRAGMA user_version =
+                ${DATABASE_VERSION_V7};
+
+            COMMIT;
+        `);
+
+
+        versionActual =
+            DATABASE_VERSION_V7;
+
+
+        console.log(
+            'SQLite - migración V7 completada'
+        );
+
+    }
+
+
+
+
+
     await ejecutarSeeders();
+
+
+
+
+
+    const versionFinalResult =
+        await db.getFirstAsync(
+            'PRAGMA user_version;'
+        );
+
+
+    const versionFinal =
+        versionFinalResult?.user_version
+        ??
+        versionActual;
+
 
 
     console.log(
         'SQLite - versión final:',
-        versionActual
+        versionFinal
     );
 
 

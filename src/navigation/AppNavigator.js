@@ -1,36 +1,27 @@
 import React from 'react';
 
-
 import {
     createBottomTabNavigator
 } from '@react-navigation/bottom-tabs';
-
 
 import {
     Ionicons
 } from '@expo/vector-icons';
 
-
 import InicioScreen
-    from '../screens/InicioScreen';
-
+from '../screens/InicioScreen';
 
 import JaulasStackNavigator
-    from './JaulasStackNavigator';
-
+from './JaulasStackNavigator';
 
 import AvesStackNavigator
-    from './AvesStackNavigator';
-
+from './AvesStackNavigator';
 
 import FinanzasStackNavigator
-    from './FinanzasStackNavigator';
-
+from './FinanzasStackNavigator';
 
 import MasStackNavigator
-    from './MasStackNavigator';
-
-
+from './MasStackNavigator';
 
 import {
     COLORS
@@ -38,28 +29,61 @@ import {
 
 
 
-
-
 const Tab =
-    createBottomTabNavigator();
+createBottomTabNavigator();
 
 
+
+function crearListenerRutaInicial(
+    tabName,
+    screenName
+){
+
+    return ({
+        navigation
+    }) => ({
+
+        tabPress: (
+            event
+        ) => {
+
+            /*
+                Evitamos que React Navigation
+                simplemente reactive el estado anterior
+                del Stack de la pestaña.
+            */
+
+            event.preventDefault();
+
+
+            navigation.navigate(
+                tabName,
+                {
+                    screen:
+                        screenName
+                }
+            );
+
+        }
+
+    });
+
+}
 
 
 
 export default function AppNavigator(){
 
-
     return(
-
 
         <Tab.Navigator
 
+            screenOptions={({
+                route
+            })=>({
 
-            screenOptions={({route})=>({
-
-
-                headerShown:false,
+                headerShown:
+                    false,
 
 
                 tabBarActiveTintColor:
@@ -72,31 +96,32 @@ export default function AppNavigator(){
 
                 tabBarStyle:{
 
-                    height:64,
+                    height:
+                        64,
 
-                    paddingTop:5,
+                    paddingTop:
+                        5,
 
-                    paddingBottom:7
+                    paddingBottom:
+                        7
 
                 },
 
 
                 tabBarLabelStyle:{
 
-                    fontSize:11,
+                    fontSize:
+                        11,
 
-                    fontWeight:'600'
+                    fontWeight:
+                        '600'
 
                 },
 
 
-
                 tabBarIcon:({
-
                     color,
-
                     size
-
                 })=>{
 
 
@@ -104,45 +129,51 @@ export default function AppNavigator(){
                         'ellipse';
 
 
-
-
-                    if(route.name === 'Inicio'){
+                    if(
+                        route.name ===
+                        'Inicio'
+                    ){
 
                         iconName =
                             'home';
 
                     }
-
-                    else if(route.name === 'Jaulas'){
+                    else if(
+                        route.name ===
+                        'Jaulas'
+                    ){
 
                         iconName =
                             'grid';
 
                     }
-
-                    else if(route.name === 'Aves'){
+                    else if(
+                        route.name ===
+                        'Aves'
+                    ){
 
                         iconName =
                             'paw';
 
                     }
-
-                    else if(route.name === 'Finanzas'){
+                    else if(
+                        route.name ===
+                        'Finanzas'
+                    ){
 
                         iconName =
                             'cash';
 
                     }
-
-                    else if(route.name === 'Más'){
+                    else if(
+                        route.name ===
+                        'Más'
+                    ){
 
                         iconName =
                             'settings';
 
                     }
-
-
-
 
 
                     return(
@@ -165,17 +196,11 @@ export default function AppNavigator(){
 
                     );
 
-
                 }
-
 
             })}
 
-
         >
-
-
-
 
 
             <Tab.Screen
@@ -186,12 +211,7 @@ export default function AppNavigator(){
                     InicioScreen
                 }
 
-
             />
-
-
-
-
 
 
 
@@ -203,18 +223,14 @@ export default function AppNavigator(){
                     JaulasStackNavigator
                 }
 
-
-                options={{
-
-                    unmountOnBlur:true
-
-                }}
+                listeners={
+                    crearListenerRutaInicial(
+                        'Jaulas',
+                        'ListaJaulas'
+                    )
+                }
 
             />
-
-
-
-
 
 
 
@@ -226,18 +242,14 @@ export default function AppNavigator(){
                     AvesStackNavigator
                 }
 
-
-                options={{
-
-                    unmountOnBlur:true
-
-                }}
+                listeners={
+                    crearListenerRutaInicial(
+                        'Aves',
+                        'ListaAves'
+                    )
+                }
 
             />
-
-
-
-
 
 
 
@@ -249,18 +261,14 @@ export default function AppNavigator(){
                     FinanzasStackNavigator
                 }
 
-
-                options={{
-
-                    unmountOnBlur:true
-
-                }}
+                listeners={
+                    crearListenerRutaInicial(
+                        'Finanzas',
+                        'FinanzasInicio'
+                    )
+                }
 
             />
-
-
-
-
 
 
 
@@ -272,20 +280,17 @@ export default function AppNavigator(){
                     MasStackNavigator
                 }
 
-
-                options={{
-
-                    unmountOnBlur:true
-
-                }}
+                listeners={
+                    crearListenerRutaInicial(
+                        'Más',
+                        'MasMenu'
+                    )
+                }
 
             />
 
 
-
-
         </Tab.Navigator>
-
 
     );
 

@@ -7,7 +7,6 @@ from 'expo-sharing';
 import * as DocumentPicker
 from 'expo-document-picker';
 
-
 import {
     getDatabase
 } from '../database/database';
@@ -16,6 +15,16 @@ import {
 
 const StorageAccessFramework =
     FileSystem.StorageAccessFramework;
+
+
+const MEDIA_INICIO =
+    '-- KIKIRIKIS_MEDIA_BEGIN';
+
+
+const MEDIA_FIN =
+    '-- KIKIRIKIS_MEDIA_END';
+
+
 
 
 
@@ -47,6 +56,8 @@ function logBackup(
 
 
 
+
+
 function logBackupError(
     paso,
     error
@@ -69,6 +80,8 @@ function logBackupError(
     );
 
 }
+
+
 
 
 
@@ -98,6 +111,8 @@ function validarFuncion(
     }
 
 }
+
+
 
 
 
@@ -169,6 +184,8 @@ function formatearFechaArchivo(
 
 
 
+
+
 function convertirValorSql(
     valor
 ){
@@ -229,6 +246,8 @@ function convertirValorSql(
 
 
 
+
+
 function escaparNombreSql(
     nombre
 ){
@@ -242,6 +261,114 @@ function escaparNombreSql(
     );
 
 }
+
+
+
+
+
+function obtenerExtensionImagen(
+    uri
+){
+
+    const limpio =
+        String(
+            uri || ''
+        )
+        .split('?')[0];
+
+
+    const match =
+        limpio.match(
+            /\.([a-zA-Z0-9]+)$/
+        );
+
+
+    if(
+        !match
+    ){
+
+        return 'jpg';
+
+    }
+
+
+    const extension =
+        match[1]
+        .toLowerCase();
+
+
+    const permitidas = [
+        'jpg',
+        'jpeg',
+        'png',
+        'webp'
+    ];
+
+
+    return (
+        permitidas.includes(
+            extension
+        )
+        ?
+        extension
+        :
+        'jpg'
+    );
+
+}
+
+
+
+
+
+function obtenerMimeImagen(
+    extension
+){
+
+    switch(
+        String(
+            extension || ''
+        )
+        .toLowerCase()
+    ){
+
+        case 'png':
+            return 'image/png';
+
+
+        case 'webp':
+            return 'image/webp';
+
+
+        case 'jpeg':
+        case 'jpg':
+        default:
+            return 'image/jpeg';
+
+    }
+
+}
+
+
+
+
+
+function generarMediaKey(
+    indice,
+    extension
+){
+
+    return (
+        `media_${Date.now()}_${indice}_` +
+        `${Math.random()
+            .toString(36)
+            .substring(2, 8)}` +
+        `.${extension}`
+    );
+
+}
+
+
 
 
 
@@ -296,6 +423,8 @@ async function obtenerTablasUsuario(
     );
 
 }
+
+
 
 
 
@@ -357,19 +486,9 @@ async function generarSqlRespaldo(
             );
 
 
-        logBackup(
-            `Columnas ${tabla}`,
-            columnas
-        );
-
-
         if(
             columnas.length === 0
         ){
-
-            logBackup(
-                `Tabla ${tabla} sin columnas. Se omite.`
-            );
 
             continue;
 
@@ -428,9 +547,7 @@ async function generarSqlRespaldo(
 
 
             bloques.push(
-
                 `INSERT INTO "${tablaSegura}" (${columnasSql}) VALUES (${valoresSql});`
-
             );
 
         }
@@ -472,24 +589,553 @@ async function generarSqlRespaldo(
 
 
 
-async function seleccionarCarpetaDestino(){
+
+
+async function obtenerReferenciasImagenes(
+    db
+){
+
+    const referencias =
+        [];
+
+
+    const aves =
+        await db.getAllAsync(
+            `
+            SELECT
+                id,
+                codigo,
+                foto_uri
+
+            FROM aves
+
+            WHERE foto_uri IS NOT NULL
+
+            AND TRIM(foto_uri) <> ''
+            `
+        );
+
+
+    for(
+        const ave
+        of aves
+    ){
+
+        referencias.push({
+
+            tabla:
+                'aves',
+
+            id:
+                ave.id,
+
+            codigoAve:
+                ave.codigo,
+
+            uri:
+                ave.foto_uri
+
+        });
+
+    }
+
+
+
+    const evoluciones =
+        await db.getAllAsync(
+            `
+            SELECT
+                e.id,
+                e.ave_id,
+                e.foto_uri,
+                a.codigo AS codigo_ave
+
+            FROM ave_evolucion e
+
+            LEFT JOIN aves a
+                ON a.id = e.ave_id
+
+            WHERE e.foto_uri IS NOT NULL
+
+            AND TRIM(e.foto_uri) <> ''
+            `
+        );
+
+
+    for(
+        const evolucion
+        of evoluciones
+    ){
+
+        referencias.push({
+
+            tabla:
+                'ave_evolucion',
+
+            id:
+                evolucion.id,
+
+            aveId:
+                evolucion.ave_id,
+
+            codigoAve:
+                evolucion.codigo_ave,
+
+            uri:
+                evolucion.foto_uri
+
+        });
+
+    }
+
+
+    return referencias;
+
+}
+
+
+
+
+
+async function generarManifestImagenes(
+    db
+){
 
     logBackup(
-        'Validando StorageAccessFramework',
+        'Iniciando respaldo de imágenes'
+    );
+
+
+    const referencias =
+        await obtenerReferenciasImagenes(
+            db
+        );
+
+
+    const porUri =
+        new Map();
+
+
+    for(
+        const referencia
+        of referencias
+    ){
+
+        const uri =
+            referencia.uri;
+
+
+        if(
+            !porUri.has(
+                uri
+            )
+        ){
+
+            porUri.set(
+                uri,
+                {
+                    uri,
+                    referencias:[]
+                }
+            );
+
+        }
+
+
+        porUri
+            .get(
+                uri
+            )
+            .referencias
+            .push({
+
+                tabla:
+                    referencia.tabla,
+
+                id:
+                    referencia.id,
+
+                aveId:
+                    referencia.aveId || null,
+
+                codigoAve:
+                    referencia.codigoAve || null
+
+            });
+
+    }
+
+
+
+    const imagenes =
+        [];
+
+
+    let indice =
+        0;
+
+
+    for(
+        const item
+        of porUri.values()
+    ){
+
+        indice += 1;
+
+
+        try{
+
+
+            const info =
+                await FileSystem
+                    .getInfoAsync(
+                        item.uri
+                    );
+
+
+            if(
+                !info?.exists
+            ){
+
+                console.warn(
+                    '[BACKUP] Imagen no encontrada, se omite:',
+                    item.uri
+                );
+
+                continue;
+
+            }
+
+
+            const base64 =
+                await FileSystem
+                    .readAsStringAsync(
+                        item.uri,
+                        {
+                            encoding:
+                                FileSystem
+                                    .EncodingType
+                                    .Base64
+                        }
+                    );
+
+
+            if(
+                !base64
+            ){
+
+                console.warn(
+                    '[BACKUP] Imagen vacía, se omite:',
+                    item.uri
+                );
+
+                continue;
+
+            }
+
+
+            const extension =
+                obtenerExtensionImagen(
+                    item.uri
+                );
+
+
+            const mediaKey =
+                generarMediaKey(
+                    indice,
+                    extension
+                );
+
+
+            imagenes.push({
+
+                key:
+                    mediaKey,
+
+                extension,
+
+                mimeType:
+                    obtenerMimeImagen(
+                        extension
+                    ),
+
+                referencias:
+                    item.referencias,
+
+                data:
+                    base64
+
+            });
+
+
+            logBackup(
+                'Imagen agregada al respaldo',
+                {
+                    key:
+                        mediaKey,
+
+                    referencias:
+                        item.referencias.length,
+
+                    bytesBase64:
+                        base64.length
+                }
+            );
+
+
+        }
+        catch(error){
+
+
+            console.warn(
+                '[BACKUP] No fue posible respaldar imagen:',
+                {
+                    uri:
+                        item.uri,
+
+                    error:
+                        error?.message
+                }
+            );
+
+
+        }
+
+    }
+
+
+
+    const manifest = {
+
+        version:
+            1,
+
+        fecha:
+            new Date()
+                .toISOString(),
+
+        cantidad:
+            imagenes.length,
+
+        imagenes
+
+    };
+
+
+    logBackup(
+        'Respaldo de imágenes preparado',
         {
-            existe:
-                !!StorageAccessFramework,
+            referencias:
+                referencias.length,
 
-            requestDirectoryPermissionsAsync:
-                typeof StorageAccessFramework
-                    ?.requestDirectoryPermissionsAsync,
-
-            createFileAsync:
-                typeof StorageAccessFramework
-                    ?.createFileAsync
+            imagenesUnicas:
+                imagenes.length
         }
     );
 
+
+    return manifest;
+
+}
+
+
+
+
+
+function agregarManifestAlSql(
+    contenidoSql,
+    manifest
+){
+
+    if(
+        !manifest ||
+        !Array.isArray(
+            manifest.imagenes
+        ) ||
+        manifest.imagenes.length === 0
+    ){
+
+        return contenidoSql;
+
+    }
+
+
+    const json =
+        JSON.stringify(
+            manifest
+        );
+
+
+    return (
+        `${contenidoSql}\n\n` +
+        `${MEDIA_INICIO}\n` +
+        `-- ${json}\n` +
+        `${MEDIA_FIN}\n`
+    );
+
+}
+
+
+
+
+
+function extraerManifestDelRespaldo(
+    contenido
+){
+
+    const indiceInicio =
+        contenido.indexOf(
+            MEDIA_INICIO
+        );
+
+
+    const indiceFin =
+        contenido.indexOf(
+            MEDIA_FIN
+        );
+
+
+    if(
+        indiceInicio < 0 ||
+        indiceFin < 0 ||
+        indiceFin <= indiceInicio
+    ){
+
+        return {
+
+            sql:
+                contenido,
+
+            manifest:
+                null
+
+        };
+
+    }
+
+
+    const inicioContenido =
+        indiceInicio +
+        MEDIA_INICIO.length;
+
+
+    let bloqueManifest =
+        contenido
+            .substring(
+                inicioContenido,
+                indiceFin
+            )
+            .trim();
+
+
+    bloqueManifest =
+        bloqueManifest
+            .split('\n')
+            .map(
+                linea => {
+
+                    const limpia =
+                        linea.trim();
+
+
+                    if(
+                        limpia.startsWith(
+                            '--'
+                        )
+                    ){
+
+                        return limpia
+                            .substring(
+                                2
+                            )
+                            .trim();
+
+                    }
+
+
+                    return limpia;
+
+                }
+            )
+            .join(
+                ''
+            );
+
+
+    let manifest =
+        null;
+
+
+    try{
+
+
+        manifest =
+            JSON.parse(
+                bloqueManifest
+            );
+
+
+        logBackup(
+            'Manifest de imágenes encontrado',
+            {
+                version:
+                    manifest?.version,
+
+                cantidad:
+                    manifest?.imagenes?.length || 0
+            }
+        );
+
+
+    }
+    catch(error){
+
+
+        logBackupError(
+            'No se pudo interpretar manifest de imágenes',
+            error
+        );
+
+
+        throw new Error(
+            'MANIFEST_IMAGENES_INVALIDO'
+        );
+
+
+    }
+
+
+
+    const sql =
+        (
+            contenido.substring(
+                0,
+                indiceInicio
+            )
+            +
+            contenido.substring(
+                indiceFin +
+                MEDIA_FIN.length
+            )
+        )
+        .trim();
+
+
+    return {
+
+        sql,
+
+        manifest
+
+    };
+
+}
+
+
+
+
+
+async function seleccionarCarpetaDestino(){
 
     if(
         !StorageAccessFramework
@@ -517,12 +1163,6 @@ async function seleccionarCarpetaDestino(){
     const permiso =
         await StorageAccessFramework
             .requestDirectoryPermissionsAsync();
-
-
-    logBackup(
-        'Resultado permiso carpeta',
-        permiso
-    );
 
 
     if(
@@ -553,6 +1193,8 @@ async function seleccionarCarpetaDestino(){
 
 
 
+
+
 async function crearArchivoDestino(
     directoryUri,
     nombreArchivo
@@ -565,15 +1207,6 @@ async function crearArchivoDestino(
     );
 
 
-    logBackup(
-        'Creando archivo SAF',
-        {
-            directoryUri,
-            nombreArchivo
-        }
-    );
-
-
     const archivoUri =
         await StorageAccessFramework
             .createFileAsync(
@@ -581,12 +1214,6 @@ async function crearArchivoDestino(
                 nombreArchivo,
                 'text/plain'
             );
-
-
-    logBackup(
-        'Archivo SAF creado',
-        archivoUri
-    );
 
 
     if(
@@ -606,9 +1233,11 @@ async function crearArchivoDestino(
 
 
 
+
+
 async function escribirRespaldo(
     archivoUri,
-    contenidoSql
+    contenido
 ){
 
     validarFuncion(
@@ -618,21 +1247,10 @@ async function escribirRespaldo(
     );
 
 
-    logBackup(
-        'Escribiendo contenido del respaldo',
-        {
-            archivoUri,
-
-            longitud:
-                contenidoSql.length
-        }
-    );
-
-
     await FileSystem
         .writeAsStringAsync(
             archivoUri,
-            contenidoSql,
+            contenido,
             {
                 encoding:
                     FileSystem
@@ -640,11 +1258,6 @@ async function escribirRespaldo(
                         .UTF8
             }
         );
-
-
-    logBackup(
-        'Escritura finalizada'
-    );
 
 
     const verificacion =
@@ -660,18 +1273,6 @@ async function escribirRespaldo(
             );
 
 
-    logBackup(
-        'Verificación de respaldo',
-        {
-            esperado:
-                contenidoSql.length,
-
-            guardado:
-                verificacion?.length || 0
-        }
-    );
-
-
     if(
         !verificacion ||
         verificacion.length === 0
@@ -684,231 +1285,46 @@ async function escribirRespaldo(
     }
 
 
-    return true;
-
-}
-
-
-
-async function prepararArchivoParaLectura(
-    archivo
-){
-
-    if(
-        !archivo?.uri
-    ){
-
-        throw new Error(
-            'ARCHIVO_SELECCIONADO_SIN_URI'
-        );
-
-    }
-
-
-    validarFuncion(
-        'FileSystem.copyAsync',
-        FileSystem
-            ?.copyAsync
-    );
-
-
-    const extension =
-        String(
-            archivo.name || ''
-        )
-        .toLowerCase()
-        .endsWith(
-            '.txt'
-        )
-        ?
-        '.txt'
-        :
-        '.sql';
-
-
-    const nombreTemporal =
-        `restauracion_criadero_${Date.now()}${extension}`;
-
-
-    const rutaTemporal =
-        `${FileSystem.documentDirectory}${nombreTemporal}`;
-
-
     logBackup(
-        'Preparando copia local del respaldo',
+        'Respaldo verificado',
         {
-            origen:
-                archivo.uri,
-
-            destino:
-                rutaTemporal,
-
-            name:
-                archivo.name,
-
-            size:
-                archivo.size,
-
-            mimeType:
-                archivo.mimeType
+            longitud:
+                verificacion.length
         }
     );
-
-
-    /*
-        Si quedó un archivo temporal anterior con
-        exactamente el mismo nombre, se elimina.
-    */
-
-    try{
-
-
-        const info =
-            await FileSystem
-                .getInfoAsync(
-                    rutaTemporal
-                );
-
-
-        if(
-            info?.exists
-        ){
-
-            await FileSystem
-                .deleteAsync(
-                    rutaTemporal,
-                    {
-                        idempotent:
-                            true
-                    }
-                );
-
-        }
-
-
-    }
-    catch(errorInfo){
-
-
-        console.log(
-            '[BACKUP] No fue necesario limpiar temporal:',
-            errorInfo?.message
-        );
-
-
-    }
-
-
-
-    await FileSystem
-        .copyAsync(
-            {
-                from:
-                    archivo.uri,
-
-                to:
-                    rutaTemporal
-            }
-        );
-
-
-    logBackup(
-        'Archivo copiado a almacenamiento interno'
-    );
-
-
-    const infoCopiado =
-        await FileSystem
-            .getInfoAsync(
-                rutaTemporal,
-                {
-                    size:
-                        true
-                }
-            );
-
-
-    logBackup(
-        'Información archivo temporal',
-        infoCopiado
-    );
-
-
-    if(
-        !infoCopiado?.exists
-    ){
-
-        throw new Error(
-            'NO_SE_PUDO_COPIAR_RESPALDO'
-        );
-
-    }
-
-
-    if(
-        Number(
-            infoCopiado?.size || 0
-        ) <= 0
-    ){
-
-        throw new Error(
-            'RESPALDO_COPIADO_VACIO'
-        );
-
-    }
-
-
-    return rutaTemporal;
 
 }
 
 
 
-async function eliminarTemporal(
-    rutaTemporal
-){
-
-    if(
-        !rutaTemporal
-    ){
-
-        return;
-
-    }
 
 
-    try{
+async function generarContenidoBackup(){
+
+    const db =
+        await getDatabase();
 
 
-        await FileSystem
-            .deleteAsync(
-                rutaTemporal,
-                {
-                    idempotent:
-                        true
-                }
-            );
-
-
-        logBackup(
-            'Archivo temporal eliminado',
-            rutaTemporal
+    const sql =
+        await generarSqlRespaldo(
+            db
         );
 
 
-    }
-    catch(error){
-
-
-        console.warn(
-            '[BACKUP] No fue posible eliminar temporal:',
-            error?.message
+    const manifest =
+        await generarManifestImagenes(
+            db
         );
 
 
-    }
+    return agregarManifestAlSql(
+        sql,
+        manifest
+    );
 
 }
+
+
 
 
 
@@ -928,29 +1344,8 @@ export async function crearBackup(){
         );
 
 
-        const db =
-            await getDatabase();
-
-
-        logBackup(
-            'Base de datos obtenida',
-            {
-                existe:
-                    !!db,
-
-                getAllAsync:
-                    typeof db?.getAllAsync,
-
-                execAsync:
-                    typeof db?.execAsync
-            }
-        );
-
-
-        const contenidoSql =
-            await generarSqlRespaldo(
-                db
-            );
+        const contenido =
+            await generarContenidoBackup();
 
 
         const directoryUri =
@@ -970,13 +1365,19 @@ export async function crearBackup(){
 
         await escribirRespaldo(
             archivoUri,
-            contenidoSql
+            contenido
         );
 
 
         logBackup(
             'Respaldo guardado correctamente',
-            archivoUri
+            {
+                uri:
+                    archivoUri,
+
+                longitud:
+                    contenido.length
+            }
         );
 
 
@@ -1007,28 +1408,75 @@ export async function crearBackup(){
 
 
 
-export async function compartirBackup(
-    rutaArchivo
-){
+
+
+async function crearBackupTemporal(){
 
     logBackup(
-        '===== INICIO COMPARTIR BACKUP =====',
-        rutaArchivo
+        'Creando respaldo temporal para compartir'
     );
 
 
+    if(
+        !FileSystem.cacheDirectory
+    ){
+
+        throw new Error(
+            'CACHE_NO_DISPONIBLE'
+        );
+
+    }
+
+
+    const contenido =
+        await generarContenidoBackup();
+
+
+    const ruta =
+        `${FileSystem.cacheDirectory}` +
+        `respaldo_criadero_kikirikis_` +
+        `${formatearFechaArchivo()}.sql`;
+
+
+    await FileSystem
+        .writeAsStringAsync(
+            ruta,
+            contenido,
+            {
+                encoding:
+                    FileSystem
+                        .EncodingType
+                        .UTF8
+            }
+        );
+
+
+    return ruta;
+
+}
+
+
+
+
+
+export async function compartirBackup(
+    rutaArchivo = null
+){
+
+    logBackup(
+        '===== INICIO COMPARTIR BACKUP ====='
+    );
+
+
+    let rutaCompartir =
+        rutaArchivo;
+
+
+    let temporalCreado =
+        false;
+
+
     try{
-
-
-        if(
-            !rutaArchivo
-        ){
-
-            throw new Error(
-                'RUTA_RESPALDO_REQUERIDA'
-            );
-
-        }
 
 
         validarFuncion(
@@ -1054,13 +1502,22 @@ export async function compartirBackup(
         }
 
 
-        let rutaCompartir =
-            rutaArchivo;
-
 
         if(
+            !rutaCompartir
+        ){
+
+            rutaCompartir =
+                await crearBackupTemporal();
+
+
+            temporalCreado =
+                true;
+
+        }
+        else if(
             String(
-                rutaArchivo
+                rutaCompartir
             )
             .startsWith(
                 'content://'
@@ -1070,7 +1527,7 @@ export async function compartirBackup(
             const contenido =
                 await FileSystem
                     .readAsStringAsync(
-                        rutaArchivo,
+                        rutaCompartir,
                         {
                             encoding:
                                 FileSystem
@@ -1081,7 +1538,9 @@ export async function compartirBackup(
 
 
             rutaCompartir =
-                `${FileSystem.cacheDirectory}respaldo_compartir_${formatearFechaArchivo()}.sql`;
+                `${FileSystem.cacheDirectory}` +
+                `respaldo_compartir_` +
+                `${formatearFechaArchivo()}.sql`;
 
 
             await FileSystem
@@ -1095,6 +1554,10 @@ export async function compartirBackup(
                                 .UTF8
                     }
                 );
+
+
+            temporalCreado =
+                true;
 
         }
 
@@ -1138,8 +1601,47 @@ export async function compartirBackup(
 
 
     }
+    finally{
+
+
+        if(
+            temporalCreado &&
+            rutaCompartir
+        ){
+
+            try{
+
+
+                await FileSystem
+                    .deleteAsync(
+                        rutaCompartir,
+                        {
+                            idempotent:
+                                true
+                        }
+                    );
+
+
+            }
+            catch(error){
+
+
+                console.warn(
+                    '[BACKUP] No se pudo eliminar respaldo temporal:',
+                    error?.message
+                );
+
+
+            }
+
+        }
+
+
+    }
 
 }
+
+
 
 
 
@@ -1160,20 +1662,6 @@ export async function seleccionarBackup(){
         );
 
 
-        /*
-            IMPORTANTE:
-
-            No dejamos que DocumentPicker copie el
-            documento a su propio cache.
-
-            En Expo Go ese cache nos devolvió una URI
-            que no resultó legible.
-
-            Conservamos la URI original del proveedor
-            de documentos y posteriormente utilizamos
-            FileSystem.copyAsync().
-        */
-
         const resultado =
             await DocumentPicker
                 .getDocumentAsync(
@@ -1192,12 +1680,6 @@ export async function seleccionarBackup(){
                         ]
                     }
                 );
-
-
-        logBackup(
-            'Resultado selector respaldo',
-            resultado
-        );
 
 
         if(
@@ -1235,19 +1717,11 @@ export async function seleccionarBackup(){
                 size:
                     archivo.size,
 
-                mimeType:
-                    archivo.mimeType,
-
                 uri:
                     archivo.uri
             }
         );
 
-
-        /*
-            Ahora retornamos el asset completo, no solamente
-            la URI, porque nos sirve para las trazas.
-        */
 
         return archivo;
 
@@ -1271,13 +1745,442 @@ export async function seleccionarBackup(){
 
 
 
+
+
+async function prepararArchivoParaLectura(
+    archivo
+){
+
+    if(
+        !archivo?.uri
+    ){
+
+        throw new Error(
+            'ARCHIVO_SELECCIONADO_SIN_URI'
+        );
+
+    }
+
+
+    if(
+        !FileSystem.documentDirectory
+    ){
+
+        throw new Error(
+            'DIRECTORIO_DOCUMENTOS_NO_DISPONIBLE'
+        );
+
+    }
+
+
+    validarFuncion(
+        'FileSystem.copyAsync',
+        FileSystem
+            ?.copyAsync
+    );
+
+
+    const rutaTemporal =
+        `${FileSystem.documentDirectory}` +
+        `restauracion_criadero_${Date.now()}.txt`;
+
+
+    await FileSystem
+        .copyAsync(
+            {
+                from:
+                    archivo.uri,
+
+                to:
+                    rutaTemporal
+            }
+        );
+
+
+    const info =
+        await FileSystem
+            .getInfoAsync(
+                rutaTemporal,
+                {
+                    size:
+                        true
+                }
+            );
+
+
+    if(
+        !info?.exists
+    ){
+
+        throw new Error(
+            'NO_SE_PUDO_COPIAR_RESPALDO'
+        );
+
+    }
+
+
+    if(
+        Number(
+            info?.size || 0
+        ) <= 0
+    ){
+
+        throw new Error(
+            'RESPALDO_COPIADO_VACIO'
+        );
+
+    }
+
+
+    return rutaTemporal;
+
+}
+
+
+
+
+
+async function eliminarTemporal(
+    rutaTemporal
+){
+
+    if(
+        !rutaTemporal
+    ){
+
+        return;
+
+    }
+
+
+    try{
+
+
+        await FileSystem
+            .deleteAsync(
+                rutaTemporal,
+                {
+                    idempotent:
+                        true
+                }
+            );
+
+
+    }
+    catch(error){
+
+
+        console.warn(
+            '[BACKUP] No se pudo eliminar temporal:',
+            error?.message
+        );
+
+
+    }
+
+}
+
+
+
+
+
+async function prepararDirectorioImagenesRestauradas(){
+
+    if(
+        !FileSystem.documentDirectory
+    ){
+
+        throw new Error(
+            'DIRECTORIO_DOCUMENTOS_NO_DISPONIBLE'
+        );
+
+    }
+
+
+    const directorio =
+        `${FileSystem.documentDirectory}` +
+        'kikirikis/aves/restauradas/';
+
+
+    await FileSystem
+        .makeDirectoryAsync(
+            directorio,
+            {
+                intermediates:
+                    true
+            }
+        );
+
+
+    return directorio;
+
+}
+
+
+
+
+
+async function restaurarImagenes(
+    db,
+    manifest
+){
+
+    if(
+        !manifest ||
+        !Array.isArray(
+            manifest.imagenes
+        ) ||
+        manifest.imagenes.length === 0
+    ){
+
+        logBackup(
+            'El respaldo no contiene imágenes.'
+        );
+
+
+        return {
+
+            restauradas:
+                0,
+
+            omitidas:
+                0
+
+        };
+
+    }
+
+
+    logBackup(
+        'Iniciando restauración de imágenes',
+        {
+            cantidad:
+                manifest.imagenes.length
+        }
+    );
+
+
+    const directorio =
+        await prepararDirectorioImagenesRestauradas();
+
+
+    let restauradas =
+        0;
+
+
+    let omitidas =
+        0;
+
+
+    for(
+        let indice = 0;
+        indice < manifest.imagenes.length;
+        indice += 1
+    ){
+
+        const imagen =
+            manifest.imagenes[
+                indice
+            ];
+
+
+        try{
+
+
+            if(
+                !imagen?.data
+            ){
+
+                omitidas += 1;
+
+                continue;
+
+            }
+
+
+            const extension =
+                obtenerExtensionImagen(
+                    imagen.key
+                );
+
+
+            const nombre =
+                `restaurada_${Date.now()}_${indice}_` +
+                `${Math.random()
+                    .toString(36)
+                    .substring(2, 8)}.` +
+                `${extension}`;
+
+
+            const nuevaUri =
+                `${directorio}${nombre}`;
+
+
+            await FileSystem
+                .writeAsStringAsync(
+                    nuevaUri,
+                    imagen.data,
+                    {
+                        encoding:
+                            FileSystem
+                                .EncodingType
+                                .Base64
+                    }
+                );
+
+
+            const info =
+                await FileSystem
+                    .getInfoAsync(
+                        nuevaUri,
+                        {
+                            size:
+                                true
+                        }
+                    );
+
+
+            if(
+                !info?.exists ||
+                Number(
+                    info?.size || 0
+                ) <= 0
+            ){
+
+                throw new Error(
+                    'IMAGEN_RESTAURADA_VACIA'
+                );
+
+            }
+
+
+
+            for(
+                const referencia
+                of (
+                    imagen.referencias || []
+                )
+            ){
+
+                if(
+                    referencia.tabla ===
+                    'aves'
+                ){
+
+                    await db.runAsync(
+                        `
+                        UPDATE aves
+
+                        SET
+                            foto_uri = ?,
+
+                            fecha_actualizacion =
+                                CURRENT_TIMESTAMP
+
+                        WHERE id = ?
+                        `,
+                        [
+                            nuevaUri,
+                            referencia.id
+                        ]
+                    );
+
+                }
+
+
+                if(
+                    referencia.tabla ===
+                    'ave_evolucion'
+                ){
+
+                    await db.runAsync(
+                        `
+                        UPDATE ave_evolucion
+
+                        SET
+                            foto_uri = ?
+
+                        WHERE id = ?
+                        `,
+                        [
+                            nuevaUri,
+                            referencia.id
+                        ]
+                    );
+
+                }
+
+            }
+
+
+            restauradas += 1;
+
+
+            logBackup(
+                'Imagen restaurada',
+                {
+                    uri:
+                        nuevaUri,
+
+                    referencias:
+                        imagen.referencias?.length || 0
+                }
+            );
+
+
+        }
+        catch(error){
+
+
+            omitidas += 1;
+
+
+            console.warn(
+                '[BACKUP] Error restaurando imagen:',
+                {
+                    key:
+                        imagen?.key,
+
+                    error:
+                        error?.message
+                }
+            );
+
+
+        }
+
+    }
+
+
+    logBackup(
+        'Restauración de imágenes finalizada',
+        {
+            restauradas,
+            omitidas
+        }
+    );
+
+
+    return {
+
+        restauradas,
+
+        omitidas
+
+    };
+
+}
+
+
+
+
+
 export async function restaurarBackup(
     archivo
 ){
 
     logBackup(
-        '===== INICIO RESTAURAR BACKUP =====',
-        archivo
+        '===== INICIO RESTAURAR BACKUP ====='
     );
 
 
@@ -1299,21 +2202,9 @@ export async function restaurarBackup(
         }
 
 
-        validarFuncion(
-            'getDatabase',
-            getDatabase
-        );
-
-
         const db =
             await getDatabase();
 
-
-        /*
-            PASO 1:
-            copiamos el content:// seleccionado a un
-            archivo file:// controlado por nuestra app.
-        */
 
         rutaTemporal =
             await prepararArchivoParaLectura(
@@ -1321,25 +2212,7 @@ export async function restaurarBackup(
             );
 
 
-        /*
-            PASO 2:
-            ahora sí leemos desde nuestro almacenamiento.
-        */
-
-        validarFuncion(
-            'FileSystem.readAsStringAsync',
-            FileSystem
-                ?.readAsStringAsync
-        );
-
-
-        logBackup(
-            'Leyendo copia local del respaldo',
-            rutaTemporal
-        );
-
-
-        const contenidoSql =
+        const contenidoCompleto =
             await FileSystem
                 .readAsStringAsync(
                     rutaTemporal,
@@ -1352,21 +2225,9 @@ export async function restaurarBackup(
                 );
 
 
-        logBackup(
-            'Archivo leído correctamente',
-            {
-                longitud:
-                    contenidoSql
-                        ?.length
-                    ||
-                    0
-            }
-        );
-
-
         if(
-            !contenidoSql ||
-            !contenidoSql.trim()
+            !contenidoCompleto ||
+            !contenidoCompleto.trim()
         ){
 
             throw new Error(
@@ -1376,13 +2237,19 @@ export async function restaurarBackup(
         }
 
 
-        /*
-            Validación básica para evitar que se seleccione
-            cualquier archivo .txt.
-        */
+
+        const {
+            sql,
+            manifest
+        } =
+            extraerManifestDelRespaldo(
+                contenidoCompleto
+            );
+
+
 
         const sqlMayuscula =
-            contenidoSql
+            sql
                 .toUpperCase();
 
 
@@ -1403,11 +2270,17 @@ export async function restaurarBackup(
         }
 
 
+
         validarFuncion(
             'db.execAsync',
             db?.execAsync
         );
 
+
+        /*
+            Primero restauramos exactamente el SQL,
+            conservando el mecanismo que ya funcionaba.
+        */
 
         logBackup(
             'Ejecutando restauración SQLite'
@@ -1415,7 +2288,7 @@ export async function restaurarBackup(
 
 
         await db.execAsync(
-            contenidoSql
+            sql
         );
 
 
@@ -1424,12 +2297,35 @@ export async function restaurarBackup(
         );
 
 
+
+        /*
+            Después restauramos imágenes y sustituimos
+            solamente las foto_uri por rutas válidas de
+            esta instalación.
+        */
+
+        const resultadoImagenes =
+            await restaurarImagenes(
+                db,
+                manifest
+            );
+
+
         logBackup(
-            '===== FIN RESTAURAR BACKUP OK ====='
+            '===== FIN RESTAURAR BACKUP OK =====',
+            resultadoImagenes
         );
 
 
-        return true;
+        return {
+
+            ok:
+                true,
+
+            imagenes:
+                resultadoImagenes
+
+        };
 
 
     }
