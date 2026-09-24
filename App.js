@@ -3,6 +3,7 @@ import React, {
     useState
 } from 'react';
 
+
 import {
     View,
     Text,
@@ -10,77 +11,164 @@ import {
     StyleSheet
 } from 'react-native';
 
+
 import {
     NavigationContainer
 } from '@react-navigation/native';
 
+
+import * as NavigationBar
+from 'expo-navigation-bar';
+
+
 import AppNavigator
-    from './src/navigation/AppNavigator';
+from './src/navigation/AppNavigator';
+
 
 import {
     initDatabase
 } from './src/database/sqlite';
+
 
 import {
     COLORS
 } from './src/config/constants';
 
 
+
+
 export default function App() {
 
-    const [databaseReady, setDatabaseReady] =
-        useState(false);
 
-    const [databaseError, setDatabaseError] =
-        useState(null);
+    const [
+        databaseReady,
+        setDatabaseReady
+    ] = useState(false);
 
 
-    useEffect(() => {
+
+    const [
+        databaseError,
+        setDatabaseError
+    ] = useState(null);
+
+
+
+
+
+    useEffect(()=>{
+
 
         initialize();
 
-    }, []);
+
+    },[]);
 
 
-    async function initialize() {
 
-        try {
+
+
+
+    async function initialize(){
+
+
+        try{
+
+
+            try{
+
+
+                if(
+                    NavigationBar &&
+                    NavigationBar.setVisibilityAsync
+                ){
+
+                    await NavigationBar.setVisibilityAsync(
+                        'hidden'
+                    );
+
+                }
+
+
+            }
+            catch(error){
+
+
+                console.log(
+                    'No fue posible ocultar barra Android:',
+                    error
+                );
+
+
+            }
+
+
+
+
 
             await initDatabase();
 
-            setDatabaseReady(true);
+
+
+            setDatabaseReady(
+                true
+            );
+
 
         }
-        catch (error) {
+        catch(error){
+
 
             console.error(
-                'Error inicializando SQLite:',
+                'Error inicializando aplicación:',
                 error
             );
+
 
             setDatabaseError(
                 error.message
             );
 
+
         }
+
 
     }
 
 
-    if (databaseError) {
+
+
+
+
+
+
+    if(databaseError){
+
 
         return (
 
-            <View style={styles.center}>
+            <View
+                style={
+                    styles.center
+                }
+            >
 
-                <Text style={styles.errorTitle}>
-                    Error de base de datos
+
+                <Text
+                    style={
+                        styles.errorTitle
+                    }
+                >
+                    Error de aplicación
                 </Text>
+
+
 
                 <Text>
                     {databaseError}
                 </Text>
 
+
             </View>
 
         );
@@ -88,33 +176,67 @@ export default function App() {
     }
 
 
-    if (!databaseReady) {
+
+
+
+
+
+
+    if(!databaseReady){
+
 
         return (
 
-            <View style={styles.center}>
+            <View
+                style={
+                    styles.center
+                }
+            >
+
 
                 <ActivityIndicator
+
                     size="large"
-                    color={COLORS.primary}
+
+                    color={
+                        COLORS.primary
+                    }
+
                 />
 
-                <Text style={styles.loadingText}>
+
+
+                <Text
+                    style={
+                        styles.loadingText
+                    }
+                >
+
                     Preparando Criadero Kikirikis...
+
                 </Text>
+
 
             </View>
 
         );
 
     }
+
+
+
+
+
+
 
 
     return (
 
         <NavigationContainer>
 
+
             <AppNavigator />
+
 
         </NavigationContainer>
 
@@ -123,45 +245,67 @@ export default function App() {
 }
 
 
-const styles = StyleSheet.create({
 
-    center: {
 
-        flex: 1,
 
-        alignItems: 'center',
+const styles =
+StyleSheet.create({
 
-        justifyContent: 'center',
 
-        padding: 20,
+    center:{
+
+
+        flex:1,
+
+
+        alignItems:'center',
+
+
+        justifyContent:'center',
+
+
+        padding:20,
+
 
         backgroundColor:
             COLORS.background
 
+
     },
 
 
-    loadingText: {
 
-        marginTop: 15,
+    loadingText:{
+
+
+        marginTop:15,
+
 
         color:
             COLORS.textSecondary
 
+
     },
 
 
-    errorTitle: {
 
-        fontSize: 20,
+    errorTitle:{
 
-        fontWeight: 'bold',
+
+        fontSize:20,
+
+
+        fontWeight:'bold',
+
 
         color:
             COLORS.danger,
 
-        marginBottom: 10
+
+        marginBottom:10
+
 
     }
+
 
 });
