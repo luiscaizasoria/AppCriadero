@@ -4,7 +4,6 @@ import {
     registrarHistorialJaula
 } from './HistorialRepository';
 
-
 export async function registrarSanidadJaula({
     jaulaId,
     fecha,
@@ -14,80 +13,58 @@ export async function registrarSanidadJaula({
 
     const db = await getDatabase();
 
+    await db.withTransactionAsync(async()=>{
 
-    await db.withTransactionAsync(
-        async () => {
-
-            await db.runAsync(
-                `
-                INSERT INTO sanidad_jaula
-                (
-                    jaula_id,
-                    fecha,
-                    tipo,
-                    detalle
-                )
-                VALUES (?, ?, ?, ?)
-                `,
-                [
-                    jaulaId,
-                    fecha,
-                    tipo,
-                    detalle || null
-                ]
-            );
-
-
-            await db.runAsync(
-                `
-                UPDATE jaulas
-                SET
-                    estado_sanitario = ?,
-                    fecha_actualizacion =
-                        CURRENT_TIMESTAMP
-                WHERE id = ?
-                `,
-                [
-                    normalizarEstado(tipo),
-                    jaulaId
-                ]
-            );
-
-
-            let descripcion =
-                `Sanidad: ${tipo}`;
-
-            if (detalle) {
-                descripcion +=
-                    ` | ${detalle}`;
-            }
-
-
-            await registrarHistorialJaula({
-
-                jaulaId,
-
-                tipoEvento:
-                    'SANIDAD',
-
+        await db.runAsync(
+            `
+            INSERT INTO sanidad_jaula
+            (
+                jaula_id,
                 fecha,
+                tipo,
+                detalle
+            )
+            VALUES (?, ?, ?, ?)
+            `,
+            [
+                jaulaId,
+                fecha,
+                tipo,
+                detalle || null
+            ]
+        );
 
-                detalle:
-                    descripcion,
+        await db.runAsync(
+            `
+            UPDATE jaulas
+            SET
+                estado_sanitario = ?,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = ?
+            `,
+            [
+                normalizarEstado(tipo),
+                jaulaId
+            ]
+        );
 
-                db
+        await registrarHistorialJaula({
+            jaulaId,
+            tipoEvento:'SANIDAD',
+            fecha,
+            detalle:`Sanidad: ${tipo}${detalle ? ' | '+detalle : ''}`,
+            db
+        });
 
-            });
-
-        }
-    );
-
+    });
 }
 
+function normalizarEstado(tipo){
 
-function normalizarEstado(tipo) {
+    switch(tipo){
 
-    switch (tipo) {
+        case 'Normal':
+            return 'NORMAL';
 
         case 'Limpieza':
             return 'LIMPIEZA';
@@ -103,7 +80,5 @@ function normalizarEstado(tipo) {
 
         default:
             return 'NORMAL';
-
     }
-
 }
