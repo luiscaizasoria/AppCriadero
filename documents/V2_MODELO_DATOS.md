@@ -461,3 +461,92 @@ No se incorporarán todavía a las entidades de negocio:
 El sistema NO asumirá que existe un solo dispositivo.
 
 La identificación y administración de dispositivos, si posteriormente es necesaria, se resolverá en las capas de autenticación, sesiones o sincronización y no mediante device_id en cada entidad de negocio.
+
+---
+
+## Decisión aprobada #5: Identidad UUID y unicidad de negocio
+
+### Identidad técnica
+
+Las entidades que requieran identidad global utilizarán UUID v7.
+
+El UUID será:
+
+- global;
+- estable;
+- inmutable;
+- independiente del código de negocio;
+- utilizado tanto en SQLite como en D1.
+
+La implementación concreta para generar UUID v7 en React Native/Expo y Cloudflare Workers se definirá posteriormente.
+
+### Generación de UUID
+
+El componente que crea originalmente un registro será responsable de generar su UUID.
+
+Si una entidad de negocio se crea offline en el dispositivo, el dispositivo generará el UUID antes de persistirla en SQLite.
+
+Si una entidad se crea originalmente mediante la API, la API generará su UUID.
+
+D1 conservará siempre el UUID ya asignado al registro.
+
+No existirá un mecanismo de traducción entre local_id y server_id.
+
+### Migración de identificadores V1
+
+Los INTEGER AUTOINCREMENT existentes en V1 se consideran identificadores locales legacy.
+
+Durante la futura migración se generará un UUID v7 una sola vez para cada registro migrado.
+
+La migración deberá mantener un mapa temporal entre el ID legacy y el nuevo UUID para transformar correctamente todas las relaciones y claves foráneas.
+
+El ID legacy no será utilizado como identidad técnica en V2.
+
+La incorporación de legacy_id como campo persistente será opcional y se decidirá únicamente si aparece una necesidad real de trazabilidad.
+
+### ID técnico y código de negocio
+
+El UUID representa la identidad técnica del registro.
+
+Los códigos visibles para el usuario representan identidad o referencia de negocio y son campos independientes.
+
+Un código de negocio podrá cambiar sin cambiar el UUID del registro.
+
+Las relaciones entre entidades utilizarán UUID y nunca dependerán del código visible.
+
+### Reglas iniciales de unicidad
+
+Se aprueban conceptualmente las siguientes reglas:
+
+- User.email: único global;
+- User.google_sub: único global cuando exista;
+- Criadero.user_id: único global para mantener relación uno-a-uno;
+- catalogos.codigo: único global;
+- catalogo_items.codigo: único dentro de la combinación criadero + catálogo;
+- jaulas.codigo: único dentro de un criadero;
+- aves.codigo: único dentro de un criadero.
+
+La necesidad y unicidad de huevos.codigo queda pendiente hasta diseñar específicamente la entidad huevos.
+
+### Soft delete y reutilización de códigos
+
+Las restricciones de unicidad de códigos de negocio aplicarán conceptualmente a registros activos.
+
+Un código perteneciente únicamente a un registro con deleted_at informado podrá reutilizarse para un nuevo registro.
+
+El UUID permitirá distinguir permanentemente ambos registros aunque hayan utilizado el mismo código de negocio en momentos diferentes.
+
+La implementación física de esta regla mediante índices o constraints se definirá al diseñar el esquema D1.
+
+### Decisiones pospuestas
+
+Todavía no se definirá:
+
+- librería concreta de UUID v7 para Expo;
+- librería concreta de UUID v7 para Cloudflare Workers;
+- índices físicos;
+- formato de códigos visibles;
+- prefijos y secuencias;
+- estrategia concreta de generación de códigos;
+- resolución de conflictos de códigos durante sincronización;
+- uso persistente de legacy_id.
