@@ -184,3 +184,196 @@ Estas decisiones se reevaluarán cuando se diseñen esos módulos.
 La unidad principal de aislamiento y sincronización será el criadero.
 
 La estrategia detallada de sincronización todavía NO está definida.
+
+---
+
+## Decisión aprobada #3: Autenticación y Onboarding Inicial
+
+### Alcance
+
+V2 utilizará un modelo de autenticación simple.
+
+Cada usuario tendrá exactamente un criadero y cada criadero pertenecerá exactamente a un usuario.
+
+Por ahora NO existirán:
+
+- roles;
+- permisos;
+- UserCriadero;
+- usuarios compartiendo un criadero;
+- membresías;
+- invitaciones.
+
+El sistema completo podrá contener múltiples usuarios y múltiples criaderos, pero cada usuario únicamente podrá acceder a los datos de su propio criadero.
+
+### Relación User y Criadero
+
+La relación conceptual será uno-a-uno.
+
+Criadero tendrá una referencia user_id única.
+
+User no almacenará directamente criadero_id.
+
+En el flujo normal de V2 el criadero se creará asociado al usuario cuando corresponda.
+
+La migración futura de información V1 se tratará como un proceso específico y no modifica esta regla conceptual.
+
+### User
+
+User representa la identidad autenticable global.
+
+Conceptualmente tendrá:
+
+- id global UUID;
+- email único;
+- nombre;
+- password_hash nullable;
+- google_sub nullable y único;
+- email_verified_at nullable;
+- active;
+- created_at;
+- updated_at.
+
+No existirá auth_provider.
+
+Los métodos de autenticación disponibles se deducirán de los datos existentes:
+
+- password_hash no nulo permite autenticación con correo y contraseña;
+- google_sub no nulo permite autenticación con Google.
+
+User no almacenará directamente:
+
+- criadero actual;
+- roles;
+- permisos;
+- datos de negocio;
+- configuración del criadero.
+
+### Autenticación con Google
+
+La identidad externa estable de Google será google_sub, correspondiente al campo sub entregado por Google.
+
+El sistema NO dependerá únicamente del email para identificar una cuenta Google.
+
+Flujo conceptual de primer ingreso con Google:
+
+1. Validar la identidad entregada por Google.
+2. Buscar un User por google_sub.
+3. Si existe, realizar login.
+4. Si no existe, verificar si el email ya pertenece a otra cuenta.
+5. Si el email no existe, crear User.
+6. Marcar email_verified_at.
+7. Activar la cuenta.
+8. Crear Criadero con nombre inicial "Mi Criadero".
+9. Generar credenciales de sesión.
+10. Permitir ingresar a la aplicación.
+
+### Cuenta existente con contraseña e intento de Google
+
+Si existe un User con el mismo email y password_hash, pero sin google_sub asociado:
+
+- NO se creará un segundo usuario;
+- NO se vinculará Google automáticamente;
+- se indicará al usuario que debe iniciar sesión con su contraseña.
+
+La vinculación explícita entre métodos de autenticación queda fuera del alcance actual.
+
+### Registro con correo y contraseña
+
+Flujo conceptual:
+
+1. El usuario ingresa email y contraseña.
+2. Se crea User con password_hash.
+3. email_verified_at queda nulo.
+4. La cuenta permanece inactiva.
+5. Se envía un mecanismo de verificación de email.
+6. El usuario verifica su email.
+7. email_verified_at se registra.
+8. La cuenta se activa.
+9. Se crea Criadero con nombre inicial "Mi Criadero".
+10. Se generan credenciales de sesión.
+11. El usuario ingresa a la aplicación.
+
+La contraseña original nunca se almacenará.
+
+Solo se almacenará un password_hash generado mediante el mecanismo criptográfico que se seleccione durante la implementación de autenticación.
+
+### Login con correo y contraseña
+
+Flujo conceptual:
+
+1. El usuario ingresa email y contraseña.
+2. Se busca User por email.
+3. Se verifica que password_hash exista.
+4. Se verifica la contraseña.
+5. Se verifica que la cuenta esté activa.
+6. Se generan las credenciales de sesión.
+7. Se carga el contexto local correspondiente al usuario/criadero.
+8. Se permite ingresar.
+
+### Recuperación de contraseña
+
+La recuperación de contraseña forma parte del alcance de V2.
+
+Flujo conceptual:
+
+1. El usuario ingresa su email.
+2. Se verifica que exista una cuenta con password_hash.
+3. Se genera un token temporal de recuperación.
+4. Se envía el mecanismo de recuperación al correo.
+5. El usuario define una nueva contraseña.
+6. Se actualiza password_hash.
+7. El token de recuperación deja de ser válido.
+8. Las sesiones existentes podrán invalidarse según la estrategia definitiva de autenticación.
+
+La implementación física de password_reset_tokens se definirá posteriormente.
+
+### Logout
+
+Al cerrar sesión:
+
+- se invalidará o eliminará el contexto de autenticación activo;
+- se eliminarán las credenciales/tokens locales;
+- se cerrará el contexto SQLite del usuario actual;
+- se regresará a la pantalla de login.
+
+El logout NO eliminará los datos SQLite del usuario.
+
+### Aislamiento SQLite por usuario/criadero
+
+V2 es offline-first.
+
+Por lo tanto, SQLite puede contener información todavía no sincronizada con D1.
+
+Los datos locales NO deben borrarse automáticamente al cerrar sesión.
+
+Cada usuario/criadero deberá mantener un contexto SQLite local aislado.
+
+Conceptualmente:
+
+Usuario A
+  -> SQLite A
+
+Usuario B
+  -> SQLite B
+
+Al cambiar de usuario se cambiará de contexto SQLite sin mezclar ni eliminar los datos del usuario anterior.
+
+La implementación física de este aislamiento se definirá durante el diseño de sincronización.
+
+### Fuera del alcance actual
+
+Todavía no se diseñarán en detalle:
+
+- refresh tokens;
+- sesiones activas;
+- password_reset_tokens;
+- email_verification_tokens;
+- oauth_states;
+- implementación concreta de OAuth;
+- algoritmo concreto de password hashing;
+- tiempos de expiración de tokens;
+- sincronización detallada;
+- resolución de conflictos.
+
+Estas decisiones se tratarán en sus fases correspondientes.
