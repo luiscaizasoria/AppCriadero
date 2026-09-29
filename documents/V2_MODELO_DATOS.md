@@ -550,3 +550,163 @@ Todavía no se definirá:
 - estrategia concreta de generación de códigos;
 - resolución de conflictos de códigos durante sincronización;
 - uso persistente de legacy_id.
+
+---
+
+## Decisión aprobada #6: Relaciones estructurales e históricos
+
+### Relaciones principales
+
+Criadero será la raíz de las entidades de negocio.
+
+Se mantienen conceptualmente las relaciones:
+
+- Criadero -> Jaulas;
+- Criadero -> Aves;
+- Ave -> Jaula actual;
+- Ave -> Padre;
+- Ave -> Madre;
+- Ave -> Huevos;
+- Ave -> Diagnósticos;
+- Diagnóstico -> Tratamientos;
+- Ave -> Bajas;
+- Ave -> AveEvolucion;
+- Ave -> AveHistorial;
+- Jaula -> JaulaHistorial;
+- Jaula -> Alimentación;
+- Jaula -> Bebida;
+- Jaula -> Sanidad.
+
+Todas las relaciones utilizarán UUID.
+
+### Jaula actual de un ave
+
+aves.jaula_actual_id será nullable.
+
+Un ave podrá existir sin estar asignada actualmente a una jaula.
+
+El criadero propietario del ave NO se determinará mediante jaula_actual_id, ya que aves.criadero_id es la relación de ownership aprobada.
+
+### Genealogía
+
+aves.padre_id y aves.madre_id serán referencias opcionales a otras aves.
+
+Ambas serán nullable porque puede existir un ave cuya genealogía no esté registrada en el sistema.
+
+Las reglas de dominio relacionadas con genealogía, como validación de sexo, pertenencia al mismo criadero o prevención de ciclos, se definirán posteriormente en la capa de dominio/API.
+
+### Huevos
+
+huevos continuará como entidad independiente.
+
+Todo huevo deberá estar asociado a un ave mediante ave_id.
+
+La relación huevos.ave_id será obligatoria.
+
+huevos.jaula_id será opcional.
+
+La jaula representa contexto adicional del registro pero no sustituye la relación obligatoria con el ave.
+
+### AveEvolucion
+
+ave_evolucion se mantendrá como entidad independiente.
+
+Representa la evolución física e información asociada de un ave y estará relacionada mediante ave_id.
+
+### Diagnósticos y tratamientos
+
+diagnosticos_ave se mantendrá como entidad independiente relacionada con Ave.
+
+tratamientos_ave se mantendrá como entidad independiente.
+
+Cada tratamiento podrá relacionarse explícitamente con su diagnóstico mediante diagnostico_id y con el ave según la estructura definitiva del módulo de salud.
+
+### Bajas de aves
+
+bajas_ave se mantendrá como entidad independiente relacionada mediante ave_id.
+
+Representará los eventos de baja como muerte o venta y conservará la información propia de dichos eventos.
+
+### AveHistorial
+
+ave_historial se mantendrá como entidad independiente.
+
+ave_historial.ave_id será obligatorio.
+
+ave_historial.jaula_id será nullable.
+
+Esto permite registrar eventos que no requieren una jaula asociada, incluyendo actualmente eventos como:
+
+- ALTA de un ave sin jaula;
+- SALUD;
+- MUERTE;
+- VENTA.
+
+### JaulaHistorial
+
+jaula_historial se mantendrá como entidad independiente.
+
+jaula_historial.jaula_id será obligatorio.
+
+jaula_historial.ave_id permanecerá nullable.
+
+Aunque el código V1 analizado utiliza actualmente un ave específica en los eventos encontrados, V1 permite NULL y no existe evidencia suficiente para introducir una restricción obligatoria nueva en V2.
+
+### Historial financiero
+
+movimientos_financieros_historial se mantendrá inicialmente como entidad independiente.
+
+Su estructura física se definirá cuando se diseñe específicamente el módulo financiero.
+
+### Origen de movimientos financieros
+
+V1 utiliza una relación polimórfica mediante:
+
+- origen_tipo;
+- origen_id;
+- ave_id opcional.
+
+El análisis del código V1 confirma únicamente los siguientes orígenes:
+
+- MANUAL: origen_id es NULL y ave_id es NULL;
+- VENTA_AVE: origen_id referencia bajas_ave.id y ave_id referencia el ave vendida.
+
+V2 eliminará la relación polimórfica origen_tipo + origen_id para estos casos actualmente conocidos.
+
+Se utilizará una relación explícita:
+
+- movimientos_financieros.baja_ave_id nullable.
+
+Reglas conceptuales:
+
+- un movimiento manual tendrá baja_ave_id NULL;
+- un movimiento originado por una venta tendrá baja_ave_id apuntando al registro correspondiente de bajas_ave.
+
+movimientos_financieros.ave_id tampoco se mantendrá para este caso, porque el ave puede obtenerse mediante:
+
+MovimientoFinanciero
+-> BajaAve
+-> Ave
+
+Esto evita duplicar relaciones y posibles inconsistencias entre ave_id y baja_ave_id.
+
+Si en el futuro aparecen nuevos tipos reales de origen financiero, se diseñarán explícitamente cuando el módulo correspondiente lo requiera, en lugar de reintroducir anticipadamente una relación polimórfica genérica.
+
+### Entidades independientes que se mantienen
+
+Por ahora se mantienen como entidades separadas:
+
+- ave_evolucion;
+- ave_historial;
+- jaula_historial;
+- huevos;
+- diagnosticos_ave;
+- tratamientos_ave;
+- bajas_ave;
+- movimientos_financieros;
+- movimientos_financieros_historial;
+- alimentacion_jaula;
+- bebida_jaula;
+- sanidad_jaula.
+
+No se utilizará por ahora un mecanismo genérico único de historial para reemplazar estas entidades.
