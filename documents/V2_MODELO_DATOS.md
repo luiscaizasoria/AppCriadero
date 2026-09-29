@@ -377,3 +377,87 @@ Todavía no se diseñarán en detalle:
 - resolución de conflictos.
 
 Estas decisiones se tratarán en sus fases correspondientes.
+
+---
+
+## Decisión aprobada #4: Estándar mínimo de entidad sincronizable
+
+Toda entidad de negocio sincronizable de V2 utilizará un conjunto mínimo de campos comunes para soportar identidad global, aislamiento por criadero, auditoría básica, borrado lógico y control de concurrencia.
+
+### Campos estándar D1 + SQLite
+
+Toda entidad de negocio sincronizable tendrá:
+
+- id: identidad global UUID estable;
+- criadero_id: identifica el criadero propietario del registro;
+- created_at: fecha de creación;
+- updated_at: fecha de última modificación;
+- deleted_at: fecha de borrado lógico, nullable;
+- version: versión entera utilizada para control optimista de concurrencia.
+
+### Metadata local exclusiva de SQLite
+
+SQLite mantendrá además metadata de sincronización local:
+
+- sync_status;
+- last_synced_version.
+
+sync_status contemplará inicialmente los estados:
+
+- SYNCED;
+- PENDING;
+- ERROR.
+
+Estos campos NO se almacenarán en D1 porque representan el estado local de sincronización del dispositivo.
+
+### Regla de soft delete
+
+deleted_at será obligatorio en toda entidad de negocio sincronizable.
+
+El borrado lógico permitirá propagar eliminaciones entre SQLite y D1 sin perder inmediatamente la información necesaria para sincronizar.
+
+Esta regla NO implica que todas las tablas técnicas futuras utilicen soft delete.
+
+Tablas temporales o técnicas como recuperación de contraseña, OAuth o sesiones podrán utilizar políticas diferentes cuando sean diseñadas.
+
+### Regla de versionado
+
+version será obligatorio en toda entidad de negocio sincronizable.
+
+La versión permitirá detectar actualizaciones realizadas sobre una copia antigua del registro.
+
+Conceptualmente:
+
+- un dispositivo conoce una versión determinada;
+- envía una modificación indicando esa versión;
+- D1 valida que siga siendo la versión actual;
+- si la modificación es aceptada, la versión aumenta.
+
+El protocolo detallado de conflictos todavía NO está definido.
+
+### Auditoría inicial
+
+created_at y updated_at serán suficientes como auditoría inicial.
+
+Por ahora NO se agregarán:
+
+- created_by;
+- updated_by.
+
+El modelo actual establece un único usuario por criadero y no existen roles ni usuarios compartiendo datos del mismo criadero.
+
+### Campos deliberadamente pospuestos
+
+No se incorporarán todavía a las entidades de negocio:
+
+- server_updated_at;
+- last_synced_at;
+- device_id;
+- hash de contenido;
+- metadata detallada de conflictos;
+- conflict_reason;
+- conflict_data.
+
+El sistema NO asumirá que existe un solo dispositivo.
+
+La identificación y administración de dispositivos, si posteriormente es necesaria, se resolverá en las capas de autenticación, sesiones o sincronización y no mediante device_id en cada entidad de negocio.
