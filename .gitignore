@@ -142,3 +142,10 @@ Desktop.ini
 # Local AI assistant configuration
 .claude/
 CLAUDE.md
+
+
+# ============================================================
+# Cloudflare Wrangler
+# ============================================================
+
+api/.wrangler/
