@@ -1,4 +1,4 @@
-﻿# V2_MODELO_DATOS — Criadero Kikirikis
+# V2_MODELO_DATOS — Criadero Kikirikis
 
 ## Propósito
 
