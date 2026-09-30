@@ -784,3 +784,204 @@ Quedan para fases posteriores:
 - expiración de tokens;
 - implementación OAuth;
 - índices físicos D1.
+
+---
+
+## Modelo aprobado #8: Criadero V2
+
+Criadero representa la unidad principal de pertenencia de todos los datos de negocio.
+
+Cada usuario tendrá exactamente un criadero y cada criadero pertenecerá exactamente a un usuario.
+
+La relación será:
+
+User 1 ---- 1 Criadero
+
+La referencia estará en Criadero mediante user_id único.
+
+### Campos conceptuales
+
+| Campo | Tipo | Nullable | Propósito |
+|---|---|---|---|
+| id | UUID | NO | Identidad global UUID v7 |
+| user_id | UUID | NO | Usuario propietario del criadero |
+| nombre | texto | NO | Nombre visible del criadero |
+| created_at | timestamp | NO | Fecha de creación |
+| updated_at | timestamp | NO | Fecha de actualización |
+| deleted_at | timestamp | Sí | Borrado lógico |
+| version | entero | NO | Control optimista |
+
+### Reglas
+
+- user_id será único para mantener la relación uno-a-uno.
+- Criadero utilizará el estándar de entidad sincronizable V2.
+- No existirá active en esta primera versión.
+- El estado activo se determinará mediante deleted_at.
+
+### Campos no incluidos
+
+No se incluyen todavía:
+
+- código visible de criadero;
+- ubicación geográfica;
+- logo o imágenes;
+- configuración del criadero;
+- datos fiscales;
+- datos comerciales;
+- suscripciones;
+- planes;
+- límites;
+- usuarios secundarios;
+- roles;
+- permisos.
+
+Estos conceptos podrán diseñarse posteriormente como entidades independientes si aparecen necesidades reales.
+
+### Sincronización
+
+Criadero utilizará:
+
+- UUID como identidad;
+- created_at;
+- updated_at;
+- deleted_at;
+- version.
+
+Los campos exclusivos de sincronización local permanecerán únicamente en SQLite.
+
+---
+
+## Modelo aprobado #9: Catalogos V2
+
+Catalogos representa las definiciones globales de tipos de catálogo del sistema.
+
+Los tipos de catálogo son definidos por la plataforma y no pertenecen a un criadero específico.
+
+Ejemplos:
+
+- RAZAS;
+- SEXOS;
+- ENFERMEDADES;
+- MEDICAMENTOS;
+- ALIMENTOS;
+- BEBIDAS;
+- CATEGORIAS_FINANCIERAS.
+
+### Relación
+
+Catalogos será una entidad global.
+
+No tendrá criadero_id.
+
+Los valores configurables por criadero serán almacenados posteriormente en catalogo_items.
+
+### Campos conceptuales
+
+| Campo | Tipo | Nullable | Propósito |
+|---|---|---|---|
+| id | UUID | NO | Identidad global UUID v7 |
+| codigo | texto | NO | Código interno único del catálogo |
+| nombre | texto | NO | Nombre descriptivo |
+| descripcion | texto | Sí | Descripción opcional |
+| activo | boolean | NO | Estado del catálogo |
+| created_at | timestamp | NO | Fecha creación |
+| updated_at | timestamp | NO | Fecha actualización |
+| deleted_at | timestamp | Sí | Borrado lógico |
+| version | entero | NO | Control optimista |
+
+### Reglas
+
+- codigo será único globalmente.
+- Los tipos de catálogo iniciales serán creados mediante configuración inicial/seeder.
+- Los usuarios no crearán nuevos tipos de catálogo en V2 inicial.
+- activo permitirá deshabilitar un catálogo sin eliminarlo funcionalmente.
+- deleted_at permitirá mantener consistencia histórica y sincronización.
+
+### Campos no incluidos
+
+No se incluyen:
+
+- criadero_id;
+- orden;
+- configuración específica;
+- valores del catálogo.
+
+Los valores pertenecerán a catalogo_items.
+
+---
+
+## Modelo aprobado #10: CatalogoItems V2
+
+CatalogoItems representa los valores configurables de los catálogos para cada criadero.
+
+Mientras Catalogos define globalmente los tipos existentes, cada CatalogoItem pertenece a un criadero específico.
+
+### Relación
+
+Cada CatalogoItem pertenece a:
+
+- un Criadero mediante criadero_id;
+- un Catalogo mediante catalogo_id.
+
+Dos criaderos podrán tener items con el mismo código y nombre, pero serán registros independientes con UUID diferentes.
+
+### Campos conceptuales
+
+| Campo | Tipo | Nullable | Propósito |
+|---|---|---|---|
+| id | UUID | NO | Identidad global UUID v7 |
+| criadero_id | UUID | NO | Criadero propietario |
+| catalogo_id | UUID | NO | Tipo de catálogo |
+| codigo | texto | NO | Código de negocio del item |
+| nombre | texto | NO | Nombre visible |
+| descripcion | texto | Sí | Descripción opcional |
+| activo | boolean | NO | Estado funcional del item |
+| orden | entero | Sí | Orden visual opcional |
+| created_at | timestamp | NO | Fecha de creación |
+| updated_at | timestamp | NO | Fecha de actualización |
+| deleted_at | timestamp | Sí | Borrado lógico |
+| version | entero | NO | Control optimista |
+
+### Regla de unicidad
+
+codigo deberá ser único dentro de la combinación:
+
+criadero_id + catalogo_id + codigo
+
+La unicidad funcional aplicará a registros activos.
+
+Un código utilizado únicamente por un registro eliminado lógicamente podrá reutilizarse conforme a la Decisión #5.
+
+### Estado activo y borrado lógico
+
+activo y deleted_at representan conceptos diferentes.
+
+activo = false indica que el item continúa existiendo pero está deshabilitado funcionalmente.
+
+deleted_at informado representa eliminación lógica.
+
+### Items iniciales de un nuevo criadero
+
+Al crear un nuevo criadero se generarán físicamente sus propios CatalogoItems iniciales.
+
+Los valores iniciales podrán basarse en una plantilla o configuración del sistema, pero cada registro creado tendrá:
+
+- su propio UUID;
+- el criadero_id del nuevo criadero;
+- su propia versión y ciclo de vida.
+
+No existirán CatalogoItems globales compartidos directamente entre criaderos.
+
+Esto permite que cada criadero modifique posteriormente sus valores sin afectar a otros criaderos.
+
+### Pendientes
+
+Quedan para implementación posterior:
+
+- seeder o plantilla concreta de valores iniciales;
+- formato de los códigos;
+- longitudes físicas de texto;
+- índices físicos;
+- implementación física de unicidad considerando deleted_at;
+- migración de valores V1;
+- comportamiento detallado de sincronización.
