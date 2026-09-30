@@ -710,3 +710,77 @@ Por ahora se mantienen como entidades separadas:
 - sanidad_jaula.
 
 No se utilizará por ahora un mecanismo genérico único de historial para reemplazar estas entidades.
+
+---
+
+## Modelo aprobado #7: User V2
+
+User representa la identidad autenticable global del sistema.
+
+La relación con Criadero será uno-a-uno.
+
+La referencia de pertenencia estará únicamente en Criadero mediante user_id único.
+
+User NO almacenará criadero_id para evitar duplicidad de relación.
+
+### Campos conceptuales
+
+| Campo | Tipo | Nullable | Propósito |
+|---|---|---|---|
+| id | UUID | NO | Identidad global UUID v7 |
+| email | texto | NO | Correo único normalizado |
+| nombre | texto | NO | Nombre del usuario |
+| password_hash | texto | Sí | Hash para autenticación correo/password |
+| google_sub | texto | Sí | Identidad externa Google OAuth |
+| email_verified_at | timestamp | Sí | Fecha de verificación del correo |
+| active | boolean | NO | Estado de la cuenta |
+| created_at | timestamp | NO | Fecha creación |
+| updated_at | timestamp | NO | Fecha actualización |
+| deleted_at | timestamp | Sí | Borrado lógico |
+| version | entero | NO | Control optimista |
+
+### Reglas de autenticación
+
+Un usuario puede autenticarse mediante:
+
+- correo y contraseña;
+- Google.
+
+La existencia de password_hash determina si existe autenticación mediante contraseña.
+
+La existencia de google_sub determina si existe vinculación con Google.
+
+No se utilizará auth_provider.
+
+### Reglas de unicidad
+
+- email será único globalmente;
+- google_sub será único cuando exista.
+
+El email deberá normalizarse antes de almacenarse y compararse.
+
+La estrategia exacta de normalización se definirá durante la implementación de autenticación.
+
+### Relación con Criadero
+
+La relación será:
+
+User 1 ---- 1 Criadero
+
+La FK conceptual estará en Criadero mediante user_id UNIQUE.
+
+User no almacenará criadero_id.
+
+### Pendientes
+
+Quedan para fases posteriores:
+
+- refresh_tokens;
+- sesiones;
+- password_reset_tokens;
+- email_verification_tokens;
+- oauth_states;
+- algoritmo concreto de hash;
+- expiración de tokens;
+- implementación OAuth;
+- índices físicos D1.
