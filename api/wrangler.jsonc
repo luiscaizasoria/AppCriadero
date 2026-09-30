@@ -1,5 +1,13 @@
 {
   "name": "criadero-kikirikis-api",
   "main": "src/index.ts",
-  "compatibility_date": "2026-09-27"
+  "compatibility_date": "2026-09-27",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "criadero-kikirikis-dev",
+      "database_id": "3553a805-434e-4923-b83e-b052fe09a84e",
+      "migrations_dir": "migrations"
+    }
+  ]
 }
