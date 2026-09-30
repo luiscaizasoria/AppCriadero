@@ -985,3 +985,129 @@ Quedan para implementación posterior:
 - implementación física de unicidad considerando deleted_at;
 - migración de valores V1;
 - comportamiento detallado de sincronización.
+
+---
+
+## Modelo aprobado #11: Plantilla inicial de CatalogoItems V2
+
+Los CatalogoItems pertenecen exclusivamente a un Criadero.
+
+No existirán CatalogoItems globales compartidos entre criaderos.
+
+Por esta razón, los items iniciales NO serán insertados mediante una migración D1 global.
+
+El backend mantendrá una plantilla inicial versionada y, al crear un nuevo Criadero, generará los CatalogoItems correspondientes utilizando nuevos UUID v7 y el criadero_id recién creado.
+
+### Valores comunes
+
+Los items creados desde la plantilla tendrán inicialmente:
+
+- activo = true;
+- deleted_at = null;
+- version = 1;
+- descripcion = null.
+
+El UUID será generado al momento de crear el item.
+
+### RAZAS
+
+| Orden | Codigo | Nombre |
+|---:|---|---|
+| 1 | KIKIRIS | Kikiris |
+| 2 | KIKIRIKIS_MEJORADOS | Kikirikis mejorados |
+| 3 | AZTECAS | Aztecas |
+| 4 | SEBRING | Sebring |
+| 5 | NAGASAKI | Nagasaki |
+| 6 | KIRI | Kiri |
+| 7 | FANTASIA | Fantasía |
+| 8 | SERAMA | Serama |
+| 9 | OTRO | Otro |
+
+### SEXOS
+
+| Orden | Codigo | Nombre |
+|---:|---|---|
+| 1 | MACHO | Macho |
+| 2 | HEMBRA | Hembra |
+
+### ENFERMEDADES
+
+Los valores provienen de enfermedades_catalogo de V1.
+
+V1 no tenía un orden explícito para estos valores, por lo que orden será null inicialmente.
+
+| Codigo | Nombre |
+|---|---|
+| COCCIDIA | Coccidia |
+| CORIZA | Coriza |
+| GRIPE | Gripe |
+| OTRO | Otro |
+
+### MEDICAMENTOS
+
+Los valores provienen de medicamentos_catalogo de V1.
+
+V1 no tenía un orden explícito para estos valores, por lo que orden será null inicialmente.
+
+| Codigo | Nombre |
+|---|---|
+| VITAMINA | Vitamina |
+| ANTIBIOTICO | Antibiótico |
+| ANTIPARASITARIO | Antiparasitario |
+| OTRO | Otro |
+
+### ALIMENTOS
+
+No tendrá CatalogoItems iniciales.
+
+V1 define el catálogo pero no contiene valores sembrados.
+
+### BEBIDAS
+
+No tendrá CatalogoItems iniciales.
+
+V1 define el catálogo pero no contiene valores sembrados.
+
+### CATEGORIAS_FINANCIERAS
+
+| Orden | Codigo | Nombre |
+|---:|---|---|
+| 1 | VENTA_AVE | Venta de ave |
+| 2 | VENTA_HUEVOS | Venta de huevos |
+| 3 | ALIMENTO | Alimento |
+| 4 | MEDICAMENTO | Medicamento |
+| 5 | INFRAESTRUCTURA | Infraestructura |
+| 6 | COMPRA_AVE | Compra de ave |
+| 7 | OTRO | Otro |
+| 8 | ENVIO_AVE | Envío de ave |
+
+ENVIO_AVE se considera parte de la plantilla inicial V2 porque fue incorporado posteriormente como valor del sistema en V1.
+
+### Cantidad inicial
+
+Un nuevo Criadero recibirá:
+
+- 9 Razas;
+- 2 Sexos;
+- 4 Enfermedades;
+- 4 Medicamentos;
+- 0 Alimentos;
+- 0 Bebidas;
+- 8 Categorías financieras.
+
+Total inicial: 27 CatalogoItems.
+
+### Regla de creación
+
+La plantilla contiene solamente las definiciones iniciales.
+
+Al crear un Criadero:
+
+1. se obtiene su criadero_id;
+2. se recorren los valores de la plantilla;
+3. cada CatalogoItem recibe un UUID v7 nuevo;
+4. se asigna el catalogo_id global correspondiente;
+5. se asigna el criadero_id recién creado;
+6. se insertan los items como registros independientes del nuevo criadero.
+
+No se compartirán UUID de CatalogoItems entre criaderos.
