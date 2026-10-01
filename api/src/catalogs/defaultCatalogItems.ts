@@ -19,7 +19,7 @@ export interface DefaultCatalogItem {
 /**
  * Colección inmutable de items iniciales por catálogo
  *
- * Total: 27 items
+ * Total: 38 items
  * - RAZAS: 9 items
  * - SEXOS: 2 items
  * - ENFERMEDADES: 4 items
@@ -27,6 +27,9 @@ export interface DefaultCatalogItem {
  * - ALIMENTOS: 0 items
  * - BEBIDAS: 0 items
  * - CATEGORIAS_FINANCIERAS: 8 items
+ * - ESPECIES: 5 items
+ * - TIPOS_CRIADERO: 3 items
+ * - FINALIDADES_CRIADERO: 3 items
  */
 export const DEFAULT_CATALOG_ITEMS: readonly DefaultCatalogItem[] = [
   // RAZAS (9 items)
@@ -205,5 +208,77 @@ export const DEFAULT_CATALOG_ITEMS: readonly DefaultCatalogItem[] = [
     code: 'ENVIO_AVE',
     name: 'Envío de ave',
     order: 8,
+  },
+
+  // ESPECIES (5 items)
+  {
+    catalogCode: 'ESPECIES',
+    code: 'GALLINA_GALLO',
+    name: 'Gallina / Gallo',
+    order: 1,
+  },
+  {
+    catalogCode: 'ESPECIES',
+    code: 'PATO',
+    name: 'Pato',
+    order: 2,
+  },
+  {
+    catalogCode: 'ESPECIES',
+    code: 'PAVO',
+    name: 'Pavo',
+    order: 3,
+  },
+  {
+    catalogCode: 'ESPECIES',
+    code: 'CODORNIZ',
+    name: 'Codorniz',
+    order: 4,
+  },
+  {
+    catalogCode: 'ESPECIES',
+    code: 'OTRA',
+    name: 'Otra',
+    order: 5,
+  },
+
+  // TIPOS_CRIADERO (3 items)
+  {
+    catalogCode: 'TIPOS_CRIADERO',
+    code: 'CRIANZA',
+    name: 'Cría',
+    order: 1,
+  },
+  {
+    catalogCode: 'TIPOS_CRIADERO',
+    code: 'REPRODUCCION',
+    name: 'Reproducción',
+    order: 2,
+  },
+  {
+    catalogCode: 'TIPOS_CRIADERO',
+    code: 'MIXTO',
+    name: 'Mixto',
+    order: 3,
+  },
+
+  // FINALIDADES_CRIADERO (3 items)
+  {
+    catalogCode: 'FINALIDADES_CRIADERO',
+    code: 'VENTA',
+    name: 'Venta',
+    order: 1,
+  },
+  {
+    catalogCode: 'FINALIDADES_CRIADERO',
+    code: 'CONSUMO',
+    name: 'Consumo propio',
+    order: 2,
+  },
+  {
+    catalogCode: 'FINALIDADES_CRIADERO',
+    code: 'EXPOSICION',
+    name: 'Exhibición',
+    order: 3,
   },
 ] as const;
