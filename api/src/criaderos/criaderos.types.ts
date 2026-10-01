@@ -14,6 +14,13 @@ export interface CreateCriaderoRequest {
   correoContacto: string;
 }
 
+export interface UpdateConfiguracionRequest {
+  especiePrincipalItemId: string;
+  razaPrincipalItemId: string;
+  tipoCriaderoItemId: string;
+  finalidadItemId: string;
+}
+
 export interface CriaderoResponse {
   id: string;
   userId: string;
@@ -39,6 +46,18 @@ export interface CreateCriaderoResponse {
     nombre: string;
     onboardingCompletado: boolean;
     catalogoItemsGenerados: number;
+  };
+}
+
+export interface UpdateConfiguracionResponse {
+  success: true;
+  data: {
+    criaderoId: string;
+    especiePrincipalItemId: string;
+    razaPrincipalItemId: string;
+    tipoCriaderoItemId: string;
+    finalidadItemId: string;
+    onboardingCompletado: false;
   };
 }
 
