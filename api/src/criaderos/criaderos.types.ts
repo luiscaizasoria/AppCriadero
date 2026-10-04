@@ -61,8 +61,25 @@ export interface UpdateConfiguracionResponse {
   };
 }
 
+export interface CompleteOnboardingResponse {
+  success: true;
+  data: {
+    criaderoId: string;
+    onboardingCompletado: true;
+    alreadyCompleted: boolean;
+  };
+}
+
+export interface OnboardingIncompleteErrorResponse {
+  success: false;
+  error: 'ONBOARDING_INCOMPLETE';
+  message: string;
+  missingFields: string[];
+}
+
 export interface ErrorResponse {
   success: false;
   error: string;
   message: string;
+  missingFields?: string[];
 }

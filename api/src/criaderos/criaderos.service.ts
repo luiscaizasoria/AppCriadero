@@ -9,7 +9,9 @@ import type {
   CreateCriaderoResponse,
   UpdateConfiguracionRequest,
   UpdateConfiguracionResponse,
+  CompleteOnboardingResponse,
   ErrorResponse,
+  OnboardingIncompleteErrorResponse,
 } from './criaderos.types';
 import {
   generateCriaderoId,
@@ -321,6 +323,234 @@ export class CriaderoService {
         success: false,
         error: 'INTERNAL_ERROR',
         message: 'Error al actualizar la configuración',
+      };
+    }
+  }
+
+  async completeOnboarding(criaderoId: string): Promise<CompleteOnboardingResponse | ErrorResponse | OnboardingIncompleteErrorResponse> {
+    if (!criaderoId) {
+      return {
+        success: false,
+        error: 'VALIDATION_ERROR',
+        message: 'criaderoId es requerido',
+      };
+    }
+
+    // Verificar que el criadero existe
+    const criaderoExists = await this.repository.criaderoExists(criaderoId);
+    if (!criaderoExists) {
+      return {
+        success: false,
+        error: 'CRIADERO_NOT_FOUND',
+        message: 'El criadero no existe',
+      };
+    }
+
+    try {
+      // Obtener información del criadero
+      const criaderoInfo = await this.repository.getCriaderoInfo(criaderoId);
+      if (!criaderoInfo) {
+        return {
+          success: false,
+          error: 'CRIADERO_NOT_FOUND',
+          message: 'El criadero no existe',
+        };
+      }
+
+      // Idempotencia: si ya está completado, retornar éxito
+      if (criaderoInfo.onboardingCompletado === 1) {
+        return {
+          success: true,
+          data: {
+            criaderoId,
+            onboardingCompletado: true,
+            alreadyCompleted: true,
+          },
+        };
+      }
+
+      // Validar campos obligatorios del criadero
+      const missingFields: string[] = [];
+
+      if (!criaderoInfo.nombre || criaderoInfo.nombre.trim() === '') {
+        missingFields.push('nombre');
+      }
+      if (!criaderoInfo.pais || criaderoInfo.pais.trim() === '') {
+        missingFields.push('pais');
+      }
+      if (!criaderoInfo.provincia || criaderoInfo.provincia.trim() === '') {
+        missingFields.push('provincia');
+      }
+      if (!criaderoInfo.ciudad || criaderoInfo.ciudad.trim() === '') {
+        missingFields.push('ciudad');
+      }
+      if (!criaderoInfo.telefono || criaderoInfo.telefono.trim() === '') {
+        missingFields.push('telefono');
+      }
+      if (!criaderoInfo.correoContacto || criaderoInfo.correoContacto.trim() === '') {
+        missingFields.push('correoContacto');
+      }
+
+      if (missingFields.length > 0) {
+        return {
+          success: false,
+          error: 'ONBOARDING_INCOMPLETE',
+          message: 'El onboarding no puede completarse',
+          missingFields,
+        };
+      }
+
+      // Obtener configuración del criadero
+      const configuracion = await this.repository.getCriaderoConfiguracion(criaderoId);
+      if (!configuracion) {
+        return {
+          success: false,
+          error: 'CRIADERO_CONFIGURATION_MISSING',
+          message: 'No existe configuración para este criadero',
+        };
+      }
+
+      // Validar que todos los campos de configuración estén configurados
+      if (!configuracion.especiePrincipalItemId) {
+        missingFields.push('especiePrincipalItemId');
+      }
+      if (!configuracion.razaPrincipalItemId) {
+        missingFields.push('razaPrincipalItemId');
+      }
+      if (!configuracion.tipoCriaderoItemId) {
+        missingFields.push('tipoCriaderoItemId');
+      }
+      if (!configuracion.finalidadItemId) {
+        missingFields.push('finalidadItemId');
+      }
+
+      if (missingFields.length > 0) {
+        return {
+          success: false,
+          error: 'ONBOARDING_INCOMPLETE',
+          message: 'El onboarding no puede completarse',
+          missingFields,
+        };
+      }
+
+      // Validar los catalogo_items seleccionados (reutilizar lógica existente)
+      const itemIds = [
+        configuracion.especiePrincipalItemId!,
+        configuracion.razaPrincipalItemId!,
+        configuracion.tipoCriaderoItemId!,
+        configuracion.finalidadItemId!,
+      ];
+
+      const itemsInfo = await this.repository.getCatalogoItemsInfo(itemIds);
+
+      // Validar que existan todos los items
+      const missingItems = itemIds.filter(id => !itemsInfo.has(id));
+      if (missingItems.length > 0) {
+        return {
+          success: false,
+          error: 'ONBOARDING_INCOMPLETE',
+          message: 'El onboarding no puede completarse',
+          missingFields: missingItems,
+        };
+      }
+
+      // Validar que todos los items pertenezcan al mismo criadero
+      const especieItem = itemsInfo.get(configuracion.especiePrincipalItemId!)!;
+      const razaItem = itemsInfo.get(configuracion.razaPrincipalItemId!)!;
+      const tipoItem = itemsInfo.get(configuracion.tipoCriaderoItemId!)!;
+      const finalidadItem = itemsInfo.get(configuracion.finalidadItemId!)!;
+
+      if (especieItem.criaderoId !== criaderoId ||
+          razaItem.criaderoId !== criaderoId ||
+          tipoItem.criaderoId !== criaderoId ||
+          finalidadItem.criaderoId !== criaderoId) {
+        return {
+          success: false,
+          error: 'ITEM_WRONG_CRIADERO',
+          message: 'Los items seleccionados deben pertenecer al mismo criadero',
+        };
+      }
+
+      // Validar que todos los items estén activos
+      if (especieItem.activo !== 1 || razaItem.activo !== 1 ||
+          tipoItem.activo !== 1 || finalidadItem.activo !== 1) {
+        return {
+          success: false,
+          error: 'ITEM_NOT_ACTIVE',
+          message: 'Todos los items seleccionados deben estar activos',
+        };
+      }
+
+      // Validar que ningún item tenga deleted_at
+      if (especieItem.deletedAt !== null || razaItem.deletedAt !== null ||
+          tipoItem.deletedAt !== null || finalidadItem.deletedAt !== null) {
+        return {
+          success: false,
+          error: 'ITEM_DELETED',
+          message: 'Los items seleccionados no deben estar eliminados',
+        };
+      }
+
+      // Validar que cada item pertenezca al catálogo correcto
+      const catalogValidations = [
+        {
+          itemId: configuracion.especiePrincipalItemId!,
+          expectedCatalog: 'ESPECIES',
+          field: 'especiePrincipalItemId',
+        },
+        {
+          itemId: configuracion.razaPrincipalItemId!,
+          expectedCatalog: 'RAZAS',
+          field: 'razaPrincipalItemId',
+        },
+        {
+          itemId: configuracion.tipoCriaderoItemId!,
+          expectedCatalog: 'TIPOS_CRIADERO',
+          field: 'tipoCriaderoItemId',
+        },
+        {
+          itemId: configuracion.finalidadItemId!,
+          expectedCatalog: 'FINALIDADES_CRIADERO',
+          field: 'finalidadItemId',
+        },
+      ];
+
+      for (const validation of catalogValidations) {
+        const item = itemsInfo.get(validation.itemId)!;
+        if (item.catalogoCodigo !== validation.expectedCatalog) {
+          return {
+            success: false,
+            error: 'ITEM_WRONG_CATALOG',
+            message: `El campo ${validation.field} pertenece al catálogo ${item.catalogoCodigo}, se esperaba ${validation.expectedCatalog}`,
+          };
+        }
+      }
+
+      // Completar onboarding
+      const result = await this.repository.completeOnboarding(criaderoId, criaderoInfo.version);
+
+      if (!result.success) {
+        return {
+          success: false,
+          error: 'CRIADERO_CONCURRENCY_CONFLICT',
+          message: 'El criadero fue modificado por otra operación. Intente nuevamente.',
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          criaderoId,
+          onboardingCompletado: true,
+          alreadyCompleted: false,
+        },
+      };
+    } catch (error) {
+      console.error('Error al completar onboarding:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_ERROR',
+        message: 'Error al completar el onboarding',
       };
     }
   }

@@ -12,9 +12,31 @@ export interface CatalogoItemInfo {
   deletedAt: string | null;
 }
 
+export interface CriaderoInfo {
+  id: string;
+  nombre: string;
+  pais: string | null;
+  provincia: string | null;
+  ciudad: string | null;
+  telefono: string | null;
+  correoContacto: string | null;
+  onboardingCompletado: number;
+  version: number;
+}
+
+export interface CriaderoConfiguracionInfo {
+  criaderoId: string;
+  especiePrincipalItemId: string | null;
+  razaPrincipalItemId: string | null;
+  tipoCriaderoItemId: string | null;
+  finalidadItemId: string | null;
+}
+
 export interface CriaderoRepository {
   userExistsAndActive(userId: string): Promise<boolean>;
   criaderoExists(criaderoId: string): Promise<boolean>;
+  getCriaderoInfo(criaderoId: string): Promise<CriaderoInfo | null>;
+  getCriaderoConfiguracion(criaderoId: string): Promise<CriaderoConfiguracionInfo | null>;
   getCatalogosByCodigo(codigos: string[]): Promise<Map<string, string>>;
   getCatalogoItemsInfo(itemIds: string[]): Promise<Map<string, CatalogoItemInfo>>;
   getConfiguracionVersion(criaderoId: string): Promise<number | null>;
@@ -26,6 +48,7 @@ export interface CriaderoRepository {
     finalidadItemId: string;
     currentVersion: number;
   }): Promise<{ success: boolean; rowsAffected: number }>;
+  completeOnboarding(criaderoId: string, currentVersion: number): Promise<{ success: boolean; rowsAffected: number }>;
   executeBatch(statements: D1PreparedStatement[]): Promise<void>;
   getDb(): D1Database;
 }
@@ -49,6 +72,46 @@ export class D1CriaderoRepository implements CriaderoRepository {
       .first<{ id: string }>();
 
     return !!result;
+  }
+
+  async getCriaderoInfo(criaderoId: string): Promise<CriaderoInfo | null> {
+    const result = await this.db
+      .prepare(`
+        SELECT
+          id,
+          nombre,
+          pais,
+          provincia,
+          ciudad,
+          telefono,
+          correo_contacto as correoContacto,
+          onboarding_completado as onboardingCompletado,
+          version
+        FROM criaderos
+        WHERE id = ? AND deleted_at IS NULL
+      `)
+      .bind(criaderoId)
+      .first<CriaderoInfo>();
+
+    return result ?? null;
+  }
+
+  async getCriaderoConfiguracion(criaderoId: string): Promise<CriaderoConfiguracionInfo | null> {
+    const result = await this.db
+      .prepare(`
+        SELECT
+          criadero_id as criaderoId,
+          especie_principal_item_id as especiePrincipalItemId,
+          raza_principal_item_id as razaPrincipalItemId,
+          tipo_criadero_item_id as tipoCriaderoItemId,
+          finalidad_item_id as finalidadItemId
+        FROM criadero_configuracion
+        WHERE criadero_id = ?
+      `)
+      .bind(criaderoId)
+      .first<CriaderoConfiguracionInfo>();
+
+    return result ?? null;
   }
 
   async getCatalogosByCodigo(codigos: string[]): Promise<Map<string, string>> {
@@ -136,6 +199,25 @@ export class D1CriaderoRepository implements CriaderoRepository {
         data.criaderoId,
         data.currentVersion
       )
+      .run();
+
+    return {
+      success: result.meta.changes > 0,
+      rowsAffected: result.meta.changes,
+    };
+  }
+
+  async completeOnboarding(criaderoId: string, currentVersion: number): Promise<{ success: boolean; rowsAffected: number }> {
+    const result = await this.db
+      .prepare(`
+        UPDATE criaderos
+        SET
+          onboarding_completado = 1,
+          updated_at = CURRENT_TIMESTAMP,
+          version = version + 1
+        WHERE id = ? AND deleted_at IS NULL AND onboarding_completado = 0 AND version = ?
+      `)
+      .bind(criaderoId, currentVersion)
       .run();
 
     return {
