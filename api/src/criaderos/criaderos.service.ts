@@ -10,6 +10,7 @@ import type {
   UpdateConfiguracionRequest,
   UpdateConfiguracionResponse,
   CompleteOnboardingResponse,
+  OnboardingStatusResponse,
   ErrorResponse,
   OnboardingIncompleteErrorResponse,
 } from './criaderos.types';
@@ -551,6 +552,216 @@ export class CriaderoService {
         success: false,
         error: 'INTERNAL_ERROR',
         message: 'Error al completar el onboarding',
+      };
+    }
+  }
+
+  async getOnboardingStatus(criaderoId: string): Promise<OnboardingStatusResponse | ErrorResponse> {
+    if (!criaderoId) {
+      return {
+        success: false,
+        error: 'VALIDATION_ERROR',
+        message: 'criaderoId es requerido',
+      };
+    }
+
+    try {
+      // Obtener información del criadero (ya verifica deleted_at IS NULL)
+      const criaderoInfo = await this.repository.getCriaderoInfo(criaderoId);
+      if (!criaderoInfo) {
+        return {
+          success: false,
+          error: 'CRIADERO_NOT_FOUND',
+          message: 'El criadero no existe',
+        };
+      }
+
+      // Obtener configuración del criadero
+      const configuracion = await this.repository.getCriaderoConfiguracion(criaderoId);
+
+      // Determinar estado del onboarding
+      const onboardingCompletado = criaderoInfo.onboardingCompletado === 1;
+
+      // Si ya está completado, no necesitamos evaluar más
+      if (onboardingCompletado) {
+        return {
+          success: true,
+          data: {
+            criaderoId,
+            onboardingCompletado: true,
+            status: 'COMPLETED',
+            currentStep: null,
+            missingFields: [],
+            generalData: {
+              nombre: criaderoInfo.nombre,
+              pais: criaderoInfo.pais,
+              provincia: criaderoInfo.provincia,
+              ciudad: criaderoInfo.ciudad,
+              telefono: criaderoInfo.telefono,
+              correoContacto: criaderoInfo.correoContacto,
+            },
+            configuration: {
+              especiePrincipalItemId: configuracion?.especiePrincipalItemId ?? null,
+              razaPrincipalItemId: configuracion?.razaPrincipalItemId ?? null,
+              tipoCriaderoItemId: configuracion?.tipoCriaderoItemId ?? null,
+              finalidadItemId: configuracion?.finalidadItemId ?? null,
+            },
+          },
+        };
+      }
+
+      // Validar campos generales
+      const missingFields: string[] = [];
+
+      if (!criaderoInfo.nombre || criaderoInfo.nombre.trim() === '') {
+        missingFields.push('nombre');
+      }
+      if (!criaderoInfo.pais || criaderoInfo.pais.trim() === '') {
+        missingFields.push('pais');
+      }
+      if (!criaderoInfo.provincia || criaderoInfo.provincia.trim() === '') {
+        missingFields.push('provincia');
+      }
+      if (!criaderoInfo.ciudad || criaderoInfo.ciudad.trim() === '') {
+        missingFields.push('ciudad');
+      }
+      if (!criaderoInfo.telefono || criaderoInfo.telefono.trim() === '') {
+        missingFields.push('telefono');
+      }
+      if (!criaderoInfo.correoContacto || criaderoInfo.correoContacto.trim() === '') {
+        missingFields.push('correoContacto');
+      }
+
+      // Si faltan datos generales
+      if (missingFields.length > 0) {
+        return {
+          success: true,
+          data: {
+            criaderoId,
+            onboardingCompletado: false,
+            status: 'INCOMPLETE_GENERAL',
+            currentStep: 1,
+            missingFields,
+            generalData: {
+              nombre: criaderoInfo.nombre,
+              pais: criaderoInfo.pais,
+              provincia: criaderoInfo.provincia,
+              ciudad: criaderoInfo.ciudad,
+              telefono: criaderoInfo.telefono,
+              correoContacto: criaderoInfo.correoContacto,
+            },
+            configuration: {
+              especiePrincipalItemId: configuracion?.especiePrincipalItemId ?? null,
+              razaPrincipalItemId: configuracion?.razaPrincipalItemId ?? null,
+              tipoCriaderoItemId: configuracion?.tipoCriaderoItemId ?? null,
+              finalidadItemId: configuracion?.finalidadItemId ?? null,
+            },
+          },
+        };
+      }
+
+      // Datos generales completos, validar configuración
+      if (!configuracion) {
+        // No existe configuración
+        return {
+          success: true,
+          data: {
+            criaderoId,
+            onboardingCompletado: false,
+            status: 'INCOMPLETE_CONFIGURATION',
+            currentStep: 2,
+            missingFields: ['especiePrincipalItemId', 'razaPrincipalItemId', 'tipoCriaderoItemId', 'finalidadItemId'],
+            generalData: {
+              nombre: criaderoInfo.nombre,
+              pais: criaderoInfo.pais,
+              provincia: criaderoInfo.provincia,
+              ciudad: criaderoInfo.ciudad,
+              telefono: criaderoInfo.telefono,
+              correoContacto: criaderoInfo.correoContacto,
+            },
+            configuration: {
+              especiePrincipalItemId: null,
+              razaPrincipalItemId: null,
+              tipoCriaderoItemId: null,
+              finalidadItemId: null,
+            },
+          },
+        };
+      }
+
+      // Validar campos de configuración
+      if (!configuracion.especiePrincipalItemId) {
+        missingFields.push('especiePrincipalItemId');
+      }
+      if (!configuracion.razaPrincipalItemId) {
+        missingFields.push('razaPrincipalItemId');
+      }
+      if (!configuracion.tipoCriaderoItemId) {
+        missingFields.push('tipoCriaderoItemId');
+      }
+      if (!configuracion.finalidadItemId) {
+        missingFields.push('finalidadItemId');
+      }
+
+      // Si faltan campos de configuración
+      if (missingFields.length > 0) {
+        return {
+          success: true,
+          data: {
+            criaderoId,
+            onboardingCompletado: false,
+            status: 'INCOMPLETE_CONFIGURATION',
+            currentStep: 2,
+            missingFields,
+            generalData: {
+              nombre: criaderoInfo.nombre,
+              pais: criaderoInfo.pais,
+              provincia: criaderoInfo.provincia,
+              ciudad: criaderoInfo.ciudad,
+              telefono: criaderoInfo.telefono,
+              correoContacto: criaderoInfo.correoContacto,
+            },
+            configuration: {
+              especiePrincipalItemId: configuracion.especiePrincipalItemId,
+              razaPrincipalItemId: configuracion.razaPrincipalItemId,
+              tipoCriaderoItemId: configuracion.tipoCriaderoItemId,
+              finalidadItemId: configuracion.finalidadItemId,
+            },
+          },
+        };
+      }
+
+      // Todo completo, listo para finalizar
+      return {
+        success: true,
+        data: {
+          criaderoId,
+          onboardingCompletado: false,
+          status: 'READY_TO_COMPLETE',
+          currentStep: 3,
+          missingFields: [],
+          generalData: {
+            nombre: criaderoInfo.nombre,
+            pais: criaderoInfo.pais,
+            provincia: criaderoInfo.provincia,
+            ciudad: criaderoInfo.ciudad,
+            telefono: criaderoInfo.telefono,
+            correoContacto: criaderoInfo.correoContacto,
+          },
+          configuration: {
+            especiePrincipalItemId: configuracion.especiePrincipalItemId,
+            razaPrincipalItemId: configuracion.razaPrincipalItemId,
+            tipoCriaderoItemId: configuracion.tipoCriaderoItemId,
+            finalidadItemId: configuracion.finalidadItemId,
+          },
+        },
+      };
+    } catch (error) {
+      console.error('Error al obtener estado del onboarding:', error);
+      return {
+        success: false,
+        error: 'INTERNAL_ERROR',
+        message: 'Error al obtener el estado del onboarding',
       };
     }
   }

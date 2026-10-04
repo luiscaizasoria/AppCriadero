@@ -77,6 +77,37 @@ export interface OnboardingIncompleteErrorResponse {
   missingFields: string[];
 }
 
+export type OnboardingStatus =
+  | 'INCOMPLETE_GENERAL'
+  | 'INCOMPLETE_CONFIGURATION'
+  | 'READY_TO_COMPLETE'
+  | 'COMPLETED';
+
+export interface OnboardingStatusResponse {
+  success: true;
+  data: {
+    criaderoId: string;
+    onboardingCompletado: boolean;
+    status: OnboardingStatus;
+    currentStep: number | null;
+    missingFields: string[];
+    generalData: {
+      nombre: string | null;
+      pais: string | null;
+      provincia: string | null;
+      ciudad: string | null;
+      telefono: string | null;
+      correoContacto: string | null;
+    };
+    configuration: {
+      especiePrincipalItemId: string | null;
+      razaPrincipalItemId: string | null;
+      tipoCriaderoItemId: string | null;
+      finalidadItemId: string | null;
+    };
+  };
+}
+
 export interface ErrorResponse {
   success: false;
   error: string;

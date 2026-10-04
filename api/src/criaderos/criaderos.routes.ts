@@ -131,4 +131,39 @@ criaderosRouter.post('/:criaderoId/onboarding/complete', async (c) => {
   }
 });
 
+// GET /api/v1/criaderos/:criaderoId/onboarding
+criaderosRouter.get('/:criaderoId/onboarding', async (c) => {
+  const db = c.env.DB;
+  const repository = new D1CriaderoRepository(db);
+  const service = new CriaderoService(repository);
+
+  try {
+    const criaderoId = c.req.param('criaderoId');
+
+    const result = await service.getOnboardingStatus(criaderoId!);
+
+    if (result.success) {
+      return c.json(result, 200);
+    } else {
+      if (result.error === 'VALIDATION_ERROR') {
+        return c.json(result, 400);
+      }
+      if (result.error === 'CRIADERO_NOT_FOUND') {
+        return c.json(result, 404);
+      }
+      return c.json(result, 500);
+    }
+  } catch (error) {
+    console.error('Error en endpoint GET /criaderos/:criaderoId/onboarding:', error);
+    return c.json(
+      {
+        success: false,
+        error: 'INTERNAL_ERROR',
+        message: 'Error interno del servidor',
+      },
+      500
+    );
+  }
+});
+
 export default criaderosRouter;
