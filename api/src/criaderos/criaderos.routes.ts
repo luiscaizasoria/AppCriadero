@@ -3,6 +3,7 @@
  */
 
 import { Hono } from 'hono';
+import type { D1Database } from '@cloudflare/workers-types';
 import { D1CriaderoRepository } from './criaderos.repository';
 import { CriaderoService } from './criaderos.service';
 import type { CreateCriaderoRequest, UpdateConfiguracionRequest } from './criaderos.types';
