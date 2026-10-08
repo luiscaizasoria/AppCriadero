@@ -6,7 +6,8 @@
     "dev": "wrangler dev",
     "typecheck": "tsc --noEmit",
     "deploy": "wrangler deploy",
-    "test": "vitest"
+    "test": "vitest --exclude test/integration/**",
+    "test:integration": "vitest --run test/integration"
   },
   "dependencies": {
     "hono": "^4.13.9",
@@ -15,6 +16,8 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260930.2",
+    "@types/better-sqlite3": "^9.6.0",
+    "better-sqlite3": "^13.0.3",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11",
     "wrangler": "^4.142.0"
