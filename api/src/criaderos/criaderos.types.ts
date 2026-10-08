@@ -3,7 +3,6 @@
  */
 
 export interface CreateCriaderoRequest {
-  userId: string;
   nombre: string;
   descripcion?: string | null;
   pais: string;

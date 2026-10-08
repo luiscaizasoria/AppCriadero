@@ -23,9 +23,9 @@ import {
 export class CriaderoService {
   constructor(private repository: CriaderoRepository) {}
 
-  async createCriadero(request: CreateCriaderoRequest): Promise<CreateCriaderoResponse | ErrorResponse> {
+  async createCriadero(userId: string, request: CreateCriaderoRequest): Promise<CreateCriaderoResponse | ErrorResponse> {
     // Validaciones
-    if (!request.userId || !request.nombre || !request.pais || !request.provincia ||
+    if (!userId || !request.nombre || !request.pais || !request.provincia ||
         !request.ciudad || !request.telefono || !request.correoContacto) {
       return {
         success: false,
@@ -35,7 +35,7 @@ export class CriaderoService {
     }
 
     // Verificar que el usuario existe y está activo
-    const userExists = await this.repository.userExistsAndActive(request.userId);
+    const userExists = await this.repository.userExistsAndActive(userId);
     if (!userExists) {
       return {
         success: false,
@@ -80,7 +80,7 @@ export class CriaderoService {
       statements.push(
         criaderoStmt.bind(
           criaderoId,
-          request.userId,
+          userId,
           request.nombre,
           request.descripcion ?? null,
           request.pais,
@@ -132,7 +132,7 @@ export class CriaderoService {
         success: true,
         data: {
           id: criaderoId,
-          userId: request.userId,
+          userId: userId,
           nombre: request.nombre,
           onboardingCompletado: false,
           catalogoItemsGenerados: DEFAULT_CATALOG_ITEMS.length,

@@ -7,19 +7,29 @@ import type { D1Database } from '@cloudflare/workers-types';
 import { D1CriaderoRepository } from './criaderos.repository';
 import { CriaderoService } from './criaderos.service';
 import type { CreateCriaderoRequest, UpdateConfiguracionRequest } from './criaderos.types';
+import { jwtMiddleware, type AuthUser, type AuthVariables } from '../auth/auth.middleware';
 
-const criaderosRouter = new Hono<{ Bindings: { DB: D1Database } }>();
+type Env = {
+  DB: D1Database;
+  JWT_SECRET: string;
+};
+
+const criaderosRouter = new Hono<{ Bindings: Env, Variables: AuthVariables }>();
+
+// Aplicar middleware JWT a todas las rutas de criaderos
+criaderosRouter.use('*', jwtMiddleware);
 
 // POST /api/v1/criaderos
 criaderosRouter.post('/', async (c) => {
   const db = c.env.DB;
   const repository = new D1CriaderoRepository(db);
   const service = new CriaderoService(repository);
+  const user = c.get('user') as AuthUser;
 
   try {
     const body = await c.req.json<CreateCriaderoRequest>();
 
-    const result = await service.createCriadero(body);
+    const result = await service.createCriadero(user.id, body);
 
     if (result.success) {
       return c.json(result, 201);
@@ -50,10 +60,24 @@ criaderosRouter.put('/:criaderoId/configuracion', async (c) => {
   const db = c.env.DB;
   const repository = new D1CriaderoRepository(db);
   const service = new CriaderoService(repository);
+  const user = c.get('user') as AuthUser;
 
   try {
     const criaderoId = c.req.param('criaderoId');
     const body = await c.req.json<UpdateConfiguracionRequest>();
+
+    // Validar propiedad del criadero
+    const ownsCriadero = await repository.userOwnsCriadero(user.id, criaderoId!);
+    if (!ownsCriadero) {
+      return c.json(
+        {
+          success: false,
+          error: 'FORBIDDEN',
+          message: 'No tiene permisos sobre este criadero',
+        },
+        403
+      );
+    }
 
     const result = await service.updateConfiguracion(criaderoId!, body);
 
@@ -91,9 +115,23 @@ criaderosRouter.post('/:criaderoId/onboarding/complete', async (c) => {
   const db = c.env.DB;
   const repository = new D1CriaderoRepository(db);
   const service = new CriaderoService(repository);
+  const user = c.get('user') as AuthUser;
 
   try {
     const criaderoId = c.req.param('criaderoId');
+
+    // Validar propiedad del criadero
+    const ownsCriadero = await repository.userOwnsCriadero(user.id, criaderoId!);
+    if (!ownsCriadero) {
+      return c.json(
+        {
+          success: false,
+          error: 'FORBIDDEN',
+          message: 'No tiene permisos sobre este criadero',
+        },
+        403
+      );
+    }
 
     const result = await service.completeOnboarding(criaderoId!);
 
@@ -137,9 +175,23 @@ criaderosRouter.get('/:criaderoId/onboarding', async (c) => {
   const db = c.env.DB;
   const repository = new D1CriaderoRepository(db);
   const service = new CriaderoService(repository);
+  const user = c.get('user') as AuthUser;
 
   try {
     const criaderoId = c.req.param('criaderoId');
+
+    // Validar propiedad del criadero
+    const ownsCriadero = await repository.userOwnsCriadero(user.id, criaderoId!);
+    if (!ownsCriadero) {
+      return c.json(
+        {
+          success: false,
+          error: 'FORBIDDEN',
+          message: 'No tiene permisos sobre este criadero',
+        },
+        403
+      );
+    }
 
     const result = await service.getOnboardingStatus(criaderoId!);
 

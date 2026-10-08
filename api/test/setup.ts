@@ -1,0 +1,1 @@
+﻿// Setup global de pruebas

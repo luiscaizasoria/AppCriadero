@@ -35,6 +35,7 @@ export interface CriaderoConfiguracionInfo {
 export interface CriaderoRepository {
   userExistsAndActive(userId: string): Promise<boolean>;
   criaderoExists(criaderoId: string): Promise<boolean>;
+  userOwnsCriadero(userId: string, criaderoId: string): Promise<boolean>;
   getCriaderoInfo(criaderoId: string): Promise<CriaderoInfo | null>;
   getCriaderoConfiguracion(criaderoId: string): Promise<CriaderoConfiguracionInfo | null>;
   getCatalogosByCodigo(codigos: string[]): Promise<Map<string, string>>;
@@ -69,6 +70,15 @@ export class D1CriaderoRepository implements CriaderoRepository {
     const result = await this.db
       .prepare('SELECT id FROM criaderos WHERE id = ? AND deleted_at IS NULL')
       .bind(criaderoId)
+      .first<{ id: string }>();
+
+    return !!result;
+  }
+
+  async userOwnsCriadero(userId: string, criaderoId: string): Promise<boolean> {
+    const result = await this.db
+      .prepare('SELECT id FROM criaderos WHERE id = ? AND user_id = ? AND deleted_at IS NULL')
+      .bind(criaderoId, userId)
       .first<{ id: string }>();
 
     return !!result;
