@@ -1,11 +1,10 @@
-/**
- * Rutas para el módulo de Criaderos
+﻿/**
+ * Rutas para el mÃ³dulo de Criaderos
  */
 
 import { Hono } from 'hono';
 import type { D1Database } from '@cloudflare/workers-types';
-import { D1CriaderoRepository } from './criaderos.repository';
-import { CriaderoService } from './criaderos.service';
+import { createCriaderoDependencies } from './criaderos.factory';
 import type { CreateCriaderoRequest, UpdateConfiguracionRequest } from './criaderos.types';
 import { jwtMiddleware, type AuthUser, type AuthVariables } from '../auth/auth.middleware';
 
@@ -22,8 +21,7 @@ criaderosRouter.use('*', jwtMiddleware);
 // POST /api/v1/criaderos
 criaderosRouter.post('/', async (c) => {
   const db = c.env.DB;
-  const repository = new D1CriaderoRepository(db);
-  const service = new CriaderoService(repository);
+  const { service, repository } = createCriaderoDependencies(db);
   const user = c.get('user') as AuthUser;
 
   try {
@@ -58,8 +56,7 @@ criaderosRouter.post('/', async (c) => {
 // PUT /api/v1/criaderos/:criaderoId/configuracion
 criaderosRouter.put('/:criaderoId/configuracion', async (c) => {
   const db = c.env.DB;
-  const repository = new D1CriaderoRepository(db);
-  const service = new CriaderoService(repository);
+  const { service, repository } = createCriaderoDependencies(db);
   const user = c.get('user') as AuthUser;
 
   try {
@@ -113,8 +110,7 @@ criaderosRouter.put('/:criaderoId/configuracion', async (c) => {
 // POST /api/v1/criaderos/:criaderoId/onboarding/complete
 criaderosRouter.post('/:criaderoId/onboarding/complete', async (c) => {
   const db = c.env.DB;
-  const repository = new D1CriaderoRepository(db);
-  const service = new CriaderoService(repository);
+  const { service, repository } = createCriaderoDependencies(db);
   const user = c.get('user') as AuthUser;
 
   try {
@@ -173,8 +169,7 @@ criaderosRouter.post('/:criaderoId/onboarding/complete', async (c) => {
 // GET /api/v1/criaderos/:criaderoId/onboarding
 criaderosRouter.get('/:criaderoId/onboarding', async (c) => {
   const db = c.env.DB;
-  const repository = new D1CriaderoRepository(db);
-  const service = new CriaderoService(repository);
+  const { service, repository } = createCriaderoDependencies(db);
   const user = c.get('user') as AuthUser;
 
   try {
@@ -220,3 +215,4 @@ criaderosRouter.get('/:criaderoId/onboarding', async (c) => {
 });
 
 export default criaderosRouter;
+

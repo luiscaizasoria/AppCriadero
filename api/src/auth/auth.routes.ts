@@ -1,11 +1,10 @@
-/**
- * Rutas para el módulo de Autenticación
+﻿/**
+ * Rutas para el mÃ³dulo de AutenticaciÃ³n
  */
 
 import { Hono } from 'hono';
 import type { D1Database } from '@cloudflare/workers-types';
-import { D1AuthRepository } from './auth.repository';
-import { AuthService } from './auth.service';
+import { createAuthService } from './auth.factory';
 import type { RegisterRequest, LoginRequest } from './auth.types';
 
 type Env = {
@@ -31,8 +30,7 @@ authRouter.post('/register', async (c) => {
     );
   }
 
-  const repository = new D1AuthRepository(db);
-  const service = new AuthService(repository, jwtSecret);
+  const service = createAuthService(db, jwtSecret);
 
   try {
     const body = await c.req.json<RegisterRequest>();
@@ -79,8 +77,7 @@ authRouter.post('/login', async (c) => {
     );
   }
 
-  const repository = new D1AuthRepository(db);
-  const service = new AuthService(repository, jwtSecret);
+  const service = createAuthService(db, jwtSecret);
 
   try {
     const body = await c.req.json<LoginRequest>();
@@ -115,3 +112,4 @@ authRouter.post('/login', async (c) => {
 });
 
 export default authRouter;
+
