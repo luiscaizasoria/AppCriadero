@@ -142,9 +142,9 @@ Desktop.ini
 !.vscode/extensions.json
 !.vscode/settings.json
 
-# Local AI assistant configuration
-.claude/
-CLAUDE.md
+# Local AI assistant configuration (personal; el resto de .claude/ y CLAUDE.md se versionan)
+.claude/settings.local.json
+CLAUDE.local.md
 
 
 # ============================================================

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm run typecheck)",
+      "Bash(npm test)",
+      "Bash(npm test -- --run)",
+      "Bash(npm --prefix api run typecheck)",
+      "Bash(npm --prefix api test)",
+      "Bash(npm --prefix api test -- --run)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch --show-current)",
+      "Bash(git branch -a)",
+      "Bash(git remote -v)",
+      "Bash(git check-ignore *)"
+    ],
+    "ask": [
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(npm run deploy)",
+      "Bash(npm --prefix api run deploy)",
+      "Bash(npx wrangler deploy *)",
+      "Bash(wrangler deploy *)",
+      "Bash(npm run test:integration)",
+      "Bash(npm --prefix api run test:integration)"
+    ],
+    "deny": [
+      "Read(./api/.dev.vars)",
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./.env.production)",
+      "Bash(cat *api/.dev.vars*)",
+      "Bash(cat *.env)",
+      "Bash(cat *.env.local)",
+      "Bash(cat *.env.production)",
+      "Bash(type *api/.dev.vars*)",
+      "Bash(type *.env)",
+      "Bash(type *.env.local)",
+      "Bash(type *.env.production)",
+      "Bash(Get-Content *api/.dev.vars*)",
+      "Bash(Get-Content *.env)",
+      "Bash(Get-Content *.env.local)",
+      "Bash(Get-Content *.env.production)",
+      "Bash(less *api/.dev.vars*)",
+      "Bash(less *.env)",
+      "Bash(less *.env.local)",
+      "Bash(less *.env.production)"
+    ]
+  }
+}
