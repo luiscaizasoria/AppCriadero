@@ -110,11 +110,14 @@ Orden de autoridad ante contradicciones: **código real > este `CLAUDE.md` > `do
 | `documents/traspaso/CIERRE_FINAL_TRASPASO_CRIADERO_KIKIRIKIS_V2.md` | Razones de las decisiones, lógica de negocio de V1, DDL borrador (muy largo: leer solo la sección necesaria) |
 | `documents/traspaso/RESPUESTAS_CUESTIONARIO_TRASPASO_CRIADERO_KIKIRIKIS_V2.md` | Estado de repo, migraciones y Cloudflare |
 | `documents/V1_BASELINE.md` | Funciones y restricciones de V1 |
-| `documents/V2_ARCHITECTURA.md`, `documents/V2_ROADMAP.md`, `documents/V2_MODELO_DATOS.md` | **Desfasados**: aún describen offline-first/sincronización; ver pendientes en `documents/README.md` |
+| `documents/V2_ARCHITECTURA.md` | Arquitectura online-first, identidad y sección de riesgos y decisiones abiertas |
+| `documents/V2_ROADMAP.md` | Siete fases de trabajo y su estado |
+| `documents/V2_MODELO_DATOS.md` | Estado real de D1 (`0001`–`0004`) y modelo futuro en **borrador no aprobado** |
+| `documents/CriaderoKikirikis_V1_Analisis_Movil_y_Mapeo_API.md` | Análisis de V1 y mapeo repositorio → endpoint (muy largo: leer solo la sección necesaria) |
 | `documents/specs/_plantilla.md` | Plantilla de especificación por módulo |
 | `documents/archive/` | Histórico; solo si se pide o falta un detalle |
 
-`AGENTS.md` es de la V1 móvil y está desfasado en sincronización, SQLite y etapas; en caso de choque prevalece este archivo.
+`AGENTS.md` es de la V1 móvil (sus reglas de SQLite V7 → V8 aplican solo a `src/`) y remite a este archivo como fuente principal; en caso de choque prevalece este.
 
 ## Agentes y skills
 

@@ -1,9 +1,12 @@
 # Reglas del proyecto Criadero Kikirikis
 
+> **Fuente principal: `CLAUDE.md`** (raíz del repositorio). Este archivo se conserva de la V1 móvil; sus reglas de SQLite, navegación, backup e imágenes aplican a la app móvil (`src/`). En caso de conflicto con `CLAUDE.md` (arquitectura online-first, backend `api/`), prevalece `CLAUDE.md`.
+
 ## Contexto obligatorio
 
 Leer solo el contexto necesario para la tarea:
 
+- `CLAUDE.md` y `documents/README.md` para el estado, las decisiones online-first y el orden de autoridad de la documentación.
 - `documents/V1_BASELINE.md` para conocer las funciones y restricciones existentes.
 - `documents/V2_ARCHITECTURA.md` para decisiones técnicas de V2.
 - `documents/V2_ROADMAP.md` para conocer la etapa y el orden de trabajo.
@@ -15,15 +18,15 @@ El código real tiene prioridad sobre la documentación si existen diferencias.
 ## Reglas para V2
 
 - Respetar las decisiones fijadas en `documents/V2_ARCHITECTURA.md`; no rediseñar el stack en cada tarea.
-- Mantener el funcionamiento local y la compatibilidad de datos de V1 durante la transición.
+- Mantener el funcionamiento local y la compatibilidad de datos de V1 durante la transición: la app móvil conserva su SQLite local hasta que cada módulo se reemplace por su cliente REST (V2 es online-first; D1 y R2 son la fuente de verdad).
 - Trabajar por etapas según `documents/V2_ROADMAP.md`.
-- Antes de implementar sincronización, definir identificadores, cambios, reintentos y conflictos.
+- No implementar sincronización SQLite ↔ D1, cola offline ni resolución de conflictos: están fuera de alcance (decisión online-first, ver `CLAUDE.md`).
 - No incluir secretos en Git.
 
 ## Reglas de desarrollo
 
 - No modificar migraciones antiguas ya aplicadas.
-- Toda modificación nueva de SQLite debe crear una nueva migración.
+- Toda modificación nueva de SQLite (app móvil V1) debe crear una nueva migración. Los cambios de D1 van en `api/migrations/` (ver `CLAUDE.md`).
 - Mantener compatibilidad con bases existentes.
 - No eliminar funcionalidades existentes para simplificar una solución.
 - No reemplazar archivos completos con versiones parciales.
@@ -46,14 +49,15 @@ Tratar con especial cuidado:
 ## SQLite
 
 - Nunca editar una migración histórica para agregar cambios nuevos.
-- Si la versión actual es V7, el siguiente cambio debe ser V8.
+- Si la versión actual es V7, el siguiente cambio debe ser V8. Estas reglas de SQLite (V7 → V8) aplican **solo a la app móvil V1**; el backend usa D1 con migraciones `0001`–`0004` en `api/migrations/` (la siguiente es `0005`).
 - Las instalaciones existentes deben poder migrar sin perder datos.
 - Las instalaciones limpias y actualizadas deben terminar con el mismo esquema.
 
 ## Navegación
 
-Los tabs principales son puntos de entrada raíz:
+Los tabs principales son cinco puntos de entrada raíz (`AppNavigator.js` define Inicio, Jaulas, Aves, Finanzas y Más):
 
+- Inicio → `InicioScreen`
 - Jaulas → `ListaJaulas`
 - Aves → `ListaAves`
 - Finanzas → pantalla principal de Finanzas
