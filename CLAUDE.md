@@ -60,7 +60,7 @@ routes -> factory -> service -> repository -> D1
 
 Validación antes de proponer un commit: `npm run typecheck`, `npm test -- --run`, `npm run test:integration` y `git diff --check`. Entorno validado: Node 22 (`nvm use 22`).
 
-`test:integration` usa una base SQLite **en memoria** con las migraciones de `api/migrations/` aplicadas en cada ejecución (`LocalD1Adapter`): no toca la base local de desarrollo de Wrangler (`.wrangler/state`) ni ninguna remota. Requiere `better-sqlite3` (compilación nativa: Node 22 y herramientas de compilación o binarios precompilados); pide confirmación antes de ejecutarlo.
+`test:integration` usa una base SQLite **en memoria** con las migraciones de `api/migrations/` aplicadas en cada ejecución (`LocalD1Adapter`): no toca la base local de desarrollo de Wrangler (`.wrangler/state`) ni ninguna remota. Requiere `better-sqlite3`, que trae binarios precompilados: instala `api/` con `npm ci --ignore-scripts` (su script de instalación intenta recompilar y falla sin Python ni Visual Studio, pero no hace falta). Pide confirmación antes de ejecutarlo.
 
 Migraciones locales: `npx wrangler d1 migrations apply criadero-kikirikis-dev --local`. Cualquier comando con `--remote` requiere autorización expresa.
 
