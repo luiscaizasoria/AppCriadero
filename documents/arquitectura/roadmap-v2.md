@@ -1,4 +1,4 @@
-# V2_ROADMAP — Criadero Kikirikis
+# Roadmap V2 — Criadero Kikirikis
 
 ## Estado actual
 
@@ -28,7 +28,7 @@ Pendiente:
 - Google Sign-In (`POST /api/v1/auth/google`).
 - `GET /api/v1/auth/me`.
 - Listado de criaderos del usuario (y detalle, actualización y selección de criadero activo).
-- Decidir el refresh token y el registro (`active` y verificación de correo). Ver "Riesgos y decisiones abiertas" en `V2_ARCHITECTURA.md`.
+- Decidir el refresh token y el registro (`active` y verificación de correo). Ver "Riesgos y decisiones abiertas" en `arquitectura-v2.md`.
 
 ### Fase 3 — R2 e imágenes
 
@@ -78,9 +78,9 @@ Trabajar en cambios pequeños desde la rama de trabajo vigente. Antes de iniciar
 
 ## Referencias
 
-- `documents/V1_BASELINE.md`: comportamiento existente de V1.
-- `documents/V2_ARCHITECTURA.md`: decisiones técnicas y riesgos abiertos.
-- `documents/V2_MODELO_DATOS.md`: esquema D1 y modelo futuro (borrador).
-- `documents/CriaderoKikirikis_V1_Analisis_Movil_y_Mapeo_API.md`: análisis de V1 y mapeo repositorio → endpoint.
+- `documents/referencia-v1/baseline-v1.md`: comportamiento existente de V1.
+- `documents/arquitectura/arquitectura-v2.md`: decisiones técnicas y riesgos abiertos.
+- `documents/arquitectura/modelo-datos-v2.md`: esquema D1 y modelo futuro (borrador).
+- `documents/referencia-v1/analisis-v1-mapeo-api.md`: análisis de V1 y mapeo repositorio → endpoint.
 - `documents/traspaso/`: decisiones vigentes y su historia.
-- `documents/archive/`: detalle histórico para consultas puntuales.
+- `documents/historico/`: detalle histórico para consultas puntuales.

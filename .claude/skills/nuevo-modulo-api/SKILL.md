@@ -7,10 +7,10 @@ argument-hint: "[módulo]"
 
 # Nuevo módulo de la API: $ARGUMENTS
 
-1. **Spec primero.** Lee `documents/specs/$ARGUMENTS.md`. Si no existe, no empieces a programar: pide al agente `analista-v1` que la redacte desde el código real de V1 con `documents/specs/_plantilla.md`, y espera la aprobación del usuario (estado `revisada`).
-2. **Contexto.** `git status --short`; revisa `api/src/criaderos/` como patrón de referencia y la sección correspondiente del handoff (`documents/traspaso/CLAUDE_PROJECT_HANDOFF_CRIADERO_KIKIRIKIS.md`, secciones 16-21).
+1. **Spec primero.** Lee `documents/specs/$ARGUMENTS.md`. Si no existe, no empieces a programar: pide al agente `analista-codigo-v1` que la redacte desde el código real de V1 con `documents/specs/plantilla-spec.md`, y espera la aprobación del usuario (estado `revisada`).
+2. **Contexto.** `git status --short`; revisa `api/src/criaderos/` como patrón de referencia y, si existe en tu copia local, el handoff (`documents/traspaso/`, ignorado por Git, solo local). Para migrar un repositorio completo (API + cliente REST de la app) usa la skill `migrar-repositorio-a-api`.
 3. **Análisis de impacto** (explícalo antes de editar): archivos a crear/modificar, tablas D1 nuevas, FK con otros módulos, riesgo sobre datos y endpoints.
-4. **Migración.** Si hay tablas nuevas, crea `api/migrations/NNNN_*.sql` (siguiente número libre, nunca editar las aplicadas). Delega el diseño en `modelador-d1` si es complejo.
+4. **Migración.** Si hay tablas nuevas, crea `api/migrations/NNNN_*.sql` (siguiente número libre, nunca editar las aplicadas). Delega el diseño en `disenador-migraciones-d1` si es complejo. Las tablas replican las de V1.
 5. **Implementa** en `api/src/<modulo>/` el patrón:
    - `<modulo>.types.ts`
    - `<modulo>.repository.ts` (SQL, prepared statements, `batch` para atomicidad)

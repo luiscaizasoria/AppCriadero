@@ -1,4 +1,4 @@
-# V2_MODELO_DATOS — Criadero Kikirikis
+# Modelo de datos V2 — Criadero Kikirikis
 
 ## Propósito
 
@@ -43,7 +43,7 @@ Convenciones comunes: `id TEXT PRIMARY KEY`, fechas `TEXT` con `DEFAULT CURRENT_
 | `password_hash` | TEXT | Nulo si solo usa Google. Formato `pbkdf2_sha256$210000${sal}${hash}` |
 | `google_sub` | TEXT UNIQUE | Preparado para Google Sign-In; hoy sin uso |
 | `email_verified_at` | TEXT | Hoy no se escribe |
-| `active` | INTEGER NOT NULL **DEFAULT 0** | `CHECK (active IN (0,1))`. El registro actual inserta `active = 1` (ver `V2_ARCHITECTURA.md`, riesgos) |
+| `active` | INTEGER NOT NULL **DEFAULT 0** | `CHECK (active IN (0,1))`. El registro actual inserta `active = 1` (ver `arquitectura-v2.md`, riesgos) |
 | `created_at`, `updated_at`, `deleted_at`, `version` | | Estándar |
 
 ### `criaderos`
@@ -1010,16 +1010,18 @@ Otros puntos detectados al comparar el borrador con las decisiones aprobadas y c
 12. **Índices y paginación.** Los índices no están acordados (validar con `EXPLAIN QUERY PLAN`); la convención de paginación tampoco.
 13. **Clientes y producción.** Se derivan de `bajas_ave` (ventas) y `huevos`; por ahora no tienen tablas propias.
 
-### Decisiones posteriores al borrador (2026-10-29, aprobadas por el usuario)
+### Decisiones posteriores al borrador (2026-10-29)
+
+> **Regla del proyecto (2026-10-29): replicar V1.** La app V1 conserva su comportamiento y solo cambia dónde guarda los datos; solo se permiten las diferencias que exija el paso a online (UUID v7, `criadero_id`, R2, autenticación, errores de red). Quedan **revocadas** las viñetas marcadas así más abajo (validaciones y reglas más estrictas que V1) y se mantienen las técnicas. Ver el bloque de decisiones revocadas de cada spec en `documents/specs/`.
 
 El DDL literal de abajo no se edita; estas decisiones lo corrigen cuando se creen las migraciones (ver `documents/specs/aves.md`):
 
-- **Orden de migraciones:** Jaulas antes que Aves. `0005` = SOLO `jaulas`; `0006` = `aves`, `ave_evolucion`, `ave_historial` y `jaula_historial` (`jaula_historial` referencia `aves`, por eso va después), con FK real y `ON DELETE RESTRICT` (el borrador usa `SET NULL` en `aves.jaula_actual_id`). Las tablas de cuidados de jaula (`alimentacion_jaula`, `bebida_jaula`, `sanidad_jaula`) irán después de `0006`, en otra spec. Las migraciones aún no se han creado. Aprobado por el usuario, 2026-10-29.
-- **Raza (precisión):** la raza se compara sin distinguir mayúsculas contra `RAZAS` del criadero y se guarda el nombre del catálogo (no el texto recibido); el sexo se valida por código `MACHO`/`HEMBRA` contra `SEXOS`. Aprobado por el usuario, 2026-10-29.
-- **Marcas de tiempo (propuesta de Claude, pendiente de revisión):** el servicio escribe `created_at`/`updated_at` en ISO 8601 UTC; `DEFAULT CURRENT_TIMESTAMP` queda solo como respaldo (spec aves, R-P3a). Decidida por criterio de paridad con servidor más estricto, 2026-10-29.
-- **`diagnosticos_ave.estado` admite `CERRADO`:** el borrador (`CHECK (estado IN ('ACTIVO'))`) debe ampliarse a `('ACTIVO','CERRADO')`. El valor viene del flujo "Finalizar tratamiento" de v1.0.0 (`UPDATE diagnosticos_ave SET estado='CERRADO' WHERE ave_id=? AND estado='ACTIVO'`), que se replica por completo en V2. Resuelve el punto 9 para este campo.
-- **Raza y sexo del ave:** texto como V1, validado contra el catálogo del criadero (no `raza_item_id`/`sexo_item_id` como en el borrador); raza obligatoria y sexo siempre. Resuelve el punto 7 para el ave.
-- **Una sola baja por ave** (punto 8) y zona horaria fija `America/Guayaquil` con fechas `YYYY-MM-DD` y marcas ISO UTC (punto 10).
+- **Orden de migraciones:** Jaulas antes que Aves. `0005` = SOLO `jaulas`; `0006` = `aves`, `ave_evolucion`, `ave_historial` y `jaula_historial` (`jaula_historial` referencia `aves`, por eso va después), con FK real y `ON DELETE RESTRICT` (el borrador usa `SET NULL` en `aves.jaula_actual_id`). Las tablas de cuidados de jaula (`alimentacion_jaula`, `bebida_jaula`, `sanidad_jaula`) irán después de `0006`, en otra spec. Las migraciones aún no se han creado. **Se mantiene (técnico).**
+- **[REVOCADA 2026-10-29] Raza (precisión):** la raza se compara sin distinguir mayúsculas contra `RAZAS` del criadero y se guarda el nombre del catálogo (no el texto recibido); el sexo se valida por código `MACHO`/`HEMBRA` contra `SEXOS`. Aprobado por el usuario, 2026-10-29.
+- **[REVOCADA 2026-10-29] Marcas de tiempo (propuesta de Claude):** el servicio escribe `created_at`/`updated_at` en ISO 8601 UTC; `DEFAULT CURRENT_TIMESTAMP` queda solo como respaldo (spec aves, R-P3a). Decidida por criterio de paridad con servidor más estricto, 2026-10-29.
+- **`diagnosticos_ave.estado` admite `CERRADO`:** el borrador (`CHECK (estado IN ('ACTIVO'))`) debe ampliarse a `('ACTIVO','CERRADO')`. El valor viene del flujo "Finalizar tratamiento" de v1.0.0 (`UPDATE diagnosticos_ave SET estado='CERRADO' WHERE ave_id=? AND estado='ACTIVO'`), que se replica por completo en V2 (**se mantiene**; el rechazo si el ave no está EN_TRATAMIENTO sí queda revocado). Resuelve el punto 9 para este campo.
+- **Raza y sexo del ave:** texto como V1 (no `raza_item_id`/`sexo_item_id` como en el borrador): **se mantiene**; la validación contra el catálogo y "raza obligatoria y sexo siempre" en el servidor quedan **[REVOCADAS 2026-10-29]**. Resuelve el punto 7 para el ave.
+- **[REVOCADAS 2026-10-29] Una sola baja por ave** (punto 8) y zona horaria fija `America/Guayaquil` con fechas `YYYY-MM-DD` y marcas ISO UTC (punto 10): se replican los formatos de V1.
 - **Fotos:** diferidas a la fase de R2; mientras tanto opcionales y sin poder quitarse al editar (punto 11 sigue abierto para el nombre de la clave).
 
 ### DDL (literal del cierre de traspaso, sección 3.1)

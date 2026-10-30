@@ -4,7 +4,7 @@ App móvil (React Native + Expo, V1 local con SQLite) en evolución a V2 **onlin
 
 ## Estado actual
 
-- `src/`, `App.js`, `app.json`: app móvil V1 (v1.0.3), funcional y local. Es la **referencia funcional**; no se reescribe ni se elimina hasta que existan y se validen los endpoints V2 equivalentes.
+- `src/`, `App.js`, `app.json`: app móvil V1 (v1.0.3), funcional y local. Es la **referencia funcional y el contrato**; no se reescribe ni se elimina hasta que existan y se validen los endpoints V2 equivalentes.
 - `api/`: backend V2. Implementado: `GET /api/v1/health`, `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/criaderos`, `PUT /api/v1/criaderos/:criaderoId/configuracion`, `POST /api/v1/criaderos/:criaderoId/onboarding/complete`, `GET /api/v1/criaderos/:criaderoId/onboarding`.
 - Pendiente (no asumir que existe): Google Sign-In, `/auth/me`, refresh token, listado/selección de criaderos, R2, y todos los módulos de negocio (aves, jaulas, huevos, salud, finanzas…).
 - Migraciones D1 aplicadas: `0001` a `0004` en `api/migrations/`.
@@ -16,14 +16,15 @@ App móvil (React Native + Expo, V1 local con SQLite) en evolución a V2 **onlin
 - Identidad: email/contraseña hoy; objetivo Google ID Token → `POST /api/v1/auth/google` → el backend emite **JWT propio** (HS256, `jose`, 3600 s). No usar el token de Google en las demás llamadas.
 - Multi-tenancy: `users 1—N criaderos 1—N entidades`. Las entidades llevan `criadero_id`; no duplicar `user_id` (la propiedad se resuelve por `criaderos.user_id`). `userId` nunca viene en el body.
 - Solo propietario del criadero; sin roles ni membresías por ahora.
-- IDs `TEXT` con UUID v7; soft delete (`deleted_at`) y `version` para concurrencia optimista (`UPDATE … WHERE version = ?`).
+- IDs `TEXT` con UUID v7; `deleted_at` donde V1 da de baja o desactiva. Las peticiones de los módulos nuevos no exigen `version` (V1 no tiene concurrencia); el módulo `criaderos` ya implementado conserva la suya.
 - API versionada bajo `/api/v1`, JSON por HTTPS, sin .NET.
 
-## Paridad con V1 (decisión vigente)
+## Objetivo y regla del proyecto (decisión del usuario, 2026-10-29)
 
-- V2 empieza **sin datos de usuario**, solo con catálogos. La V1 está probada y es el **contrato**: V2 reproduce exactamente lo que V1 hace (validaciones y mensajes, efectos en historial y otras tablas, errores).
-- Todo lo que V2 haga distinto es una **diferencia deliberada**: se registra en la spec del módulo y la aprueba el usuario. Ya aceptadas: V2 requiere conexión y las pantallas necesitan estados de carga y de error de red.
-- No hay importación de datos de V1 ni mapeo de IDs en el alcance actual.
+- La app móvil V1 **conserva pantallas, lógica y comportamiento** y solo cambia **dónde guarda los datos**: de SQLite local a la API en la nube (D1 + R2, con login). Cada repositorio de V1 (`src/repositories/`) se reemplaza por un **cliente REST con la misma interfaz** (mismos nombres de función, mismo objeto devuelto, mismos errores).
+- **Regla por defecto: replicar V1 tal cual.** V2 empieza sin datos de usuario, solo con catálogos. Si V1 no lo hacía, V2 tampoco: no se añaden validaciones, límites, rechazos ni comportamientos más estrictos en el servidor. Se conservan los códigos y mensajes de error de V1 para que las pantallas muestren lo mismo.
+- **Solo se permiten diferencias que exija el paso a online:** IDs UUID v7, `criadero_id`, imágenes en R2, autenticación y errores de red (las pantallas necesitan estados de carga y de error de red). Se anotan en la spec del módulo como "excepciones técnicas".
+- No hay importación de datos de V1 ni mapeo de IDs en el alcance actual. Procedimiento de migración de un módulo: skill `migrar-repositorio-a-api`.
 
 ## Fuera de alcance (no implementar sin orden expresa)
 
@@ -84,7 +85,7 @@ Migraciones locales: `npx wrangler d1 migrations apply criadero-kikirikis-dev --
 - **No hacer commit, push, deploy ni migraciones remotas sin orden explícita.** Revisar `git status` y `git diff --stat` antes de `git add`; nunca `git add .` a ciegas.
 - No versionar secretos: `api/.dev.vars`, `.env*` están ignorados. Solo `api/.dev.vars.example` (variable actual: `JWT_SECRET`). No leer ni imprimir `.dev.vars`.
 - Barrera **parcial**: `.claude/settings.json` niega `Read` sobre `api/.dev.vars`, `.env`, `.env.local` y `.env.production`, y `Bash` con `cat`, `type`, `Get-Content` y `less` sobre esos archivos. No cubre otras formas de lectura (`more`, `head`, `tail`, `Select-String`, `node`, `python`, redirecciones, copiar el archivo, `.env.*` distintos de esos tres) ni subagentes con otras herramientas; no sustituye al sandbox ni a la disciplina de no abrirlos.
-- `documents/traspaso/` está pendiente de decisión de versionado: no incluirlo en un `git add` sin que se pida.
+- `documents/traspaso/` es **solo local**: está en `.gitignore` (respaldo en un `.zip` fuera del repositorio); no se versiona ni se modifica.
 
 ## PowerShell, CRLF y archivos
 
@@ -95,38 +96,35 @@ Migraciones locales: `npx wrangler d1 migrations apply criadero-kikirikis-dev --
 
 ## Aplicación móvil V1 (solo si la tarea la toca)
 
-Reglas de `AGENTS.md` aplicables a `src/`: no modificar migraciones SQLite antiguas, nueva migración para cada cambio de esquema local, no tocar `BackupRepository.js` ni servicios de imágenes sin analizar impacto, no romper tabs raíz (Inicio, Jaulas → `ListaJaulas`, Aves → `ListaAves`, Finanzas, Más). Detalle en `.claude/rules/app-movil-v1.md`.
+Reglas aplicables a `src/` (detalle en `.claude/rules/app-movil-v1.md`): no modificar migraciones SQLite antiguas (V7 → V8 solo para la app), no tocar `BackupRepository.js` ni servicios de imágenes sin analizar impacto, no romper los cinco tabs raíz (Inicio, Jaulas → `ListaJaulas`, Aves → `ListaAves`, Finanzas, Más).
 
 ## Flujo de trabajo
 
 1. `git status --short` y rama actual; no asumir árbol limpio.
-2. Para un módulo nuevo: leer su spec en `documents/specs/<modulo>.md`; si no existe, pedir al agente `analista-v1` que la redacte desde el código V1 (skill `nuevo-modulo-api`).
+2. Para migrar un módulo: leer su spec en `documents/specs/<modulo>.md`; si no existe, pedir al agente `analista-codigo-v1` que la redacte desde el código V1 con `documents/specs/plantilla-spec.md`. Procedimiento completo: skill `migrar-repositorio-a-api` (API + cliente REST con la misma interfaz que el repositorio V1).
 3. Analizar impacto (archivos, tablas, riesgo sobre datos) antes de programar; explicar los archivos que se modificarán.
 4. Implementar siguiendo las capas; validar con la skill `verificar-api`.
 5. Revisar el diff y reportar qué se validó y qué no.
 
 ## Documentación (leer solo lo necesario, por ruta)
 
-Orden de autoridad ante contradicciones: **código real > este `CLAUDE.md` > `documents/traspaso/` > documentos V2 antiguos**. Índice completo en `documents/README.md`.
+Orden de autoridad ante contradicciones: **código real > este `CLAUDE.md` > `documents/arquitectura/` > specs > `documents/historico/`**. Mapa completo en `documents/README.md`.
 
 | Ruta | Contenido |
 |---|---|
-| `documents/README.md` | Índice, autoridad y pendientes de documentación |
-| `documents/traspaso/CLAUDE_PROJECT_HANDOFF_CRIADERO_KIKIRIKIS.md` | Contexto maestro: estado, modelo D1 actual, auth, endpoints, modelo funcional V1, mapeo V1→API V2 |
-| `documents/traspaso/CIERRE_FINAL_TRASPASO_CRIADERO_KIKIRIKIS_V2.md` | Razones de las decisiones, lógica de negocio de V1, DDL borrador (muy largo: leer solo la sección necesaria) |
-| `documents/traspaso/RESPUESTAS_CUESTIONARIO_TRASPASO_CRIADERO_KIKIRIKIS_V2.md` | Estado de repo, migraciones y Cloudflare |
-| `documents/V1_BASELINE.md` | Funciones y restricciones de V1 |
-| `documents/V2_ARCHITECTURA.md` | Arquitectura online-first, identidad y sección de riesgos y decisiones abiertas |
-| `documents/V2_ROADMAP.md` | Siete fases de trabajo y su estado |
-| `documents/V2_MODELO_DATOS.md` | Estado real de D1 (`0001`–`0004`) y modelo futuro en **borrador no aprobado** |
-| `documents/CriaderoKikirikis_V1_Analisis_Movil_y_Mapeo_API.md` | Análisis de V1 y mapeo repositorio → endpoint (muy largo: leer solo la sección necesaria) |
-| `documents/specs/_plantilla.md` | Plantilla de especificación por módulo |
-| `documents/archive/` | Histórico; solo si se pide o falta un detalle |
-
-`AGENTS.md` es de la V1 móvil (sus reglas de SQLite V7 → V8 aplican solo a `src/`) y remite a este archivo como fuente principal; en caso de choque prevalece este.
+| `documents/README.md` | Mapa del proyecto, autoridad y flujo para migrar un módulo |
+| `documents/arquitectura/arquitectura-v2.md` | Arquitectura online-first, identidad y riesgos |
+| `documents/arquitectura/modelo-datos-v2.md` | Estado real de D1 (`0001`–`0004`) y modelo futuro en **borrador** (DDL literal) |
+| `documents/arquitectura/roadmap-v2.md` | Siete fases de trabajo y su estado |
+| `documents/referencia-v1/baseline-v1.md` | Funciones y restricciones de V1 |
+| `documents/referencia-v1/analisis-v1-mapeo-api.md` | Análisis de V1 y mapeo repositorio → endpoint (muy largo: leer solo la sección necesaria; su Anexo B es literal) |
+| `documents/specs/plantilla-spec.md` | Plantilla ligera de especificación por módulo |
+| `documents/specs/*.md` | Specs: `aves`, `catalogos`, `jaulas`, `cuidados-jaula` |
+| `documents/historico/` | Documentos antiguos y la copia de las reglas antiguas de la app móvil; solo si se pide o falta un detalle |
+| `documents/traspaso/` | Traspaso (handoff, cierre, respuestas): **solo local**, ignorado por Git y respaldado fuera del repositorio |
 
 ## Agentes y skills
 
-- Agentes (`.claude/agents/`): `arquitecto-v2`, `analista-v1`, `modelador-d1`, `revisor-codigo`, `probador`, `documentador`.
-- Skills (`.claude/skills/`): `nuevo-modulo-api`, `verificar-api`.
+- Agentes (`.claude/agents/`): `revisor-arquitectura-v2`, `analista-codigo-v1`, `disenador-migraciones-d1`, `revisor-de-cambios`, `ejecutor-de-pruebas`, `redactor-documentacion`.
+- Skills (`.claude/skills/`): `nuevo-modulo-api`, `verificar-api`, `migrar-repositorio-a-api`.
 - Reglas por ruta en `.claude/rules/`. Preferencias personales en `CLAUDE.local.md` y `.claude/settings.local.json` (ignorados por Git).
