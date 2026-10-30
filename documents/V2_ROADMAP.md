@@ -40,13 +40,13 @@ Pendiente:
 
 Para cada módulo: leer su pantalla y su repositorio en V1, redactar la spec en `documents/specs/`, definir esquema y contrato de API, implementar permisos y comprobar que los datos pueden conservarse. Orden:
 
-1. `AveRepository`
-2. `JaulaRepository`
+1. `JaulaRepository`
+2. `AveRepository`
 3. `HuevoRepository`
 4. `SaludRepository`
 5. `FinanzasRepository`
 
-Ave y Jaula tienen referencias cruzadas: diseñar las claves foráneas con cuidado y validarlas contra el código real de V1.
+Orden decidido el 2026-10-29: Jaulas antes que Aves, con migraciones `0005` (jaulas) y `0006` (aves), FK real y `ON DELETE RESTRICT`. Ave y Jaula tienen referencias cruzadas: validar las claves foráneas contra el código real de V1.
 
 ### Fase 5 — Funcionalidades derivadas
 
