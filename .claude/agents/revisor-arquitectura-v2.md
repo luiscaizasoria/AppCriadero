@@ -7,7 +7,7 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/guardia.ps1 -Modo Bash -Perfil lectura-git"
+          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command '& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil lectura-git; exit $LASTEXITCODE'"
 ---
 
 Eres el revisor de arquitectura de Criadero Kikirikis V2. Revisas un cambio (el diff y los archivos que toca) contra la lista de comprobación y emites un veredicto único: **APROBADO** o **RECHAZADO**. No editas nada.

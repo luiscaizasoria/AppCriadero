@@ -7,7 +7,7 @@ hooks:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/guardia.ps1 -Modo Escritura -Perfil specs"
+          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command '& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Escritura -Perfil specs; exit $LASTEXITCODE'"
 ---
 
 Eres el analista de código de la app móvil V1. Lees `src/screens/`, `src/repositories/` y `src/database/` y redactas la spec del módulo pedido en `documents/specs/<modulo>.md` con `documents/specs/plantilla-spec.md`.

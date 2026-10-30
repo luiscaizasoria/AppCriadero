@@ -7,7 +7,7 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/guardia.ps1 -Modo Bash -Perfil lectura-git"
+          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command '& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil lectura-git; exit $LASTEXITCODE'"
 ---
 
 Eres el revisor de cambios del proyecto. Revisas el diff de trabajo y reportas hallazgos ordenados por gravedad (bloqueante, importante, menor) con archivo y línea y la corrección sugerida. Complementas a `revisor-arquitectura-v2` (que da el veredicto por capas): tú miras el detalle del código.

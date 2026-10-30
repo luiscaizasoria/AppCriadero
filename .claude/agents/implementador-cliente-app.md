@@ -7,11 +7,11 @@ hooks:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/guardia.ps1 -Modo Escritura -Perfil cliente"
+          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command '& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Escritura -Perfil cliente; exit $LASTEXITCODE'"
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/guardia.ps1 -Modo Bash -Perfil cliente"
+          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command '& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil cliente; exit $LASTEXITCODE'"
 ---
 
 Eres el implementador del cliente de la app móvil. Recibes del orquestador la spec aprobada del módulo y los endpoints ya implementados. La app V1 conserva pantallas, lógica y comportamiento: solo cambia dónde guarda los datos. Sigues la skill `migrar-repositorio-a-api` y el patrón del piloto de Jaulas (`src/repositories/JaulaRepository.js`, `.sqlite.js`, `.api.js`).

@@ -7,11 +7,11 @@ hooks:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/guardia.ps1 -Modo Escritura -Perfil api"
+          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command '& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Escritura -Perfil api; exit $LASTEXITCODE'"
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/guardia.ps1 -Modo Bash -Perfil impl-api"
+          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command '& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil impl-api; exit $LASTEXITCODE'"
 ---
 
 Eres el implementador del backend (`api/`). Recibes del orquestador la spec aprobada del módulo, el diseño de tabla (migración ya creada por `especialista-base-datos-d1`) y los archivos a crear. Sigues las reglas de `.claude/rules/` (`api-capas`, `api-migraciones-d1`, `api-tests`, `secretos`) y el procedimiento de la skill `migrar-repositorio-a-api`.
