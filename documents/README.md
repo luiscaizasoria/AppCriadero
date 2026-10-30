@@ -33,14 +33,27 @@ Ante una contradicción prevalece, de mayor a menor:
 | `documents/historico/` | Documentos antiguos (contexto V1 y V2 previo a online-first, estado de V1) y la copia de las reglas antiguas de la app móvil; no se edita |
 | `documents/traspaso/` | Handoff, cierre y respuestas del traspaso: solo local, ignorado por Git |
 
-## Agentes (`.claude/agents/`)
+## Equipo de agentes (`.claude/agents/`)
 
-- `revisor-arquitectura-v2`: revisa decisiones de arquitectura V2 y propone diseño sin editar.
+- **`orquestador-proyecto`** (hilo principal, fijado con `"agent"` en `.claude/settings.json`): coordina a los demás agentes y es el único que habla con el usuario.
+- `revisor-arquitectura-v2`: lista de comprobación de arquitectura con veredicto APROBADO o RECHAZADO.
 - `analista-codigo-v1`: lee el código de V1 y redacta las specs en `documents/specs/`.
-- `disenador-migraciones-d1`: diseña migraciones D1 nuevas a partir de una spec.
-- `revisor-de-cambios`: revisa el diff de la API (capas, ownership, paridad con V1) sin editar.
-- `ejecutor-de-pruebas`: ejecuta typecheck y pruebas de `api/` y reporta los resultados reales.
+- `especialista-base-datos-d1`: analiza el esquema D1 real, diseña migraciones nuevas y revisa índices, límites del plan gratuito y paridad con V1 (solo local).
+- `implementador-api`: escribe el backend (`api/`) y sus pruebas a partir de la spec aprobada.
+- `implementador-cliente-app`: escribe el cliente REST de la app con la misma interfaz que el repositorio V1, sin tocar las pantallas V1.
+- `revisor-de-cambios`: revisa el diff (capas, propiedad del criadero, paridad con V1) sin editar.
+- `ejecutor-de-pruebas`: ejecuta typecheck y las pruebas de `api/` (unitarias, HTTP e integración en memoria) y reporta los resultados reales.
+- `probador-integracion-api`: levanta el Worker local con una D1 temporal, hace llamadas HTTP reales, comprueba D1 y los errores de la spec, limpia y reporta.
+- `probador-movil`: evalúa y define cómo validar la app contra la API (emulador Android, adb, Maestro) y reduce lo que exige el teléfono físico a una lista corta.
 - `redactor-documentacion`: mantiene `documents/` coherente con el código y con la regla del proyecto.
+
+### Flujo por módulo y qué le toca al usuario
+
+1. Spec y V1 (`analista-codigo-v1`) → 2. diseño de tabla (`especialista-base-datos-d1`) → 3. **plan del módulo aprobado por el usuario** → 4. implementar (`implementador-api`, luego `implementador-cliente-app`) → 5. revisar (`revisor-arquitectura-v2` y `revisor-de-cambios`; si rechazan, vuelve al paso 4, máximo dos vueltas) → 6. probar (`ejecutor-de-pruebas` y `probador-integracion-api`) → 7. probar la app (`probador-movil`) → 8. documentar (`redactor-documentacion`) → 9. commit local y resumen corto.
+
+**Al usuario solo le toca:** aprobar el plan de cada módulo, el push, los despliegues (y todo comando `--remote` o que cree o borre recursos en Cloudflare), las decisiones de producto y la comprobación mínima en el teléfono. Los subagentes no pueden preguntar al usuario: sus dudas las pregunta el orquestador.
+
+**Cumplimiento técnico y reinicio:** el hook `.claude/hooks/guardia.ps1` (en el frontmatter de cada agente) limita dónde escribe cada agente y qué comandos Bash admite; `.claude/settings.json` pregunta antes de push, deploy y comandos remotos. Es comparación de texto, no una frontera de seguridad. Para activar el orquestador hay que reiniciar la sesión (o recargar la ventana de VS Code); para desactivarlo, quitar la clave `agent` de `.claude/settings.json`. La extensión de VS Code puede no aplicar el ajuste `agent` (no confirmado): en ese caso, iniciar con `claude --agent orquestador-proyecto` o actuar según `.claude/agents/orquestador-proyecto.md`.
 
 ## Reglas (`.claude/rules/`)
 

@@ -82,7 +82,7 @@ Migraciones locales: `npx wrangler d1 migrations apply criadero-kikirikis-dev --
 
 - **Conventional Commits** en español, con scope: `feat(api): …`, `test(api): …`, `refactor(api): …`, `fix(api): …`, `docs: …`, `chore: …`.
 - Commits pequeños y funcionales; no mezclar una feature con limpieza grande. Ramas `feature/v2-*` desde `v2`.
-- **No hacer commit, push, deploy ni migraciones remotas sin orden explícita.** Revisar `git status` y `git diff --stat` antes de `git add`; nunca `git add .` a ciegas.
+- **Push, deploy y migraciones remotas solo con orden explícita del usuario.** Los commits locales los hace únicamente el `orquestador-proyecto` al cerrar un módulo cuyo plan aprobó el usuario (ningún otro agente hace commit); fuera de ese caso, solo con orden explícita. Revisar `git status` y `git diff --stat` antes de `git add`; nunca `git add .` a ciegas.
 - No versionar secretos: `api/.dev.vars`, `.env*` están ignorados. Solo `api/.dev.vars.example` (variable actual: `JWT_SECRET`). No leer ni imprimir `.dev.vars`.
 - Barrera **parcial**: `.claude/settings.json` niega `Read` sobre `api/.dev.vars`, `.env`, `.env.local` y `.env.production`, y `Bash` con `cat`, `type`, `Get-Content` y `less` sobre esos archivos. No cubre otras formas de lectura (`more`, `head`, `tail`, `Select-String`, `node`, `python`, redirecciones, copiar el archivo, `.env.*` distintos de esos tres) ni subagentes con otras herramientas; no sustituye al sandbox ni a la disciplina de no abrirlos.
 - `documents/traspaso/` es **solo local**: está en `.gitignore` (respaldo en un `.zip` fuera del repositorio); no se versiona ni se modifica.
@@ -123,8 +123,12 @@ Orden de autoridad ante contradicciones: **código real > este `CLAUDE.md` > `do
 | `documents/historico/` | Documentos antiguos y la copia de las reglas antiguas de la app móvil; solo si se pide o falta un detalle |
 | `documents/traspaso/` | Traspaso (handoff, cierre, respuestas): **solo local**, ignorado por Git y respaldado fuera del repositorio |
 
-## Agentes y skills
+## Equipo de agentes y flujo
 
-- Agentes (`.claude/agents/`): `revisor-arquitectura-v2`, `analista-codigo-v1`, `disenador-migraciones-d1`, `revisor-de-cambios`, `ejecutor-de-pruebas`, `redactor-documentacion`.
+- Hilo principal: **`orquestador-proyecto`** (fijado con `"agent"` en `.claude/settings.json`; coordina y no escribe código). Si la sesión no arrancó con él, actúa según `.claude/agents/orquestador-proyecto.md` o inicia con `claude --agent orquestador-proyecto`. **Desactivarlo:** quitar la clave `agent` de `.claude/settings.json` (o arrancar con `claude --agent <otro>`) y reiniciar la sesión; los cambios de agentes y del ajuste se aplican al reiniciar.
+- Subagentes (`.claude/agents/`; el orquestador solo puede lanzar estos): `analista-codigo-v1` (specs), `especialista-base-datos-d1` (esquema y migraciones), `implementador-api` (backend), `implementador-cliente-app` (cliente REST de la app), `revisor-arquitectura-v2` (veredicto APROBADO o RECHAZADO), `revisor-de-cambios` (detalle del diff), `ejecutor-de-pruebas` (typecheck y pruebas), `probador-integracion-api` (Worker local con D1 temporal), `probador-movil` (emulador y teléfono) y `redactor-documentacion` (`documents/`).
+- Flujo por módulo: spec y V1 → diseño de tabla → **plan aprobado por el usuario** → implementar (API y cliente) → revisar → probar → probar la app → documentar → commit local y resumen corto.
+- **Al usuario solo le toca:** aprobar el plan de cada módulo, el push, los despliegues (y todo comando `--remote` o que cree o borre recursos en Cloudflare), las decisiones de producto y la comprobación mínima en el teléfono. Los subagentes no pueden preguntar al usuario: sus dudas las pregunta el orquestador.
+- Cumplimiento técnico: `.claude/hooks/guardia.ps1` (hook en el frontmatter de cada agente) limita dónde escribe cada uno y qué comandos Bash admite; `.claude/settings.json` pregunta antes de push, deploy y comandos remotos. Es comparación de texto, no una frontera de seguridad; el resto son reglas de conducta de cada agente. Los hooks de agentes de proyecto exigen aceptar una vez el diálogo de confianza de la carpeta.
 - Skills (`.claude/skills/`): `nuevo-modulo-api`, `verificar-api`, `migrar-repositorio-a-api`.
 - Reglas por ruta en `.claude/rules/`. Preferencias personales en `CLAUDE.local.md` y `.claude/settings.local.json` (ignorados por Git).
