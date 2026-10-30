@@ -1,4 +1,4 @@
-# V2_ARCHITECTURA — Criadero Kikirikis
+# Arquitectura V2 — Criadero Kikirikis
 
 ## Objetivo
 
@@ -93,7 +93,7 @@ Google ID Token  --->  POST /api/v1/auth/google
 - Las entidades de negocio llevan `criadero_id`; la propiedad se resuelve por `entidad.criadero_id -> criaderos.user_id`. No se duplica `user_id` en cada tabla salvo necesidad técnica documentada.
 - IDs `TEXT` con UUID v7; `deleted_at` (borrado lógico) y `version` (concurrencia optimista) donde aplique. Las operaciones compuestas se hacen atómicas con `db.batch()`.
 - Las fotos se almacenan en R2 con claves que aíslen usuario y criadero; hay que distinguir archivos públicos de privados y no asumir que todo objeto de R2 es público.
-- Modelo detallado: `documents/V2_MODELO_DATOS.md`.
+- Modelo detallado: `documents/arquitectura/modelo-datos-v2.md`.
 
 ## Reglas de diseño
 
@@ -125,7 +125,7 @@ Google ID Token  --->  POST /api/v1/auth/google
 ## Referencias
 
 - `documents/traspaso/`: decisiones vigentes, razones y estado del traspaso.
-- `documents/V2_MODELO_DATOS.md`: esquema D1 real y modelo futuro (borrador).
-- `documents/V2_ROADMAP.md`: fases de trabajo.
-- `documents/CriaderoKikirikis_V1_Analisis_Movil_y_Mapeo_API.md`: análisis de V1 y mapeo repositorio → endpoint.
-- `documents/archive/Contexto_Arquitectura_V2_Online_Criadero_Kikirikis.md`: propuesta original (histórica, anterior a online-first).
+- `documents/arquitectura/modelo-datos-v2.md`: esquema D1 real y modelo futuro (borrador).
+- `documents/arquitectura/roadmap-v2.md`: fases de trabajo.
+- `documents/referencia-v1/analisis-v1-mapeo-api.md`: análisis de V1 y mapeo repositorio → endpoint.
+- `documents/historico/Contexto_Arquitectura_V2_Online_Criadero_Kikirikis.md`: propuesta original (histórica, anterior a online-first).

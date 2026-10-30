@@ -1,5 +1,12 @@
 # Spec: catalogos
 
+> **Regla del proyecto (2026-10-29): replicar V1.** La app V1 conserva pantallas, lógica y comportamiento; solo cambia dónde guarda los datos (SQLite local → API en la nube con D1 + R2 y login), y cada repositorio V1 se reemplaza por un cliente REST con la misma interfaz. Solo se permiten diferencias que exija el paso a online (IDs UUID v7, `criadero_id`, imágenes en R2, autenticación y errores de red). Queda **revocado** el criterio "servidor más estricto que V1" y las decisiones tomadas con él. Todas las reglas abiertas y decisiones de producto de esta spec se marcan: *resuelta: replicar V1*, *técnica, se mantiene* o *revocada*; el resto del texto no se ha reescrito, por lo que las secciones "Diferencias deliberadas", "Decisiones aprobadas" y "Reglas abiertas" conservan su redacción original y deben leerse a la luz de estas marcas.
+>
+> **Decisiones revocadas en esta spec:** D-CAT-04 (normalizar el código en el servidor), D-CAT-06 (reactivar ítems y listar inactivos), D-CAT-07 (errores diferenciados) y D-CAT-08 (`version` obligatoria).
+>
+> **Se mantiene (técnico/online):** Catálogos por defecto en cada criadero nuevo, con 42 ítems (Morichillo, Balanceado, Agua y Agua con vitamina; se mantienen ENFERMEDADES, MEDICAMENTOS y ENVIO_AVE aunque V1 no los siembre): D-CAT-01 a D-CAT-03, DP-CAT-01 y DP-CAT-02; y D-CAT-05 (desactivar con `activo = 0`, el código sigue reservado, como V1).
+
+
 > **Regla de paridad con V1.** V2 empieza sin datos de usuario, solo con catálogos. La V1 está probada y es el contrato: V2 reproduce exactamente lo que hace V1. Todo lo que V2 haga distinto es una **diferencia deliberada**: debe registrarse en la sección "Diferencias deliberadas" y estar aprobada por el usuario. Diferencias ya aceptadas: V2 requiere conexión y las pantallas necesitan estados de carga y de error de red.
 
 ## Estado
@@ -29,13 +36,13 @@ Consumidores de los catálogos (lectura): `AveRepository`/`NuevaAveScreen.js` (R
 
 V2 (para la comparación): `api/src/catalogs/defaultCatalogItems.ts`, `api/src/criaderos/criaderos.service.ts` (`crearCriadero`, validaciones de configuración), `api/src/criaderos/criaderos.repository.ts` (`getCatalogosByCodigo`, `getCatalogoItemsInfo`), `api/migrations/0001`-`0004`.
 
-Contexto (no sustituye al código): `documents/CriaderoKikirikis_V1_Analisis_Movil_y_Mapeo_API.md` (sección 13 l.673-683 y mapeo l.741-742, 830-838, 889, 897), `documents/V2_MODELO_DATOS.md` (l.83-101 y modelo #11 l.835-965).
+Contexto (no sustituye al código): `documents/referencia-v1/analisis-v1-mapeo-api.md` (sección 13 l.673-683 y mapeo l.741-742, 830-838, 889, 897), `documents/arquitectura/modelo-datos-v2.md` (l.83-101 y modelo #11 l.835-965).
 
 ## Comportamiento en V1
 
 ### Hallazgos que cambian lo que decían los documentos
 
-1. **Enfermedades y medicamentos NO están sembrados en `catalogo_items`.** Sus 4+4 valores (Coccidia, Coriza, Gripe, Otro / Vitamina, Antibiótico, Antiparasitario, Otro) solo existen en las tablas heredadas `enfermedades_catalogo` y `medicamentos_catalogo` (`migrationV2.js:49-79`). Búsqueda sin límite de `enfermedades_catalogo|medicamentos_catalogo` en `src/`: solo aparece en `migrationV2.js` (l.15, 32, 49, 66); ninguna pantalla ni repositorio las lee. Las pantallas leen `catalogo_items` con `catalogos.codigo = 'ENFERMEDADES'` / `'MEDICAMENTOS'` (`SaludRepository.js:34, 78`), y `migrationV7.js:7-29` solo crea el catálogo vacío. Conclusión por código: en una instalación nueva de V1 esos dos catálogos están vacíos y el usuario debe crear sus ítems. `V2_MODELO_DATOS.md:879, 892` y el análisis V1 (l.637-638, 679-680) afirman lo contrario.
+1. **Enfermedades y medicamentos NO están sembrados en `catalogo_items`.** Sus 4+4 valores (Coccidia, Coriza, Gripe, Otro / Vitamina, Antibiótico, Antiparasitario, Otro) solo existen en las tablas heredadas `enfermedades_catalogo` y `medicamentos_catalogo` (`migrationV2.js:49-79`). Búsqueda sin límite de `enfermedades_catalogo|medicamentos_catalogo` en `src/`: solo aparece en `migrationV2.js` (l.15, 32, 49, 66); ninguna pantalla ni repositorio las lee. Las pantallas leen `catalogo_items` con `catalogos.codigo = 'ENFERMEDADES'` / `'MEDICAMENTOS'` (`SaludRepository.js:34, 78`), y `migrationV7.js:7-29` solo crea el catálogo vacío. Conclusión por código: en una instalación nueva de V1 esos dos catálogos están vacíos y el usuario debe crear sus ítems. `modelo-datos-v2.md:879, 892` y el análisis V1 (l.637-638, 679-680) afirman lo contrario.
 2. **`ENVIO_AVE` no se siembra en una instalación nueva de V1 (deducido del código, no probado en dispositivo).** `migrationV6.js:53-73` inserta `ENVIO_AVE` con `SELECT ... FROM catalogos WHERE codigo='CATEGORIAS_FINANCIERAS'`; en una instalación nueva ese catálogo aún no existe en V6 (lo crean `migrationV7.js:66-68` y `seeders.js:129-140`, ambos posteriores), así que el `INSERT` no inserta filas. Los seeders solo insertan 7 categorías (`seeders.js:146-199`, sin `ENVIO_AVE`). Solo bases que ya tenían el catálogo antes de V6 lo reciben (orden = MAX(orden)+1). Aun así el código usa `'ENVIO_AVE'` como texto en movimientos automáticos: `BajaAveRepository.js:343`, `FinanzasRepository.js:480`, filtro de `EditarMovimientoFinancieroScreen.js:346`, etiqueta `FinanzasScreen.js:1039`.
 3. **Las categorías financieras creadas por el usuario no aparecen al registrar un movimiento.** `NuevoMovimientoFinancieroScreen.js:202-228` y `EditarMovimientoFinancieroScreen.js:341-359` filtran `categorias` contra listas de códigos fijos (INGRESO: `VENTA_AVE`, `VENTA_HUEVOS`, `OTRO` en alta; más `ENVIO_AVE` en edición; EGRESO: `ALIMENTO`, `MEDICAMENTO`, `INFRAESTRUCTURA`, `COMPRA_AVE`, `OTRO`). Un ítem nuevo de `CATEGORIAS_FINANCIERAS` se puede crear en `CatalogoScreen`, pero nunca es seleccionable.
 4. **`SEXOS` no es administrable.** `ConfiguracionScreen.js:23-55` solo ofrece 6 catálogos (RAZAS, ENFERMEDADES, MEDICAMENTOS, ALIMENTOS, BEBIDAS, CATEGORIAS_FINANCIERAS). `SEXOS` solo se lee en `NuevaAveScreen.js:332-334, 364-373`. Ninguna pantalla V1 permite editarlo; el repositorio sí lo permitiría.
@@ -176,7 +183,7 @@ La columna "V1" es lo que realmente siembra una instalación nueva de V1 (hallaz
 | TIPOS_CRIADERO | no existe en V1 | 3 (l.246-263) | No aplica |
 | FINALIDADES_CRIADERO | no existe en V1 | 3 (l.266-283) | No aplica |
 
-Conteo: actual 9+2+4+4+0+0+8+5+3+3 = 38 (27 del dominio V1 según `V2_MODELO_DATOS.md:965` + 11 de onboarding). Con la decisión: ALIMENTOS 2 y BEBIDAS 2 → **42 ítems** (27 + 4 nuevos + 11). Estrictamente, de los 27 solo 18 (9 razas + 2 sexos + 7 categorías) los siembra V1 de verdad; los otros 9 son 8 enfermedades/medicamentos de tablas heredadas y `ENVIO_AVE`.
+Conteo: actual 9+2+4+4+0+0+8+5+3+3 = 38 (27 del dominio V1 según `modelo-datos-v2.md:965` + 11 de onboarding). Con la decisión: ALIMENTOS 2 y BEBIDAS 2 → **42 ítems** (27 + 4 nuevos + 11). Estrictamente, de los 27 solo 18 (9 razas + 2 sexos + 7 categorías) los siembra V1 de verdad; los otros 9 son 8 enfermedades/medicamentos de tablas heredadas y `ENVIO_AVE`.
 
 ### Ítems nuevos propuestos (códigos)
 
@@ -241,14 +248,14 @@ Estado inicial de referencia: criadero nuevo en V2 con la plantilla propuesta (4
 | ID | Diferencia | Motivo | Estado |
 |---|---|---|---|
 | D-CAT-00 | V2 requiere conexión; estados de carga y de error de red | Decisión de arquitectura online-first | aprobada por el usuario (ya aceptada) |
-| D-CAT-01 | `ENFERMEDADES` y `MEDICAMENTOS` salen con 4 ítems cada uno (V1 real los deja vacíos en `catalogo_items`; los valores solo estaban en tablas heredadas sin uso). Se mantienen aunque V1 no los siembre | Decisión del usuario: todos los catálogos básicos cargados por defecto | aprobada por el usuario (2026-10-29) |
-| D-CAT-02 | `CATEGORIAS_FINANCIERAS` incluye `ENVIO_AVE` en toda instalación nueva (V1 solo en bases migradas); lo usa el flujo de venta de ave. Se mantiene aunque V1 no lo siembre | Decisión del usuario: todos los catálogos básicos por defecto; el código V1 ya depende de `ENVIO_AVE` | aprobada por el usuario (2026-10-29) |
-| D-CAT-03 | `ALIMENTOS` = Morichillo (`MORICHILLO`), Balanceado (`BALANCEADO`); `BEBIDAS` = Agua (`AGUA`), Agua con vitamina (`AGUA_VITAMINA`) (V1: vacíos). `AGUA_VITAMINA` difiere de la regla de alta de V1, que daría `AGUA_CON_VITAMINA` | Decisión del usuario | aprobada por el usuario (2026-10-29) |
-| D-CAT-04 | El backend normaliza el código de ítems nuevos con la regla de V1 (`trim`, mayúsculas, `\s+` → `_`) en vez de dejarlo a la pantalla. Se mantiene la tilde si el nombre la lleva, como V1 (la plantilla sin tildes es una excepción de los sembrados) | Paridad; evitar que el cliente defina códigos | propuesta |
-| D-CAT-05 | "Desactivar" = `activo = 0` con `deleted_at = NULL` (el código sigue reservado, igual que V1); `deleted_at` no se usa en ítems de catálogo | Reproduce la unicidad total de V1 sobre el índice parcial de D1 | propuesta |
-| D-CAT-06 | Se añade "reactivar" (`activo = 1`) y un listado opcional que incluya desactivados (`incluirInactivos`) | V1 no permite recuperar un ítem desactivado ni su código; sin esta función un código queda bloqueado para siempre | propuesta |
-| D-CAT-07 | Respuestas con errores diferenciados (`CATALOGO_ITEM_DUPLICATE`, `CATALOGO_ITEM_NOT_FOUND`, `CATALOGO_NOT_FOUND`) en vez de la alerta genérica de V1 | La API necesita códigos estables | propuesta |
-| D-CAT-08 | `version` obligatoria en edición/desactivación/reactivación (concurrencia optimista) | Convención V2 (CLAUDE.md) | propuesta |
+| D-CAT-01 *[técnica, se mantiene]* | `ENFERMEDADES` y `MEDICAMENTOS` salen con 4 ítems cada uno (V1 real los deja vacíos en `catalogo_items`; los valores solo estaban en tablas heredadas sin uso). Se mantienen aunque V1 no los siembre | Decisión del usuario: todos los catálogos básicos cargados por defecto | aprobada por el usuario (2026-10-29) |
+| D-CAT-02 *[técnica, se mantiene]* | `CATEGORIAS_FINANCIERAS` incluye `ENVIO_AVE` en toda instalación nueva (V1 solo en bases migradas); lo usa el flujo de venta de ave. Se mantiene aunque V1 no lo siembre | Decisión del usuario: todos los catálogos básicos por defecto; el código V1 ya depende de `ENVIO_AVE` | aprobada por el usuario (2026-10-29) |
+| D-CAT-03 *[técnica, se mantiene]* | `ALIMENTOS` = Morichillo (`MORICHILLO`), Balanceado (`BALANCEADO`); `BEBIDAS` = Agua (`AGUA`), Agua con vitamina (`AGUA_VITAMINA`) (V1: vacíos). `AGUA_VITAMINA` difiere de la regla de alta de V1, que daría `AGUA_CON_VITAMINA` | Decisión del usuario | aprobada por el usuario (2026-10-29) |
+| D-CAT-04 *[revocada 2026-10-29]* | El backend normaliza el código de ítems nuevos con la regla de V1 (`trim`, mayúsculas, `\s+` → `_`) en vez de dejarlo a la pantalla. Se mantiene la tilde si el nombre la lleva, como V1 (la plantilla sin tildes es una excepción de los sembrados) | Paridad; evitar que el cliente defina códigos | propuesta |
+| D-CAT-05 *[resuelta: replicar V1]* | "Desactivar" = `activo = 0` con `deleted_at = NULL` (el código sigue reservado, igual que V1); `deleted_at` no se usa en ítems de catálogo | Reproduce la unicidad total de V1 sobre el índice parcial de D1 | propuesta |
+| D-CAT-06 *[revocada 2026-10-29]* | Se añade "reactivar" (`activo = 1`) y un listado opcional que incluya desactivados (`incluirInactivos`) | V1 no permite recuperar un ítem desactivado ni su código; sin esta función un código queda bloqueado para siempre | propuesta |
+| D-CAT-07 *[revocada 2026-10-29]* | Respuestas con errores diferenciados (`CATALOGO_ITEM_DUPLICATE`, `CATALOGO_ITEM_NOT_FOUND`, `CATALOGO_NOT_FOUND`) en vez de la alerta genérica de V1 | La API necesita códigos estables | propuesta |
+| D-CAT-08 *[revocada 2026-10-29]* | `version` obligatoria en edición/desactivación/reactivación (concurrencia optimista) | Convención V2 (CLAUDE.md) | propuesta |
 
 ## Endpoints V2
 
@@ -292,15 +299,15 @@ Plantilla 38 → 42 ítems:
 
 Documentos con la cifra 38 u otros números de la plantilla (actualizar al implementar a 42). Nota de verificación: el matcher de `api/test/criadero.service.test.ts:111-112` es `.toBeGreaterThan(0)` (verificado) y no cambia; en `ConfiguracionRepository.js` el `SET activo = 0` de `eliminarItemCatalogo` está en la línea 268 (la función empieza en 251; se corrigió la cita `:261` en todo este documento):
 
-- `documents/V2_ROADMAP.md:23` ("38 items de catálogo iniciales").
+- `documents/arquitectura/roadmap-v2.md:23` ("38 items de catálogo iniciales").
 - `documents/README.md:41` ("plantilla de 38 items").
-- `documents/V2_MODELO_DATOS.md`: l.83 (título "Items iniciales de un criadero (38)"), l.93-94 (ALIMENTOS/BEBIDAS 0), l.99 (Total 38), l.322 y l.688 (38 items al crear), l.903-913 (ALIMENTOS y BEBIDAS "No tendrá CatalogoItems iniciales"), l.954-960 y l.965 (cantidades y "Total inicial: 38 (27 de V1 y 11 de onboarding)"), l.1588 (crear criadero + 38 items). Corregir también l.879 y l.892 ("los valores provienen de enfermedades_catalogo/medicamentos_catalogo de V1": son tablas heredadas sin uso).
-- `documents/CriaderoKikirikis_V1_Analisis_Movil_y_Mapeo_API.md:637-638, 679-683`: describen enfermedades/medicamentos y `ENVIO_AVE` como ítems de V1 (matizar con los hallazgos 1 y 2). No contiene la cifra 38.
+- `documents/arquitectura/modelo-datos-v2.md`: l.83 (título "Items iniciales de un criadero (38)"), l.93-94 (ALIMENTOS/BEBIDAS 0), l.99 (Total 38), l.322 y l.688 (38 items al crear), l.903-913 (ALIMENTOS y BEBIDAS "No tendrá CatalogoItems iniciales"), l.954-960 y l.965 (cantidades y "Total inicial: 38 (27 de V1 y 11 de onboarding)"), l.1588 (crear criadero + 38 items). Corregir también l.879 y l.892 ("los valores provienen de enfermedades_catalogo/medicamentos_catalogo de V1": son tablas heredadas sin uso).
+- `documents/referencia-v1/analisis-v1-mapeo-api.md:637-638, 679-683`: describen enfermedades/medicamentos y `ENVIO_AVE` como ítems de V1 (matizar con los hallazgos 1 y 2). No contiene la cifra 38.
 - Dentro de `documents/traspaso/` (sin versionar; actualizar solo si se decide): `CLAUDE_PROJECT_HANDOFF_CRIADERO_KIKIRIKIS.md:682, 688, 866, 879` (el 688 queda resuelto), `CIERRE_FINAL_TRASPASO_CRIADERO_KIKIRIKIS_V2.md:436, 1863, 2072`, `RESPUESTAS_CUESTIONARIO_TRASPASO_CRIADERO_KIKIRIKIS_V2.md:830, 1135`.
-- `CLAUDE.md`, `AGENTS.md` y `.claude/`: sin ocurrencias de 38 (búsqueda sin límite).
-- `documents/archive/`: no se revisa ni modifica (histórico).
+- `CLAUDE.md` y `.claude/`: sin ocurrencias de 38 (búsqueda sin límite).
+- `documents/historico/`: no se revisa ni modifica (histórico).
 
-Cifras 38/27/11 **ajenas** al catálogo (no tocar): `documents/specs/aves.md:20` (`registrarHuevo (~38)`, línea de código V1), `api/src/catalogs/defaultCatalogItems.ts:8` ("Modelo aprobado #11", número de modelo), `V2_MODELO_DATOS.md:21, 1009` (numeración de decisiones/puntos), `documents/specs/aves.md:403` (punto 11), y las fechas "27 de ..." en traspaso/archive.
+Cifras 38/27/11 **ajenas** al catálogo (no tocar): `documents/specs/aves.md:20` (`registrarHuevo (~38)`, línea de código V1), `api/src/catalogs/defaultCatalogItems.ts:8` ("Modelo aprobado #11", número de modelo), `modelo-datos-v2.md:21, 1009` (numeración de decisiones/puntos), `documents/specs/aves.md:403` (punto 11), y las fechas "27 de ..." en traspaso/archive.
 
 Para los endpoints (módulo nuevo `api/src/catalogs/`, siguiendo `criaderos/`; `.claude/rules/api-capas.md`):
 
@@ -324,13 +331,13 @@ Para los endpoints (módulo nuevo `api/src/catalogs/`, siguiendo `criaderos/`; `
 
 ### Decisión de producto
 
-- **DP-CAT-01 (decidida 2026-10-29, parcial).** Texto original: aprobar o corregir D-CAT-01 a D-CAT-08 (en particular D-CAT-02 `ENVIO_AVE`, D-CAT-05 desactivar con `activo`, D-CAT-06 reactivar). **Decisión:** la aprobación del usuario cubre **solo D-CAT-01, D-CAT-02 y D-CAT-03**. **D-CAT-04 a D-CAT-08 siguen como propuestas sin aprobar** (no hay decisión sobre normalización de código en servidor, desactivar con `activo`, reactivar, errores diferenciados ni `version`).
-- **DP-CAT-02 (decidida 2026-10-29).** Texto original: códigos de los 4 ítems nuevos (`MORICHILLO`, `BALANCEADO`, `AGUA`, `AGUA_CON_VITAMINA` o `AGUA_VITAMINA`) y su orden (RC-CAT-05). **Decisión:** ALIMENTOS = Morichillo (`MORICHILLO`), Balanceado (`BALANCEADO`); BEBIDAS = Agua (`AGUA`), Agua con vitamina (`AGUA_VITAMINA`). La convención de alta de V1 daría `AGUA_CON_VITAMINA`; `AGUA_VITAMINA` es la decisión del usuario (diferencia consciente respecto de la regla de alta). `ENFERMEDADES`, `MEDICAMENTOS` y `ENVIO_AVE` se mantienen aunque V1 no los siembre. El **orden** de los 4 ítems sigue abierto en RC-CAT-05 (propuesta `null`).
-- **DP-CAT-03.** ¿Se permite desactivar/editar ítems que están en uso por la configuración del criadero (`criadero_configuracion`) o que el sistema usa por código? Hoy `PUT .../configuracion` exige ítems activos (`criaderos.service.ts:222-228`); ¿bloquear la desactivación del ítem elegido o permitirla? V1 no bloquea nada.
-- **DP-CAT-04.** En los módulos de V2 que usen catálogos (aves, salud, alimentación, bebida, finanzas): ¿guardar texto como V1 (nombre o código, según el módulo) o `item_id`? V1 guarda texto (ver tabla de consumo) y por eso un renombrado no se propaga. Se decide en la spec de cada módulo.
-- **DP-CAT-05.** ¿Los criaderos ya creados en D1 local con 38 ítems deben recibir los 4 ítems nuevos? (regla del proyecto: V2 empieza sin datos, por lo que se propone no migrar nada).
-- **DP-CAT-06.** ¿Se corrige el comportamiento de V1 de que las categorías financieras creadas por el usuario nunca son seleccionables (hallazgo 3)? Cambiarlo es una diferencia deliberada.
-- **DP-CAT-07.** ¿Se añade unicidad de nombre (V1 solo controla el código)? Cambiarlo es una diferencia deliberada; la propuesta es mantener V1.
+- **[resuelta: técnica, se mantiene (regla del proyecto 2026-10-29); catálogos por defecto con 42 ítems (D-CAT-01 a D-CAT-03)] DP-CAT-01 (decidida 2026-10-29, parcial).** Texto original: aprobar o corregir D-CAT-01 a D-CAT-08 (en particular D-CAT-02 `ENVIO_AVE`, D-CAT-05 desactivar con `activo`, D-CAT-06 reactivar). **Decisión:** la aprobación del usuario cubre **solo D-CAT-01, D-CAT-02 y D-CAT-03**. **D-CAT-04 a D-CAT-08 siguen como propuestas sin aprobar** (no hay decisión sobre normalización de código en servidor, desactivar con `activo`, reactivar, errores diferenciados ni `version`).
+- **[resuelta: técnica, se mantiene (regla del proyecto 2026-10-29)] DP-CAT-02 (decidida 2026-10-29).** Texto original: códigos de los 4 ítems nuevos (`MORICHILLO`, `BALANCEADO`, `AGUA`, `AGUA_CON_VITAMINA` o `AGUA_VITAMINA`) y su orden (RC-CAT-05). **Decisión:** ALIMENTOS = Morichillo (`MORICHILLO`), Balanceado (`BALANCEADO`); BEBIDAS = Agua (`AGUA`), Agua con vitamina (`AGUA_VITAMINA`). La convención de alta de V1 daría `AGUA_CON_VITAMINA`; `AGUA_VITAMINA` es la decisión del usuario (diferencia consciente respecto de la regla de alta). `ENFERMEDADES`, `MEDICAMENTOS` y `ENVIO_AVE` se mantienen aunque V1 no los siembre. El **orden** de los 4 ítems sigue abierto en RC-CAT-05 (propuesta `null`).
+- **[resuelta: replicar V1 (regla del proyecto 2026-10-29)] DP-CAT-03.** ¿Se permite desactivar/editar ítems que están en uso por la configuración del criadero (`criadero_configuracion`) o que el sistema usa por código? Hoy `PUT .../configuracion` exige ítems activos (`criaderos.service.ts:222-228`); ¿bloquear la desactivación del ítem elegido o permitirla? V1 no bloquea nada.
+- **[resuelta: replicar V1 (regla del proyecto 2026-10-29)] DP-CAT-04.** En los módulos de V2 que usen catálogos (aves, salud, alimentación, bebida, finanzas): ¿guardar texto como V1 (nombre o código, según el módulo) o `item_id`? V1 guarda texto (ver tabla de consumo) y por eso un renombrado no se propaga. Se decide en la spec de cada módulo.
+- **[resuelta: replicar V1 (regla del proyecto 2026-10-29)] DP-CAT-05.** ¿Los criaderos ya creados en D1 local con 38 ítems deben recibir los 4 ítems nuevos? (regla del proyecto: V2 empieza sin datos, por lo que se propone no migrar nada).
+- **[resuelta: replicar V1 (regla del proyecto 2026-10-29)] DP-CAT-06.** ¿Se corrige el comportamiento de V1 de que las categorías financieras creadas por el usuario nunca son seleccionables (hallazgo 3)? Cambiarlo es una diferencia deliberada.
+- **[resuelta: replicar V1 (regla del proyecto 2026-10-29)] DP-CAT-07.** ¿Se añade unicidad de nombre (V1 solo controla el código)? Cambiarlo es una diferencia deliberada; la propuesta es mantener V1.
 
 ## Criterios de terminado
 

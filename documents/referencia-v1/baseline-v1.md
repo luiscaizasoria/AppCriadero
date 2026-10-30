@@ -1,10 +1,10 @@
-# V1_BASELINE — Criadero Kikirikis
+# Baseline V1 — Criadero Kikirikis
 
 ## Punto de partida
 
 La versión v1.0.3 es el cierre de V1 y el punto de partida de la rama v2. V1 es una aplicación Android hecha con React Native, Expo y JavaScript. Guarda los datos en SQLite local y funciona sin conexión permanente.
 
-Este documento resume los documentos históricos de `documents/archive/`. Antes de modificar una función, comprobar su comportamiento en el código real; si hay diferencias, el código tiene prioridad.
+Este documento resume los documentos históricos de `documents/historico/`. Antes de modificar una función, comprobar su comportamiento en el código real; si hay diferencias, el código tiene prioridad.
 
 ## Funciones existentes que se deben preservar
 
@@ -35,7 +35,7 @@ Los documentos históricos describen funciones implementadas, pero también señ
 
 ## Referencias históricas
 
-- `documents/archive/CONTEXTO_PROYECTO_CRIADERO_KIKIRIKIS.md`
-- `documents/archive/Estado Actual Criadero kikiriki v1.md`
+- `documents/historico/CONTEXTO_PROYECTO_CRIADERO_KIKIRIKIS.md`
+- `documents/historico/Estado Actual Criadero kikiriki v1.md`
 
 Consultar estos archivos cuando haga falta un detalle que no esté en este resumen.

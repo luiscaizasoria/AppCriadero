@@ -18,7 +18,8 @@ Reglas de código:
 - Rutas bajo `/api/v1`. `userId` sale del JWT, nunca del body.
 - Ownership antes de consultar o modificar: `criaderos.id = ? AND user_id = ? AND deleted_at IS NULL`; si no, `403 FORBIDDEN`.
 - Entidades de negocio con `criadero_id`; no agregar `user_id` por costumbre.
-- Soft delete (`deleted_at`) y `version` con `UPDATE … WHERE version = ?`.
+- Soft delete (`deleted_at`) donde V1 da de baja o desactiva. Las peticiones de los módulos nuevos no exigen `version` (V1 no tiene concurrencia); los módulos ya implementados (`criaderos`) conservan la suya.
+- Replicar V1: mismos códigos y mensajes de error y mismas validaciones que el repositorio V1; no añadir reglas más estrictas.
 - En joins usar alias para columnas repetidas (`c.version AS criadero_version`).
 - Respuestas: `{ success: true, data }` o `{ success: false, error, message }` con códigos estables; reutilizar los existentes.
 - TypeScript explícito; evitar `any`. Nombres de dominio en español; API camelCase, SQL snake_case.

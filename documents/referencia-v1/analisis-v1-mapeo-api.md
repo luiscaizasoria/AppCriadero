@@ -16,7 +16,7 @@ El análisis que sigue se redactó **antes** de la decisión oficial de V2 (onli
 Siguen **vigentes**: la descripción de V1 (tablas, campos, estados, reglas, pantallas, repositorios y su lógica) y el mapeo repositorio → endpoint, con estos matices:
 
 - El código real de V1 prevalece sobre este análisis si hay diferencias. Todo detalle que vaya a convertirse en endpoint o en migración debe confirmarse en el código y recogerse en una spec de `documents/specs/`.
-- Las referencias a tablas "locales" son del esquema SQLite de V1; el esquema D1 real vigente está en `documents/V2_MODELO_DATOS.md`.
+- Las referencias a tablas "locales" son del esquema SQLite de V1; el esquema D1 real vigente está en `documents/arquitectura/modelo-datos-v2.md`.
 - El texto original menciona el valor `HEMRA`; verificado en el código: `HEMRA` no aparece en ningún archivo de `src/` ni de `api/` (solo en documentos) y V1 usa `HEMBRA` (`src/database/migrationV4.js:59`, `AveRepository.js`). Es un error de tipeo del documento.
 - Las decisiones vigentes están en `documents/traspaso/` y en `CLAUDE.md`; ver `documents/README.md` para el orden de autoridad.
 
