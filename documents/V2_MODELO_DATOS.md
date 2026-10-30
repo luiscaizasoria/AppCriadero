@@ -1014,7 +1014,9 @@ Otros puntos detectados al comparar el borrador con las decisiones aprobadas y c
 
 El DDL literal de abajo no se edita; estas decisiones lo corrigen cuando se creen las migraciones (ver `documents/specs/aves.md`):
 
-- **Orden de migraciones:** Jaulas antes que Aves. `0005` = `jaulas` y `0006` = `aves`, con FK real y `ON DELETE RESTRICT` (el borrador usa `SET NULL` en `aves.jaula_actual_id`). Las migraciones aún no se han creado.
+- **Orden de migraciones:** Jaulas antes que Aves. `0005` = SOLO `jaulas`; `0006` = `aves`, `ave_evolucion`, `ave_historial` y `jaula_historial` (`jaula_historial` referencia `aves`, por eso va después), con FK real y `ON DELETE RESTRICT` (el borrador usa `SET NULL` en `aves.jaula_actual_id`). Las tablas de cuidados de jaula (`alimentacion_jaula`, `bebida_jaula`, `sanidad_jaula`) irán después de `0006`, en otra spec. Las migraciones aún no se han creado. Aprobado por el usuario, 2026-10-29.
+- **Raza (precisión):** la raza se compara sin distinguir mayúsculas contra `RAZAS` del criadero y se guarda el nombre del catálogo (no el texto recibido); el sexo se valida por código `MACHO`/`HEMBRA` contra `SEXOS`. Aprobado por el usuario, 2026-10-29.
+- **Marcas de tiempo (propuesta de Claude, pendiente de revisión):** el servicio escribe `created_at`/`updated_at` en ISO 8601 UTC; `DEFAULT CURRENT_TIMESTAMP` queda solo como respaldo (spec aves, R-P3a). Decidida por criterio de paridad con servidor más estricto, 2026-10-29.
 - **`diagnosticos_ave.estado` admite `CERRADO`:** el borrador (`CHECK (estado IN ('ACTIVO'))`) debe ampliarse a `('ACTIVO','CERRADO')`. El valor viene del flujo "Finalizar tratamiento" de v1.0.0 (`UPDATE diagnosticos_ave SET estado='CERRADO' WHERE ave_id=? AND estado='ACTIVO'`), que se replica por completo en V2. Resuelve el punto 9 para este campo.
 - **Raza y sexo del ave:** texto como V1, validado contra el catálogo del criadero (no `raza_item_id`/`sexo_item_id` como en el borrador); raza obligatoria y sexo siempre. Resuelve el punto 7 para el ave.
 - **Una sola baja por ave** (punto 8) y zona horaria fija `America/Guayaquil` con fechas `YYYY-MM-DD` y marcas ISO UTC (punto 10).
