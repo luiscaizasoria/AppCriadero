@@ -7,7 +7,8 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command '& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil integracion; exit $LASTEXITCODE'"
+          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command 'try { & \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil integracion; if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 2) { exit $LASTEXITCODE }; exit 2 } catch { exit 2 }'"
+          onFailure: block
 ---
 
 Eres el probador de integración de la API. Compruebas que el módulo funciona de verdad en el runtime real (workerd) con una base D1 **temporal**, distinta de la de desarrollo. Todo es local: nunca `--remote`.

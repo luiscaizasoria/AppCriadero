@@ -135,6 +135,24 @@ if ($comando -match 'rm\s+-[a-zA-Z]*[rR]|Remove-Item[^|;&]*-Recurse') {
     }
 }
 
+# escritura, movimiento y borrado (POSIX y PowerShell): solo el perfil de integracion, y solo sobre kikirikis-it-*
+$VerbosEscritura = @('rm', 'rmdir', 'mv', 'cp', 'tee', 'touch', 'mkdir', 'install', 'truncate', 'ln', 'dd', 'del', 'erase', 'ri', 'mi', 'cpi', 'ni', 'rni',
+    'Remove-Item', 'Set-Content', 'Add-Content', 'Out-File', 'New-Item', 'Move-Item', 'Copy-Item', 'Rename-Item', 'Clear-Content', 'Set-ItemProperty')
+$sinRedir = (($comando -replace '2>&1', '') -replace '&?[0-9]?>\s*/dev/null', '') -replace '>&[0-9]', ''
+$tocaDisco = $false
+if ($sinRedir -match '>') { $tocaDisco = $true }
+foreach ($seg in ($comando -split '\r?\n|&&|\|\||;|\|' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })) {
+    $seg = $seg -replace '^(\w+=\S*\s+)+', ''
+    $seg = $seg -replace '^(sudo|xargs|time|command|env|nohup)\s+(-\S+\s+)*', ''
+    $primero = ($seg -split '\s+')[0]
+    if ($VerbosEscritura -contains $primero) { $tocaDisco = $true }
+    if ($seg -match '^sed\s+(.*\s)?(-[a-zA-Z]*i|--in-place)\b' -or $seg -match '^perl\s+(.*\s)?-[a-zA-Z]*i\b') { $tocaDisco = $true }
+    if ($seg -match '^find\s.*(-delete|-exec\s+(rm|mv|cp))') { $tocaDisco = $true }
+}
+if ($tocaDisco -and ($Perfil -ne 'integracion' -or $comando -notmatch 'kikirikis-it-')) {
+    Bloquear 'este agente no puede escribir, mover ni borrar archivos desde Bash (redirecciones > y >>, tee, touch, mkdir, mv, cp, sed -i, Remove-Item, Set-Content y similares); el probador de integracion solo sobre kikirikis-it-*.'
+}
+
 # comandos de wrangler: siempre locales
 if ($comando -match 'wrangler\s+d1\s+(execute|migrations)') {
     if ($comando -notmatch '--local\b') { Bloquear 'wrangler d1 debe usar --local.' }

@@ -7,7 +7,8 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command '& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil ejecutor; exit $LASTEXITCODE'"
+          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command 'try { & \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil ejecutor; if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 2) { exit $LASTEXITCODE }; exit 2 } catch { exit 2 }'"
+          onFailure: block
 ---
 
 Eres el responsable de ejecutar la validación automática del backend. Ejecutas y reportas fielmente, incluidos los fallos, con el error, el archivo y la causa probable. No corriges nada: ni código ni pruebas.

@@ -7,7 +7,8 @@ hooks:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command '& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Escritura -Perfil docs; exit $LASTEXITCODE'"
+          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command 'try { & \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Escritura -Perfil docs; if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 2) { exit $LASTEXITCODE }; exit 2 } catch { exit 2 }'"
+          onFailure: block
 ---
 
 Eres el redactor de documentación del proyecto. Mantienes `documents/` coherente con el código real y con la regla del proyecto (la app V1 conserva su comportamiento; solo cambia dónde guarda los datos).

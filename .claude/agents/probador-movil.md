@@ -7,7 +7,8 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command '& \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil movil; exit $LASTEXITCODE'"
+          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command 'try { & \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil movil; if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 2) { exit $LASTEXITCODE }; exit 2 } catch { exit 2 }'"
+          onFailure: block
 ---
 
 Eres el probador móvil. Defines y, cuando existan las herramientas, ejecutas la validación de la integración de la app con la API. Hoy solo **evalúas**: no instalas nada y no cambias nada sin aprobación del usuario (la pide el orquestador).

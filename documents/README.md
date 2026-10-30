@@ -55,6 +55,8 @@ Ante una contradicción prevalece, de mayor a menor:
 
 **Cumplimiento técnico y reinicio:** el hook `.claude/hooks/guardia.ps1` (en el frontmatter de cada agente) limita dónde escribe cada agente y qué comandos Bash admite; `.claude/settings.json` pregunta antes de push, deploy y comandos remotos. Es comparación de texto, no una frontera de seguridad. Para activar el orquestador hay que reiniciar la sesión (o recargar la ventana de VS Code); para desactivarlo, quitar la clave `agent` de `.claude/settings.json`. La extensión de VS Code puede no aplicar el ajuste `agent` (no confirmado): en ese caso, iniciar con `claude --agent orquestador-proyecto` o actuar según `.claude/agents/orquestador-proyecto.md`.
 
+**Los hooks NO están confirmados como protección técnica (2026-10-30).** En pruebas reales con subagentes (7 intentos que debían bloquearse en esta sesión y 2 más en la anterior), ninguno se bloqueó y el guardia ni siquiera se ejecutó (una traza escrita al inicio del script no apareció). La documentación oficial dice que los hooks del frontmatter de subagentes de proyecto solo corren tras aceptar el diálogo de confianza de la carpeta (https://code.claude.com/docs/en/sub-agents, sección de hooks en frontmatter) y que un hook que falla o no arranca no bloquea salvo `onFailure: "block"` (v2.1.295+) o salida con código 2 (https://code.claude.com/docs/en/hooks). Mientras no se confirme, las restricciones de cada agente son **reglas de conducta**, y la seguridad real son las **ramas, los PR y las reglas `ask`/`deny` de `.claude/settings.json`**. Los hooks se mantienen como defensa adicional.
+
 ## Reglas (`.claude/rules/`)
 
 - `api-capas`: flujo routes → factory → service → repository y reglas de código de `api/src`.
