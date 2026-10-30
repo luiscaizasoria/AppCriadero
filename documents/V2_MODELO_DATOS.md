@@ -876,7 +876,7 @@ El UUID será generado al momento de crear el item.
 
 ### ENFERMEDADES
 
-Los valores provienen de enfermedades_catalogo de V1.
+Los valores provienen de la tabla heredada `enfermedades_catalogo` de V1 (`src/database/migrationV2.js:15-49`), que ningún código de `src/` lee. **V1 no siembra estos valores en `catalogo_items`**: `migrationV7.js:7-29` y `seeders.js:68` crean el catálogo `ENFERMEDADES` vacío, y `SaludRepository.js:34` lee `catalogo_items`. En una instalación nueva de V1 el selector sale vacío. Se mantienen en la plantilla V2 por decisión del usuario (2026-10-29).
 
 V1 no tenía un orden explícito para estos valores, por lo que orden será null inicialmente.
 
@@ -889,7 +889,7 @@ V1 no tenía un orden explícito para estos valores, por lo que orden será null
 
 ### MEDICAMENTOS
 
-Los valores provienen de medicamentos_catalogo de V1.
+Los valores provienen de la tabla heredada `medicamentos_catalogo` de V1 (`src/database/migrationV2.js:32-66`), que ningún código de `src/` lee. **V1 no siembra estos valores en `catalogo_items`**: `migrationV7.js:7-29` y `seeders.js:85` crean el catálogo `MEDICAMENTOS` vacío, y `SaludRepository.js:78` lee `catalogo_items`. Se mantienen en la plantilla V2 por decisión del usuario (2026-10-29).
 
 V1 no tenía un orden explícito para estos valores, por lo que orden será null inicialmente.
 
@@ -902,15 +902,15 @@ V1 no tenía un orden explícito para estos valores, por lo que orden será null
 
 ### ALIMENTOS
 
-No tendrá CatalogoItems iniciales.
+Estado real hoy (código y migraciones): sin CatalogoItems iniciales. V1 define el catálogo pero no contiene valores sembrados.
 
-V1 define el catálogo pero no contiene valores sembrados.
+Decidido el 2026-10-29, **pendiente de implementar** (la plantilla sigue en 38): `MORICHILLO` (Morichillo) y `BALANCEADO` (Balanceado). Ver `documents/specs/catalogos.md`.
 
 ### BEBIDAS
 
-No tendrá CatalogoItems iniciales.
+Estado real hoy (código y migraciones): sin CatalogoItems iniciales. V1 define el catálogo pero no contiene valores sembrados.
 
-V1 define el catálogo pero no contiene valores sembrados.
+Decidido el 2026-10-29, **pendiente de implementar** (la plantilla sigue en 38): `AGUA` (Agua) y `AGUA_VITAMINA` (Agua con vitamina). Ver `documents/specs/catalogos.md`.
 
 ### CATEGORIAS_FINANCIERAS
 
@@ -925,7 +925,7 @@ V1 define el catálogo pero no contiene valores sembrados.
 | 7 | OTRO | Otro |
 | 8 | ENVIO_AVE | Envío de ave |
 
-ENVIO_AVE se considera parte de la plantilla inicial V2 porque fue incorporado posteriormente como valor del sistema en V1.
+ENVIO_AVE se considera parte de la plantilla inicial V2 por decisión del usuario (2026-10-29). En V1 solo lo inserta `migrationV6.js:53-73` mediante un `INSERT … SELECT` sobre el catálogo `CATEGORIAS_FINANCIERAS`, que se crea después (`migrationV7.js`, `seeders.js`): por el orden de ejecución, una instalación nueva de V1 no lo siembra (deducción del código, no probada con una base real). El código de V1 sí lo usa como texto (`BajaAveRepository.js:343`, `FinanzasRepository.js:480`).
 
 ### ESPECIES, TIPOS_CRIADERO y FINALIDADES_CRIADERO (onboarding)
 
@@ -962,7 +962,7 @@ Un nuevo Criadero recibe:
 - 3 Tipos de criadero;
 - 3 Finalidades.
 
-Total inicial: **38** CatalogoItems (27 provienen de V1 y 11 del onboarding). La versión original de este modelo indicaba 27.
+Total inicial: **38** CatalogoItems (27 del dominio y 11 del onboarding). La versión original de este modelo indicaba 27. De los 27 del dominio, V1 siembra de verdad 18 en una instalación nueva (9 razas, 2 sexos y 7 categorías financieras); los otros 9 son 8 enfermedades y medicamentos de tablas heredadas más `ENVIO_AVE`, que se mantienen por decisión del usuario. Decidido el 2026-10-29, pendiente de implementar: la plantilla pasa a **42** ítems (`MORICHILLO`, `BALANCEADO`, `AGUA`, `AGUA_VITAMINA`).
 
 ### Regla de creación
 
@@ -1009,6 +1009,16 @@ Otros puntos detectados al comparar el borrador con las decisiones aprobadas y c
 11. **Fotos en R2.** El borrador usa `foto_r2_key`; la convención del proyecto es `r2_object_key`. Definir nombres y el patrón de claves (aislamiento por usuario y criadero) junto con la fase de R2.
 12. **Índices y paginación.** Los índices no están acordados (validar con `EXPLAIN QUERY PLAN`); la convención de paginación tampoco.
 13. **Clientes y producción.** Se derivan de `bajas_ave` (ventas) y `huevos`; por ahora no tienen tablas propias.
+
+### Decisiones posteriores al borrador (2026-10-29, aprobadas por el usuario)
+
+El DDL literal de abajo no se edita; estas decisiones lo corrigen cuando se creen las migraciones (ver `documents/specs/aves.md`):
+
+- **Orden de migraciones:** Jaulas antes que Aves. `0005` = `jaulas` y `0006` = `aves`, con FK real y `ON DELETE RESTRICT` (el borrador usa `SET NULL` en `aves.jaula_actual_id`). Las migraciones aún no se han creado.
+- **`diagnosticos_ave.estado` admite `CERRADO`:** el borrador (`CHECK (estado IN ('ACTIVO'))`) debe ampliarse a `('ACTIVO','CERRADO')`. El valor viene del flujo "Finalizar tratamiento" de v1.0.0 (`UPDATE diagnosticos_ave SET estado='CERRADO' WHERE ave_id=? AND estado='ACTIVO'`), que se replica por completo en V2. Resuelve el punto 9 para este campo.
+- **Raza y sexo del ave:** texto como V1, validado contra el catálogo del criadero (no `raza_item_id`/`sexo_item_id` como en el borrador); raza obligatoria y sexo siempre. Resuelve el punto 7 para el ave.
+- **Una sola baja por ave** (punto 8) y zona horaria fija `America/Guayaquil` con fechas `YYYY-MM-DD` y marcas ISO UTC (punto 10).
+- **Fotos:** diferidas a la fase de R2; mientras tanto opcionales y sin poder quitarse al editar (punto 11 sigue abierto para el nombre de la clave).
 
 ### DDL (literal del cierre de traspaso, sección 3.1)
 

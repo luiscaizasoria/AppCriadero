@@ -17,8 +17,17 @@ Siguen **vigentes**: la descripción de V1 (tablas, campos, estados, reglas, pan
 
 - El código real de V1 prevalece sobre este análisis si hay diferencias. Todo detalle que vaya a convertirse en endpoint o en migración debe confirmarse en el código y recogerse en una spec de `documents/specs/`.
 - Las referencias a tablas "locales" son del esquema SQLite de V1; el esquema D1 real vigente está en `documents/V2_MODELO_DATOS.md`.
-- El texto original menciona el valor `HEMRA`; debe verificarse en el código de V1 si es un error real antes de corregirlo.
+- El texto original menciona el valor `HEMRA`; verificado en el código: `HEMRA` no aparece en ningún archivo de `src/` ni de `api/` (solo en documentos) y V1 usa `HEMBRA` (`src/database/migrationV4.js:59`, `AveRepository.js`). Es un error de tipeo del documento.
 - Las decisiones vigentes están en `documents/traspaso/` y en `CLAUDE.md`; ver `documents/README.md` para el orden de autoridad.
+
+### Correcciones verificadas contra el código
+
+Se comprobaron contra el código de V1 (rama `spec/aves`, árbol idéntico al tag `v1.0.3` en estos puntos) y contra el historial de git. Donde el Anexo B dice otra cosa, vale lo siguiente. El Anexo B, más abajo, **no se modifica**.
+
+- **`EstadoSaludRepository.js` existe, pero no es un repositorio.** El Anexo B (línea 358 de este archivo) dice "NO EXISTE - pantalla mal nombrada". El archivo `src/repositories/EstadoSaludRepository.js` existe (2150 líneas) y es una copia de `NuevaAveScreen`: su único export es `export default function NuevaAveScreen` (línea 48). `FinalizarTratamientoScreen.js:14-16` importa de él `finalizarTratamiento`, que ya no existe: la función estaba en la v1.0.0 (commit `4a8cc6c`) y se perdió en el commit `97edf7f` (etiqueta v1.0.1), que sobrescribió el archivo.
+- **`actualizarAve` no escribe en `ave_evolucion`.** El mapeo del Anexo B (línea 762 de este archivo) indica "aves + ave_evolucion + ave_historial". En el código, `actualizarAve` (`AveRepository.js:975-1552`) solo actualiza `aves` y escribe en `ave_historial` (`:1523`); el único `INSERT` en `ave_evolucion` está en `crearAve` (`:862`).
+- **`ProduccionRepository` aparece repetido.** La tabla de repositorios del Anexo B lo lista dos veces (líneas 354 y 359 de este archivo). Hay 20 archivos distintos y el análisis no menciona ninguno que no exista; el único existente que no trata como tal es `EstadoSaludRepository.js`.
+- **V1 no siembra ENFERMEDADES ni MEDICAMENTOS.** El Anexo B (líneas 637-638 y 679-680 de este archivo) los presenta como ítems de catálogo de V1. Sus valores solo están en las tablas heredadas `enfermedades_catalogo` y `medicamentos_catalogo` (`migrationV2.js:15-79`), que ningún código lee; `migrationV7.js:7-29` y `seeders.js` crean esos catálogos vacíos y `SaludRepository.js:34,78` leen `catalogo_items`. Lo mismo ocurre, por el orden de las migraciones, con `ENVIO_AVE` (`migrationV6.js:53-73`) en una instalación nueva (deducción, no probada con una base real). V2 los mantiene en su plantilla por decisión del usuario (2026-10-29).
 
 ---
 

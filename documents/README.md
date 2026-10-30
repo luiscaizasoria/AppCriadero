@@ -46,7 +46,7 @@ Ante una contradicción prevalece, de mayor a menor:
 
 - [ ] `V1_BASELINE.md`: su apartado "Alcance aún no implementado en V1" todavía menciona la sincronización offline como trabajo de V2. Se dejó intacto a propósito (referencia histórica); actualizar solo si se decide.
 - [ ] Decidir si `documents/traspaso/` se versiona y si se elimina o archiva su contenido duplicado.
-- [ ] Redactar las specs de módulo en `specs/` (Aves, Jaulas, Huevos, Salud, Finanzas…) desde el código de V1.
+- [ ] Specs de módulo en `specs/`, desde el código de V1. Borradores con decisiones aprobadas (2026-10-29): `aves.md` y `catalogos.md`. Pendientes, en este orden de implementación: Jaulas (antes que Aves), Huevos, Salud, Finanzas…
 - [ ] Validar el borrador del modelo futuro contra V1 (`HEMRA`/`HEMBRA`, dinero, soft delete de movimientos, origen de movimientos…) antes de crear migraciones.
 - [ ] Decidir el destino de `BackupRepository` en V2.
 - [ ] Resolver los riesgos listados en `V2_ARCHITECTURA.md` (PBKDF2 en Worker real, rate limiting, CORS, CI, refresh token, `active` en el registro).

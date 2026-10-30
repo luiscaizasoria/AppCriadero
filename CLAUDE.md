@@ -19,6 +19,12 @@ App móvil (React Native + Expo, V1 local con SQLite) en evolución a V2 **onlin
 - IDs `TEXT` con UUID v7; soft delete (`deleted_at`) y `version` para concurrencia optimista (`UPDATE … WHERE version = ?`).
 - API versionada bajo `/api/v1`, JSON por HTTPS, sin .NET.
 
+## Paridad con V1 (decisión vigente)
+
+- V2 empieza **sin datos de usuario**, solo con catálogos. La V1 está probada y es el **contrato**: V2 reproduce exactamente lo que V1 hace (validaciones y mensajes, efectos en historial y otras tablas, errores).
+- Todo lo que V2 haga distinto es una **diferencia deliberada**: se registra en la spec del módulo y la aprueba el usuario. Ya aceptadas: V2 requiere conexión y las pantallas necesitan estados de carga y de error de red.
+- No hay importación de datos de V1 ni mapeo de IDs en el alcance actual.
+
 ## Fuera de alcance (no implementar sin orden expresa)
 
 - Sincronización SQLite ↔ D1, cola offline, resolución de conflictos, motor offline-first.
