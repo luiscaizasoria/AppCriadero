@@ -2,7 +2,8 @@
   CriaderoRepository,
   CatalogoItemInfo,
   CriaderoInfo,
-  CriaderoConfiguracionInfo
+  CriaderoConfiguracionInfo,
+  CriaderoResumen
 } from "../../src/criaderos/criaderos.repository";
 
 
@@ -112,6 +113,14 @@ export class FakeCriaderoRepository implements CriaderoRepository {
       }
     );
 
+  }
+
+
+  criaderosDelUsuario: CriaderoResumen[] = [];
+
+
+  async listCriaderosByUser(){
+    return this.criaderosDelUsuario;
   }
 
 

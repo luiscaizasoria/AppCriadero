@@ -35,6 +35,29 @@ import {
 } from './src/config/constants';
 
 
+import {
+    USAR_API
+} from './src/config/dataSource';
+
+
+// Modo API (EXPO_PUBLIC_DATA_SOURCE=api): inicio de sesion y seleccion de
+// criadero. En modo SQLite (por defecto) estos modulos ni se cargan.
+const useSesion =
+    USAR_API
+        ? require('./src/api/useSesion').useSesion
+        : () => ({
+            cargando: false,
+            token: null,
+            criaderoId: null
+        });
+
+
+const AccesoNavigator =
+    USAR_API
+        ? require('./src/navigation/AccesoNavigator').default
+        : null;
+
+
 
 
 export default function App() {
@@ -51,6 +74,10 @@ export default function App() {
         databaseError,
         setDatabaseError
     ] = useState(null);
+
+
+
+    const sesion = useSesion();
 
 
 
@@ -225,6 +252,58 @@ export default function App() {
 
 
 
+
+
+
+
+
+    if(USAR_API){
+
+
+        if(sesion.cargando){
+
+            return (
+
+                <View
+                    style={
+                        styles.center
+                    }
+                >
+
+                    <ActivityIndicator
+                        size="large"
+                        color={
+                            COLORS.primary
+                        }
+                    />
+
+                </View>
+
+            );
+
+        }
+
+
+        if(!sesion.token || !sesion.criaderoId){
+
+            return (
+
+                <NavigationContainer>
+
+                    <AccesoNavigator
+                        autenticado={
+                            Boolean(sesion.token)
+                        }
+                    />
+
+                </NavigationContainer>
+
+            );
+
+        }
+
+
+    }
 
 
 

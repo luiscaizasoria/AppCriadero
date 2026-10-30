@@ -32,7 +32,14 @@ export interface CriaderoConfiguracionInfo {
   finalidadItemId: string | null;
 }
 
+export interface CriaderoResumen {
+  id: string;
+  nombre: string;
+  onboardingCompletado: number;
+}
+
 export interface CriaderoRepository {
+  listCriaderosByUser(userId: string): Promise<CriaderoResumen[]>;
   userExistsAndActive(userId: string): Promise<boolean>;
   criaderoExists(criaderoId: string): Promise<boolean>;
   userOwnsCriadero(userId: string, criaderoId: string): Promise<boolean>;
@@ -56,6 +63,23 @@ export interface CriaderoRepository {
 
 export class D1CriaderoRepository implements CriaderoRepository {
   constructor(private db: D1Database) {}
+
+  async listCriaderosByUser(userId: string): Promise<CriaderoResumen[]> {
+    const result = await this.db
+      .prepare(`
+        SELECT
+          id,
+          nombre,
+          onboarding_completado as onboardingCompletado
+        FROM criaderos
+        WHERE user_id = ? AND deleted_at IS NULL
+        ORDER BY created_at, id
+      `)
+      .bind(userId)
+      .all<CriaderoResumen>();
+
+    return result.results;
+  }
 
   async userExistsAndActive(userId: string): Promise<boolean> {
     const result = await this.db

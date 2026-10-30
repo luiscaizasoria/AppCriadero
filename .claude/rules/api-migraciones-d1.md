@@ -6,7 +6,7 @@ paths:
 
 # Migraciones D1
 
-- Nunca editar una migración ya aplicada (`0001`–`0004`). Todo cambio va en un archivo nuevo `NNNN_descripcion.sql` (la siguiente es `0005`). Orden decidido: `0005` = solo jaulas; `0006` = aves, ave_evolucion, ave_historial y jaula_historial.
+- Nunca editar una migración ya aplicada (`0001`–`0005`; `0005` = jaulas, aplicada en local y en pruebas). Todo cambio va en un archivo nuevo `NNNN_descripcion.sql` (la siguiente es `0006` = aves, ave_evolucion, ave_historial y jaula_historial).
 - Antes de escribir una migración, revisar el esquema actual (`users`, `criaderos`, `catalogos`, `catalogo_items`, `criadero_configuracion`) y la spec del módulo en `documents/specs/` y el modelo en `documents/arquitectura/modelo-datos-v2.md` (su DDL es borrador; prevalecen el código de V1 y la spec). Las tablas replican las de V1.
 - Convenciones de tablas: `id TEXT` (UUID v7), `created_at`, `updated_at`; `deleted_at` donde V1 da de baja o desactiva; entidades de negocio con `criadero_id` y FK; sin `user_id` redundante. No añadir CHECK, límites ni columnas que V1 no tenga (las peticiones no exigen `version`).
 - Foto/archivos: `r2_object_key` (no URI local ni BLOB).

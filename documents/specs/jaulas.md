@@ -13,6 +13,18 @@
 
 borrador
 
+## Implementación piloto (2026-10-30, rama `feat/jaulas-api`)
+
+Jaulas es el módulo piloto de la migración de repositorios a la API. Lo implementado replica `JaulaRepository.js` de V1 y **prevalece sobre las propuestas anteriores de esta spec** cuando hay diferencias (regla del proyecto: replicar V1).
+
+- **Migración `0005_jaulas.sql`** (solo `jaulas`): columnas de V1 (`codigo`, `nombre`, `ubicacion`, `tipo`, `estado_sanitario`, `activa`, `fecha_creacion`, `fecha_actualizacion`, `fecha_desactivacion`) más `id` (UUID v7) y `criadero_id`. `fecha_actualizacion` nace en `NULL`, como en V1. Sin `version`, `deleted_at` ni CHECK. Índice único `(criadero_id, codigo)`: distingue mayúsculas e incluye inactivas, como el `UNIQUE` de V1.
+- **Endpoints** bajo `/api/v1/criaderos/:criaderoId/jaulas` (JWT y propiedad del criadero; `403 FORBIDDEN` si no es propietario): `GET ?estado=ACTIVA|INACTIVA`, `GET /:jaulaId`, `POST`, `PUT /:jaulaId`, `DELETE /:jaulaId` (baja lógica: `activa = 0`, `fecha_desactivacion` ISO). Respuestas en camelCase; el cliente de la app las convierte a los objetos `snake_case` de V1.
+- **Errores como V1:** código duplicado → `409` con `message: "UNIQUE constraint failed: jaulas.codigo"` (`error: UNIQUE_JAULAS_CODIGO`); el cliente lanza `Error` con ese texto, que es lo que detectan `NuevaJaulaScreen` y `DetalleJaulaScreen`. Jaula inexistente → `404` `JAULA_NO_ENCONTRADA` (la cadena de V1); `obtenerJaulaPorId` devuelve `null`, como V1. Desactivar una jaula ya inactiva → `200` con `{ cantidadAvesLiberadas: 0 }`, como V1.
+- **Sin reglas nuevas en el servidor:** solo `trim` (vacío → `null`) en `nombre`, `ubicacion` y `tipo`, y `trim` en `codigo`; ni mayúsculas, ni longitud, ni tipo cerrado, ni rechazo por jaula inactiva, ni `version`. La única validación es técnica (el cuerpo debe ser un objeto y `codigo` un texto, si no `400 VALIDATION_ERROR`).
+- **Excepciones técnicas:** ids UUID v7 (el cliente devuelve el id como texto en lugar del entero de `lastInsertRowId`), `criadero_id`, autenticación y errores de red; además, editar una jaula inexistente (o de otro criadero) responde `404` en lugar de no hacer nada, para no tocar jaulas de otro criadero; y se añadió `GET /api/v1/criaderos` (criaderos del usuario) para que la app elija criadero.
+- **Cliente (app):** `JaulaRepository.js` conserva las 8 funciones y delega en `JaulaRepository.sqlite.js` (código V1 intacto) o `JaulaRepository.api.js` según `EXPO_PUBLIC_DATA_SOURCE`; las pantallas de jaulas no se modificaron.
+- **Pendiente (depende de Aves y de la migración `0006`):** `cantidad_aves` real (hoy 0), `obtenerAvesHistoricasJaula`, `obtenerHistorialCompletoJaula` y el historial (`jaula_historial`), liberar aves al desactivar (`cantidadAvesLiberadas` hoy siempre 0), asignar y quitar aves. Mientras las aves sigan en SQLite local, en modo API esas pantallas (asignar o quitar aves, cuidados de jaula, selector de jaula del alta de ave y dashboard) siguen leyendo la tabla `jaulas` local: no deben usarse en la prueba del piloto.
+
 ## Fuente V1
 
 Alcance: jaulas del criadero, su ocupación por aves individuales (sin lotes), su baja lógica ("eliminar" = desactivar) y el historial de la jaula (`jaula_historial`). Sin sincronización offline; D1 como fuente de verdad en V2. Todo sale del código de V1 (árbol actual, `app.json` v1.0.3). Las líneas citadas son del árbol actual.

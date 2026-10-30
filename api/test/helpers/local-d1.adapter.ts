@@ -1,8 +1,37 @@
 ﻿import Database from "better-sqlite3";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 
-const DB_PATH =
-  "./.wrangler/state/v3/d1/miniflare-D1DatabaseObject/888e3c02635326b114d386411a37533786c9f79e77575fe1920db4b0b6a66919.sqlite";
+const MIGRATIONS_DIR = fileURLToPath(
+  new URL("../../migrations", import.meta.url)
+);
+
+
+/**
+ * Crea una base SQLite NUEVA con todas las migraciones de api/migrations
+ * aplicadas en orden. Por defecto vive en memoria: las pruebas de
+ * integracion nunca tocan la base local de desarrollo de Wrangler
+ * (.wrangler/state) ni ninguna base remota.
+ */
+function createMigratedDatabase(path = ":memory:"){
+
+  const db = new Database(path);
+
+  const files = readdirSync(MIGRATIONS_DIR)
+    .filter(file => file.endsWith(".sql"))
+    .sort();
+
+  for(const file of files){
+    db.exec(readFileSync(join(MIGRATIONS_DIR, file), "utf8"));
+  }
+
+  db.pragma("foreign_keys = ON");
+
+  return db;
+
+}
 
 
 class LocalPreparedStatement {
@@ -93,7 +122,7 @@ export class LocalD1Adapter {
 
   constructor(){
 
-    this.db = new Database(DB_PATH);
+    this.db = createMigratedDatabase();
 
   }
 
