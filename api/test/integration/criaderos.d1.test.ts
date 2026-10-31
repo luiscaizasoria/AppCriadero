@@ -154,7 +154,7 @@ describe("Criadero D1 Local Integration",()=>{
 
 
     expect(items.total)
-      .toBe(38);
+      .toBe(42);
 
 
 

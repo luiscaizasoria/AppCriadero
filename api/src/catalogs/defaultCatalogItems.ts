@@ -19,13 +19,13 @@ export interface DefaultCatalogItem {
 /**
  * Colección inmutable de items iniciales por catálogo
  *
- * Total: 38 items
+ * Total: 42 items
  * - RAZAS: 9 items
  * - SEXOS: 2 items
  * - ENFERMEDADES: 4 items
  * - MEDICAMENTOS: 4 items
- * - ALIMENTOS: 0 items
- * - BEBIDAS: 0 items
+ * - ALIMENTOS: 2 items
+ * - BEBIDAS: 2 items
  * - CATEGORIAS_FINANCIERAS: 8 items
  * - ESPECIES: 5 items
  * - TIPOS_CRIADERO: 3 items
@@ -154,11 +154,35 @@ export const DEFAULT_CATALOG_ITEMS: readonly DefaultCatalogItem[] = [
     order: null,
   },
 
-  // ALIMENTOS (0 items)
-  // No tiene items iniciales según V1
+  // ALIMENTOS (2 items)
+  // V1 no los siembra; decisión del usuario (D-CAT-03)
+  {
+    catalogCode: 'ALIMENTOS',
+    code: 'MORICHILLO',
+    name: 'Morichillo',
+    order: 0,
+  },
+  {
+    catalogCode: 'ALIMENTOS',
+    code: 'BALANCEADO',
+    name: 'Balanceado',
+    order: 0,
+  },
 
-  // BEBIDAS (0 items)
-  // No tiene items iniciales según V1
+  // BEBIDAS (2 items)
+  // V1 no los siembra; decisión del usuario (D-CAT-03)
+  {
+    catalogCode: 'BEBIDAS',
+    code: 'AGUA',
+    name: 'Agua',
+    order: 0,
+  },
+  {
+    catalogCode: 'BEBIDAS',
+    code: 'AGUA_VITAMINA',
+    name: 'Agua con vitamina',
+    order: 0,
+  },
 
   // CATEGORIAS_FINANCIERAS (8 items)
   {

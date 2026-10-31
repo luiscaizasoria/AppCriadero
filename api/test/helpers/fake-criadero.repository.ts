@@ -60,6 +60,8 @@ export class FakeCriaderoRepository implements CriaderoRepository {
       ["SEXOS","catalog-sexos"],
       ["ENFERMEDADES","catalog-enfermedades"],
       ["MEDICAMENTOS","catalog-medicamentos"],
+      ["ALIMENTOS","catalog-alimentos"],
+      ["BEBIDAS","catalog-bebidas"],
       ["CATEGORIAS_FINANCIERAS","catalog-financieras"]
     ].forEach(([codigo,id])=>{
       this.catalogs.set(codigo,id);
