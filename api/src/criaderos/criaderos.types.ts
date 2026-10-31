@@ -107,6 +107,17 @@ export interface OnboardingStatusResponse {
   };
 }
 
+export interface ListCriaderosResponse {
+  success: true;
+  data: {
+    criaderos: {
+      id: string;
+      nombre: string;
+      onboardingCompletado: boolean;
+    }[];
+  };
+}
+
 export interface ErrorResponse {
   success: false;
   error: string;

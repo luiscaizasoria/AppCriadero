@@ -1,6 +1,7 @@
 ﻿import { Hono } from 'hono';
 import defaultCriaderosRouter from './criaderos/criaderos.routes';
 import defaultAuthRouter from './auth/auth.routes';
+import defaultJaulasRouter from './jaulas/jaulas.routes';
 
 
 export type Env = {
@@ -15,6 +16,7 @@ type AppRouter = Hono<any, any, any>;
 type AppOptions = {
   criaderosRouter?: AppRouter;
   authRouter?: AppRouter;
+  jaulasRouter?: AppRouter;
 };
 
 
@@ -34,6 +36,10 @@ export function createApp(
     options.authRouter ?? defaultAuthRouter;
 
 
+  const jaulasRouter =
+    options.jaulasRouter ?? defaultJaulasRouter;
+
+
 
   app.get('/api/v1/health', (c) => {
 
@@ -47,6 +53,8 @@ export function createApp(
 
 
   app.route('/api/v1/criaderos', criaderosRouter);
+
+  app.route('/api/v1/criaderos/:criaderoId/jaulas', jaulasRouter);
 
   app.route('/api/v1/auth', authRouter);
 

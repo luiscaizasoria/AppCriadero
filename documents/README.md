@@ -21,11 +21,11 @@ Ante una contradicción prevalece, de mayor a menor:
 | Ruta | Contenido |
 |---|---|
 | `CLAUDE.md` | Única guía para Claude: estado, regla del proyecto, arquitectura, comandos, convenciones, Git |
-| `src/` | App móvil V1 (React Native + Expo): `screens/`, `repositories/` (acceso a SQLite; se reemplazarán por clientes REST), `database/` (migraciones y seeders SQLite V1–V7), `navigation/`, `components/`, `services/` (imágenes), `models/`, `config/` |
+| `src/` | App móvil V1 (React Native + Expo): `screens/`, `repositories/` (acceso a SQLite; se reemplazan uno a uno por clientes REST: `JaulaRepository.js` elige entre `.sqlite.js` y `.api.js`), `api/` (cliente HTTP y sesión del modo API), `screens/acceso/` (registro, inicio de sesión y selección de criadero, solo en modo API), `database/` (migraciones y seeders SQLite V1–V7), `navigation/`, `components/`, `services/` (imágenes), `models/`, `config/` (`dataSource.js`: interruptor SQLite/API) |
 | `App.js`, `index.js`, `app.json`, `eas.json`, `assets/` | Entrada y configuración de la app Expo |
-| `api/src/` | Backend V2 (TypeScript, Cloudflare Workers, Hono): `app.ts` compone los routers, `index.ts` exporta el Worker; módulos `auth/`, `criaderos/` y `catalogs/` con el patrón routes → factory → service → repository |
-| `api/migrations/` | Migraciones D1 aplicadas `0001`–`0004` (siguiente: `0005` = jaulas; `0006` = aves e historiales) |
-| `api/test/` | Pruebas: unitarias y HTTP (`*.test.ts`), `helpers/` (fakes, adaptador D1 local) e `integration/` (D1 local con better-sqlite3; borra datos locales) |
+| `api/src/` | Backend V2 (TypeScript, Cloudflare Workers, Hono): `app.ts` compone los routers, `index.ts` exporta el Worker; módulos `auth/`, `criaderos/`, `jaulas/` y `catalogs/` con el patrón routes → factory → service → repository |
+| `api/migrations/` | Migraciones D1 `0001`–`0005` (`0005` = jaulas, solo aplicada en local y pruebas; siguiente: `0006` = aves e historiales) |
+| `api/test/` | Pruebas: unitarias y HTTP (`*.test.ts`), `helpers/` (fakes, adaptador D1 local) e `integration/` (SQLite en memoria con las migraciones aplicadas, vía better-sqlite3) |
 | `.claude/` | Configuración de Claude Code: `settings.json`, `agents/`, `rules/`, `skills/` (ver abajo) |
 | `documents/arquitectura/` | `arquitectura-v2.md` (arquitectura online-first, identidad, riesgos), `modelo-datos-v2.md` (estado real de D1 y borrador del modelo futuro) y `roadmap-v2.md` (siete fases) |
 | `documents/referencia-v1/` | `baseline-v1.md` (funciones y restricciones de V1) y `analisis-v1-mapeo-api.md` (análisis de V1 y mapeo repositorio → endpoint; el Anexo B es literal) |
@@ -56,6 +56,8 @@ Ante una contradicción prevalece, de mayor a menor:
 **Cumplimiento técnico y reinicio:** el hook `PreToolUse` de `.claude/settings.json` ejecuta `.claude/hooks/guardia-agentes.ps1`, que identifica al subagente por `agent_type` y aplica su perfil de `.claude/hooks/guardia.ps1` (dónde escribe y qué comandos Bash admite); al usuario y al orquestador no los restringe. `.claude/settings.json` pregunta antes de push, deploy y comandos remotos. Es comparación de texto, no una frontera de seguridad. Para desactivar el guardia, quitar `hooks.PreToolUse` de `.claude/settings.json`. Para activar el orquestador hay que reiniciar la sesión (o recargar la ventana de VS Code); para desactivarlo, quitar la clave `agent`. La extensión de VS Code puede no aplicar el ajuste `agent` (no confirmado): en ese caso, iniciar con `claude --agent orquestador-proyecto` o actuar según `.claude/agents/orquestador-proyecto.md`.
 
 **Hooks confirmados como protección técnica (2026-10-31).** Los hooks de `settings.json` se ejecutan dentro de los subagentes y reciben `agent_type` (https://code.claude.com/docs/en/hooks); se verificó con subagentes reales (bloqueo del redactor fuera de `documents/` y del probador de integración en `rm -rf` sin `kikirikis-it-`). Los hooks del frontmatter de los agentes se retiraron. La seguridad adicional siguen siendo las ramas, los PR y las reglas `ask`/`deny`.
+
+**Regla de trabajo con ramas (decisión del usuario, 2026-10-31).** Una sola rama de trabajo (hoy `trabajo/migracion-nube`, desde `main`), commits locales frecuentes, push a esa rama solo con aprobación del usuario, sin PR y fusión a `main` únicamente cuando el usuario la pida con algo probado y funcionando. Cada comando remoto de Cloudflare sigue necesitando su aprobación individual.
 
 ## Reglas (`.claude/rules/`)
 

@@ -5,9 +5,9 @@ App móvil (React Native + Expo, V1 local con SQLite) en evolución a V2 **onlin
 ## Estado actual
 
 - `src/`, `App.js`, `app.json`: app móvil V1 (v1.0.3), funcional y local. Es la **referencia funcional y el contrato**; no se reescribe ni se elimina hasta que existan y se validen los endpoints V2 equivalentes.
-- `api/`: backend V2. Implementado: `GET /api/v1/health`, `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/criaderos`, `PUT /api/v1/criaderos/:criaderoId/configuracion`, `POST /api/v1/criaderos/:criaderoId/onboarding/complete`, `GET /api/v1/criaderos/:criaderoId/onboarding`.
-- Pendiente (no asumir que existe): Google Sign-In, `/auth/me`, refresh token, listado/selección de criaderos, R2, y todos los módulos de negocio (aves, jaulas, huevos, salud, finanzas…).
-- Migraciones D1 aplicadas: `0001` a `0004` en `api/migrations/`.
+- `api/`: backend V2. Implementado: `GET /api/v1/health`, `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/criaderos`, `PUT /api/v1/criaderos/:criaderoId/configuracion`, `POST /api/v1/criaderos/:criaderoId/onboarding/complete`, `GET /api/v1/criaderos/:criaderoId/onboarding`, `GET /api/v1/criaderos` (criaderos del usuario) y, bajo `/api/v1/criaderos/:criaderoId/jaulas`, `GET` (activas o `?estado=INACTIVA`), `GET /:jaulaId`, `POST`, `PUT /:jaulaId` y `DELETE /:jaulaId` (baja lógica). Jaulas es el módulo piloto: el cliente REST de la app (`src/repositories/JaulaRepository.api.js`) se activa con `EXPO_PUBLIC_DATA_SOURCE=api`; sin esa variable la app usa SQLite como V1.
+- Pendiente (no asumir que existe): Google Sign-In, `/auth/me`, refresh token, R2, el historial de jaulas (`jaula_historial`, migración `0006`) y los demás módulos de negocio (aves, cuidados de jaula, huevos, salud, finanzas…).
+- Migraciones D1 en `api/migrations/`: `0001` a `0004` aplicadas y `0005` (jaulas), nueva y solo aplicada en local y en pruebas; hasta aplicarla en remoto con orden expresa, la base remota llega a `0004`.
 
 ## Decisiones vigentes (online-first)
 
@@ -60,7 +60,7 @@ routes -> factory -> service -> repository -> D1
 
 Validación antes de proponer un commit: `npm run typecheck`, `npm test -- --run`, `npm run test:integration` y `git diff --check`. Entorno validado: Node 22 (`nvm use 22`).
 
-`test:integration` **borra datos** (`DELETE` en `users`, `criaderos`, `catalogo_items`, `criadero_configuracion`) del SQLite local de Wrangler (`.wrangler/state/v3/d1/…`, el hash cambia). Nunca apuntarlo a una base remota. Pide confirmación antes de ejecutarlo.
+`test:integration` usa una base SQLite **en memoria** con las migraciones de `api/migrations/` aplicadas en cada ejecución (`LocalD1Adapter`): no toca la base local de desarrollo de Wrangler (`.wrangler/state`) ni ninguna remota. Requiere `better-sqlite3`, que trae binarios precompilados: instala `api/` con `npm ci --ignore-scripts` (su script de instalación intenta recompilar y falla sin Python ni Visual Studio, pero no hace falta). Pide confirmación antes de ejecutarlo.
 
 Migraciones locales: `npx wrangler d1 migrations apply criadero-kikirikis-dev --local`. Cualquier comando con `--remote` requiere autorización expresa.
 
@@ -70,7 +70,7 @@ Migraciones locales: `npx wrangler d1 migrations apply criadero-kikirikis-dev --
 - Dominio y campos en español; **API en camelCase**, **SQL en snake_case**.
 - Respuesta de éxito `{ "success": true, "data": … }`; error `{ "success": false, "error": "CODIGO", "message": "…" }` (opcional `missingFields`). Los códigos de error son estables (p. ej. `VALIDATION_ERROR`, `UNAUTHORIZED`, `INVALID_TOKEN`, `FORBIDDEN`, `CRIADERO_NOT_FOUND`, `*_CONCURRENCY_CONFLICT`); reutilizar los existentes antes de crear otros.
 - No sobrediseñar ni eliminar funcionalidades para simplificar. Cambios pequeños y revisables.
-- Migraciones D1: nunca editar una aplicada; todo cambio va en `NNNN_descripcion.sql` nueva (siguiente: `0005`). Ver `.claude/rules/api-migraciones-d1.md`.
+- Migraciones D1: nunca editar una aplicada; todo cambio va en `NNNN_descripcion.sql` nueva (siguiente: `0006` = aves, ave_evolucion, ave_historial y jaula_historial). Ver `.claude/rules/api-migraciones-d1.md`.
 
 ## Pruebas
 
@@ -81,8 +81,9 @@ Migraciones locales: `npx wrangler d1 migrations apply criadero-kikirikis-dev --
 ## Git
 
 - **Conventional Commits** en español, con scope: `feat(api): …`, `test(api): …`, `refactor(api): …`, `fix(api): …`, `docs: …`, `chore: …`.
-- Commits pequeños y funcionales; no mezclar una feature con limpieza grande. Ramas `feature/v2-*` desde `v2`.
-- **Push, deploy y migraciones remotas solo con orden explícita del usuario.** Los commits locales los hace únicamente el `orquestador-proyecto` al cerrar un módulo cuyo plan aprobó el usuario (ningún otro agente hace commit); fuera de ese caso, solo con orden explícita. Revisar `git status` y `git diff --stat` antes de `git add`; nunca `git add .` a ciegas.
+- **Una sola rama de trabajo** (decisión del usuario, 2026-10-31): hoy `trabajo/migracion-nube`, creada desde `main`. Commits locales frecuentes en ella; **push a esa rama solo con aprobación del usuario**; sin PR y **sin fusionar a `main` hasta que el usuario lo pida**, cuando haya algo probado y funcionando. No se abren ramas por módulo (la rama `v2` se retirará más adelante).
+- Commits pequeños y funcionales; no mezclar una feature con limpieza grande.
+- **Deploy y migraciones remotas solo con orden explícita del usuario** (cada comando `--remote`, `deploy` o `secret` con su aprobación individual). Los commits locales los hace únicamente el `orquestador-proyecto` al cerrar un módulo cuyo plan aprobó el usuario (ningún otro agente hace commit); fuera de ese caso, solo con orden explícita. Revisar `git status` y `git diff --stat` antes de `git add`; nunca `git add .` a ciegas.
 - No versionar secretos: `api/.dev.vars`, `.env*` están ignorados. Solo `api/.dev.vars.example` (variable actual: `JWT_SECRET`). No leer ni imprimir `.dev.vars`.
 - Barrera **parcial**: `.claude/settings.json` niega `Read` sobre `api/.dev.vars`, `.env`, `.env.local` y `.env.production`, y `Bash` con `cat`, `type`, `Get-Content` y `less` sobre esos archivos. No cubre otras formas de lectura (`more`, `head`, `tail`, `Select-String`, `node`, `python`, redirecciones, copiar el archivo, `.env.*` distintos de esos tres) ni subagentes con otras herramientas; no sustituye al sandbox ni a la disciplina de no abrirlos.
 - `documents/traspaso/` es **solo local**: está en `.gitignore` (respaldo en un `.zip` fuera del repositorio); no se versiona ni se modifica.

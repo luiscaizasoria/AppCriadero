@@ -4,7 +4,7 @@
 
 V2 es **online-first** (D1 y R2 como fuentes de verdad, sin sincronización offline). La API en `api/` ya tiene la plataforma base, autenticación con email y contraseña, criaderos y onboarding. V1.0.3 sigue siendo la referencia funcional y la app móvil continúa usando su SQLite local hasta que cada módulo se reemplace por su cliente REST.
 
-Rama de trabajo conocida: `feature/v2-criadero-onboarding` (base `v2`). Última actualización de este documento: 29 de octubre de 2026.
+Rama de trabajo: `main` (las ramas de trabajo salen de `main` y los PR apuntan a `main`). Última actualización de este documento: 29 de octubre de 2026.
 
 ## Fases
 

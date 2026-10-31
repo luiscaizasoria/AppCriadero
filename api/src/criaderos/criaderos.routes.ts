@@ -18,6 +18,29 @@ const criaderosRouter = new Hono<{ Bindings: Env, Variables: AuthVariables }>();
 // Aplicar middleware JWT a todas las rutas de criaderos
 criaderosRouter.use('*', jwtMiddleware);
 
+// GET /api/v1/criaderos
+criaderosRouter.get('/', async (c) => {
+  const db = c.env.DB;
+  const { service } = createCriaderoDependencies(db);
+  const user = c.get('user') as AuthUser;
+
+  try {
+    const result = await service.listCriaderos(user.id);
+
+    return c.json(result, 200);
+  } catch (error) {
+    console.error('Error en endpoint GET /criaderos:', error);
+    return c.json(
+      {
+        success: false,
+        error: 'INTERNAL_ERROR',
+        message: 'Error interno del servidor',
+      },
+      500
+    );
+  }
+});
+
 // POST /api/v1/criaderos
 criaderosRouter.post('/', async (c) => {
   const db = c.env.DB;

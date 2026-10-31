@@ -11,6 +11,7 @@ import type {
   UpdateConfiguracionResponse,
   CompleteOnboardingResponse,
   OnboardingStatusResponse,
+  ListCriaderosResponse,
   ErrorResponse,
   OnboardingIncompleteErrorResponse,
 } from './criaderos.types';
@@ -22,6 +23,22 @@ import {
 
 export class CriaderoService {
   constructor(private repository: CriaderoRepository) {}
+
+  /** Criaderos del usuario autenticado (para elegir criadero en la app). */
+  async listCriaderos(userId: string): Promise<ListCriaderosResponse> {
+    const criaderos = await this.repository.listCriaderosByUser(userId);
+
+    return {
+      success: true,
+      data: {
+        criaderos: criaderos.map((criadero) => ({
+          id: criadero.id,
+          nombre: criadero.nombre,
+          onboardingCompletado: criadero.onboardingCompletado === 1,
+        })),
+      },
+    };
+  }
 
   async createCriadero(userId: string, request: CreateCriaderoRequest): Promise<CreateCriaderoResponse | ErrorResponse> {
     // Validaciones
