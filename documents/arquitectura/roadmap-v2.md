@@ -4,7 +4,7 @@
 
 V2 es **online-first** (D1 y R2 como fuentes de verdad, sin sincronización offline). La API en `api/` ya tiene la plataforma base, autenticación con email y contraseña, criaderos y onboarding. V1.0.3 sigue siendo la referencia funcional y la app móvil continúa usando su SQLite local hasta que cada módulo se reemplace por su cliente REST.
 
-Rama de trabajo: `main` (las ramas de trabajo salen de `main` y los PR apuntan a `main`). Última actualización de este documento: 29 de octubre de 2026.
+Rama de trabajo: `trabajo/migracion-nube` (desde `main`; rama única, sin PR; se fusiona a `main` solo cuando el usuario lo pida). Última actualización de este documento: 31 de octubre de 2026.
 
 ## Fases
 
@@ -20,7 +20,7 @@ Rama de trabajo: `main` (las ramas de trabajo salen de `main` y los PR apuntan a
 Completado:
 
 - Registro y login con email y contraseña; JWT propio (access token de 1 hora); middleware.
-- Creación de criadero con 38 items de catálogo iniciales y configuración.
+- Creación de criadero con 42 items de catálogo iniciales (ALIMENTOS con `MORICHILLO` y `BALANCEADO`; BEBIDAS con `AGUA` y `AGUA_VITAMINA`) y configuración.
 - Onboarding: configuración principal, finalizar y consultar estado; control de propiedad y de concurrencia.
 
 Pendiente:
@@ -47,6 +47,18 @@ Para cada módulo: leer su pantalla y su repositorio en V1, redactar la spec en 
 5. `FinanzasRepository`
 
 Orden decidido el 2026-10-29: Jaulas antes que Aves, con migraciones `0005` (jaulas) y `0006` (aves), FK real y `ON DELETE RESTRICT`. Ave y Jaula tienen referencias cruzadas: validar las claves foráneas contra el código real de V1.
+
+Estado de los módulos (2026-10-31, rama `trabajo/migracion-nube`):
+
+- **Jaulas**: implementado (API y cliente REST); `0005` solo aplicada en local y pruebas.
+- **Catálogos**: **implementado** en la rama `trabajo/migracion-nube`. Seis endpoints bajo `/api/v1/criaderos/:criaderoId/catalogos` (solo los 7 catálogos básicos), plantilla de criadero de 42 ítems, sin migración nueva (siguiente: `0006`) y cliente de la app `ConfiguracionRepository.js` (conmutador) con `.sqlite.js` y `.api.js`. Validado con pruebas unitarias, HTTP e integración y con el Worker local. **Pendiente:** validar en el teléfono y redesplegar en el Worker de pruebas. Detalle en `documents/specs/catalogos.md`.
+
+Puerta previa a Aves (actualizada 2026-10-31):
+
+- PBKDF2 pasó a 100000 iteraciones (máximo de workerd). CPU medido: 13-20 ms por hash frente al límite de 10 ms del plan gratuito; el usuario decidió mantenerlo y el plan de su cuenta no se pudo confirmar.
+- El PR de agentes ya está fusionado.
+- No habrá PR de Jaulas: desde 2026-10-31 se trabaja en una sola rama (`trabajo/migracion-nube`) y se fusiona a `main` solo cuando el usuario lo pida.
+- Pendiente de la puerta: validar Catálogos en el teléfono y redesplegar el Worker de pruebas.
 
 ### Fase 5 — Funcionalidades derivadas
 

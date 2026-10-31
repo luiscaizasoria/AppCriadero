@@ -11,7 +11,11 @@
 
 ## Estado
 
-borrador
+implementada (2026-10-31) en la rama `trabajo/migracion-nube`; validada con pruebas unitarias, HTTP e integración y con el Worker local. **Pendiente:** validar en el teléfono y redesplegar en el Worker de pruebas.
+
+Lo implementado: 6 endpoints bajo `/api/v1/criaderos/:criaderoId/catalogos` (sección "Endpoints V2"); plantilla de criadero de 42 ítems (`defaultCatalogItems.ts`); sin migración nueva (la siguiente es `0006`); cliente de la app `src/repositories/ConfiguracionRepository.js` (conmutador) con `ConfiguracionRepository.sqlite.js` y `ConfiguracionRepository.api.js`; y la excepción deliberada de lecturas descrita más abajo. Desde 2026-10-31 se trabaja en una sola rama, sin PR; se fusiona a `main` cuando el usuario lo pida.
+
+Nota relacionada (no es de este módulo): PBKDF2 pasó a 100000 iteraciones, el máximo de workerd; CPU medido 13-20 ms por hash frente al límite de 10 ms del plan gratuito; el usuario decidió mantenerlo y el plan de su cuenta no se pudo confirmar.
 
 ## Fuente V1
 
@@ -160,7 +164,7 @@ No hay en V1: longitud máxima de nombre/descripción, comprobación de nombres 
 
 ## Comparación con la plantilla V2 (`defaultCatalogItems.ts`)
 
-`api/src/catalogs/defaultCatalogItems.ts` define 38 ítems (cabecera l.22-32; datos l.34-284). Se copian a cada criadero nuevo en un único `batch` (`criaderos.service.ts:95-117`; `activo = 1`, `deleted_at = NULL`, `version = 1`, `orden = item.order ?? null`; `catalogoItemsGenerados = DEFAULT_CATALOG_ITEMS.length` en l.138).
+`api/src/catalogs/defaultCatalogItems.ts` define 42 ítems (antes 38; los números de línea que siguen son de la versión previa a añadir los 4 ítems de ALIMENTOS y BEBIDAS). Se copian a cada criadero nuevo en un único `batch` (`criaderos.service.ts:95-117`; `activo = 1`, `deleted_at = NULL`, `version = 1`, `orden = item.order ?? null`; `catalogoItemsGenerados = DEFAULT_CATALOG_ITEMS.length` en l.138).
 
 ### Convención de códigos de la plantilla
 
@@ -176,25 +180,25 @@ La columna "V1" es lo que realmente siembra una instalación nueva de V1 (hallaz
 | SEXOS | 2: Macho (1), Hembra (2) | 2, igual (l.92-103) | Nada. Igual a V1 |
 | ENFERMEDADES | 0 en `catalogo_items` (4 valores solo en tabla heredada sin uso) | 4: COCCIDIA, CORIZA, GRIPE, OTRO, `order: null` (l.106-129) | Sobran 4 respecto a V1 real; los mantiene la decisión del usuario (D-CAT-01) |
 | MEDICAMENTOS | 0 en `catalogo_items` (4 en tabla heredada sin uso) | 4: VITAMINA, ANTIBIOTICO, ANTIPARASITARIO, OTRO, `order: null` (l.132-155) | Sobran 4 respecto a V1 real; los mantiene la decisión del usuario (D-CAT-01) |
-| ALIMENTOS | 0 | 0 (comentario l.157-158 "No tiene items iniciales según V1") | **Faltan 2** por decisión del usuario: Morichillo, Balanceado |
-| BEBIDAS | 0 | 0 (comentario l.160-161) | **Faltan 2** por decisión del usuario: Agua, Agua con vitamina |
+| ALIMENTOS | 0 | 2: `MORICHILLO`, `BALANCEADO`, `orden = 0` (antes 0; comentario l.157-158 "No tiene items iniciales según V1") | **Sobran 2** respecto a V1 por decisión del usuario: Morichillo, Balanceado |
+| BEBIDAS | 0 | 2: `AGUA`, `AGUA_VITAMINA`, `orden = 0` (antes 0; comentario l.160-161) | **Sobran 2** respecto a V1 por decisión del usuario: Agua, Agua con vitamina |
 | CATEGORIAS_FINANCIERAS | 7 en instalación nueva (VENTA_AVE, VENTA_HUEVOS, ALIMENTO, MEDICAMENTO, INFRAESTRUCTURA, COMPRA_AVE, OTRO; orden 1-7); `ENVIO_AVE` solo en bases migradas | 8: los 7 con el mismo orden más `ENVIO_AVE` orden 8 (l.164-211) | Sobra `ENVIO_AVE` respecto a una instalación nueva de V1 (D-CAT-02); el código V1 sí lo usa (`BajaAveRepository.js:343`, `FinanzasRepository.js:480`) |
 | ESPECIES | no existe en V1 | 5 (l.214-243) | No aplica (onboarding V2; fuera de V1) |
 | TIPOS_CRIADERO | no existe en V1 | 3 (l.246-263) | No aplica |
 | FINALIDADES_CRIADERO | no existe en V1 | 3 (l.266-283) | No aplica |
 
-Conteo: actual 9+2+4+4+0+0+8+5+3+3 = 38 (27 del dominio V1 según `modelo-datos-v2.md:965` + 11 de onboarding). Con la decisión: ALIMENTOS 2 y BEBIDAS 2 → **42 ítems** (27 + 4 nuevos + 11). Estrictamente, de los 27 solo 18 (9 razas + 2 sexos + 7 categorías) los siembra V1 de verdad; los otros 9 son 8 enfermedades/medicamentos de tablas heredadas y `ENVIO_AVE`.
+Conteo: 9+2+4+4+2+2+8+5+3+3 = **42 ítems** (27 del dominio V1 según `modelo-datos-v2.md:965` + 4 nuevos de ALIMENTOS y BEBIDAS + 11 de onboarding; antes de los 4 nuevos eran 38). Estrictamente, de los 27 solo 18 (9 razas + 2 sexos + 7 categorías) los siembra V1 de verdad; los otros 9 son 8 enfermedades/medicamentos de tablas heredadas y `ENVIO_AVE`.
 
 ### Ítems nuevos propuestos (códigos)
 
 | Catálogo | Código propuesto | Nombre | Orden propuesto | Justificación |
 |---|---|---|---|---|
-| ALIMENTOS | `MORICHILLO` | Morichillo | null (ver regla abierta) | Nombre de una palabra → mayúsculas, como `COCCIDIA`, `VITAMINA` (l.108, 134) y como lo derivaría V1 (`EditarCatalogoItemScreen.js:120-127`) |
-| ALIMENTOS | `BALANCEADO` | Balanceado | null | Ídem |
-| BEBIDAS | `AGUA` | Agua | null | Ídem; `OTRO` ya se repite entre catálogos, así que no hay conflicto |
-| BEBIDAS | `AGUA_VITAMINA` | Agua con vitamina | null | **Decisión del usuario (2026-10-29).** Omite "con", como se omite "de" en `VENTA_AVE`. Nota: la regla de alta de V1 (`EditarCatalogoItemScreen.js:120-127`) daría `AGUA_CON_VITAMINA` para ese nombre; `AGUA_VITAMINA` es una diferencia consciente respecto de esa regla de alta (el código de un ítem sembrado no lo deriva la regla) |
+| ALIMENTOS | `MORICHILLO` | Morichillo | 0 (RC-CAT-05 resuelta: como V1) | Nombre de una palabra → mayúsculas, como `COCCIDIA`, `VITAMINA` (l.108, 134) y como lo derivaría V1 (`EditarCatalogoItemScreen.js:120-127`) |
+| ALIMENTOS | `BALANCEADO` | Balanceado | 0 | Ídem |
+| BEBIDAS | `AGUA` | Agua | 0 | Ídem; `OTRO` ya se repite entre catálogos, así que no hay conflicto |
+| BEBIDAS | `AGUA_VITAMINA` | Agua con vitamina | 0 | **Decisión del usuario (2026-10-29).** Omite "con", como se omite "de" en `VENTA_AVE`. Nota: la regla de alta de V1 (`EditarCatalogoItemScreen.js:120-127`) daría `AGUA_CON_VITAMINA` para ese nombre; `AGUA_VITAMINA` es una diferencia consciente respecto de esa regla de alta (el código de un ítem sembrado no lo deriva la regla) |
 
-Estos 4 ítems **no existen aún** en el código; no se han añadido (esta spec no modifica código). La plantilla pasa de 38 a 42 ítems cuando se implemente. `ENFERMEDADES`, `MEDICAMENTOS` y `ENVIO_AVE` se mantienen en la plantilla aunque V1 no los siembre (D-CAT-01, D-CAT-02).
+Estos 4 ítems ya están en la plantilla (implementado en la rama `trabajo/migracion-nube`), con `orden = 0`: la plantilla pasó de 38 a 42 ítems. `ENFERMEDADES`, `MEDICAMENTOS` y `ENVIO_AVE` se mantienen en la plantilla aunque V1 no los siembre (D-CAT-01, D-CAT-02).
 
 ## Tratamiento de ítems desactivados y unicidad: V1 frente a D1
 
@@ -259,23 +263,40 @@ Estado inicial de referencia: criadero nuevo en V2 con la plantilla propuesta (4
 
 ## Endpoints V2
 
-**No existen hoy.** Verificado: `api/src/app.ts:49-51` solo monta `/api/v1/criaderos` y `/api/v1/auth`; `api/src/catalogs/` contiene solo `defaultCatalogItems.ts`; la lógica de catálogo en `criaderos.*` se limita a copiar la plantilla y validar la configuración. El análisis V1 (l.741-742, 834-838, 889, 897) propone `GET /catalogos`, `GET|POST|PUT /catalogos/:catalogoId/items`, `DELETE .../items/:itemId` y rutas por código `ALIMENTOS`/`BEBIDAS`. Propuesta de esta spec (alineada, usando el `codigo` del catálogo en lugar del id, consistente con cómo V1 resuelve el catálogo, `CatalogoScreen.js:69`). Todas bajo `/api/v1/criaderos/:criaderoId`, con JWT; `userId` sale del token; ownership con `criaderos.id = ? AND user_id = ? AND deleted_at IS NULL` (si no, `403 FORBIDDEN`); respuesta `{ success, data }` o `{ success: false, error, message }`.
+**Diseño definitivo aprobado el 2026-10-31**, implementado en la rama `trabajo/migracion-nube` (pendiente de validar en el teléfono). Sustituye a la propuesta anterior (que incluía `version`, normalización del código en el servidor, reactivar e `incluirInactivos`, decisiones revocadas D-CAT-04, 06, 07 y 08). Las rutas usan el `codigo` del catálogo en lugar del id, consistente con cómo V1 resuelve el catálogo (`CatalogoScreen.js:69`). Todas bajo `/api/v1/criaderos/:criaderoId`, con JWT; `userId` sale del token; ownership con `criaderos.id = ? AND user_id = ? AND deleted_at IS NULL` (si no, `403 FORBIDDEN`); respuesta `{ success, data }` o `{ success: false, error, message }`. **Sin `version`** en peticiones ni respuestas, sin reactivar y sin `incluirInactivos`.
 
 | Método y ruta | Equivale a V1 | Request | Response `data` | Errores |
 |---|---|---|---|---|
-| `GET /catalogos` | `obtenerCatalogos` (sin uso en V1) | - | `{ catalogos: [{ codigo, nombre, descripcion }] }` de los 7 catálogos básicos (ver RC-CAT-04) | `UNAUTHORIZED`, `FORBIDDEN`, `CRIADERO_NOT_FOUND` |
-| `GET /catalogos/:catalogoCodigo/items?incluirInactivos=false` | `obtenerItemsCatalogo` | - | `{ items: [{ id, codigo, nombre, descripcion, activo, orden, version }] }`, orden `orden, nombre`; por defecto solo `activo = true` | `CATALOGO_NOT_FOUND` (404, propuesto), `FORBIDDEN` |
-| `POST /catalogos/:catalogoCodigo/items` | `crearItemCatalogo` | `{ nombre, descripcion? }` (el servidor deriva `codigo`, D-CAT-04) | `{ item: { id, codigo, nombre, descripcion, activo: true, orden, version: 1 } }` (201) | `VALIDATION_ERROR` (nombre vacío), `CATALOGO_NOT_FOUND`, `CATALOGO_ITEM_DUPLICATE` (409, propuesto) |
-| `PUT /catalogos/:catalogoCodigo/items/:itemId` | `actualizarItemCatalogo` | `{ nombre, descripcion?, version }` | `{ item }` | `VALIDATION_ERROR`, `CATALOGO_ITEM_NOT_FOUND` (404), `CATALOGO_ITEM_CONCURRENCY_CONFLICT` (409) |
-| `POST /catalogos/:catalogoCodigo/items/:itemId/desactivar` | `eliminarItemCatalogo` | `{ version }` | `{ item }` con `activo: false` | `CATALOGO_ITEM_NOT_FOUND`, `CATALOGO_ITEM_CONCURRENCY_CONFLICT` |
-| `POST /catalogos/:catalogoCodigo/items/:itemId/reactivar` | (no existe en V1, D-CAT-06) | `{ version }` | `{ item }` con `activo: true` | ídem |
+| `GET /catalogos` | `obtenerCatalogos` (sin uso en V1) | - | `{ catalogos: [{ codigo, nombre, descripcion }] }` solo de los 7 catálogos básicos (RAZAS, SEXOS, ENFERMEDADES, MEDICAMENTOS, ALIMENTOS, BEBIDAS, CATEGORIAS_FINANCIERAS), activos, por `nombre`. Los 3 de onboarding (ESPECIES, TIPOS_CRIADERO, FINALIDADES_CRIADERO) no se exponen | `UNAUTHORIZED`, `FORBIDDEN`, `CRIADERO_NOT_FOUND` |
+| `GET /catalogos/:catalogoCodigo` | `obtenerCatalogoPorCodigo` | - | `{ catalogo: { codigo, nombre, descripcion } }` | `CATALOGO_NOT_FOUND` (404); el cliente REST lo traduce al `null` de V1 |
+| `GET /catalogos/:catalogoCodigo/items` | `obtenerItemsCatalogo` | - | `{ items: [{ id, codigo, nombre, descripcion, activo, orden }] }`, solo `activo = 1`, ordenados por `orden` y `nombre` (`orden` NULL se trata como 0). Sin `version` | `CATALOGO_NOT_FOUND` (404), `FORBIDDEN` |
+| `POST /catalogos/:catalogoCodigo/items` | `crearItemCatalogo` | `{ codigo, nombre, descripcion? }` | `{ item: { id, codigo, nombre, descripcion, activo: true, orden: 0 } }` (201) | `VALIDATION_ERROR` solo si `codigo` o `nombre` vienen vacíos; `CATALOGO_NOT_FOUND` (404); `UNIQUE_CATALOGO_ITEMS_CODIGO` (409) |
+| `PUT /catalogos/:catalogoCodigo/items/:itemId` | `actualizarItemCatalogo` | `{ nombre, descripcion? }` | `{ item }` | `VALIDATION_ERROR` (nombre vacío), `CATALOGO_ITEM_NOT_FOUND` (404) |
+| `DELETE /catalogos/:catalogoCodigo/items/:itemId` | `eliminarItemCatalogo` | - | `{ item }` con `activo: false` | `CATALOGO_ITEM_NOT_FOUND` (404) |
 
-Notas:
+Reglas del diseño (réplica de V1):
 
-- `FORBIDDEN`, `UNAUTHORIZED`, `CRIADERO_NOT_FOUND` y `VALIDATION_ERROR` son códigos existentes; los demás son propuestos y deben revisarse antes de crearlos (CLAUDE.md pide reutilizar). Los `*_CONCURRENCY_CONFLICT` ya existen como patrón.
-- Desactivar un ítem ya desactivado: sin error (idempotente), como V1 (PAR-CAT-015).
-- El `itemId` debe pertenecer al `criaderoId` y al catálogo de la ruta; si no, `CATALOGO_ITEM_NOT_FOUND` (V1 actualiza por `id` sin comprobar catálogo, `ConfiguracionRepository.js:231`; en V2 es un ajuste necesario por multi-tenancy).
+- `POST`: el servidor **no normaliza** el `codigo`; lo calcula la pantalla (`nombre.trim().toUpperCase().replace(/\s+/g, '_')`, `EditarCatalogoItemScreen.js:120-127`) y llega ya hecho, como en V1. `descripcion || null`; `orden = 0` (V1 no informa `orden`, `ConfiguracionRepository.js:153-196`, y la columna es `DEFAULT 0`); `activo = 1`.
+- Código duplicado dentro del catálogo del criadero: `409 UNIQUE_CATALOGO_ITEMS_CODIGO` con el mensaje exacto `UNIQUE constraint failed: catalogo_items.catalogo_id, catalogo_items.codigo` (el texto que daba SQLite en V1). Los ítems desactivados siguen reservando su código (D-CAT-05).
+- `PUT`: cambia solo `nombre` y `descripcion` (`descripcion || null`), también en ítems inactivos; no cambia `codigo`, `orden` ni `activo`.
+- `DELETE`: baja lógica, `activo = 0` con `deleted_at` NULL; idempotente (sobre un ítem ya desactivado no falla), como V1 (PAR-CAT-015). No comprueba uso.
 - La plantilla se aplica al crear el criadero (ya existente); no hay endpoint de "restablecer valores por defecto" (V1 tampoco).
+
+### Excepciones técnicas (por pasar a online)
+
+- **(a)** IDs `UUID v7` en `catalogo_items.id` y `criadero_id` en cada ítem (los catálogos `catalogos` son globales).
+- **(b)** Un `itemId` inexistente, de otro criadero o de otro catálogo responde `404 CATALOGO_ITEM_NOT_FOUND`. V1 no falla (actualiza o desactiva por `id` sin comprobar nada, `ConfiguracionRepository.js:231, 268`); en V2 es necesario por multi-tenancy.
+- **(c)** Códigos de error nuevos: `CATALOGO_NOT_FOUND`, `CATALOGO_ITEM_NOT_FOUND` y `UNIQUE_CATALOGO_ITEMS_CODIGO`. `FORBIDDEN`, `UNAUTHORIZED`, `CRIADERO_NOT_FOUND` y `VALIDATION_ERROR` ya existían.
+- **(d)** El cliente REST mantiene mapas `id -> código` (de catálogo y de ítem), porque la API enruta por código del catálogo y las pantallas V1 pasan ids (`obtenerItemsCatalogo(catalogoId)`, `crearItemCatalogo({catalogoId, ...})`).
+- Estados de carga y de error de red en las pantallas (D-CAT-00).
+
+## Excepción deliberada a la regla de un repositorio cada vez
+
+Por decisión del usuario (2026-10-31), las funciones de **lectura** de catálogo `obtenerTiposAlimentos` (`AlimentacionRepository.js`), `obtenerTiposBebidas` (`BebidaRepository.js`), `obtenerEnfermedades` y `obtenerMedicamentos` (`SaludRepository.js`) **delegan en `ConfiguracionRepository.api.js`** cuando `EXPO_PUBLIC_DATA_SOURCE=api`. En modo SQLite el código de V1 queda intacto. No se tocan sus escrituras (`registrarAlimentacion`, `registrarBebida`, `registrarDiagnostico`, etc.) ni sus pantallas.
+
+- **Motivo:** que las pantallas de Alimentación, Bebida y Salud no queden con listas vacías en modo API (los ítems viven en D1, no en SQLite).
+- **Limitación:** guardar un registro de alimentación, bebida o salud sigue dependiendo de los módulos Aves, cuidados de jaula y Salud (hoy usan FK locales a `jaulas` y `aves` en SQLite), por lo que no funciona en modo API hasta migrarlos.
+- Ver también las notas en `cuidados-jaula.md` y `aves.md`.
 
 ## Modelo D1
 
@@ -285,19 +306,19 @@ Sin tablas nuevas. Existente y suficiente:
 - `catalogo_items` (esquema final en `0003:174-197`): `id TEXT PK`, `criadero_id TEXT NOT NULL` (FK `criaderos`), `catalogo_id TEXT NOT NULL` (FK `catalogos`), `codigo`, `nombre`, `descripcion`, `activo INTEGER NOT NULL DEFAULT 1 CHECK IN (0,1)`, `orden INTEGER`, `created_at`, `updated_at`, `deleted_at`, `version`. Índices: `ux_catalogo_items_codigo_activo` único parcial `(criadero_id, catalogo_id, codigo) WHERE deleted_at IS NULL` (`0003:234-236`), `ix_catalogo_items_criadero_id`, `ix_catalogo_items_catalogo_id` (`0003:238-242`).
 - `criadero_configuracion` referencia 4 ítems (`0003:250-285`, `ON DELETE SET NULL`).
 
-Migración prevista: ninguna para el esquema si se acepta D-CAT-05 (desactivar con `activo`). Los 4 ítems nuevos se añaden a la plantilla en código (no a una migración: los ítems no se siembran por migración, `0004:11-14`) y solo afectan a criaderos creados después. **Criaderos ya existentes en D1 local no recibirán los 4 ítems**; el proyecto parte sin datos de usuario (regla del proyecto), pero conviene confirmar (RC-CAT-09). Si se decide asegurar unicidad de nombre o restricciones adicionales, sería una migración `0005_*.sql` (hoy no se propone).
+Migración: ninguna (implementado sin migración nueva; la siguiente es `0006`). Los 4 ítems nuevos se añaden a la plantilla en código (no a una migración: los ítems no se siembran por migración, `0004:11-14`) y solo afectan a criaderos creados después. **Criaderos ya existentes en D1 local no recibirán los 4 ítems**; el proyecto parte sin datos de usuario (regla del proyecto), pero conviene confirmar (RC-CAT-09). Si se decide asegurar unicidad de nombre o restricciones adicionales, sería una migración nueva (`0006` o posterior; hoy no se propone).
 
 ## Impacto al implementar
 
 Lista de archivos a tocar (no se tocan en esta spec).
 
-Plantilla 38 → 42 ítems:
+Plantilla 38 → 42 ítems (ya aplicado en la rama `trabajo/migracion-nube`; se conserva la lista como registro de lo tocado):
 
-- `api/src/catalogs/defaultCatalogItems.ts`: añadir 4 ítems (ALIMENTOS ×2, BEBIDAS ×2); actualizar cabecera (l.22 `Total: 38 items`, l.27 `ALIMENTOS: 0 items`, l.28 `BEBIDAS: 0 items`) y comentarios de l.157-161.
+- `api/src/catalogs/defaultCatalogItems.ts`: añadir 4 ítems (ALIMENTOS ×2 `MORICHILLO`/`BALANCEADO`, BEBIDAS ×2 `AGUA`/`AGUA_VITAMINA`, `orden = 0`); actualizar cabecera (l.22 `Total: 38 items`, l.27 `ALIMENTOS: 0 items`, l.28 `BEBIDAS: 0 items`) y comentarios de l.157-161.
 - `api/test/integration/criaderos.d1.test.ts:157`: `.toBe(38)` → `.toBe(42)`. Única expectativa numérica de la plantilla en pruebas. No hay expectativa por catálogo (búsqueda de `ALIMENTOS`/`BEBIDAS`/`DEFAULT_CATALOG_ITEMS` en `api/test/`: sin resultados). `api/test/criadero.service.test.ts:112` usa `toBeGreaterThan(0)` y no cambia (verificado: el matcher está en las líneas 111-112, `.toBeGreaterThan(0)`). Conviene añadir pruebas por catálogo (conteo y códigos de ALIMENTOS y BEBIDAS).
 - No cambian `criaderos.service.ts:103-117, 138` (iteran la plantilla; el campo `catalogoItemsGenerados` pasará a 42 automáticamente).
 
-Documentos con la cifra 38 u otros números de la plantilla (actualizar al implementar a 42). Nota de verificación: el matcher de `api/test/criadero.service.test.ts:111-112` es `.toBeGreaterThan(0)` (verificado) y no cambia; en `ConfiguracionRepository.js` el `SET activo = 0` de `eliminarItemCatalogo` está en la línea 268 (la función empieza en 251; se corrigió la cita `:261` en todo este documento):
+Documentos con la cifra 38 u otros números de la plantilla (actualizados a 42 el 2026-10-31, salvo `documents/traspaso/`, que no se toca; se conserva la lista como registro). Nota de verificación: el matcher de `api/test/criadero.service.test.ts:111-112` es `.toBeGreaterThan(0)` (verificado) y no cambia; en `ConfiguracionRepository.js` el `SET activo = 0` de `eliminarItemCatalogo` está en la línea 268 (la función empieza en 251; se corrigió la cita `:261` en todo este documento):
 
 - `documents/arquitectura/roadmap-v2.md:23` ("38 items de catálogo iniciales").
 - `documents/README.md:41` ("plantilla de 38 items").
@@ -324,15 +345,15 @@ Para los endpoints (módulo nuevo `api/src/catalogs/`, siguiendo `criaderos/`; `
 - **RC-CAT-01 (abierta).** Confirmar en dispositivo (o con una base V1 real) que una instalación nueva no tiene `ENVIO_AVE` (hallazgo 2, deducido del orden V6 → V7) y qué ítems tienen las bases creadas antes de V6. Evidencia: `migrationV6.js:53-73`, `migrationV7.js:66-68`, `seeders.js:129-199`, `sqlite.js` (orden de migraciones). No se resuelve solo leyendo; puede requerir historial de git del seeder (`git log -S`, tag `v1.0.3`).
 - **RC-CAT-02 (abierta).** Confirmar si el filtro por códigos fijos de categorías (hallazgo 3) es intencional y si debe reproducirse en V2 (la API de categorías por tipo INGRESO/EGRESO) o si basta con listar el catálogo completo. Pendiente de leer `FinanzasRepository.js` y la spec de finanzas para ver si el repositorio valida la categoría al guardar el movimiento.
 - **RC-CAT-03 (abierta).** Verificar si `BackupRepository.js` exporta/restaura `catalogos` y `catalogo_items` (el grep de `catalogo` en `src/` no lo lista, es decir, aparentemente no); confirmar para saber si los ítems creados por el usuario se pierden en un backup de V1.
-- **RC-CAT-04 (abierta).** Confirmar el conjunto de catálogos que expone la API: los 7 básicos (V1 administra 6; `SEXOS` solo se lee). Decidir si `SEXOS` es solo lectura y si ESPECIES/TIPOS_CRIADERO/FINALIDADES_CRIADERO (onboarding) son administrables (no existen en V1).
-- **RC-CAT-05 (abierta).** `orden` de ítems nuevos: V1 usa 0 (aparecen primero) y la plantilla usa `null` (SQLite ordena `NULL` primero en `ASC`). Definir orden de lista en V2 y `orden` de los 4 ítems nuevos y de los creados por usuario (propuesta: `null` para ALIMENTOS/BEBIDAS, ordenados por `nombre`, como en V1 donde sus selectores usan `ORDER BY nombre`).
+- **RC-CAT-04 (resuelta 2026-10-31).** Se exponen los 7 básicos; los 3 de onboarding no se exponen; `SEXOS` no tiene restricción en el repositorio (como V1, donde solo la pantalla no lo ofrece). Texto original: confirmar el conjunto de catálogos que expone la API: los 7 básicos (V1 administra 6; `SEXOS` solo se lee). Decidir si `SEXOS` es solo lectura y si ESPECIES/TIPOS_CRIADERO/FINALIDADES_CRIADERO (onboarding) son administrables (no existen en V1).
+- **RC-CAT-05 (resuelta 2026-10-31).** Los 4 ítems nuevos de la plantilla y los ítems creados por el usuario llevan `orden = 0`, como V1; la lista ordena por `orden` (NULL = 0) y `nombre`. Texto original: `orden` de ítems nuevos: V1 usa 0 (aparecen primero) y la plantilla usa `null` (SQLite ordena `NULL` primero en `ASC`). Definir orden de lista en V2 y `orden` de los 4 ítems nuevos y de los creados por usuario (propuesta: `null` para ALIMENTOS/BEBIDAS, ordenados por `nombre`, como en V1 donde sus selectores usan `ORDER BY nombre`).
 - **RC-CAT-06 (abierta).** `catalogos.nombre`/`descripcion` de D1 (`0002`) difieren de V1 (p. ej. "Razas" frente a "Razas de aves", "Categorias financieras" sin tilde frente a "Categorías financieras"). Las pantallas V1 usan títulos propios (`ConfiguracionScreen.js:26-52`), no `catalogos.nombre`. Decidir qué texto muestra la app de V2.
 - **RC-CAT-07 (abierta).** V1 no impide desactivar ítems que usa el sistema (`OTRO`, categorías con lógica automática como `VENTA_AVE`, `ENVIO_AVE`). Verificar si V1 depende de que existan (`BajaAveRepository.js:343` y `FinanzasRepository.js:480` escriben el código como texto sin consultar el catálogo, por lo que no fallan).
 
 ### Decisión de producto
 
 - **[resuelta: técnica, se mantiene (regla del proyecto 2026-10-29); catálogos por defecto con 42 ítems (D-CAT-01 a D-CAT-03)] DP-CAT-01 (decidida 2026-10-29, parcial).** Texto original: aprobar o corregir D-CAT-01 a D-CAT-08 (en particular D-CAT-02 `ENVIO_AVE`, D-CAT-05 desactivar con `activo`, D-CAT-06 reactivar). **Decisión:** la aprobación del usuario cubre **solo D-CAT-01, D-CAT-02 y D-CAT-03**. **D-CAT-04 a D-CAT-08 siguen como propuestas sin aprobar** (no hay decisión sobre normalización de código en servidor, desactivar con `activo`, reactivar, errores diferenciados ni `version`).
-- **[resuelta: técnica, se mantiene (regla del proyecto 2026-10-29)] DP-CAT-02 (decidida 2026-10-29).** Texto original: códigos de los 4 ítems nuevos (`MORICHILLO`, `BALANCEADO`, `AGUA`, `AGUA_CON_VITAMINA` o `AGUA_VITAMINA`) y su orden (RC-CAT-05). **Decisión:** ALIMENTOS = Morichillo (`MORICHILLO`), Balanceado (`BALANCEADO`); BEBIDAS = Agua (`AGUA`), Agua con vitamina (`AGUA_VITAMINA`). La convención de alta de V1 daría `AGUA_CON_VITAMINA`; `AGUA_VITAMINA` es la decisión del usuario (diferencia consciente respecto de la regla de alta). `ENFERMEDADES`, `MEDICAMENTOS` y `ENVIO_AVE` se mantienen aunque V1 no los siembre. El **orden** de los 4 ítems sigue abierto en RC-CAT-05 (propuesta `null`).
+- **[resuelta: técnica, se mantiene (regla del proyecto 2026-10-29)] DP-CAT-02 (decidida 2026-10-29).** Texto original: códigos de los 4 ítems nuevos (`MORICHILLO`, `BALANCEADO`, `AGUA`, `AGUA_CON_VITAMINA` o `AGUA_VITAMINA`) y su orden (RC-CAT-05). **Decisión:** ALIMENTOS = Morichillo (`MORICHILLO`), Balanceado (`BALANCEADO`); BEBIDAS = Agua (`AGUA`), Agua con vitamina (`AGUA_VITAMINA`). La convención de alta de V1 daría `AGUA_CON_VITAMINA`; `AGUA_VITAMINA` es la decisión del usuario (diferencia consciente respecto de la regla de alta). `ENFERMEDADES`, `MEDICAMENTOS` y `ENVIO_AVE` se mantienen aunque V1 no los siembre. El **orden** de los 4 ítems quedó resuelto en RC-CAT-05 (2026-10-31): `orden = 0`.
 - **[resuelta: replicar V1 (regla del proyecto 2026-10-29)] DP-CAT-03.** ¿Se permite desactivar/editar ítems que están en uso por la configuración del criadero (`criadero_configuracion`) o que el sistema usa por código? Hoy `PUT .../configuracion` exige ítems activos (`criaderos.service.ts:222-228`); ¿bloquear la desactivación del ítem elegido o permitirla? V1 no bloquea nada.
 - **[resuelta: replicar V1 (regla del proyecto 2026-10-29)] DP-CAT-04.** En los módulos de V2 que usen catálogos (aves, salud, alimentación, bebida, finanzas): ¿guardar texto como V1 (nombre o código, según el módulo) o `item_id`? V1 guarda texto (ver tabla de consumo) y por eso un renombrado no se propaga. Se decide en la spec de cada módulo.
 - **[resuelta: replicar V1 (regla del proyecto 2026-10-29)] DP-CAT-05.** ¿Los criaderos ya creados en D1 local con 38 ítems deben recibir los 4 ítems nuevos? (regla del proyecto: V2 empieza sin datos, por lo que se propone no migrar nada).
@@ -341,12 +362,14 @@ Para los endpoints (módulo nuevo `api/src/catalogs/`, siguiendo `criaderos/`; `
 
 ## Criterios de terminado
 
-- [ ] Diferencias deliberadas D-CAT-01 a D-CAT-03 aprobadas (2026-10-29); **D-CAT-04 a D-CAT-08 pendientes de aprobación**; reglas abiertas RC-* cerradas y DP-* restantes decididas; estado de la spec en `revisada`.
-- [ ] `defaultCatalogItems.ts` con 42 ítems (ALIMENTOS: `MORICHILLO`, `BALANCEADO`; BEBIDAS: `AGUA`, `AGUA_VITAMINA`; se mantienen ENFERMEDADES, MEDICAMENTOS y `ENVIO_AVE`) y códigos aprobados el 2026-10-29; cabecera y comentarios coherentes.
-- [ ] Endpoints de la sección "Endpoints V2" implementados en `api/src/catalogs/` siguiendo `routes -> factory -> service -> repository` y montados en `app.ts`.
-- [ ] Ownership probado: otro usuario recibe `403 FORBIDDEN` y no ve ítems de otro criadero; el `itemId` de otro criadero o catálogo devuelve `CATALOGO_ITEM_NOT_FOUND`.
-- [ ] Pruebas unitarias del service con fakes, HTTP con `app.request()` e integración D1 local (con confirmación previa por ser destructiva): conteo por catálogo (RAZAS 9, SEXOS 2, ENFERMEDADES 4, MEDICAMENTOS 4, ALIMENTOS 2, BEBIDAS 2, CATEGORIAS_FINANCIERAS 8, ESPECIES 5, TIPOS_CRIADERO 3, FINALIDADES_CRIADERO 3; total 42), duplicados (activo y desactivado), idempotencia de desactivar, reactivar y concurrencia por `version`.
-- [ ] Casos PAR-CAT-001 a PAR-CAT-023 cubiertos o marcados explícitamente como diferencia deliberada.
-- [ ] Prueba de integración `criaderos.d1.test.ts` actualizada de 38 a 42.
-- [ ] Documentos de la lista "Impacto al implementar" actualizados (cifra 42, ALIMENTOS/BEBIDAS, orígenes de enfermedades/medicamentos).
-- [ ] `npm run typecheck`, `npm test -- --run` y `npm run test:integration` sin errores; `git diff --check` limpio.
+- [ ] Diferencias deliberadas D-CAT-01 a D-CAT-03 aprobadas (2026-10-29); D-CAT-04, 06, 07 y 08 revocadas; reglas abiertas RC-* cerradas (siguen abiertas RC-CAT-01, 02, 03, 06 y 07, sin resolver en esta actualización).
+- [x] `defaultCatalogItems.ts` con 42 ítems (ALIMENTOS: `MORICHILLO`, `BALANCEADO`; BEBIDAS: `AGUA`, `AGUA_VITAMINA`, todos con `orden = 0`; se mantienen ENFERMEDADES, MEDICAMENTOS y `ENVIO_AVE`) y códigos aprobados el 2026-10-29; cabecera y comentarios coherentes.
+- [x] Endpoints de la sección "Endpoints V2" (diseño definitivo 2026-10-31) implementados en `api/src/catalogs/` siguiendo `routes -> factory -> service -> repository` y montados en `app.ts`.
+- [x] Ownership cubierto por pruebas (`FORBIDDEN` y `CATALOGO_ITEM_NOT_FOUND` aparecen en `api/test/catalogs.service.test.ts`, `api/test/routes.catalogs.test.ts` y `api/test/integration/catalogs.d1.test.ts`; no se releyó cada caso).
+- [x] Pruebas unitarias del service con fakes, HTTP con `app.request()` e integración D1 local (con confirmación previa por ser destructiva): conteo por catálogo (RAZAS 9, SEXOS 2, ENFERMEDADES 4, MEDICAMENTOS 4, ALIMENTOS 2, BEBIDAS 2, CATEGORIAS_FINANCIERAS 8, ESPECIES 5, TIPOS_CRIADERO 3, FINALIDADES_CRIADERO 3; total 42), duplicados (activo y desactivado, `UNIQUE_CATALOGO_ITEMS_CODIGO`) e idempotencia de desactivar (sin reactivar ni `version`, decisiones revocadas).
+- [ ] Casos PAR-CAT-001 a PAR-CAT-023 cubiertos o marcados explícitamente como diferencia deliberada (no revisados uno a uno).
+- [x] Prueba de integración `criaderos.d1.test.ts` actualizada de 38 a 42 (`criaderos.d1.test.ts:157`).
+- [x] Documentos de la lista "Impacto al implementar" actualizados (cifra 42, ALIMENTOS/BEBIDAS, orígenes de enfermedades/medicamentos) el 2026-10-31.
+- [x] Pruebas unitarias, HTTP e integración y Worker local validados (resultado comunicado por el orquestador el 2026-10-31); `typecheck` y `git diff --check` no se reverificaron en esta actualización.
+- [ ] Validación en el teléfono.
+- [ ] Redespliegue en el Worker de pruebas y comprobación allí.

@@ -80,7 +80,7 @@ Catálogos sembrados (10): `RAZAS`, `SEXOS`, `ENFERMEDADES`, `MEDICAMENTOS`, `AL
 
 `id`, `criadero_id` NOT NULL **UNIQUE** (FK → `criaderos` `ON DELETE CASCADE`), `especie_principal_item_id`, `raza_principal_item_id`, `tipo_criadero_item_id`, `finalidad_item_id` (cada uno FK → `catalogo_items` `ON DELETE SET NULL`), `created_at`, `updated_at`, `version`. No tiene `deleted_at`. Una tabla aparte evita la dependencia circular entre `criaderos` y `catalogo_items`. Índices por cada columna `*_item_id`.
 
-### Items iniciales de un criadero (38)
+### Items iniciales de un criadero (42)
 
 No se siembran por migración: la plantilla versionada está en código (`api/src/catalogs/defaultCatalogItems.ts`) y al crear un criadero se generan sus propios items (UUID v7 nuevos, `criadero_id` del criadero) junto con su `criadero_configuracion`, en un solo `batch`.
 
@@ -90,13 +90,13 @@ No se siembran por migración: la plantilla versionada está en código (`api/sr
 | `SEXOS` | 2 |
 | `ENFERMEDADES` | 4 |
 | `MEDICAMENTOS` | 4 |
-| `ALIMENTOS` | 0 |
-| `BEBIDAS` | 0 |
+| `ALIMENTOS` | 2 |
+| `BEBIDAS` | 2 |
 | `CATEGORIAS_FINANCIERAS` | 8 |
 | `ESPECIES` | 5 |
 | `TIPOS_CRIADERO` | 3 |
 | `FINALIDADES_CRIADERO` | 3 |
-| **Total** | **38** |
+| **Total** | **42** |
 
 Aunque `ESPECIES` incluye varias opciones por el onboarding, el alcance funcional vigente es el de aves individuales.
 
@@ -319,7 +319,7 @@ Regla original conservada (el handoff la lista como política pendiente de confi
 
 Un criadero no se crea automáticamente al registrarse (el diseño original preveía un criadero "Mi Criadero"). Hoy es explícito y protegido por JWT:
 
-1. `POST /api/v1/criaderos`: crea, en un solo `batch`, el criadero, sus 38 `catalogo_items` iniciales y su `criadero_configuracion`. El `userId` sale del token, nunca del body.
+1. `POST /api/v1/criaderos`: crea, en un solo `batch`, el criadero, sus 42 `catalogo_items` iniciales y su `criadero_configuracion`. El `userId` sale del token, nunca del body.
 2. `PUT /api/v1/criaderos/:criaderoId/configuracion`: guarda especie, raza, tipo y finalidad principales, validando que los cuatro items existan, estén activos y no borrados, pertenezcan al criadero y al catálogo correcto, con control de concurrencia por `version`.
 3. `POST /api/v1/criaderos/:criaderoId/onboarding/complete`: revalida datos generales y configuración; idempotente (`alreadyCompleted`); `UPDATE … WHERE version = ? AND onboarding_completado = 0`.
 4. `GET /api/v1/criaderos/:criaderoId/onboarding`: estado `INCOMPLETE_GENERAL` (paso 1), `INCOMPLETE_CONFIGURATION` (paso 2), `READY_TO_COMPLETE` (paso 3) o `COMPLETED`.
@@ -685,7 +685,7 @@ La configuración principal (especie, raza, tipo y finalidad) vive en la tabla a
 - `user_id` no es único: relación 1:N.
 - No existe `active`; el estado activo se determina mediante `deleted_at`.
 - Todo criadero propio se consulta con propiedad validada (`user_id` del token).
-- Al crearse, genera sus 38 items de catálogo y su fila de configuración.
+- Al crearse, genera sus 42 items de catálogo y su fila de configuración.
 
 ### Campos no incluidos
 
@@ -876,7 +876,7 @@ El UUID será generado al momento de crear el item.
 
 ### ENFERMEDADES
 
-Los valores provienen de la tabla heredada `enfermedades_catalogo` de V1 (`src/database/migrationV2.js:15-49`), que ningún código de `src/` lee. **V1 no siembra estos valores en `catalogo_items`**: `migrationV7.js:7-29` y `seeders.js:68` crean el catálogo `ENFERMEDADES` vacío, y `SaludRepository.js:34` lee `catalogo_items`. En una instalación nueva de V1 el selector sale vacío. Se mantienen en la plantilla V2 por decisión del usuario (2026-10-29).
+Los valores provienen de la tabla heredada `enfermedades_catalogo` de V1 (`src/database/migrationV2.js:15-49`), tabla heredada sin uso: ningún código de `src/` la lee y no se reproduce en D1. **V1 no siembra estos valores en `catalogo_items`**: `migrationV7.js:7-29` y `seeders.js:68` crean el catálogo `ENFERMEDADES` vacío, y `SaludRepository.js:34` lee `catalogo_items`. En una instalación nueva de V1 el selector sale vacío. Se mantienen en la plantilla V2 por decisión del usuario (2026-10-29): es una decisión V2, no un comportamiento de V1.
 
 V1 no tenía un orden explícito para estos valores, por lo que orden será null inicialmente.
 
@@ -889,7 +889,7 @@ V1 no tenía un orden explícito para estos valores, por lo que orden será null
 
 ### MEDICAMENTOS
 
-Los valores provienen de la tabla heredada `medicamentos_catalogo` de V1 (`src/database/migrationV2.js:32-66`), que ningún código de `src/` lee. **V1 no siembra estos valores en `catalogo_items`**: `migrationV7.js:7-29` y `seeders.js:85` crean el catálogo `MEDICAMENTOS` vacío, y `SaludRepository.js:78` lee `catalogo_items`. Se mantienen en la plantilla V2 por decisión del usuario (2026-10-29).
+Los valores provienen de la tabla heredada `medicamentos_catalogo` de V1 (`src/database/migrationV2.js:32-66`), tabla heredada sin uso: ningún código de `src/` la lee y no se reproduce en D1. **V1 no siembra estos valores en `catalogo_items`**: `migrationV7.js:7-29` y `seeders.js:85` crean el catálogo `MEDICAMENTOS` vacío, y `SaludRepository.js:78` lee `catalogo_items`. Se mantienen en la plantilla V2 por decisión del usuario (2026-10-29): es una decisión V2, no un comportamiento de V1.
 
 V1 no tenía un orden explícito para estos valores, por lo que orden será null inicialmente.
 
@@ -902,15 +902,11 @@ V1 no tenía un orden explícito para estos valores, por lo que orden será null
 
 ### ALIMENTOS
 
-Estado real hoy (código y migraciones): sin CatalogoItems iniciales. V1 define el catálogo pero no contiene valores sembrados.
-
-Decidido el 2026-10-29, **pendiente de implementar** (la plantilla sigue en 38): `MORICHILLO` (Morichillo) y `BALANCEADO` (Balanceado). Ver `documents/specs/catalogos.md`.
+V1 define el catálogo pero no contiene valores sembrados. Implementado (2026-10-31, rama `trabajo/migracion-nube`): la plantilla V2 añade 2 ítems con orden 0: `MORICHILLO` (Morichillo) y `BALANCEADO` (Balanceado). Ver `documents/specs/catalogos.md`.
 
 ### BEBIDAS
 
-Estado real hoy (código y migraciones): sin CatalogoItems iniciales. V1 define el catálogo pero no contiene valores sembrados.
-
-Decidido el 2026-10-29, **pendiente de implementar** (la plantilla sigue en 38): `AGUA` (Agua) y `AGUA_VITAMINA` (Agua con vitamina). Ver `documents/specs/catalogos.md`.
+V1 define el catálogo pero no contiene valores sembrados. Implementado (2026-10-31, rama `trabajo/migracion-nube`): la plantilla V2 añade 2 ítems con orden 0: `AGUA` (Agua) y `AGUA_VITAMINA` (Agua con vitamina). Ver `documents/specs/catalogos.md`.
 
 ### CATEGORIAS_FINANCIERAS
 
@@ -925,7 +921,7 @@ Decidido el 2026-10-29, **pendiente de implementar** (la plantilla sigue en 38):
 | 7 | OTRO | Otro |
 | 8 | ENVIO_AVE | Envío de ave |
 
-ENVIO_AVE se considera parte de la plantilla inicial V2 por decisión del usuario (2026-10-29). En V1 solo lo inserta `migrationV6.js:53-73` mediante un `INSERT … SELECT` sobre el catálogo `CATEGORIAS_FINANCIERAS`, que se crea después (`migrationV7.js`, `seeders.js`): por el orden de ejecución, una instalación nueva de V1 no lo siembra (deducción del código, no probada con una base real). El código de V1 sí lo usa como texto (`BajaAveRepository.js:343`, `FinanzasRepository.js:480`).
+ENVIO_AVE se considera parte de la plantilla inicial V2 por decisión del usuario (2026-10-29); es una decisión V2, no un comportamiento de V1. En V1 solo lo inserta `migrationV6.js:53-73` mediante un `INSERT … SELECT` sobre el catálogo `CATEGORIAS_FINANCIERAS`, que se crea después (`migrationV7.js`, `seeders.js`): por el orden de ejecución, una instalación nueva de V1 no lo siembra (deducción del código, no probada con una base real). El código de V1 sí lo usa como texto (`BajaAveRepository.js:343`, `FinanzasRepository.js:480`).
 
 ### ESPECIES, TIPOS_CRIADERO y FINALIDADES_CRIADERO (onboarding)
 
@@ -955,14 +951,14 @@ Un nuevo Criadero recibe:
 - 2 Sexos;
 - 4 Enfermedades;
 - 4 Medicamentos;
-- 0 Alimentos;
-- 0 Bebidas;
+- 2 Alimentos;
+- 2 Bebidas;
 - 8 Categorías financieras;
 - 5 Especies;
 - 3 Tipos de criadero;
 - 3 Finalidades.
 
-Total inicial: **38** CatalogoItems (27 del dominio y 11 del onboarding). La versión original de este modelo indicaba 27. De los 27 del dominio, V1 siembra de verdad 18 en una instalación nueva (9 razas, 2 sexos y 7 categorías financieras); los otros 9 son 8 enfermedades y medicamentos de tablas heredadas más `ENVIO_AVE`, que se mantienen por decisión del usuario. Decidido el 2026-10-29, pendiente de implementar: la plantilla pasa a **42** ítems (`MORICHILLO`, `BALANCEADO`, `AGUA`, `AGUA_VITAMINA`).
+Total inicial: **42** CatalogoItems (31 del dominio y 11 del onboarding). La versión original de este modelo indicaba 27 y después 38. De los 27 del dominio originales, V1 siembra de verdad 18 en una instalación nueva (9 razas, 2 sexos y 7 categorías financieras); los otros 9 son 8 enfermedades y medicamentos de tablas heredadas más `ENVIO_AVE`, que se mantienen por decisión V2 del usuario. Implementado el 2026-10-31: la plantilla pasó de 38 a **42** ítems con `MORICHILLO`, `BALANCEADO` (ALIMENTOS), `AGUA` y `AGUA_VITAMINA` (BEBIDAS), orden 0. Sin migración nueva (siguiente: `0006`).
 
 ### Regla de creación
 
@@ -1599,7 +1595,7 @@ CREATE INDEX ix_sanidad_jaula_fecha
 
 Deben ser atómicas con `db.batch()`:
 
-- crear criadero + 38 items + configuración (ya implementado);
+- crear criadero + 42 items + configuración (ya implementado);
 - crear ave + evolución inicial + historial + historial de jaula;
 - cambiar jaula + actualizar ave + historiales de salida e ingreso;
 - huevo + historial del ave;

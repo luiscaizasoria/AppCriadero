@@ -21,9 +21,9 @@ Ante una contradicción prevalece, de mayor a menor:
 | Ruta | Contenido |
 |---|---|
 | `CLAUDE.md` | Única guía para Claude: estado, regla del proyecto, arquitectura, comandos, convenciones, Git |
-| `src/` | App móvil V1 (React Native + Expo): `screens/`, `repositories/` (acceso a SQLite; se reemplazan uno a uno por clientes REST: `JaulaRepository.js` elige entre `.sqlite.js` y `.api.js`), `api/` (cliente HTTP y sesión del modo API), `screens/acceso/` (registro, inicio de sesión y selección de criadero, solo en modo API), `database/` (migraciones y seeders SQLite V1–V7), `navigation/`, `components/`, `services/` (imágenes), `models/`, `config/` (`dataSource.js`: interruptor SQLite/API) |
+| `src/` | App móvil V1 (React Native + Expo): `screens/`, `repositories/` (acceso a SQLite; se reemplazan uno a uno por clientes REST: `JaulaRepository.js` y `ConfiguracionRepository.js` eligen entre `.sqlite.js` y `.api.js`), `api/` (cliente HTTP y sesión del modo API), `screens/acceso/` (registro, inicio de sesión y selección de criadero, solo en modo API), `database/` (migraciones y seeders SQLite V1–V7), `navigation/`, `components/`, `services/` (imágenes), `models/`, `config/` (`dataSource.js`: interruptor SQLite/API) |
 | `App.js`, `index.js`, `app.json`, `eas.json`, `assets/` | Entrada y configuración de la app Expo |
-| `api/src/` | Backend V2 (TypeScript, Cloudflare Workers, Hono): `app.ts` compone los routers, `index.ts` exporta el Worker; módulos `auth/`, `criaderos/`, `jaulas/` y `catalogs/` con el patrón routes → factory → service → repository |
+| `api/src/` | Backend V2 (TypeScript, Cloudflare Workers, Hono): `app.ts` compone los routers, `index.ts` exporta el Worker; módulos `auth/`, `criaderos/`, `jaulas/` y `catalogs/` con el patrón routes → factory → service → repository. Catálogos implementado (2026-10-31): plantilla de criadero de 42 ítems (ALIMENTOS y BEBIDAS con 2 cada uno) |
 | `api/migrations/` | Migraciones D1 `0001`–`0005` (`0005` = jaulas, solo aplicada en local y pruebas; siguiente: `0006` = aves e historiales) |
 | `api/test/` | Pruebas: unitarias y HTTP (`*.test.ts`), `helpers/` (fakes, adaptador D1 local) e `integration/` (SQLite en memoria con las migraciones aplicadas, vía better-sqlite3) |
 | `.claude/` | Configuración de Claude Code: `settings.json`, `agents/`, `rules/`, `skills/` (ver abajo) |
@@ -98,4 +98,4 @@ Procedimiento detallado: skill `migrar-repositorio-a-api`.
 - [ ] `baseline-v1.md`: su apartado "Alcance aún no implementado en V1" todavía menciona la sincronización offline como trabajo de V2.
 - [ ] Specs de los módulos restantes (Huevos, Salud, Finanzas, Bajas, Evolución, etc.) con `plantilla-spec.md`.
 - [ ] Decidir el destino de `BackupRepository` en V2.
-- [ ] Resolver los riesgos de `arquitectura-v2.md` (PBKDF2 en Worker real, rate limiting, CORS, CI, refresh token, `active` en el registro).
+- [ ] Resolver los riesgos de `arquitectura-v2.md` (PBKDF2: hoy 100000 iteraciones, CPU medido 13-20 ms por hash frente a 10 ms del plan gratuito, sin confirmar el plan de la cuenta; rate limiting, CORS, CI, refresh token, `active` en el registro).
