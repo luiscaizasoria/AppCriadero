@@ -4,8 +4,42 @@ import {
     registrarHistorialJaula
 } from './HistorialRepository';
 
+import {
+    USAR_API
+} from '../config/dataSource';
+
+import {
+    obtenerCatalogoPorCodigo,
+    obtenerItemsCatalogo
+} from './ConfiguracionRepository';
+
 
 export async function obtenerTiposAlimentos(){
+
+    // Modo API: el catalogo se lee desde la API (mismo resultado que V1).
+    if (USAR_API) {
+
+        const catalogo =
+            await obtenerCatalogoPorCodigo('ALIMENTOS');
+
+        if (!catalogo) {
+            return [];
+        }
+
+        const items =
+            await obtenerItemsCatalogo(catalogo.id);
+
+        return items
+            .map(i => ({
+                id: i.id,
+                codigo: i.codigo,
+                nombre: i.nombre
+            }))
+            .sort((a, b) =>
+                a.nombre < b.nombre ? -1 : (a.nombre > b.nombre ? 1 : 0)
+            );
+
+    }
 
     const db =
         await getDatabase();

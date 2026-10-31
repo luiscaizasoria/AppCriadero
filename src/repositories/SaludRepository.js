@@ -2,9 +2,48 @@ import {
     getDatabase
 } from '../database/database';
 
+import {
+    USAR_API
+} from '../config/dataSource';
+
+import {
+    obtenerCatalogoPorCodigo,
+    obtenerItemsCatalogo
+} from './ConfiguracionRepository';
+
+
+// Modo API: lectura de un catalogo por codigo (mismo resultado que V1).
+async function leerCatalogoApi(codigoCatalogo) {
+
+    const catalogo =
+        await obtenerCatalogoPorCodigo(codigoCatalogo);
+
+    if (!catalogo) {
+        return [];
+    }
+
+    const items =
+        await obtenerItemsCatalogo(catalogo.id);
+
+    return items
+        .map(i => ({
+            id: i.id,
+            codigo: i.codigo,
+            nombre: i.nombre
+        }))
+        .sort((a, b) =>
+            a.nombre < b.nombre ? -1 : (a.nombre > b.nombre ? 1 : 0)
+        );
+
+}
+
 
 
 export async function obtenerEnfermedades() {
+
+    if (USAR_API) {
+        return await leerCatalogoApi('ENFERMEDADES');
+    }
 
     const db =
         await getDatabase();
@@ -49,6 +88,10 @@ export async function obtenerEnfermedades() {
 
 
 export async function obtenerMedicamentos() {
+
+    if (USAR_API) {
+        return await leerCatalogoApi('MEDICAMENTOS');
+    }
 
     const db =
         await getDatabase();
