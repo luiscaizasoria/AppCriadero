@@ -80,7 +80,9 @@ export class D1AuthRepository implements AuthRepository {
 /**
  * Password hashing utilities using PBKDF2 + SHA-256
  */
-const PBKDF2_ITERATIONS = 210000;
+// workerd (Cloudflare Workers) rechaza PBKDF2 con más de 100000 iteraciones
+// (NotSupportedError). Es el máximo; la verificación lee el número del hash guardado.
+export const PBKDF2_ITERATIONS = 100000;
 const SALT_LENGTH = 16;
 const HASH_LENGTH = 32;
 

@@ -40,7 +40,7 @@ Convenciones comunes: `id TEXT PRIMARY KEY`, fechas `TEXT` con `DEFAULT CURRENT_
 | `id` | TEXT PK | UUID v7 |
 | `email` | TEXT NOT NULL UNIQUE | Normalizado (trim y minúsculas) por el servicio |
 | `nombre` | TEXT NOT NULL | |
-| `password_hash` | TEXT | Nulo si solo usa Google. Formato `pbkdf2_sha256$210000${sal}${hash}` |
+| `password_hash` | TEXT | Nulo si solo usa Google. Formato `pbkdf2_sha256$100000${sal}${hash}` (100000 es el máximo que admite workerd) |
 | `google_sub` | TEXT UNIQUE | Preparado para Google Sign-In; hoy sin uso |
 | `email_verified_at` | TEXT | Hoy no se escribe |
 | `active` | INTEGER NOT NULL **DEFAULT 0** | `CHECK (active IN (0,1))`. El registro actual inserta `active = 1` (ver `arquitectura-v2.md`, riesgos) |
