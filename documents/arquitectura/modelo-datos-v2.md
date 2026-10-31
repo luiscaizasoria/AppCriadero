@@ -878,7 +878,7 @@ El UUID será generado al momento de crear el item.
 
 Los valores provienen de la tabla heredada `enfermedades_catalogo` de V1 (`src/database/migrationV2.js:15-49`), tabla heredada sin uso: ningún código de `src/` la lee y no se reproduce en D1. **V1 no siembra estos valores en `catalogo_items`**: `migrationV7.js:7-29` y `seeders.js:68` crean el catálogo `ENFERMEDADES` vacío, y `SaludRepository.js:34` lee `catalogo_items`. En una instalación nueva de V1 el selector sale vacío. Se mantienen en la plantilla V2 por decisión del usuario (2026-10-29): es una decisión V2, no un comportamiento de V1.
 
-V1 no tenía un orden explícito para estos valores, por lo que orden será null inicialmente.
+Orden: `0`, como V1 (`catalogo_items.orden` es `NOT NULL DEFAULT 0`). La plantilla (`defaultCatalogItems.ts`) deja `order: null` en estos ítems y la API de catálogos los devuelve con `orden = 0` (`COALESCE(orden, 0)`), por lo que el resultado visible es 0.
 
 | Codigo | Nombre |
 |---|---|
@@ -891,7 +891,7 @@ V1 no tenía un orden explícito para estos valores, por lo que orden será null
 
 Los valores provienen de la tabla heredada `medicamentos_catalogo` de V1 (`src/database/migrationV2.js:32-66`), tabla heredada sin uso: ningún código de `src/` la lee y no se reproduce en D1. **V1 no siembra estos valores en `catalogo_items`**: `migrationV7.js:7-29` y `seeders.js:85` crean el catálogo `MEDICAMENTOS` vacío, y `SaludRepository.js:78` lee `catalogo_items`. Se mantienen en la plantilla V2 por decisión del usuario (2026-10-29): es una decisión V2, no un comportamiento de V1.
 
-V1 no tenía un orden explícito para estos valores, por lo que orden será null inicialmente.
+Orden: `0`, como V1 (`catalogo_items.orden` es `NOT NULL DEFAULT 0`). La plantilla (`defaultCatalogItems.ts`) deja `order: null` en estos ítems y la API de catálogos los devuelve con `orden = 0` (`COALESCE(orden, 0)`), por lo que el resultado visible es 0.
 
 | Codigo | Nombre |
 |---|---|
