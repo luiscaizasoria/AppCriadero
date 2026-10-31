@@ -9,5 +9,18 @@
       "database_id": "3553a805-434e-4923-b83e-b052fe09a84e",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  "env": {
+    "test": {
+      "name": "criadero-kikirikis-api-test",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "criadero-kikirikis-test",
+          "database_id": "d962f2a9-d10b-4770-a808-7dedd3f84235",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
 }
