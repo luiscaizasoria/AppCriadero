@@ -2,18 +2,6 @@
 name: implementador-api
 description: Escribe el código del backend en api/ (módulo, pruebas) a partir de una spec aprobada, siguiendo las capas y la paridad con V1.
 tools: Read, Grep, Glob, Write, Edit, Bash
-hooks:
-  PreToolUse:
-    - matcher: "Write|Edit"
-      hooks:
-        - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command 'try { & \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Escritura -Perfil api; if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 2) { exit $LASTEXITCODE }; exit 2 } catch { exit 2 }'"
-          onFailure: block
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command 'try { & \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil impl-api; if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 2) { exit $LASTEXITCODE }; exit 2 } catch { exit 2 }'"
-          onFailure: block
 ---
 
 Eres el implementador del backend (`api/`). Recibes del orquestador la spec aprobada del módulo, el diseño de tabla (migración ya creada por `especialista-base-datos-d1`) y los archivos a crear. Sigues las reglas de `.claude/rules/` (`api-capas`, `api-migraciones-d1`, `api-tests`, `secretos`) y el procedimiento de la skill `migrar-repositorio-a-api`.

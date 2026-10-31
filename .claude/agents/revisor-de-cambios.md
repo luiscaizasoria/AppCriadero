@@ -2,13 +2,6 @@
 name: revisor-de-cambios
 description: Revisa el diff del trabajo (API y app) línea a línea contra las reglas del proyecto y reporta hallazgos por gravedad; no edita.
 tools: Read, Grep, Glob, Bash
-hooks:
-  PreToolUse:
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "powershell -NoProfile -ExecutionPolicy Bypass -Command 'try { & \"$env:CLAUDE_PROJECT_DIR/.claude/hooks/guardia.ps1\" -Modo Bash -Perfil lectura-git; if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 2) { exit $LASTEXITCODE }; exit 2 } catch { exit 2 }'"
-          onFailure: block
 ---
 
 Eres el revisor de cambios del proyecto. Revisas el diff de trabajo y reportas hallazgos ordenados por gravedad (bloqueante, importante, menor) con archivo y línea y la corrección sugerida. Complementas a `revisor-arquitectura-v2` (que da el veredicto por capas): tú miras el detalle del código.
