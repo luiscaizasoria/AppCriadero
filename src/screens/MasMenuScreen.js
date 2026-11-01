@@ -8,7 +8,8 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
-    ScrollView
+    ScrollView,
+    Alert
 } from 'react-native';
 
 import {
@@ -19,6 +20,11 @@ import {
 import {
     COLORS
 } from '../config/constants';
+
+
+import {
+    USAR_API
+} from '../config/dataSource';
 
 
 import {
@@ -246,6 +252,19 @@ export default function MasMenuScreen({
             </TouchableOpacity>
 
 
+            {
+                /* Solo en modo API (excepcion aprobada a la regla de no tocar V1). */
+                USAR_API &&
+                <MenuCard
+                    icon="🚪"
+                    title="Cerrar sesión"
+                    description="Salir de la cuenta en este teléfono"
+                    onPress={
+                        confirmarCerrarSesion
+                    }
+                />
+            }
+
         </ScrollView>
 
 
@@ -253,6 +272,33 @@ export default function MasMenuScreen({
 
 }
 
+
+
+function confirmarCerrarSesion(){
+
+    Alert.alert(
+        'Cerrar sesión',
+        '¿Quieres cerrar la sesión en este teléfono?',
+        [
+            {
+                text:'Cancelar',
+                style:'cancel'
+            },
+            {
+                text:'Cerrar sesión',
+                style:'destructive',
+                onPress:()=>{
+
+                    // require diferido: en modo SQLite el modulo de sesion no se carga.
+                    require('../api/sesion')
+                        .cerrarSesion();
+
+                }
+            }
+        ]
+    );
+
+}
 
 
 function MenuCard({
