@@ -4,7 +4,7 @@
 
 Este documento registra el modelo de datos de V2 en tres niveles, de mayor a menor autoridad:
 
-1. **Estado real de D1** (migraciones `0001`–`0004`): lo que existe hoy. Si algo no coincide con una decisión posterior, el esquema real y el código prevalecen.
+1. **Estado real de D1** (migraciones `0001`–`0006`): lo que existe hoy. Si algo no coincide con una decisión posterior, el esquema real y el código prevalecen.
 2. **Decisiones y modelos aprobados**: reglas de diseño tomadas de forma incremental.
 3. **Modelo futuro de negocio**: borrador **no aprobado** (sección final), que debe validarse contra el código real de V1 antes de crear migraciones.
 
@@ -16,11 +16,11 @@ Este documento registra el modelo de datos de V2 en tres niveles, de mayor a men
 - **Multi-criadero:** `users 1 — N criaderos 1 — N entidades de negocio`. Los datos se aíslan por `criadero_id`; la propiedad se resuelve por `entidad.criadero_id -> criaderos.user_id`, sin duplicar `user_id` salvo necesidad técnica documentada.
 - **Aves individuales, sin lotes.** El alcance funcional es el de V1.
 - **Fotos:** el binario va a R2; D1 guarda la clave del objeto y metadatos.
-- **El esquema D1 de negocio aún no existe.** Hoy solo están implementadas las tablas descritas en la sección siguiente; el resto es borrador.
+- **El esquema D1 de negocio está parcial.** Hoy están implementadas las tablas descritas en la sección siguiente (hasta `0006`: jaulas, aves e historiales); el resto es borrador.
 
 > **Nota sobre la numeración.** Las decisiones #1–#11 se redactaron cuando la arquitectura todavía era offline-first. Se conservan con su numeración porque el código las cita (por ejemplo, `api/src/catalogs/defaultCatalogItems.ts` cita el "Modelo aprobado #11"). Lo que dependía de sincronización fue **reemplazado por online-first** y así se indica en cada caso.
 
-## Estado real de D1 (migraciones 0001–0004)
+## Estado real de D1 (migraciones 0001–0006)
 
 Migraciones aplicadas, en `api/migrations/`:
 
@@ -30,6 +30,10 @@ Migraciones aplicadas, en `api/migrations/`:
 | `0002_seed_catalogos.sql` | 7 catálogos globales |
 | `0003_onboarding_schema.sql` | Elimina `UNIQUE(user_id)` de `criaderos` (1:N), amplía `criaderos`, crea `criadero_configuracion` |
 | `0004_seed_onboarding_catalogs.sql` | 3 catálogos globales de onboarding |
+| `0005` (jaulas) | `jaulas` |
+| `0006_aves.sql` | `aves`, `ave_evolucion`, `ave_historial`, `jaula_historial` y `diagnosticos_ave` (aplicada en local y en integración; pendiente en la base remota de pruebas) |
+
+Las tablas de `0006` ya no son borrador: su DDL real es `api/migrations/0006_aves.sql`. Diferencias aprobadas respecto al borrador de la sección final: `raza` y `sexo` son `TEXT` sin FK a catálogo; la foto es `foto_r2_key` (en `aves` y `ave_evolucion`; hoy guarda la ruta local de la foto, ver limitaciones en `documents/specs/aves.md`); marcas de tiempo `fecha_creacion` y `fecha_actualizacion` (nombres de V1) en lugar de `created_at`/`updated_at`; sin `version`, `deleted_at` ni `CHECK` (V1 no los tiene); todas las FK con `ON DELETE RESTRICT ON UPDATE RESTRICT` (incluida `aves.jaula_actual_id`, que el borrador tenía en `SET NULL`); `UNIQUE (criadero_id, codigo)` en `aves` (índice `ux_aves_criadero_codigo`, sin `WHERE deleted_at`); y `diagnosticos_ave` añadida en esta migración con `estado` `ACTIVO`/`CERRADO` sin `CHECK`. `tratamientos_ave` no se crea (módulo Salud).
 
 Convenciones comunes: `id TEXT PRIMARY KEY`, fechas `TEXT` con `DEFAULT CURRENT_TIMESTAMP`, booleanos `INTEGER` 0/1 con `CHECK`, `version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1)` y `deleted_at TEXT` (borrado lógico).
 
@@ -1012,13 +1016,13 @@ Otros puntos detectados al comparar el borrador con las decisiones aprobadas y c
 
 El DDL literal de abajo no se edita; estas decisiones lo corrigen cuando se creen las migraciones (ver `documents/specs/aves.md`):
 
-- **Orden de migraciones:** Jaulas antes que Aves. `0005` = SOLO `jaulas`; `0006` = `aves`, `ave_evolucion`, `ave_historial` y `jaula_historial` (`jaula_historial` referencia `aves`, por eso va después), con FK real y `ON DELETE RESTRICT` (el borrador usa `SET NULL` en `aves.jaula_actual_id`). Las tablas de cuidados de jaula (`alimentacion_jaula`, `bebida_jaula`, `sanidad_jaula`) irán después de `0006`, en otra spec. Las migraciones aún no se han creado. **Se mantiene (técnico).**
+- **Orden de migraciones:** Jaulas antes que Aves. `0005` = SOLO `jaulas`; `0006` = `aves`, `ave_evolucion`, `ave_historial` y `jaula_historial` (`jaula_historial` referencia `aves`, por eso va después), con FK real y `ON DELETE RESTRICT` (el borrador usa `SET NULL` en `aves.jaula_actual_id`). Las tablas de cuidados de jaula (`alimentacion_jaula`, `bebida_jaula`, `sanidad_jaula`) irán después de `0006`, en otra spec. `0005` y `0006` ya existen (2026-11-01); `0006` añadió además `diagnosticos_ave`. **Se mantiene (técnico).**
 - **[REVOCADA 2026-10-29] Raza (precisión):** la raza se compara sin distinguir mayúsculas contra `RAZAS` del criadero y se guarda el nombre del catálogo (no el texto recibido); el sexo se valida por código `MACHO`/`HEMBRA` contra `SEXOS`. Aprobado por el usuario, 2026-10-29.
 - **[REVOCADA 2026-10-29] Marcas de tiempo (propuesta de Claude):** el servicio escribe `created_at`/`updated_at` en ISO 8601 UTC; `DEFAULT CURRENT_TIMESTAMP` queda solo como respaldo (spec aves, R-P3a). Decidida por criterio de paridad con servidor más estricto, 2026-10-29.
 - **`diagnosticos_ave.estado` admite `CERRADO`:** el borrador (`CHECK (estado IN ('ACTIVO'))`) debe ampliarse a `('ACTIVO','CERRADO')`. El valor viene del flujo "Finalizar tratamiento" de v1.0.0 (`UPDATE diagnosticos_ave SET estado='CERRADO' WHERE ave_id=? AND estado='ACTIVO'`), que se replica por completo en V2 (**se mantiene**; el rechazo si el ave no está EN_TRATAMIENTO sí queda revocado). Resuelve el punto 9 para este campo.
 - **Raza y sexo del ave:** texto como V1 (no `raza_item_id`/`sexo_item_id` como en el borrador): **se mantiene**; la validación contra el catálogo y "raza obligatoria y sexo siempre" en el servidor quedan **[REVOCADAS 2026-10-29]**. Resuelve el punto 7 para el ave.
 - **[REVOCADAS 2026-10-29] Una sola baja por ave** (punto 8) y zona horaria fija `America/Guayaquil` con fechas `YYYY-MM-DD` y marcas ISO UTC (punto 10): se replican los formatos de V1.
-- **Fotos:** diferidas a la fase de R2; mientras tanto opcionales y sin poder quitarse al editar (punto 11 sigue abierto para el nombre de la clave).
+- **Fotos:** diferidas a la fase de R2; mientras tanto opcionales y sin poder quitarse al editar. La migración `0006` usó `foto_r2_key` (punto 11: nombre resuelto para aves; propuesta de clave de objeto para R2 `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`, a decidir en el módulo R2).
 
 ### DDL (literal del cierre de traspaso, sección 3.1)
 

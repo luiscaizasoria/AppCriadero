@@ -48,10 +48,12 @@ Para cada módulo: leer su pantalla y su repositorio en V1, redactar la spec en 
 
 Orden decidido el 2026-10-29: Jaulas antes que Aves, con migraciones `0005` (jaulas) y `0006` (aves), FK real y `ON DELETE RESTRICT`. Ave y Jaula tienen referencias cruzadas: validar las claves foráneas contra el código real de V1.
 
-Estado de los módulos (2026-10-31, rama `trabajo/migracion-nube`):
+Estado de los módulos (2026-11-01, rama `trabajo/migracion-nube`):
 
-- **Jaulas**: implementado (API y cliente REST); `0005` solo aplicada en local y pruebas.
-- **Catálogos**: **implementado** en la rama `trabajo/migracion-nube`. Seis endpoints bajo `/api/v1/criaderos/:criaderoId/catalogos` (solo los 7 catálogos básicos), plantilla de criadero de 42 ítems, sin migración nueva (siguiente: `0006`) y cliente de la app `ConfiguracionRepository.js` (conmutador) con `.sqlite.js` y `.api.js`. Validado con pruebas unitarias, HTTP e integración y con el Worker local. **Pendiente:** validar en el teléfono y redesplegar en el Worker de pruebas. Detalle en `documents/specs/catalogos.md`.
+- **Jaulas**: implementado (API y cliente REST); `0005` aplicada en local y pruebas. Ampliado con Aves: `cantidadAves` real, `aves-historicas`, `historial` y baja que libera aves.
+- **Aves**: implementado (API en `api/src/aves/`, migración `0006` con `aves`, `ave_evolucion`, `ave_historial`, `jaula_historial` y `diagnosticos_ave`, cliente `AveRepository.api.js` y fachadas de `AveRepository`, `CicloVidaRepository`, `EvolucionAveRepository` y `EstadoSaludRepository`). Probado en local e integración; **pendiente:** Worker de pruebas (`0006` remota y redespliegue) y teléfono. Limitaciones: foto local en `foto_r2_key`, vendidas/fallecidas sin `bajas_ave`, ciclo de vida y evolución en SQLite en modo API. Detalle en `documents/specs/aves.md`.
+- **Orden siguiente:** cuidados de jaula, Salud, Bajas, Huevos, Finanzas, R2 (módulo aparte; claves propuestas `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`), Google Sign-In.
+- **Catálogos**: **implementado** en la rama `trabajo/migracion-nube`. Seis endpoints bajo `/api/v1/criaderos/:criaderoId/catalogos` (solo los 7 catálogos básicos), plantilla de criadero de 42 ítems, sin migración nueva y cliente de la app `ConfiguracionRepository.js` (conmutador) con `.sqlite.js` y `.api.js`. Validado con pruebas unitarias, HTTP e integración y con el Worker local. **Pendiente:** validar en el teléfono y redesplegar en el Worker de pruebas. Detalle en `documents/specs/catalogos.md`.
 
 Puerta previa a Aves (actualizada 2026-10-31):
 

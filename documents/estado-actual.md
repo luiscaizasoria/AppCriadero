@@ -14,20 +14,21 @@ Leer este archivo y `CLAUDE.md` al empezar. Actualizar al cerrar cada módulo. F
 | Auth, criaderos, onboarding | sí | sí | sí | sí |
 | Jaulas (migración `0005`) | sí | `JaulaRepository.api.js` | sí | sí (sin historial ni `cantidad_aves` reales) |
 | Catálogos (42 ítems por criadero) | sí | `ConfiguracionRepository.api.js` | sí | sí (listas y alta de ítems) |
+| Aves (migración `0006`; sin commit aún) | sí | `AveRepository.api.js` y fachadas | no (pendiente) | no (pendiente) |
 
-Migraciones: `0001`–`0005` aplicadas en local, en pruebas y en la base remota de pruebas. Siguiente: `0006` (aves, ave_evolucion, ave_historial, jaula_historial).
+Migraciones: `0001`–`0005` aplicadas en local, en pruebas y en la base remota de pruebas. `0006` (aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave) aplicada en local e integración; falta en la base remota de pruebas.
 
-## Módulos pendientes (orden propuesto)
+## Módulos pendientes (orden)
 
-1. **Aves** con historiales y "finalizar tratamiento" (incluye `jaula_historial` y `cantidad_aves`).
-2. Cuidados de jaula. 3. Salud. 4. Bajas. 5. Huevos. 6. Finanzas.
-7. R2 (fotos). 8. Google Sign-In (con `/auth/me` y refresh token).
+1. **Cuidados de jaula** (siguiente). 2. Salud. 3. Bajas. 4. Huevos. 5. Finanzas.
+6. R2 (fotos; módulo aparte, claves propuestas `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`). 7. Google Sign-In (con `/auth/me` y refresh token).
 
 ## Limitaciones conocidas
 
-- Aves, cuidados de jaula, Salud y Finanzas siguen en SQLite local. En modo API, asignar un ave a una jaula falla (`FOREIGN KEY constraint failed`: la jaula está en la nube y el ave en SQLite). Guardar Alimentación, Bebida y Sanidad falla por la misma causa.
-- Finalizar tratamiento falla con `TypeError: undefined is not a function` (bug conocido de V1 por la función perdida en v1.0.1).
-- Fotos: R2 sin hacer; las imágenes siguen como ruta local del teléfono.
+- Cuidados de jaula, Salud y Finanzas siguen en SQLite local. Guardar Alimentación, Bebida y Sanidad de una jaula en modo API falla con `FOREIGN KEY constraint failed` (la jaula está en la nube y el cuidado en SQLite).
+- Aves: ciclo de vida (`obtenerCicloVidaAve`) y evolución (`obtenerEvolucionAve`) siguen en SQLite en modo API; el ciclo de vida queda vacío hasta huevos, bajas y salud. Vendidas y fallecidas sin `bajas_ave` y `obtenerBajaAve` devuelve `null` (Bajas). `NuevaAveScreen` usa `Number(item.id)` (da `NaN` con UUID; efecto menor en el filtro de padres y la excepción de sexo).
+- Finalizar tratamiento: en modo API el endpoint no escribe `RECUPERACION` (lo hace la pantalla con `POST /:aveId/eventos`); en SQLite, `EstadoSaludRepository.sqlite.js` restaura `finalizarTratamiento` de v1.0.0 (ya no falla con `TypeError`).
+- Fotos: R2 sin hacer; `foto_r2_key` guarda la ruta local del teléfono (no es clave de objeto).
 - Google Sign-In pendiente. El token dura 60 minutos, sin refresh token; al vencer (401) la app vuelve al inicio de sesión. `FORBIDDEN`/`CRIADERO_NOT_FOUND` sobre el criadero guardado devuelve a la selección de criadero.
 - PBKDF2 a 100000 iteraciones (máximo de workerd); en Workers Free midió 13–20 ms de CPU, sin cortes en pruebas (riesgo conocido).
 
@@ -48,4 +49,4 @@ Migraciones: `0001`–`0005` aplicadas en local, en pruebas y en la base remota 
 
 ## Siguiente paso exacto
 
-Aprobación del plan del módulo **Aves** (spec `documents/specs/aves.md`); después migración `0006`, API, cliente `AveRepository.api.js` y arreglo del import roto de "finalizar tratamiento" sin tocar pantallas.
+Commit local del módulo **Aves** (lo hace el orquestador); después, con aprobación del usuario, aplicar `0006` en la base remota de pruebas (`--env test`), redesplegar el Worker de pruebas y validar Aves en el teléfono. A continuación, plan del módulo **cuidados de jaula** (spec `documents/specs/cuidados-jaula.md`).
