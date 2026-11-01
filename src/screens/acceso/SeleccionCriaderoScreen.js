@@ -21,6 +21,10 @@ import {
 } from '../../api/accesoApi';
 
 import {
+    cerrarSesion
+} from '../../api/sesion';
+
+import {
     COLORS
 } from '../../config/constants';
 
@@ -320,6 +324,21 @@ export default function SeleccionCriaderoScreen() {
 
                     </TouchableOpacity>
                 }
+
+                {
+                    /* Borra token y criadero guardados y vuelve al login. */
+                }
+                <TouchableOpacity
+                    style={styles.linkButton}
+                    onPress={cerrarSesion}
+                    disabled={procesando}
+                >
+
+                    <Text style={styles.linkText}>
+                        Cerrar sesión
+                    </Text>
+
+                </TouchableOpacity>
 
             </ScrollView>
 
