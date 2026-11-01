@@ -28,6 +28,7 @@ Ante una contradicción prevalece, de mayor a menor:
 | `api/test/` | Pruebas: unitarias y HTTP (`*.test.ts`), `helpers/` (fakes, adaptador D1 local) e `integration/` (SQLite en memoria con las migraciones aplicadas, vía better-sqlite3) |
 | `.claude/` | Configuración de Claude Code: `settings.json`, `agents/`, `rules/`, `skills/` (ver abajo) |
 | `documents/estado-actual.md` | Resumen de sesión: rama, módulos hechos y pendientes, limitaciones, cómo arrancar y siguiente paso (actualizar al cerrar cada módulo) |
+| `documents/bitacora.md` | Registro de sesiones, la más nueva arriba (lo escribe `/cerrar-dia`); al pasar de 300 líneas se archiva en `historico/bitacora-AAAA-MM.md` |
 | `documents/arquitectura/` | `arquitectura-v2.md` (arquitectura online-first, identidad, riesgos), `modelo-datos-v2.md` (estado real de D1 y borrador del modelo futuro) y `roadmap-v2.md` (siete fases) |
 | `documents/referencia-v1/` | `baseline-v1.md` (funciones y restricciones de V1) y `analisis-v1-mapeo-api.md` (análisis de V1 y mapeo repositorio → endpoint; el Anexo B es literal) |
 | `documents/specs/` | Una spec por módulo (`aves`, `catalogos`, `jaulas`, `cuidados-jaula`) y `plantilla-spec.md` (plantilla ligera) |

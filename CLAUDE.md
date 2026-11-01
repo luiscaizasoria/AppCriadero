@@ -101,8 +101,11 @@ Reglas aplicables a `src/` (detalle en `.claude/rules/app-movil-v1.md`): no modi
 
 ## Regla de sesión (ahorro de contexto)
 
-- Al empezar, leer **solo** `CLAUDE.md` y `documents/estado-actual.md`. Leer la spec únicamente del módulo en curso; no releerla entera si el estado ya resume lo necesario.
-- Al terminar cada módulo, actualizar `documents/estado-actual.md` y hacer commit.
+- Estado actual (se carga solo con el import de abajo):
+
+@documents/estado-actual.md
+
+- Al empezar, el estado se carga solo (import) y el hook `SessionStart` muestra las últimas entradas de la bitácora; si no aparecen, ejecutar `/retomar`. Al terminar una sesión o un módulo, ejecutar `/cerrar-dia`. Las specs solo se leen para el módulo en curso.
 
 ## Flujo de trabajo
 
@@ -119,7 +122,8 @@ Orden de autoridad ante contradicciones: **código real > este `CLAUDE.md` > `do
 | Ruta | Contenido |
 |---|---|
 | `documents/README.md` | Mapa del proyecto, autoridad y flujo para migrar un módulo |
-| `documents/estado-actual.md` | Estado resumido y siguiente paso (leer al empezar la sesión) |
+| `documents/estado-actual.md` | Estado resumido y siguiente paso (se carga con el import de CLAUDE.md) |
+| `documents/bitacora.md` | Registro de sesiones, la más nueva arriba (lo escribe `/cerrar-dia`; el hook de inicio muestra las 3 últimas) |
 | `documents/arquitectura/arquitectura-v2.md` | Arquitectura online-first, identidad y riesgos |
 | `documents/arquitectura/modelo-datos-v2.md` | Estado real de D1 (`0001`–`0004`) y modelo futuro en **borrador** (DDL literal) |
 | `documents/arquitectura/roadmap-v2.md` | Siete fases de trabajo y su estado |

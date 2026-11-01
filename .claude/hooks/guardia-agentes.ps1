@@ -9,6 +9,7 @@ $ErrorActionPreference = 'Stop'
 
 $PerfilesPorAgente = @{
     'redactor-documentacion'     = @{ Escritura = 'docs' }
+    'seguimiento-proyecto'       = @{ Escritura = 'seguimiento'; Bash = 'lectura-git' }
     'analista-codigo-v1'         = @{ Escritura = 'specs' }
     'especialista-base-datos-d1' = @{ Escritura = 'd1'; Bash = 'd1' }
     'implementador-api'          = @{ Escritura = 'api'; Bash = 'impl-api' }

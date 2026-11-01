@@ -25,6 +25,7 @@ function Bloquear([string]$Motivo) {
 # ---------------------------------------------------------------- perfiles
 $PerfilesEscritura = @{
     'docs'    = @{ Permitir = @('^documents/'); Denegar = @() }
+    'seguimiento' = @{ Permitir = @('^documents/bitacora\.md$', '^documents/estado-actual\.md$'); Denegar = @() }
     'specs'   = @{ Permitir = @('^documents/specs/'); Denegar = @() }
     'd1'      = @{ Permitir = @('^api/migrations/', '^documents/specs/'); Denegar = @() }
     'api'     = @{ Permitir = @('^api/(src|test)/'); Denegar = @() }

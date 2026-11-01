@@ -1,6 +1,6 @@
 # Estado actual (resumen de sesión)
 
-Leer este archivo y `CLAUDE.md` al empezar. Actualizar al cerrar cada módulo. Fecha: 2026-11-01.
+Se carga solo desde `CLAUDE.md` (import). Historial de sesiones: `documents/bitacora.md`. Actualizar con `/cerrar-dia`. Fecha: 2026-11-01.
 
 ## Rama y reglas de trabajo
 
@@ -14,7 +14,7 @@ Leer este archivo y `CLAUDE.md` al empezar. Actualizar al cerrar cada módulo. F
 | Auth, criaderos, onboarding | sí | sí | sí | sí |
 | Jaulas (migración `0005`) | sí | `JaulaRepository.api.js` | sí | sí (sin historial ni `cantidad_aves` reales) |
 | Catálogos (42 ítems por criadero) | sí | `ConfiguracionRepository.api.js` | sí | sí (listas y alta de ítems) |
-| Aves (migración `0006`; sin commit aún) | sí | `AveRepository.api.js` y fachadas | no (pendiente) | no (pendiente) |
+| Aves (migración `0006`, commits `4fc1831` y `37df1fa`) | sí | `AveRepository.api.js` y fachadas | no (pendiente) | no (pendiente) |
 
 Migraciones: `0001`–`0005` aplicadas en local, en pruebas y en la base remota de pruebas. `0006` (aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave) aplicada en local e integración; falta en la base remota de pruebas.
 
@@ -49,4 +49,4 @@ Migraciones: `0001`–`0005` aplicadas en local, en pruebas y en la base remota 
 
 ## Siguiente paso exacto
 
-Commit local del módulo **Aves** (lo hace el orquestador); después, con aprobación del usuario, aplicar `0006` en la base remota de pruebas (`--env test`), redesplegar el Worker de pruebas y validar Aves en el teléfono. A continuación, plan del módulo **cuidados de jaula** (spec `documents/specs/cuidados-jaula.md`).
+Resolver el acceso a Cloudflare (error 7403 al consultar la base de pruebas con `--env test`); después, con aprobación del usuario, aplicar `0006` en la base remota de pruebas, redesplegar el Worker de pruebas y validar Aves en el teléfono. A continuación, plan del módulo **cuidados de jaula** (spec `documents/specs/cuidados-jaula.md`).
