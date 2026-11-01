@@ -11,7 +11,10 @@ import {
 } from './jaulas.repository';
 import {
   MENSAJE_CODIGO_DUPLICADO,
+  type AveHistoricaJaula,
   type EstadoJaulas,
+  type EventoHistorialJaula,
+  type LiberacionAve,
   type JaulaDatos,
   type JaulaDetalle,
   type JaulaInactivaListado,
@@ -134,8 +137,8 @@ export class JaulaService {
   }
 
   /**
-   * Equivale a desactivarJaula de V1. Las aves llegan con la migracion 0006:
-   * hasta entonces no hay aves que liberar (cantidadAvesLiberadas = 0).
+   * Equivale a desactivarJaula de V1: libera las aves de la jaula (de cualquier
+   * estado) escribiendo CAMBIO_JAULA y SALIDA_AVE, y devuelve cuantas liberó.
    */
   async desactivar(
     criaderoId: string,
@@ -146,10 +149,49 @@ export class JaulaService {
     if (!jaula) return noEncontrada();
 
     // V1: si la jaula ya esta inactiva no escribe nada y devuelve 0.
-    if (Number(jaula.activa) === 1) {
-      await this.repository.desactivar(criaderoId, jaulaId, this.now().toISOString());
+    if (Number(jaula.activa) !== 1) {
+      return { success: true, data: { cantidadAvesLiberadas: 0 } };
     }
 
-    return { success: true, data: { cantidadAvesLiberadas: 0 } };
+    const aves = await this.repository.listarAvesDeJaula(criaderoId, jaulaId);
+
+    const liberaciones: LiberacionAve[] = aves.map((ave) => ({
+      aveId: ave.id,
+      historialAveId: this.newId(),
+      detalleAve: `La jaula ${jaula.codigo} fue eliminada. El ave quedó sin jaula asignada.`,
+      historialJaulaId: this.newId(),
+      detalleJaula: `Ave ${ave.codigo} salió de la jaula porque la jaula fue eliminada.`,
+    }));
+
+    await this.repository.desactivarLiberandoAves(
+      criaderoId,
+      jaulaId,
+      this.now().toISOString(),
+      liberaciones
+    );
+
+    return { success: true, data: { cantidadAvesLiberadas: liberaciones.length } };
+  }
+
+  /** obtenerAvesHistoricasJaula de V1 (jaula inexistente -> []). */
+  async listarAvesHistoricas(
+    criaderoId: string,
+    jaulaId: string
+  ): Promise<Resultado<{ aves: AveHistoricaJaula[] }>> {
+    return {
+      success: true,
+      data: { aves: await this.repository.listarAvesHistoricas(criaderoId, jaulaId) },
+    };
+  }
+
+  /** obtenerHistorialCompletoJaula de V1 (jaula inexistente -> []). */
+  async listarHistorialCompleto(
+    criaderoId: string,
+    jaulaId: string
+  ): Promise<Resultado<{ historial: EventoHistorialJaula[] }>> {
+    return {
+      success: true,
+      data: { historial: await this.repository.listarHistorialCompleto(criaderoId, jaulaId) },
+    };
   }
 }

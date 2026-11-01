@@ -3,6 +3,7 @@ import defaultCriaderosRouter from './criaderos/criaderos.routes';
 import defaultAuthRouter from './auth/auth.routes';
 import defaultJaulasRouter from './jaulas/jaulas.routes';
 import defaultCatalogosRouter from './catalogs/catalogs.routes';
+import defaultAvesRouter from './aves/aves.routes';
 
 
 export type Env = {
@@ -19,6 +20,7 @@ type AppOptions = {
   authRouter?: AppRouter;
   jaulasRouter?: AppRouter;
   catalogosRouter?: AppRouter;
+  avesRouter?: AppRouter;
 };
 
 
@@ -46,6 +48,10 @@ export function createApp(
     options.catalogosRouter ?? defaultCatalogosRouter;
 
 
+  const avesRouter =
+    options.avesRouter ?? defaultAvesRouter;
+
+
 
   app.get('/api/v1/health', (c) => {
 
@@ -63,6 +69,8 @@ export function createApp(
   app.route('/api/v1/criaderos/:criaderoId/jaulas', jaulasRouter);
 
   app.route('/api/v1/criaderos/:criaderoId/catalogos', catalogosRouter);
+
+  app.route('/api/v1/criaderos/:criaderoId/aves', avesRouter);
 
   app.route('/api/v1/auth', authRouter);
 

@@ -1,5 +1,9 @@
 import type { JaulaRepository } from "../../src/jaulas/jaulas.repository";
 import type {
+  AveDeJaula,
+  AveHistoricaJaula,
+  EventoHistorialJaula,
+  LiberacionAve,
   JaulaDatos,
   JaulaDetalle,
   JaulaInactivaListado,
@@ -152,7 +156,33 @@ export class FakeJaulaRepository implements JaulaRepository {
   }
 
 
-  async desactivar(criaderoId:string,jaulaId:string,fecha:string){
+  /** Aves (de cualquier estado) por jaula, sembradas por las pruebas. */
+  avesDeJaula: Record<string,AveDeJaula[]> = {};
+
+
+  /** Liberaciones recibidas por desactivarLiberandoAves. */
+  liberaciones: LiberacionAve[] = [];
+
+
+  avesHistoricas: AveHistoricaJaula[] = [];
+
+
+  historialCompleto: EventoHistorialJaula[] = [];
+
+
+  async listarAvesDeJaula(_criaderoId:string,jaulaId:string){
+
+    return [...(this.avesDeJaula[jaulaId] ?? [])];
+
+  }
+
+
+  async desactivarLiberandoAves(
+    criaderoId:string,
+    jaulaId:string,
+    fecha:string,
+    liberaciones:LiberacionAve[]
+  ){
 
     const fila = this.filas.find(
       f=>f.id===jaulaId && f.criaderoId===criaderoId && f.activa===1
@@ -162,11 +192,28 @@ export class FakeJaulaRepository implements JaulaRepository {
       return 0;
     }
 
+    this.liberaciones.push(...liberaciones);
+    this.avesDeJaula[jaulaId] = [];
+
     fila.activa = 0;
     fila.fechaDesactivacion = fecha;
     fila.fechaActualizacion = this.ahora();
 
     return 1;
+
+  }
+
+
+  async listarAvesHistoricas(_criaderoId:string,_jaulaId:string){
+
+    return [...this.avesHistoricas];
+
+  }
+
+
+  async listarHistorialCompleto(_criaderoId:string,_jaulaId:string){
+
+    return [...this.historialCompleto];
 
   }
 

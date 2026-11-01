@@ -239,6 +239,21 @@ describe("HTTP Jaulas",()=>{
   });
 
 
+  it("debe responder las rutas de aves históricas e historial de la jaula", async()=>{
+
+    await llamar(BASE,"propietario","POST",{ codigo:"J001" });
+
+    const aves = await llamar(`${BASE}/jaula-1/aves-historicas`,"propietario");
+    const historial = await llamar(`${BASE}/jaula-1/historial`,"propietario");
+
+    expect(aves.status).toBe(200);
+    expect((await aves.json()).data).toEqual({ aves:[] });
+    expect(historial.status).toBe(200);
+    expect((await historial.json()).data).toEqual({ historial:[] });
+
+  });
+
+
   it("debe responder 404 al desactivar una jaula inexistente", async()=>{
 
     const respuesta = await llamar(`${BASE}/no-existe`,"propietario","DELETE");

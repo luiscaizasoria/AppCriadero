@@ -105,6 +105,26 @@ export function createJaulasRouter(buildDependencies: DependenciesFactory = crea
     return responder(c, await service.obtener(c.req.param('criaderoId')!, c.req.param('jaulaId')));
   });
 
+  // GET /jaulas/:jaulaId/aves-historicas  (obtenerAvesHistoricasJaula)
+  router.get('/:jaulaId/aves-historicas', async (c) => {
+    const { service } = buildDependencies(c.env.DB);
+
+    return responder(
+      c,
+      await service.listarAvesHistoricas(c.req.param('criaderoId')!, c.req.param('jaulaId'))
+    );
+  });
+
+  // GET /jaulas/:jaulaId/historial  (obtenerHistorialCompletoJaula)
+  router.get('/:jaulaId/historial', async (c) => {
+    const { service } = buildDependencies(c.env.DB);
+
+    return responder(
+      c,
+      await service.listarHistorialCompleto(c.req.param('criaderoId')!, c.req.param('jaulaId'))
+    );
+  });
+
   // POST /jaulas
   router.post('/', async (c) => {
     const { service } = buildDependencies(c.env.DB);

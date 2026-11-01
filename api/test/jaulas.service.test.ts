@@ -344,6 +344,51 @@ describe("JaulaService (paridad con JaulaRepository de V1)",()=>{
   });
 
 
+  it("debe liberar las aves de cualquier estado al desactivar y devolver cuántas liberó (PAR-AVE-043)", async()=>{
+
+    const jaula = await crear("J001");
+
+    repository.avesDeJaula[jaula.id] = [
+      { id:"ave-a", codigo:"A1" },
+      { id:"ave-b", codigo:"B1" }
+    ];
+
+    const resultado = await service.desactivar(CRIADERO, jaula.id);
+
+    expect(resultado).toEqual({
+      success:true,
+      data:{ cantidadAvesLiberadas:2 }
+    });
+
+    expect(repository.liberaciones.map(l=>[l.aveId,l.detalleAve,l.detalleJaula])).toEqual([
+      ["ave-a","La jaula J001 fue eliminada. El ave quedó sin jaula asignada.","Ave A1 salió de la jaula porque la jaula fue eliminada."],
+      ["ave-b","La jaula J001 fue eliminada. El ave quedó sin jaula asignada.","Ave B1 salió de la jaula porque la jaula fue eliminada."]
+    ]);
+
+  });
+
+
+  it("debe devolver las aves históricas y el historial completo de la jaula", async()=>{
+
+    const jaula = await crear("J001");
+
+    repository.avesHistoricas = [
+      { id:"ave-a", codigo:"A1", raza:null, sexo:"MACHO", estado:"ACTIVA", fotoUri:null }
+    ];
+
+    repository.historialCompleto = [
+      { id:"h1", jaulaId:jaula.id, aveId:"ave-a", tipoEvento:"INGRESO_AVE", fecha:"2026-10-30", detalle:"x", aveCodigo:"A1" }
+    ];
+
+    const aves = await service.listarAvesHistoricas(CRIADERO, jaula.id);
+    const historial = await service.listarHistorialCompleto(CRIADERO, jaula.id);
+
+    expect(aves.success && aves.data.aves.map(a=>a.codigo)).toEqual(["A1"]);
+    expect(historial.success && historial.data.historial[0].tipoEvento).toBe("INGRESO_AVE");
+
+  });
+
+
   it("debe rechazar un cuerpo cuyo código no es texto (validación técnica)", async()=>{
 
     const sinCodigo = await service.crear(CRIADERO,{ nombre:"Sin código" });

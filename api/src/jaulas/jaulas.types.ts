@@ -51,6 +51,42 @@ export interface JaulaDatos {
 
 export type EstadoJaulas = 'ACTIVA' | 'INACTIVA';
 
+/** obtenerAvesHistoricasJaula de V1. */
+export interface AveHistoricaJaula {
+  id: string;
+  codigo: string;
+  raza: string | null;
+  sexo: string | null;
+  estado: string;
+  fotoUri: string | null;
+}
+
+/** obtenerHistorialCompletoJaula de V1. */
+export interface EventoHistorialJaula {
+  id: string;
+  jaulaId: string;
+  aveId: string | null;
+  tipoEvento: string;
+  fecha: string;
+  detalle: string | null;
+  aveCodigo: string | null;
+}
+
+/** Ave (de cualquier estado) con jaula_actual_id = jaula, para desactivarJaula. */
+export interface AveDeJaula {
+  id: string;
+  codigo: string;
+}
+
+/** Eventos que escribe desactivarJaula de V1 por cada ave liberada. */
+export interface LiberacionAve {
+  aveId: string;
+  historialAveId: string;
+  detalleAve: string;
+  historialJaulaId: string;
+  detalleJaula: string;
+}
+
 export interface ErrorResponse {
   success: false;
   error: string;

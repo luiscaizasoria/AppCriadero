@@ -94,7 +94,8 @@ class LocalPreparedStatementBound {
 
 
 
-  async run(){
+  /** Ejecucion sincrona: db.batch la usa dentro de la transaccion para que un error revierta todo. */
+  runSync(){
 
     const result = this.db
       .prepare(this.sql)
@@ -107,6 +108,14 @@ class LocalPreparedStatementBound {
         changes: result.changes
       }
     };
+
+  }
+
+
+
+  async run(){
+
+    return this.runSync();
 
   }
 
@@ -156,7 +165,7 @@ export class LocalD1Adapter {
         for(const statement of items){
 
           results.push(
-            statement.run()
+            statement.runSync()
           );
 
         }
