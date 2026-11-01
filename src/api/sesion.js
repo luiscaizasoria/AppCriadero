@@ -254,6 +254,26 @@ export async function guardarCriadero(criaderoId) {
 }
 
 
+/**
+ * Descarta solo el criadero guardado (el token se conserva): App.js muestra
+ * entonces la seleccion de criadero.
+ */
+export async function descartarCriadero() {
+
+    await cargarSesion();
+
+    estado = {
+        ...estado,
+        criaderoId: null
+    };
+
+    await escribir(CLAVES.criaderoId, null);
+
+    emitir();
+
+}
+
+
 export async function cerrarSesion() {
 
     if (temporizador) {

@@ -10,7 +10,9 @@ import {
 
 import {
     obtenerToken,
-    cerrarSesion
+    cerrarSesion,
+    descartarCriadero,
+    obtenerEstado
 } from './sesion';
 
 
@@ -137,6 +139,30 @@ export async function apiFetch(path, {
         if (respuesta.status === 401 && auth) {
 
             await cerrarSesion();
+
+        }
+
+        // Criadero guardado inexistente o ajeno: se vuelve a elegir criadero.
+        // Un 404 de un ítem concreto (JAULA_NOT_FOUND, etc.) no entra aquí.
+        if (
+            auth &&
+            (
+                json?.error === 'FORBIDDEN' ||
+                json?.error === 'CRIADERO_NOT_FOUND'
+            ) &&
+            (respuesta.status === 403 || respuesta.status === 404)
+        ) {
+
+            const coincide = path.match(/\/criaderos\/([^/?#]+)/);
+
+            if (
+                coincide &&
+                coincide[1] === obtenerEstado().criaderoId
+            ) {
+
+                await descartarCriadero();
+
+            }
 
         }
 
