@@ -4,8 +4,11 @@
  * objetos devueltos (snake_case, como salen de SQLite en V1) y mismos errores,
  * para que las pantallas no cambien.
  *
- * Pendiente hasta migrar Aves (migracion D1 0006): cantidad_aves llega en 0,
- * y obtenerAvesHistoricasJaula / obtenerHistorialCompletoJaula devuelven [].
+ * Con Aves migrado (migracion D1 0006): cantidad_aves es la real (activas en
+ * jaulas activas; aves distintas del historial en inactivas),
+ * obtenerAvesHistoricasJaula / obtenerHistorialCompletoJaula usan
+ * /aves-historicas y /historial, y desactivarJaula devuelve
+ * cantidadAvesLiberadas real.
  */
 
 import {
@@ -141,18 +144,47 @@ export async function obtenerJaulasInactivas() {
 }
 
 
-// Pendiente de Aves y jaula_historial (migracion D1 0006).
-export async function obtenerAvesHistoricasJaula() {
+export async function obtenerAvesHistoricasJaula(jaulaId) {
 
-    return [];
+    const ruta = await rutaJaulas();
+
+    const data = await apiFetch(
+        `${ruta}/${encodeURIComponent(jaulaId)}/aves-historicas`
+    );
+
+    return data.aves.map(
+        ave => ({
+            id: ave.id,
+            codigo: ave.codigo,
+            raza: ave.raza,
+            sexo: ave.sexo,
+            estado: ave.estado,
+            foto_uri: ave.fotoUri
+        })
+    );
 
 }
 
 
-// Pendiente de Aves y jaula_historial (migracion D1 0006).
-export async function obtenerHistorialCompletoJaula() {
+export async function obtenerHistorialCompletoJaula(jaulaId) {
 
-    return [];
+    const ruta = await rutaJaulas();
+
+    const data = await apiFetch(
+        `${ruta}/${encodeURIComponent(jaulaId)}/historial`
+    );
+
+    return data.historial.map(
+        item => ({
+            id: item.id,
+            jaula_id: item.jaulaId,
+            ave_id: item.aveId,
+            tipo_evento: item.tipoEvento,
+            fecha: item.fecha,
+            detalle: item.detalle,
+            ave_codigo: item.aveCodigo
+        })
+    );
 
 }
 
