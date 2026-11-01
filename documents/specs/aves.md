@@ -21,7 +21,8 @@ Diferencias que exige el paso a online (además de UUID v7, `criadero_id`, auten
 
 - `JAULA_NO_ENCONTRADA` (404) cuando la jaula indicada no existe en el criadero. V1 daba error de clave foránea; el cliente lo traduce a `FOREIGN KEY constraint failed` para que la pantalla muestre lo mismo.
 - `AVE_NO_ENCONTRADA` (404) en eventos, evolución, cambio de jaula y finalizar tratamiento con ave inexistente (V1: error de FK o ningún error).
-- `VALIDATION_ERROR` por tipos del body (campos numéricos que no son número), 400 por `?estado` inválido y 400 por `jaulaId` ausente en `para-asignar-jaula`.
+- `VALIDATION_ERROR` técnico por el body JSON: cuerpo que no es objeto, `codigo` que no es texto (V1 lanzaba `TypeError` en `codigo.trim()`), `origen` ausente, nulo u objeto (columna `NOT NULL`; D1 no enlaza `undefined`), campos con `?.trim()` en V1 (`criaderoOrigen`, `metodoEnvio`, `raza`, `caracteristicas`) que no son texto (V1 lanzaba `TypeError`) y objetos o arreglos en cualquier campo escalar (D1 no puede enlazarlos). **Alineado con V1 (2026-11-01):** ya no se rechazan los escalares de otro tipo en `origen`, `fechaNacimiento`, `fechaIngreso`, `sexo`, `fotoUri`, `padreId`, `madreId` ni en `edadMesesCompra`, `pesoGramos`, `alturaCm`, `largoCm`: V1 no comprobaba tipos y SQLite aplicaba la afinidad de la columna; se aceptan y se guardan igual (prueba de integración en `aves.d1.test.ts`, sobre SQLite en memoria, no sobre D1 real).
+- 400 por `?estado` inválido y 400 por `jaulaId` ausente en `para-asignar-jaula`.
 - El servidor hace `trim` de la observación en finalizar tratamiento (la pantalla ya la envía recortada).
 
 ### Limitaciones conocidas

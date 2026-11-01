@@ -55,10 +55,19 @@ function esAusente(valor: unknown): valor is null | undefined {
   return valor === undefined || valor === null;
 }
 
-/** `x || null` de V1 para textos (sin trim). undefined = tipo invalido. */
+/** string, number o boolean: lo que SQLite/D1 aceptan como parametro escalar (objetos y arreglos no). */
+function esEscalar(valor: unknown): valor is string | number | boolean {
+  return typeof valor === 'string' || typeof valor === 'number' || typeof valor === 'boolean';
+}
+
+/**
+ * `x || null` de V1 para textos (sin trim ni comprobacion de tipo). SQLite lo guardaba
+ * con afinidad TEXT, asi que un escalar se acepta y se guarda como texto. undefined =
+ * objeto/arreglo (tecnico: D1 no puede enlazarlo).
+ */
 function textoOrNull(valor: unknown): string | null | undefined {
   if (esAusente(valor)) return null;
-  if (typeof valor === 'string') return valor || null;
+  if (esEscalar(valor)) return valor ? String(valor) : null;
   return undefined;
 }
 
@@ -69,10 +78,16 @@ function textoTrimOrNull(valor: unknown): string | null | undefined {
   return undefined;
 }
 
-/** `x ?? null` de V1 para numeros. undefined = tipo invalido. */
+/**
+ * `x ?? null` de V1 para numeros, sin comprobacion de tipo: SQLite aplicaba la afinidad de la
+ * columna (un texto numerico se guardaba como numero). Se acepta cualquier escalar; D1 hace
+ * lo mismo. undefined = objeto/arreglo (tecnico: D1 no puede enlazarlo).
+ */
 function numeroOrNull(valor: unknown): number | null | undefined {
   if (esAusente(valor)) return null;
-  if (typeof valor === 'number' && Number.isFinite(valor)) return valor;
+  if (typeof valor === 'number') return valor;
+  if (typeof valor === 'boolean') return Number(valor);
+  if (typeof valor === 'string') return valor as unknown as number;
   return undefined;
 }
 
@@ -81,7 +96,8 @@ export function normalizarDatos(body: unknown): AveDatos | Resultado<never> {
   if (!esObjeto(body)) return validationError('El cuerpo debe ser un objeto JSON');
 
   if (typeof body.codigo !== 'string') return validationError('El campo codigo debe ser texto');
-  if (typeof body.origen !== 'string') return validationError('El campo origen debe ser texto');
+  // V1 no validaba origen; aqui solo se exige un escalar porque la columna es NOT NULL y D1 no enlaza undefined/objetos.
+  if (!esEscalar(body.origen)) return validationError('El campo origen es obligatorio');
 
   const fechaNacimiento = textoOrNull(body.fechaNacimiento);
   const fechaIngreso = textoOrNull(body.fechaIngreso);
@@ -105,16 +121,16 @@ export function normalizarDatos(body: unknown): AveDatos | Resultado<never> {
   const numeros = [edadMesesCompra, pesoGramos, alturaCm, largoCm];
 
   if (textos.some((valor) => valor === undefined)) {
-    return validationError('Los campos de texto del ave deben ser texto');
+    return validationError('Los campos del ave no pueden ser objetos ni arreglos');
   }
 
   if (numeros.some((valor) => valor === undefined)) {
-    return validationError('edadMesesCompra, pesoGramos, alturaCm y largoCm deben ser numeros');
+    return validationError('edadMesesCompra, pesoGramos, alturaCm y largoCm no pueden ser objetos ni arreglos');
   }
 
   return {
     codigo: body.codigo.trim().toUpperCase(),
-    origen: body.origen,
+    origen: String(body.origen),
     fechaNacimiento: fechaNacimiento as string | null,
     edadMesesCompra: edadMesesCompra as number | null,
     fechaIngreso: fechaIngreso as string | null,

@@ -177,6 +177,21 @@ describe("Aves D1 local (SQLite en memoria)",()=>{
   });
 
 
+  it("debe guardar escalares de otro tipo como V1 (afinidad de la columna) sin que D1 falle", async()=>{
+
+    const resultado = await aves.crear(criaderoA,{
+      codigo:"TIPOS-1", origen:7, sexo:3, pesoGramos:"10", alturaCm:true, fechaNacimiento:20261001
+    });
+
+    expect(resultado.success).toBe(true);
+
+    const fila = await filas("SELECT origen, sexo, peso_gramos, altura_cm, fecha_nacimiento FROM aves WHERE codigo = ?","TIPOS-1");
+
+    expect(fila[0]).toEqual({ origen:"7", sexo:"3", peso_gramos:10, altura_cm:1, fecha_nacimiento:"20261001" });
+
+  });
+
+
   it("debe distinguir mayúsculas en el índice único y permitir el mismo código en otro criadero", async()=>{
 
     const otroCriadero = await crearAve(criaderoB,"K001");

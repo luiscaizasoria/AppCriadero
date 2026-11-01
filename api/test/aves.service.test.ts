@@ -249,10 +249,31 @@ describe("AveService (paridad con AveRepository de V1)",()=>{
       expect(error(await service.crear(CRIADERO, cuerpo)).error).toBe("VALIDATION_ERROR");
     }
 
-    expect(error(await service.crear(CRIADERO,{ codigo: "A", origen: "COMPRADA", pesoGramos: "10" })).error)
-      .toBe("VALIDATION_ERROR");
+    expect(repository.aves).toHaveLength(0);
+
+  });
+
+
+  it("debe rechazar objetos y arreglos en campos escalares porque D1 no los enlaza (técnico)", async()=>{
+
+    for(const extra of [{ origen: {} },{ origen: null },{ sexo: {} },{ padreId: [] },{ pesoGramos: {} },{ alturaCm: [1] }]){
+      expect(error(await service.crear(CRIADERO,{ codigo: "A", origen: "COMPRADA", ...extra })).error)
+        .toBe("VALIDATION_ERROR");
+    }
 
     expect(repository.aves).toHaveLength(0);
+
+  });
+
+
+  it("debe aceptar escalares sin comprobar su tipo, como V1 (SQLite aplicaba la afinidad de la columna)", async()=>{
+
+    const ave = await crear("T1",{ origen: 7, sexo: 3, pesoGramos: "10", alturaCm: true });
+
+    expect(ave.origen).toBe("7");
+    expect(ave.sexo).toBe("3");
+    expect(Number(ave.pesoGramos)).toBe(10);
+    expect(Number(ave.alturaCm)).toBe(1);
 
   });
 
