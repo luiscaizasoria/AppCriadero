@@ -99,6 +99,11 @@ Migraciones locales: `npx wrangler d1 migrations apply criadero-kikirikis-dev --
 
 Reglas aplicables a `src/` (detalle en `.claude/rules/app-movil-v1.md`): no modificar migraciones SQLite antiguas (V7 → V8 solo para la app), no tocar `BackupRepository.js` ni servicios de imágenes sin analizar impacto, no romper los cinco tabs raíz (Inicio, Jaulas → `ListaJaulas`, Aves → `ListaAves`, Finanzas, Más).
 
+## Regla de sesión (ahorro de contexto)
+
+- Al empezar, leer **solo** `CLAUDE.md` y `documents/estado-actual.md`. Leer la spec únicamente del módulo en curso; no releerla entera si el estado ya resume lo necesario.
+- Al terminar cada módulo, actualizar `documents/estado-actual.md` y hacer commit.
+
 ## Flujo de trabajo
 
 1. `git status --short` y rama actual; no asumir árbol limpio.
@@ -114,6 +119,7 @@ Orden de autoridad ante contradicciones: **código real > este `CLAUDE.md` > `do
 | Ruta | Contenido |
 |---|---|
 | `documents/README.md` | Mapa del proyecto, autoridad y flujo para migrar un módulo |
+| `documents/estado-actual.md` | Estado resumido y siguiente paso (leer al empezar la sesión) |
 | `documents/arquitectura/arquitectura-v2.md` | Arquitectura online-first, identidad y riesgos |
 | `documents/arquitectura/modelo-datos-v2.md` | Estado real de D1 (`0001`–`0004`) y modelo futuro en **borrador** (DDL literal) |
 | `documents/arquitectura/roadmap-v2.md` | Siete fases de trabajo y su estado |

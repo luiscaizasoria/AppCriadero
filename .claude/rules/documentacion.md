@@ -16,6 +16,6 @@ Estructura:
 
 Reglas:
 
-- Nombres de archivo en minúsculas con guiones (`arquitectura-v2.md`). No dejar documentos sueltos en la raíz de `documents/` salvo `README.md`.
+- Nombres de archivo en minúsculas con guiones (`arquitectura-v2.md`). No dejar documentos sueltos en la raíz de `documents/` salvo `README.md` y `estado-actual.md`.
 - Orden de autoridad ante contradicciones: código real > `CLAUDE.md` > `documents/arquitectura/` > specs > `documents/historico/`.
 - Al mover o renombrar un documento, actualizar todas las referencias (`grep` del nombre antiguo) y el índice.
