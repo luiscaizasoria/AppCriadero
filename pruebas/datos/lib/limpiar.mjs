@@ -65,3 +65,12 @@ export function limpiarCuentasDesechables() {
 
     return { ok: true, recuento: recuento() };
 }
+
+/** Ítems de catálogo de un criadero en D1 (todos los catálogos, incluidos los de onboarding). Solo lectura, --env test. */
+export function itemsPorCatalogo(criaderoId) {
+    if (!/^[0-9a-f-]{36}$/i.test(criaderoId)) throw new Error('criaderoId no valido');
+    const consulta = `SELECT c.codigo, count(i.id) n FROM catalogos c LEFT JOIN catalogo_items i ON i.catalogo_id=c.id AND i.criadero_id='${criaderoId}' GROUP BY c.codigo ORDER BY c.codigo`;
+    const q = wrangler(['--command', `"${consulta}"`]);
+    const filas = JSON.parse(q.stdout.slice(q.stdout.indexOf('[')))[0].results;
+    return Object.fromEntries(filas.map(f => [f.codigo, f.n]));
+}
