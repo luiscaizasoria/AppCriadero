@@ -28,6 +28,7 @@ Sustituye `CR` por `SELECT id FROM criaderos [WHERE user_id NOT IN (SELECT id FR
 npx wrangler d1 execute criadero-kikirikis-test --remote --env test --command "DELETE FROM ave_historial WHERE criadero_id IN (CR)"
 npx wrangler d1 execute criadero-kikirikis-test --remote --env test --command "DELETE FROM jaula_historial WHERE criadero_id IN (CR)"
 npx wrangler d1 execute criadero-kikirikis-test --remote --env test --command "DELETE FROM ave_evolucion WHERE criadero_id IN (CR)"
+npx wrangler d1 execute criadero-kikirikis-test --remote --env test --command "DELETE FROM tratamientos_ave WHERE criadero_id IN (CR)"
 npx wrangler d1 execute criadero-kikirikis-test --remote --env test --command "DELETE FROM diagnosticos_ave WHERE criadero_id IN (CR)"
 npx wrangler d1 execute criadero-kikirikis-test --remote --env test --command "UPDATE aves SET padre_id=NULL, madre_id=NULL WHERE criadero_id IN (CR)"
 npx wrangler d1 execute criadero-kikirikis-test --remote --env test --command "DELETE FROM aves WHERE criadero_id IN (CR)"

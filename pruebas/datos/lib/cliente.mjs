@@ -27,6 +27,7 @@ export * as jaulas from './src/repositories/JaulaRepository.api.js';
 export * as aves from './src/repositories/AveRepository.api.js';
 export * as config from './src/repositories/ConfiguracionRepository.api.js';
 export * as salud from './src/repositories/EstadoSaludRepository.api.js';
+export * as saludAve from './src/repositories/SaludRepository.api.js';
 export * as alimentacion from './src/repositories/AlimentacionRepository.api.js';
 export * as bebida from './src/repositories/BebidaRepository.api.js';
 export * as sanidad from './src/repositories/SanidadJaulaRepository.api.js';

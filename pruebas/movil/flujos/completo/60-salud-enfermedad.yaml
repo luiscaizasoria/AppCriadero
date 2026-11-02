@@ -1,9 +1,9 @@
 # SEMILLA: --jaulas=JX-1 --aves=AV-P:MACHO:JX-1
-# ESPERADO FALLAR (salud): registrar una enfermedad en un ave (Salud sigue en SQLite)
-# Si pasa, el informe avisa: migrado, quitar etiqueta.
+# SALUD: registrar una enfermedad (Coriza) en un ave; el historial la muestra y el estado pasa a "En tratamiento".
 appId: host.exp.exponent
 tags:
-  - esperado-fallar
+  - completo
+  - migrado
   - salud
 ---
 - runFlow:
@@ -26,4 +26,13 @@ tags:
 - extendedWaitUntil:
     visible: "Registro guardado"
     timeout: 15000
+- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: ".*En tratamiento.*"
+    timeout: 20000
+- scrollUntilVisible:
+    element: ".*Historial sanitario.*"
+- scrollUntilVisible:
+    element: ".*🔴 Coriza.*"
+- assertVisible: ".*Coriza.*"
 - takeScreenshot: salud-resultado
