@@ -2,6 +2,14 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-02 sesión 2
+- Hecho: módulo Cuidados de jaula: migración `0007` y API (`8ee3c59`), clientes con fachadas (`909ffc0`), excepción aprobada a `AlimentacionJaulaScreen` y `BebidaJaulaScreen` (`39ff632`), pruebas y flujos (`aa472b6`) y documentación (spec sin lo revocado, estado, roadmap; `8484fda`). `0007` aplicada y Worker de pruebas desplegado con `--env test`.
+- Resultado: typecheck, 188 pruebas unitarias/HTTP y 47 de integración en verde; `/probar datos` 38/38 (51 s), smoke verde (1,7 min); completo 20,7 min sin regresiones: 10 migrados en verde y 4 esperados (`PENDIENTE DE MIGRAR: genealogia, huevos, dashboard, salud`). Revisor de arquitectura: APROBADO.
+- Decisión: Alertas, Inicio y Reportes pasan a la fase 6 como pendientes; mientras Inicio no se migre, dos cuentas en el mismo teléfono ven los contadores del SQLite local compartido.
+- Decisión: el ejecutor móvil reinicia su Metro en cada ejecución (modo CI no recarga y servía código desfasado); se corrigió una prueba de Aves que dependía del reloj real.
+- Pendiente: probar Cuidados de jaula y Aves en el teléfono físico; push de los commits nuevos (requiere aprobación); `pruebas/.entorno.local` sin crear (la variable no estaba en la sesión).
+- Próximo paso exacto: plan del módulo Salud (o el que decida el usuario).
+
 ## 2026-11-02 sesión 1
 - Hecho: pruebas automáticas. Capa 1 `pruebas/datos` (26 casos, ~31 s, aislamiento entre cuentas sin fuga: `64f41ac`); capa 2 `pruebas/movil` con Maestro 2.12.1 (nativo en Windows) y Expo Go 57.0.9 (`795de4b`); skill `/probar`, perfil del guardia de `probador-movil` y regla en `CLAUDE.md` (`b996a83`).
 - Resultado: smoke verde (~2 min); completo 22 min: acceso, catálogos, jaulas y aves en verde; confirmados como «esperado fallar»: Alimentación, Bebida, Sanidad, Salud, Huevos, Genealogía, Inicio e Historial de jaula (este último usa `HistorialRepository` en SQLite).
