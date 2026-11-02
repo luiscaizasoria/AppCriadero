@@ -4,7 +4,7 @@
 
 Este documento registra el modelo de datos de V2 en tres niveles, de mayor a menor autoridad:
 
-1. **Estado real de D1** (migraciones `0001`–`0006`): lo que existe hoy. Si algo no coincide con una decisión posterior, el esquema real y el código prevalecen.
+1. **Estado real de D1** (migraciones `0001`–`0007`): lo que existe hoy. Si algo no coincide con una decisión posterior, el esquema real y el código prevalecen.
 2. **Decisiones y modelos aprobados**: reglas de diseño tomadas de forma incremental.
 3. **Modelo futuro de negocio**: borrador **no aprobado** (sección final), que debe validarse contra el código real de V1 antes de crear migraciones.
 
@@ -16,11 +16,11 @@ Este documento registra el modelo de datos de V2 en tres niveles, de mayor a men
 - **Multi-criadero:** `users 1 — N criaderos 1 — N entidades de negocio`. Los datos se aíslan por `criadero_id`; la propiedad se resuelve por `entidad.criadero_id -> criaderos.user_id`, sin duplicar `user_id` salvo necesidad técnica documentada.
 - **Aves individuales, sin lotes.** El alcance funcional es el de V1.
 - **Fotos:** el binario va a R2; D1 guarda la clave del objeto y metadatos.
-- **El esquema D1 de negocio está parcial.** Hoy están implementadas las tablas descritas en la sección siguiente (hasta `0006`: jaulas, aves e historiales); el resto es borrador.
+- **El esquema D1 de negocio está parcial.** Hoy están implementadas las tablas descritas en la sección siguiente (hasta `0007`: jaulas, aves, historiales y cuidados de jaula); el resto es borrador.
 
 > **Nota sobre la numeración.** Las decisiones #1–#11 se redactaron cuando la arquitectura todavía era offline-first. Se conservan con su numeración porque el código las cita (por ejemplo, `api/src/catalogs/defaultCatalogItems.ts` cita el "Modelo aprobado #11"). Lo que dependía de sincronización fue **reemplazado por online-first** y así se indica en cada caso.
 
-## Estado real de D1 (migraciones 0001–0006)
+## Estado real de D1 (migraciones 0001–0007)
 
 Migraciones aplicadas, en `api/migrations/`:
 
@@ -31,7 +31,8 @@ Migraciones aplicadas, en `api/migrations/`:
 | `0003_onboarding_schema.sql` | Elimina `UNIQUE(user_id)` de `criaderos` (1:N), amplía `criaderos`, crea `criadero_configuracion` |
 | `0004_seed_onboarding_catalogs.sql` | 3 catálogos globales de onboarding |
 | `0005` (jaulas) | `jaulas` |
-| `0006_aves.sql` | `aves`, `ave_evolucion`, `ave_historial`, `jaula_historial` y `diagnosticos_ave` (aplicada en local y en integración; pendiente en la base remota de pruebas) |
+| `0006_aves.sql` | `aves`, `ave_evolucion`, `ave_historial`, `jaula_historial` y `diagnosticos_ave` (aplicada en local, en integración y en la base remota de pruebas) |
+| `0007_cuidados_jaula.sql` | `alimentacion_jaula`, `bebida_jaula` y `sanidad_jaula` (eventos inmutables; `fecha_creacion`, sin `version`/`deleted_at`/`CHECK`; FK `RESTRICT`; índices `(jaula_id, fecha)`; aplicada en local, integración y base remota de pruebas) |
 
 Las tablas de `0006` ya no son borrador: su DDL real es `api/migrations/0006_aves.sql`. Diferencias aprobadas respecto al borrador de la sección final: `raza` y `sexo` son `TEXT` sin FK a catálogo; la foto es `foto_r2_key` (en `aves` y `ave_evolucion`; hoy guarda la ruta local de la foto, ver limitaciones en `documents/specs/aves.md`); marcas de tiempo `fecha_creacion` y `fecha_actualizacion` (nombres de V1) en lugar de `created_at`/`updated_at`; sin `version`, `deleted_at` ni `CHECK` (V1 no los tiene); todas las FK con `ON DELETE RESTRICT ON UPDATE RESTRICT` (incluida `aves.jaula_actual_id`, que el borrador tenía en `SET NULL`); `UNIQUE (criadero_id, codigo)` en `aves` (índice `ux_aves_criadero_codigo`, sin `WHERE deleted_at`); y `diagnosticos_ave` añadida en esta migración con `estado` `ACTIVO`/`CERRADO` sin `CHECK`. `tratamientos_ave` no se crea (módulo Salud).
 

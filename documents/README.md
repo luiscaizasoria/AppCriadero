@@ -24,7 +24,7 @@ Ante una contradicción prevalece, de mayor a menor:
 | `src/` | App móvil V1 (React Native + Expo): `screens/`, `repositories/` (acceso a SQLite; se reemplazan uno a uno por clientes REST: `JaulaRepository.js`, `ConfiguracionRepository.js`, `AveRepository.js`, `CicloVidaRepository.js`, `EvolucionAveRepository.js` y `EstadoSaludRepository.js` eligen entre `.sqlite.js` y `.api.js`), `api/` (cliente HTTP y sesión del modo API), `screens/acceso/` (registro, inicio de sesión y selección de criadero, solo en modo API), `database/` (migraciones y seeders SQLite V1–V7), `navigation/`, `components/`, `services/` (imágenes), `models/`, `config/` (`dataSource.js`: interruptor SQLite/API) |
 | `App.js`, `index.js`, `app.json`, `eas.json`, `assets/` | Entrada y configuración de la app Expo |
 | `api/src/` | Backend V2 (TypeScript, Cloudflare Workers, Hono): `app.ts` compone los routers, `index.ts` exporta el Worker; módulos `auth/`, `criaderos/`, `jaulas/`, `aves/` y `catalogs/` con el patrón routes → factory → service → repository. Catálogos implementado (2026-10-31): plantilla de criadero de 42 ítems (ALIMENTOS y BEBIDAS con 2 cada uno) |
-| `api/migrations/` | Migraciones D1 `0001`–`0006` (`0005` = jaulas, aplicada en local y pruebas; `0006` = aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave, aplicada en local e integración; pendiente en la base remota de pruebas) |
+| `api/migrations/` | Migraciones D1 `0001`–`0007` (`0005` = jaulas, aplicada en local y pruebas; `0006` = aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave, aplicada en local e integración; `0007` = alimentacion_jaula, bebida_jaula y sanidad_jaula, aplicada en local, integración y base remota de pruebas) |
 | `api/test/` | Pruebas: unitarias y HTTP (`*.test.ts`), `helpers/` (fakes, adaptador D1 local) e `integration/` (SQLite en memoria con las migraciones aplicadas, vía better-sqlite3) |
 | `.claude/` | Configuración de Claude Code: `settings.json`, `agents/`, `rules/`, `skills/` (ver abajo) |
 | `documents/estado-actual.md` | Resumen de sesión: rama, módulos hechos y pendientes, limitaciones, cómo arrancar y siguiente paso (actualizar al cerrar cada módulo) |
@@ -81,7 +81,7 @@ Ante una contradicción prevalece, de mayor a menor:
 ## Flujo para migrar un módulo
 
 1. Leer la spec del módulo (`documents/specs/<modulo>.md`) y el repositorio V1 con sus pantallas; si no hay spec, pedirla a `analista-codigo-v1` con `plantilla-spec.md`.
-2. Definir los endpoints y la tabla D1 equivalentes (migración nueva `NNNN_*.sql`; jaulas `0005`, aves `0006`; la siguiente, `0007`).
+2. Definir los endpoints y la tabla D1 equivalentes (migración nueva `NNNN_*.sql`; jaulas `0005`, aves `0006`; cuidados de jaula `0007`; la siguiente, `0008`).
 3. Implementar en `api/` siguiendo routes → factory → service → repository.
 4. Crear el cliente REST de la app con la misma interfaz que el repositorio V1 (mismos nombres, mismo objeto devuelto, mismos errores).
 5. Pruebas unitarias, HTTP e integración, más las pruebas de paridad con V1.
@@ -98,7 +98,7 @@ Procedimiento detallado: skill `migrar-repositorio-a-api`.
 ## Estado de módulos (2026-11-01)
 
 - Aves: implementado (API y cliente), probado en local e integración; pendiente Worker de pruebas y teléfono. Spec `specs/aves.md` (estado, excepciones técnicas y limitaciones).
-- Orden siguiente: cuidados de jaula, Salud, Bajas, Huevos, Finanzas, R2, Google Sign-In.
+- Orden siguiente: Salud, Bajas, Huevos, Finanzas, R2, Google Sign-In; después Alertas, Inicio, Reportes y Genealogía.
 - R2 va como módulo aparte; propuesta de claves de objeto: `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`. Hoy `foto_r2_key` guarda la ruta local.
 
 ## Pendientes
