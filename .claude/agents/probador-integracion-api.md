@@ -22,3 +22,8 @@ Reglas de conducta (el guardia técnico cubre lo marcado con [T]; el resto lo cu
 - Detén solo los procesos que arrancaste tú (no puedo impedir que mates otros: cúmplelo). No leas ni imprimas `api/.dev.vars`.
 - No tienes Write ni Edit: no modificas archivos del repositorio.
 - No puedes preguntar al usuario. Si falta algo, termina con "DUDA PARA EL USUARIO: ..." sin inventar.
+
+
+## Capa 1 de pruebas de datos (Worker de pruebas en la nube)
+
+Además del Worker local, ejecuta `node pruebas/datos/ejecutar.mjs` (requiere `EXPO_PUBLIC_API_URL` en el entorno): usa los clientes REST reales de la app contra el Worker de pruebas con cuentas desechables, incluye el aislamiento entre cuentas y las borra al terminar. Informa el resultado y la ruta de `pruebas/informes/…-datos/`. Si el módulo nuevo añade endpoints, pide al orquestador que se añadan casos en `pruebas/datos/casos/`.

@@ -77,6 +77,7 @@ Migraciones locales: `npx wrangler d1 migrations apply criadero-kikirikis-dev --
 - Tres niveles: unitarias de service con fakes (`api/test/helpers/fake-*.repository.ts`), HTTP ligeras con `app.request()` y routers de prueba, e integración D1 local (`api/test/integration/`).
 - Nombres de tests descriptivos en español: `debe …` (p. ej. `debe rechazar un token expirado`).
 - Los tests unitarios/HTTP no tocan D1; la integración nunca se mezcla con ellos.
+- **Probar con `/probar` antes de pedir pruebas manuales al usuario:** `/probar datos` (clientes REST reales contra el Worker de pruebas, con aislamiento entre cuentas), `/probar smoke` y `/probar completo` (flujos Maestro en el emulador). Detalle en `pruebas/README.md`; los informes quedan en `pruebas/informes/` (ignorado por Git). Al teléfono físico solo va lo que el emulador no cubre.
 
 ## Git
 
