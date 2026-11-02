@@ -14,9 +14,9 @@ Se carga solo desde `CLAUDE.md` (import). Historial de sesiones: `documents/bita
 | Auth, criaderos, onboarding | sí | sí | sí | sí |
 | Jaulas (migración `0005`) | sí | `JaulaRepository.api.js` | sí | sí (sin historial ni `cantidad_aves` reales) |
 | Catálogos (42 ítems por criadero) | sí | `ConfiguracionRepository.api.js` | sí | sí (listas y alta de ítems) |
-| Aves (migración `0006`, commits `4fc1831` y `37df1fa`) | sí | `AveRepository.api.js` y fachadas | no (pendiente) | no (pendiente) |
+| Aves (migración `0006`, commits `4fc1831` y `37df1fa`) | sí | `AveRepository.api.js` y fachadas | sí (capa 1 y flujos del emulador) | no (pendiente) |
 
-Migraciones: `0001`–`0005` aplicadas en local, en pruebas y en la base remota de pruebas. `0006` (aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave) aplicada en local e integración; falta en la base remota de pruebas.
+Migraciones: `0001`–`0005` aplicadas en local, en pruebas y en la base remota de pruebas. `0006` (aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave) aplicada en local, en integración y en la base remota de pruebas (`migrations list` sin pendientes; el Worker de pruebas ya sirve Aves).
 
 ## Módulos pendientes (orden)
 
@@ -49,4 +49,4 @@ Migraciones: `0001`–`0005` aplicadas en local, en pruebas y en la base remota 
 
 ## Siguiente paso exacto
 
-Resolver el acceso a Cloudflare (error 7403 al consultar la base de pruebas con `--env test`); después, con aprobación del usuario, aplicar `0006` en la base remota de pruebas, redesplegar el Worker de pruebas y validar Aves en el teléfono. A continuación, plan del módulo **cuidados de jaula** (spec `documents/specs/cuidados-jaula.md`).
+Plan del módulo **cuidados de jaula** (spec `documents/specs/cuidados-jaula.md`).

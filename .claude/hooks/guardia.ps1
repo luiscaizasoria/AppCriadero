@@ -29,7 +29,7 @@ $PerfilesEscritura = @{
     'specs'   = @{ Permitir = @('^documents/specs/'); Denegar = @() }
     'd1'      = @{ Permitir = @('^api/migrations/', '^documents/specs/'); Denegar = @() }
     'api'     = @{ Permitir = @('^api/(src|test)/'); Denegar = @() }
-    'pruebas' = @{ Permitir = @('^pruebas/(movil|datos)/'); Denegar = @() }
+    'pruebas' = @{ Permitir = @('^pruebas/movil/flujos/'); Denegar = @() }
     'cliente' = @{
         Permitir = @('^src/(repositories|api|config|services)/', '^src/screens/acceso/', '^src/navigation/AccesoNavigator\.js$')
         Denegar  = @('^src/repositories/.*\.sqlite\.js$')
@@ -46,7 +46,8 @@ $PerfilesBash = @{
     'movil'       = @{
         Modo     = 'permitir'
         Permitir = @('^adb(\.exe)?\s+(version|devices|get-state|reconnect)\b', '^adb(\.exe)?\s+reverse\b', '^adb(\.exe)?\s+logcat\b', '^adb(\.exe)?\s+exec-out\s+screencap\b',
-            '^adb(\.exe)?\s+shell\s+(getprop|input|pm\s+list|settings\s+get|am\s+start\s+-a\s+android\.intent\.action\.VIEW)\b',
+            '^adb(\.exe)?\s+shell\s+(getprop|input|pm\s+list|settings\s+get)\b',
+            '^adb(\.exe)?\s+shell\s+am\s+start\s+-a\s+android\.intent\.action\.VIEW\s+-d\s+"?exp://[^"\s]+"?(\s+host\.exp\.exponent)?$',
             '^adb(\.exe)?\s+install\s+-r\s+"?C:/Android/kikirikis-tools/[^"\s]+\.apk"?$',
             '^emulator(\.exe)?\s+(-list-avds|-version|-accel-check)\b', '^emulator(\.exe)?\s+-avd\s+[\w.]+',
             '^maestro(\.bat)?\s+(--version|test|hierarchy)\b', '^(bash\s+)?(\./)?pruebas/movil/ejecutar-flujo\.sh\b',

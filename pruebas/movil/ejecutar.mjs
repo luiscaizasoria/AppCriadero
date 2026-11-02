@@ -36,6 +36,7 @@ function listarFlujos() {
                 nombre: `${dir}/${f}`,
                 archivo: path.join(base, f),
                 esperadoFallar: tags.includes('esperado-fallar'),
+                modulo: texto.match(/^# ESPERADO FALLAR (([^)]+))/m)?.[1] ?? null,
                 semilla: (texto.match(/^# SEMILLA: (.*)$/m)?.[1] ?? '').split(' ').filter(Boolean)
             });
         }
@@ -89,7 +90,7 @@ for (const flujo of listarFlujos()) {
     else estado = paso ? 'PASO' : (x.infra ? 'FALLO DE ENTORNO' : 'REGRESION');
     if (!paso) guardarEvidencia(x, offsetMetro, ini);
     const falla = x.salida.split('\n').filter(l => /FAILED|not found|is false/.test(l)).slice(0, 2).join(' | ').slice(0, 220);
-    resultados.push({ flujo: flujo.nombre, estado, seg: x.seg, intentos: x.intentos, falla: paso ? '' : falla });
+    resultados.push({ flujo: flujo.nombre, modulo: flujo.modulo, estado, seg: x.seg, intentos: x.intentos, falla: paso ? '' : falla });
     console.log(`${estado.padEnd(26)} ${flujo.nombre} (${x.seg} s)${paso ? '' : '\n   ' + falla}`);
 }
 try { tail.kill(); spawnSync('taskkill', ['/F', '/T', '/PID', String(tail.pid)]); } catch { /* ya terminado */ }
@@ -98,10 +99,14 @@ const limpieza = sinLimpiar ? { ok: true, detalle: 'omitida' } : limpiarCuentasD
 const cuenta = e => resultados.filter(r => r.estado === e).length;
 const regresiones = cuenta('REGRESION') + cuenta('FALLO DE ENTORNO');
 const total = ((Date.now() - t0) / 1000 / 60).toFixed(1);
+const pendientes = [...new Set(resultados.filter(r => r.estado === 'FALLO COMO SE ESPERABA' && r.modulo).map(r => r.modulo))];
+const lineaPendiente = pendientes.length ? `PENDIENTE DE MIGRAR: ${pendientes.join(', ')}` : null;
+const veredicto = regresiones > 0 ? 'ROJO' : (pendientes.length ? 'SIN REGRESIONES, CON MODULOS PENDIENTES (no es verde)' : 'VERDE');
 const resumen = [
+    ...(lineaPendiente ? [lineaPendiente, ''] : []),
     `# Flujos moviles (${modo}) - ${new Date().toISOString()}`,
     '',
-    `Resultado: **${regresiones === 0 ? 'VERDE' : 'ROJO'}** en ${total} min. Entorno: emulador ${entorno.emulador}, Metro ${entorno.metro}.`,
+    `Resultado: **${veredicto}** en ${total} min. Entorno: emulador ${entorno.emulador}, Metro ${entorno.metro}.`,
     `Paso: ${cuenta('PASO')} | Regresion: ${cuenta('REGRESION')} | Entorno: ${cuenta('FALLO DE ENTORNO')} | Fallo como se esperaba: ${cuenta('FALLO COMO SE ESPERABA')} | Migrado, quitar etiqueta: ${cuenta('MIGRADO, QUITAR ETIQUETA')}`,
     `Limpieza de cuentas desechables: ${limpieza.ok ? 'hecha' : 'FALLO'} ${JSON.stringify(limpieza.recuento ?? limpieza.detalle ?? '')}`,
     '',
@@ -112,6 +117,8 @@ const resumen = [
 ];
 fs.writeFileSync(path.join(carpeta, 'resumen.md'), resumen.join('\n'));
 fs.writeFileSync(path.join(carpeta, 'resultados.json'), JSON.stringify({ modo, entorno, resultados, limpieza }, null, 2));
-console.log(`\n${regresiones === 0 ? 'VERDE' : 'ROJO'} (${modo}): ${cuenta('PASO')} pasaron, ${regresiones} regresiones, ${cuenta('FALLO COMO SE ESPERABA')} fallos esperados, ${cuenta('MIGRADO, QUITAR ETIQUETA')} para quitar etiqueta, ${total} min`);
+if (lineaPendiente) console.log(`
+${lineaPendiente}`);
+console.log(`\n${veredicto} (${modo}): ${cuenta('PASO')} pasaron, ${regresiones} regresiones, ${cuenta('FALLO COMO SE ESPERABA')} fallos esperados, ${cuenta('MIGRADO, QUITAR ETIQUETA')} para quitar etiqueta, ${total} min`);
 console.log(`Informe: ${path.relative(process.cwd(), carpeta)}`);
 process.exit(regresiones === 0 ? 0 : 1);

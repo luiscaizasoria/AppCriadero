@@ -18,9 +18,9 @@ Pruebas automáticas (detalle y cómo se instalaron las herramientas: `pruebas/R
 
 ## Pasos
 
-1. Comprueba que `EXPO_PUBLIC_API_URL` está en el entorno de la sesión (solo variable de entorno; **nunca** la escribas en archivos, informes versionados ni en el chat). Si falta, detente y pide al usuario que la defina.
+1. La URL del Worker de pruebas la lee el ejecutor de `EXPO_PUBLIC_API_URL` o, si no existe, de `pruebas/.entorno.local` (ignorado por Git; ver `pruebas/README.md`). **Nunca** la escribas en archivos versionados, informes ni en el chat. Si el ejecutor avisa de que falta, detente y dile al usuario cómo crearla.
 2. Ejecuta el comando de la tabla desde la raíz del repositorio. El ejecutor reutiliza lo que ya esté arrancado (emulador, Expo Go, Metro) y arranca lo que falte; las cuentas de prueba son desechables (`@kikirikis.test`) y se borran al terminar (nunca la cuenta del usuario).
-3. Responde con **máximo 15 líneas**: veredicto (VERDE/ROJO), cuántos pasaron, regresiones (flujo y motivo en una línea), flujos «esperado fallar» (confirmados o «migrado, quitar etiqueta»), duración y la **ruta del informe** (`pruebas/informes/AAAA-MM-DD-HHMM-<modo>/`).
+3. Responde con **máximo 15 líneas**: si el resumen del informe empieza con `PENDIENTE DE MIGRAR: …`, esa va como **primera línea** y no presentes el resultado como verde; después veredicto, cuántos pasaron, regresiones (flujo y motivo en una línea), flujos «esperado fallar» (confirmados o «migrado, quitar etiqueta»), duración y la **ruta del informe** (`pruebas/informes/AAAA-MM-DD-HHMM-<modo>/`).
 4. Si hay regresiones, no las corrijas aquí: devuélvelas al implementador del módulo con la ruta del informe.
 
 ## Reglas

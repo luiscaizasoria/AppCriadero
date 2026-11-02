@@ -163,3 +163,6 @@ documents/traspaso/
 pruebas/node_modules/
 pruebas/informes/
 pruebas/.cache/
+
+# URL local del Worker de pruebas (nunca versionar)
+pruebas/.entorno.local
