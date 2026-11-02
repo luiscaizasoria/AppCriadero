@@ -1,9 +1,9 @@
 # SEMILLA: --jaulas=JX-1
-# ESPERADO FALLAR (cuidados-jaula): guardar Alimentacion de una jaula (hoy: FOREIGN KEY, cuidado en SQLite)
-# Si pasa, el informe avisa: migrado, quitar etiqueta.
+# ALIMENTACION: guardar el cuidado de una jaula y verlo en su historial.
 appId: host.exp.exponent
 tags:
-  - esperado-fallar
+  - completo
+  - migrado
   - cuidados-jaula
 ---
 - runFlow:
@@ -26,4 +26,11 @@ tags:
 - extendedWaitUntil:
     visible: "Alimentación registrada"
     timeout: 15000
-- takeScreenshot: alimentacion-resultado
+- tapOn: "Aceptar"
+- scrollUntilVisible:
+    element: ".*Historial"
+- tapOn: ".*Historial"
+- extendedWaitUntil:
+    visible: ".*Alimentación: Morichillo.*"
+    timeout: 20000
+- takeScreenshot: alimentacion-historial

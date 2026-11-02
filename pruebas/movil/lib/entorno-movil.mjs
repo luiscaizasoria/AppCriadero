@@ -42,7 +42,13 @@ async function metroVivo() {
 
 export async function asegurarMetro(urlApi) {
     adb('reverse', `tcp:${PUERTO_METRO}`, `tcp:${PUERTO_METRO}`);
-    if (await metroVivo()) return 'reutilizado';
+    // Metro en modo CI no recarga: un Metro viejo serviria codigo desfasado. Se reinicia siempre
+    // (solo el del puerto de pruebas); REUSAR_METRO=1 lo conserva.
+    if (await metroVivo()) {
+        if (process.env.REUSAR_METRO === '1') return 'reutilizado';
+        spawnSync('powershell', ['-NoProfile', '-Command', `Get-NetTCPConnection -LocalPort ${PUERTO_METRO} -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }`]);
+        for (let i = 0; i < 10 && (await metroVivo()); i++) await espera(1000);
+    }
     fs.mkdirSync(path.dirname(LOG_METRO), { recursive: true });
     const salida = fs.openSync(LOG_METRO, 'w');
     spawn('npx', ['expo', 'start', '--port', PUERTO_METRO, '--offline'], {

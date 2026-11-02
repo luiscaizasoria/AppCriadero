@@ -1,9 +1,9 @@
 # SEMILLA: --jaulas=JX-1
-# ESPERADO FALLAR (cuidados-jaula): guardar Sanidad de una jaula (hoy: FOREIGN KEY)
-# Si pasa, el informe avisa: migrado, quitar etiqueta.
+# SANIDAD: registrar Fumigacion con detalle; la jaula cambia de estado sanitario y el historial lo muestra.
 appId: host.exp.exponent
 tags:
-  - esperado-fallar
+  - completo
+  - migrado
   - cuidados-jaula
 ---
 - runFlow:
@@ -19,10 +19,21 @@ tags:
 - scrollUntilVisible:
     element: ".*Sanidad"
 - tapOn: ".*Sanidad"
+- tapOn: ".*Fumigación.*"
+- tapOn: ".*Detalle de la actividad sanitaria.*"
+- inputText: "Se aplico producto"
+- hideKeyboard
 - scrollUntilVisible:
     element: ".*Guardar sanidad.*"
 - tapOn: ".*Guardar sanidad.*"
 - extendedWaitUntil:
     visible: "Sanidad registrada"
     timeout: 15000
-- takeScreenshot: sanidad-resultado
+- tapOn: "Aceptar"
+- scrollUntilVisible:
+    element: ".*Historial"
+- tapOn: ".*Historial"
+- extendedWaitUntil:
+    visible: '.*Sanidad: Fumigación \| Se aplico producto.*'
+    timeout: 20000
+- takeScreenshot: sanidad-historial

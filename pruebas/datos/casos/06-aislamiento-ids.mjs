@@ -29,6 +29,10 @@ prueba('aislamiento', 'debe dar 404 (o vacio sin datos de B) a A con ids de B en
         ['GET', `${a}/jaulas/${B.jaulaId}/historial`, undefined, [404, 200]],
         ['PUT', `${a}/jaulas/${B.jaulaId}`, { codigo: 'HACK', nombre: 'x', ubicacion: 'x', tipo: 'x' }, [404]],
         ['DELETE', `${a}/jaulas/${B.jaulaId}`, undefined, [404]],
+        ['POST', `${a}/jaulas/${B.jaulaId}/alimentacion`, { tipo: 'Balanceado', fecha: new Date().toISOString() }, [404]],
+        ['POST', `${a}/jaulas/${B.jaulaId}/bebida`, { tipo: 'Balanceado', fecha: new Date().toISOString() }, [404]],
+        ['POST', `${a}/jaulas/${B.jaulaId}/sanidad`, { tipo: 'Cuarentena', fecha: new Date().toISOString() }, [404]],
+        ['GET', `${a}/jaulas/${B.jaulaId}/alimentacion`, undefined, [404, 200]],
         ['PUT', `${a}/catalogos/RAZAS/items/${B.itemId}`, { nombre: 'HACK' }, [404]],
         ['DELETE', `${a}/catalogos/RAZAS/items/${B.itemId}`, undefined, [404]]
     ]);
@@ -64,6 +68,9 @@ prueba('aislamiento', 'debe dejar intactos los datos de B tras los ataques de A'
     const items = await http('GET', `${b}/catalogos/RAZAS/items`, { token: ctx.B.token });
     const item = items.data.items.find(i => i.id === B.itemId);
     assert.ok(item && item.nombre === 'Raza de B' && item.activo, 'el item de B debe seguir igual');
+    const histB = await http('GET', `${b}/jaulas/${B.jaulaId}/historial`, { token: ctx.B.token });
+    assert.ok(histB.data.historial.every(e => !['ALIMENTACION', 'BEBIDA', 'SANIDAD'].includes(e.tipoEvento)), 'A no debe escribir cuidados en la jaula de B');
+    assert.equal(jaula.data.jaula.estadoSanitario, 'NORMAL', 'la sanidad de A no cambia la jaula de B');
     const codigos = (await http('GET', `${b}/aves`, { token: ctx.B.token })).data.aves.map(x => x.codigo);
     assert.deepEqual(codigos, ['B-AVE']);
 });

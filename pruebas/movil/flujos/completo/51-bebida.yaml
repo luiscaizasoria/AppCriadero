@@ -1,9 +1,9 @@
 # SEMILLA: --jaulas=JX-1
-# ESPERADO FALLAR (cuidados-jaula): guardar Bebida de una jaula (hoy: FOREIGN KEY)
-# Si pasa, el informe avisa: migrado, quitar etiqueta.
+# BEBIDA: guardar el cuidado de una jaula y verlo en su historial.
 appId: host.exp.exponent
 tags:
-  - esperado-fallar
+  - completo
+  - migrado
   - cuidados-jaula
 ---
 - runFlow:
@@ -26,4 +26,11 @@ tags:
 - extendedWaitUntil:
     visible: "Bebida registrada"
     timeout: 15000
-- takeScreenshot: bebida-resultado
+- tapOn: "Aceptar"
+- scrollUntilVisible:
+    element: ".*Historial"
+- tapOn: ".*Historial"
+- extendedWaitUntil:
+    visible: ".*Bebida: Agua.*"
+    timeout: 20000
+- takeScreenshot: bebida-historial
