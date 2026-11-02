@@ -2,6 +2,13 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-02 sesión 1
+- Hecho: pruebas automáticas. Capa 1 `pruebas/datos` (26 casos, ~31 s, aislamiento entre cuentas sin fuga: `64f41ac`); capa 2 `pruebas/movil` con Maestro 2.12.1 (nativo en Windows) y Expo Go 57.0.9 (`795de4b`); skill `/probar`, perfil del guardia de `probador-movil` y regla en `CLAUDE.md` (`b996a83`).
+- Resultado: smoke verde (~2 min); completo 22 min: acceso, catálogos, jaulas y aves en verde; confirmados como «esperado fallar»: Alimentación, Bebida, Sanidad, Salud, Huevos, Genealogía, Inicio e Historial de jaula (este último usa `HistorialRepository` en SQLite).
+- Decisión: Metro de pruebas en el puerto 8090 y cuentas desechables `@kikirikis.test` borradas al terminar; motivo: 8081/8082 los usan los Expo en túnel del usuario y la cuenta del usuario no se toca.
+- Pendiente: Inicio y Genealogía leen SQLite compartido entre cuentas; Historial de jaula sin migrar; `/probar` exige `EXPO_PUBLIC_API_URL` en el entorno.
+- Próximo paso exacto: corregir los fallos de los módulos pendientes (cuidados de jaula primero) apoyándose en `/probar`.
+
 ## 2026-11-01 sesión 2
 - Hecho: sistema de seguimiento: esta bitácora rellena hacia atrás, import del estado en `CLAUDE.md`, hook `SessionStart` (`.claude/hooks/sesion-inicio.ps1`), agente `seguimiento-proyecto` y skills `/cerrar-dia` y `/retomar`. Commit de esta sesión: ver `git log` (mensaje «chore: sistema de seguimiento»).
 - Decisión: el estado se carga con import `@` y la bitácora con hook; motivo: el import siempre trae la versión actual y el hook permite recortar la bitácora.
