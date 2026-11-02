@@ -36,7 +36,7 @@ function listarFlujos() {
                 nombre: `${dir}/${f}`,
                 archivo: path.join(base, f),
                 esperadoFallar: tags.includes('esperado-fallar'),
-                modulo: texto.match(/^# ESPERADO FALLAR (([^)]+))/m)?.[1] ?? null,
+                modulo: texto.match(/^# ESPERADO FALLAR [(]([^)]+)[)]/m)?.[1] ?? null,
                 semilla: (texto.match(/^# SEMILLA: (.*)$/m)?.[1] ?? '').split(' ').filter(Boolean)
             });
         }
