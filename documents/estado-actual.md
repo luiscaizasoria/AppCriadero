@@ -16,30 +16,33 @@ Se carga solo desde `CLAUDE.md` (import). Historial de sesiones: `documents/bita
 | Catálogos (42 ítems por criadero) | sí | `ConfiguracionRepository.api.js` | sí | sí (listas y alta de ítems) |
 | Aves (migración `0006`, commits `4fc1831` y `37df1fa`) | sí | `AveRepository.api.js` y fachadas | sí (capa 1 y flujos del emulador) | no (pendiente) |
 | Cuidados de jaula (migración `0007`; commits `8ee3c59`, `909ffc0`, `39ff632`, `aa472b6`) | sí | `Alimentacion/Bebida/SanidadJaula/Historial *.api.js` con fachadas | sí (`/probar datos` y flujos del emulador) | pendiente |
+| Salud (migración `0008`; commits `7e02ccd`, `e5805e6`, `31b823c`, `b9001bb`) | sí (`api/src/salud/`) | `SaludRepository.{js,sqlite.js,api.js}` (sin `actualizarEstadoSaludAve` en API) | sí (`/probar datos` 44/44, flujo `60-salud-enfermedad`) | pendiente (modo avión: `Alert` de error) |
 
-Migraciones: `0001`–`0007` aplicadas en local y en integración. `0001`–`0007` están en la base remota de pruebas (`0006` = aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave; `0007` aplicada el 2026-11-02 con `--remote --env test`).
+Migraciones: `0001`–`0008` aplicadas en local y en integración. `0001`–`0008` están en la base remota de pruebas (`0006` = aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave; `0007` = cuidados de jaula; `0008` = `tratamientos_ave`). Pruebas: 203 unitarias/HTTP y 54 de integración.
 
 ## Módulos pendientes (orden)
 
-1. Salud. 2. Bajas. 3. Huevos. 4. Finanzas. 5. R2 (fotos; módulo aparte, claves propuestas `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`). 6. Google Sign-In (con `/auth/me` y refresh token).
-7. **Fase 6 del roadmap:** Alertas, Inicio y Reportes (siguen leyendo el SQLite local; las alertas "Sin alimentación registrada hoy" no ven los cuidados de la nube) y Genealogía.
+1. Bajas. 2. Huevos. 3. Finanzas. 4. R2 (fotos; módulo aparte, claves propuestas `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`). 5. Google Sign-In (con `/auth/me` y refresh token).
+6. **Fase 6 del roadmap:** Alertas, Inicio y Reportes (siguen leyendo el SQLite local; las alertas "Sin alimentación registrada hoy" no ven los cuidados de la nube) y Genealogía.
 
 ## Limitaciones conocidas
 
-- Salud y Finanzas siguen en SQLite local.
+- Finanzas sigue en SQLite local. Salud ya está en la nube, pero la ficha de ave sigue sin bajas ni huevos (ciclo de vida incompleto).
+- `SaludAveScreen`: sin guard si `ave` es `null` en el render; si falla `cargarDatos` se muestra el `Alert` pero el render puede dar `TypeError`. El botón "Guardar diagnóstico" sigue sin `disabled` (doble toque puede duplicar).
 - Mientras Inicio no se migre, dos cuentas en el mismo teléfono verán los contadores del SQLite local compartido (Inicio lee `DashboardRepository` sobre un único archivo local).
 - Alertas, Inicio y Reportes siguen leyendo SQLite (fase 6): no ven los cuidados de jaula guardados en la nube.
-- `/probar completo` deja ahora como "PENDIENTE DE MIGRAR": genealogía, huevos, dashboard y salud.
+- `/probar completo` deja ahora como "PENDIENTE DE MIGRAR": genealogía, huevos y dashboard.
 - Aves: ciclo de vida (`obtenerCicloVidaAve`) y evolución (`obtenerEvolucionAve`) siguen en SQLite en modo API; el ciclo de vida queda vacío hasta huevos, bajas y salud. Vendidas y fallecidas sin `bajas_ave` y `obtenerBajaAve` devuelve `null` (Bajas). `NuevaAveScreen` usa `Number(item.id)` (da `NaN` con UUID; efecto menor en el filtro de padres y la excepción de sexo).
 - Finalizar tratamiento: en modo API el endpoint no escribe `RECUPERACION` (lo hace la pantalla con `POST /:aveId/eventos`); en SQLite, `EstadoSaludRepository.sqlite.js` restaura `finalizarTratamiento` de v1.0.0 (ya no falla con `TypeError`).
 - Fotos: R2 sin hacer; `foto_r2_key` guarda la ruta local del teléfono (no es clave de objeto).
 - Google Sign-In pendiente. El token dura 60 minutos, sin refresh token; al vencer (401) la app vuelve al inicio de sesión. `FORBIDDEN`/`CRIADERO_NOT_FOUND` sobre el criadero guardado devuelve a la selección de criadero.
 - PBKDF2 a 100000 iteraciones (máximo de workerd); en Workers Free midió 13–20 ms de CPU, sin cortes en pruebas (riesgo conocido).
 
-## Excepciones aprobadas a la regla de no tocar pantallas V1
+## Excepciones aprobadas a la regla de no tocar pantallas V1 (tres)
 
 1. "Cerrar sesión" en `MasMenuScreen` (solo en modo API). Motivo: autenticación.
 2. `AlimentacionJaulaScreen.js` y `BebidaJaulaScreen.js`: `try/catch` con `Alert.alert('Error', 'No fue posible guardar el registro.')` (mismo estilo que `SanidadJaulaScreen`), aprobada por el usuario el 2026-11-02. Motivo: errores de red al pasar a la nube; V1 no manejaba errores en esas pantallas y la promesa rechazada las dejaba sin respuesta. Nada más cambió en ellas. Detalle en `documents/specs/cuidados-jaula.md`.
+3. `SaludAveScreen.js`: solo dos `Alert.alert` en los `catch` de `cargarDatos` ('No fue posible cargar los datos de salud.') y `guardar` ('No fue posible guardar el registro.'), aprobada por el usuario el 2026-11-02. Motivo: errores de red. Sin `disabled` en el botón ni guard de `ave` null. Detalle en `documents/specs/salud.md`.
 
 ## Cómo arrancar (Windows, PowerShell)
 
@@ -58,4 +61,4 @@ Migraciones: `0001`–`0007` aplicadas en local y en integración. `0001`–`000
 
 ## Siguiente paso exacto
 
-Plan del módulo **Salud** (o el que decida el usuario). Pendientes previos: comprobar Cuidados de jaula en el teléfono y validar Aves en el teléfono y en el Worker de pruebas.
+Módulo **Huevos**, esperando indicación del usuario. Pendientes previos: comprobar Salud (modo avión: `Alert` de error), Cuidados de jaula y Aves en el teléfono.

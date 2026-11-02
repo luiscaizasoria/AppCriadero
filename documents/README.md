@@ -21,17 +21,17 @@ Ante una contradicción prevalece, de mayor a menor:
 | Ruta | Contenido |
 |---|---|
 | `CLAUDE.md` | Única guía para Claude: estado, regla del proyecto, arquitectura, comandos, convenciones, Git |
-| `src/` | App móvil V1 (React Native + Expo): `screens/`, `repositories/` (acceso a SQLite; se reemplazan uno a uno por clientes REST: `JaulaRepository.js`, `ConfiguracionRepository.js`, `AveRepository.js`, `CicloVidaRepository.js`, `EvolucionAveRepository.js` y `EstadoSaludRepository.js` eligen entre `.sqlite.js` y `.api.js`), `api/` (cliente HTTP y sesión del modo API), `screens/acceso/` (registro, inicio de sesión y selección de criadero, solo en modo API), `database/` (migraciones y seeders SQLite V1–V7), `navigation/`, `components/`, `services/` (imágenes), `models/`, `config/` (`dataSource.js`: interruptor SQLite/API) |
+| `src/` | App móvil V1 (React Native + Expo): `screens/`, `repositories/` (acceso a SQLite; se reemplazan uno a uno por clientes REST: `JaulaRepository.js`, `ConfiguracionRepository.js`, `AveRepository.js`, `CicloVidaRepository.js`, `EvolucionAveRepository.js` `EstadoSaludRepository.js` y `SaludRepository.js` eligen entre `.sqlite.js` y `.api.js`), `api/` (cliente HTTP y sesión del modo API), `screens/acceso/` (registro, inicio de sesión y selección de criadero, solo en modo API), `database/` (migraciones y seeders SQLite V1–V7), `navigation/`, `components/`, `services/` (imágenes), `models/`, `config/` (`dataSource.js`: interruptor SQLite/API) |
 | `App.js`, `index.js`, `app.json`, `eas.json`, `assets/` | Entrada y configuración de la app Expo |
-| `api/src/` | Backend V2 (TypeScript, Cloudflare Workers, Hono): `app.ts` compone los routers, `index.ts` exporta el Worker; módulos `auth/`, `criaderos/`, `jaulas/`, `aves/` y `catalogs/` con el patrón routes → factory → service → repository. Catálogos implementado (2026-10-31): plantilla de criadero de 42 ítems (ALIMENTOS y BEBIDAS con 2 cada uno) |
-| `api/migrations/` | Migraciones D1 `0001`–`0007` (`0005` = jaulas, aplicada en local y pruebas; `0006` = aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave, aplicada en local e integración; `0007` = alimentacion_jaula, bebida_jaula y sanidad_jaula, aplicada en local, integración y base remota de pruebas) |
+| `api/src/` | Backend V2 (TypeScript, Cloudflare Workers, Hono): `app.ts` compone los routers, `index.ts` exporta el Worker; módulos `auth/`, `criaderos/`, `jaulas/`, `aves/`, `salud/` y `catalogs/` con el patrón routes → factory → service → repository. Catálogos implementado (2026-10-31): plantilla de criadero de 42 ítems (ALIMENTOS y BEBIDAS con 2 cada uno) |
+| `api/migrations/` | Migraciones D1 `0001`–`0008` (`0008` = tratamientos_ave, aplicada en local, integración y base remota de pruebas; `0005` = jaulas, aplicada en local y pruebas; `0006` = aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave, aplicada en local e integración; `0007` = alimentacion_jaula, bebida_jaula y sanidad_jaula, aplicada en local, integración y base remota de pruebas) |
 | `api/test/` | Pruebas: unitarias y HTTP (`*.test.ts`), `helpers/` (fakes, adaptador D1 local) e `integration/` (SQLite en memoria con las migraciones aplicadas, vía better-sqlite3) |
 | `.claude/` | Configuración de Claude Code: `settings.json`, `agents/`, `rules/`, `skills/` (ver abajo) |
 | `documents/estado-actual.md` | Resumen de sesión: rama, módulos hechos y pendientes, limitaciones, cómo arrancar y siguiente paso (actualizar al cerrar cada módulo) |
 | `documents/bitacora.md` | Registro de sesiones, la más nueva arriba (lo escribe `/cerrar-dia`); al pasar de 300 líneas se archiva en `historico/bitacora-AAAA-MM.md` |
 | `documents/arquitectura/` | `arquitectura-v2.md` (arquitectura online-first, identidad, riesgos), `modelo-datos-v2.md` (estado real de D1 y borrador del modelo futuro) y `roadmap-v2.md` (siete fases) |
 | `documents/referencia-v1/` | `baseline-v1.md` (funciones y restricciones de V1) y `analisis-v1-mapeo-api.md` (análisis de V1 y mapeo repositorio → endpoint; el Anexo B es literal) |
-| `documents/specs/` | Una spec por módulo (`aves`, `catalogos`, `jaulas`, `cuidados-jaula`) y `plantilla-spec.md` (plantilla ligera) |
+| `documents/specs/` | Una spec por módulo (`aves`, `catalogos`, `jaulas`, `cuidados-jaula`, `salud`) y `plantilla-spec.md` (plantilla ligera) |
 | `documents/historico/` | Documentos antiguos (contexto V1 y V2 previo a online-first, estado de V1) y la copia de las reglas antiguas de la app móvil; no se edita |
 | `pruebas/README.md` | Pruebas automáticas (`/probar datos`, `smoke`, `completo`): capa de datos contra el Worker de pruebas y flujos Maestro en el emulador |
 | `documents/traspaso/` | Handoff, cierre y respuestas del traspaso: solo local, ignorado por Git |
@@ -98,7 +98,7 @@ Procedimiento detallado: skill `migrar-repositorio-a-api`.
 ## Estado de módulos (2026-11-01)
 
 - Aves: implementado (API y cliente), probado en local e integración; pendiente Worker de pruebas y teléfono. Spec `specs/aves.md` (estado, excepciones técnicas y limitaciones).
-- Orden siguiente: Salud, Bajas, Huevos, Finanzas, R2, Google Sign-In; después Alertas, Inicio, Reportes y Genealogía.
+- Orden siguiente: Bajas, Huevos, Finanzas, R2, Google Sign-In; después Alertas, Inicio, Reportes y Genealogía.
 - R2 va como módulo aparte; propuesta de claves de objeto: `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`. Hoy `foto_r2_key` guarda la ruta local.
 
 ## Pendientes

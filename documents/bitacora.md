@@ -2,6 +2,14 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-02 sesión 3
+- Hecho: módulo Salud: migración `0008` (`tratamientos_ave`) y API `api/src/salud/` (`7e02ccd`), cliente `SaludRepository.{js,sqlite.js,api.js}` (`e5805e6`), excepción aprobada a `SaludAveScreen` (`31b823c`), pruebas y flujo `60-salud-enfermedad` (`b9001bb`). `0008` aplicada en local, integración y base remota de pruebas.
+- Resultado: typecheck OK, 203 unitarias/HTTP y 54 de integración; `/probar datos` 44/44 (58 s, sin fuga), smoke verde (1,7 min), completo 25,2 min sin regresiones (`PENDIENTE DE MIGRAR: genealogia, huevos, dashboard`). Revisor de arquitectura: APROBADO.
+- Decisión: `actualizarEstadoSaludAve` se omite en la API (sin llamadores, decisión del usuario).
+- Decisión: tercera excepción a pantallas V1: solo dos `Alert.alert` en los `catch` de `SaludAveScreen`; sin `disabled` en el botón ni guard de `ave` null (si falla la carga el render puede dar `TypeError`; limitación conocida).
+- Pendiente: probar Salud en el teléfono (modo avión: `Alert` de error); la ficha de ave sigue sin bajas ni huevos; push (requiere aprobación).
+- Próximo paso exacto: módulo Huevos, esperando indicación del usuario.
+
 ## 2026-11-02 sesión 2
 - Hecho: módulo Cuidados de jaula: migración `0007` y API (`8ee3c59`), clientes con fachadas (`909ffc0`), excepción aprobada a `AlimentacionJaulaScreen` y `BebidaJaulaScreen` (`39ff632`), pruebas y flujos (`aa472b6`) y documentación (spec sin lo revocado, estado, roadmap; `8484fda`). `0007` aplicada y Worker de pruebas desplegado con `--env test`.
 - Resultado: typecheck, 188 pruebas unitarias/HTTP y 47 de integración en verde; `/probar datos` 38/38 (51 s), smoke verde (1,7 min); completo 20,7 min sin regresiones: 10 migrados en verde y 4 esperados (`PENDIENTE DE MIGRAR: genealogia, huevos, dashboard, salud`). Revisor de arquitectura: APROBADO.

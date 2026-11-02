@@ -6,8 +6,8 @@ App móvil (React Native + Expo, V1 local con SQLite) en evolución a V2 **onlin
 
 - `src/`, `App.js`, `app.json`: app móvil V1 (v1.0.3), funcional y local. Es la **referencia funcional y el contrato**; no se reescribe ni se elimina hasta que existan y se validen los endpoints V2 equivalentes.
 - `api/`: backend V2. Implementado: `GET /api/v1/health`, `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/criaderos`, `PUT /api/v1/criaderos/:criaderoId/configuracion`, `POST /api/v1/criaderos/:criaderoId/onboarding/complete`, `GET /api/v1/criaderos/:criaderoId/onboarding`, `GET /api/v1/criaderos` (criaderos del usuario) y, bajo `/api/v1/criaderos/:criaderoId/jaulas`, `GET` (activas o `?estado=INACTIVA`), `GET /:jaulaId`, `POST`, `PUT /:jaulaId` y `DELETE /:jaulaId` (baja lógica). Jaulas es el módulo piloto: el cliente REST de la app (`src/repositories/JaulaRepository.api.js`) se activa con `EXPO_PUBLIC_DATA_SOURCE=api`; sin esa variable la app usa SQLite como V1. **Catálogos** (rama `trabajo/migracion-nube`, 2026-10-31): bajo `/api/v1/criaderos/:criaderoId/catalogos`, `GET /`, `GET /:catalogoCodigo`, `GET` y `POST /:catalogoCodigo/items`, `PUT` y `DELETE /:catalogoCodigo/items/:itemId` (desactivar = `activo 0`); plantilla de 42 ítems por criadero; cliente `ConfiguracionRepository.api.js` con la misma bandera y, como excepción aprobada, las lecturas de catálogo de Alimentación, Bebida y Salud (`documents/specs/catalogos.md`).
-- Pendiente (no asumir que existe): Google Sign-In, `/auth/me`, refresh token, R2, los demás módulos de negocio (salud, bajas, huevos, finanzas…) y, en la fase 6, Alertas, Inicio y Reportes (siguen en SQLite).
-- Migraciones D1 en `api/migrations/`: `0001` a `0004` aplicadas y `0005` (jaulas) aplicada en local, en pruebas y en la base remota de pruebas `criadero-kikirikis-test` (Worker `criadero-kikirikis-api-test`, `--env test`); la base remota `criadero-kikirikis-dev` llega a `0004` y no se toca sin orden expresa. **Aves** (rama `trabajo/migracion-nube`, 2026-11-01): migración `0006` (aves, ave_evolucion, ave_historial, jaula_historial, diagnosticos_ave), API bajo `/criaderos/:criaderoId/aves` y cliente `AveRepository.api.js` (más fachadas de CicloVida, EvolucionAve y EstadoSalud); `0006` aplicada en local, en pruebas en memoria y en la base remota de pruebas (Aves probado contra el Worker de pruebas y en el emulador; pendiente en el teléfono; `documents/specs/aves.md`). **Cuidados de jaula** (2026-11-02): migración `0007` (alimentacion_jaula, bebida_jaula, sanidad_jaula; aplicada también en la base remota de pruebas), API bajo `/criaderos/:criaderoId/jaulas/:jaulaId/{alimentacion,bebida,sanidad}` (más `GET /alimentacion` y `fechaCreacion` en el historial de jaula) y clientes con fachada (`Alimentacion`, `Bebida`, `SanidadJaula` e `Historial`); excepción aprobada a las pantallas V1: `try/catch` con `Alert` en `AlimentacionJaulaScreen` y `BebidaJaulaScreen` (errores de red; `documents/specs/cuidados-jaula.md`).
+- Pendiente (no asumir que existe): Google Sign-In, `/auth/me`, refresh token, R2, los demás módulos de negocio (bajas, huevos, finanzas…) y, en la fase 6, Alertas, Inicio y Reportes (siguen en SQLite).
+- Migraciones D1 en `api/migrations/`: `0001` a `0004` aplicadas y `0005` (jaulas) aplicada en local, en pruebas y en la base remota de pruebas `criadero-kikirikis-test` (Worker `criadero-kikirikis-api-test`, `--env test`); la base remota `criadero-kikirikis-dev` llega a `0004` y no se toca sin orden expresa. **Aves** (rama `trabajo/migracion-nube`, 2026-11-01): migración `0006` (aves, ave_evolucion, ave_historial, jaula_historial, diagnosticos_ave), API bajo `/criaderos/:criaderoId/aves` y cliente `AveRepository.api.js` (más fachadas de CicloVida, EvolucionAve y EstadoSalud); `0006` aplicada en local, en pruebas en memoria y en la base remota de pruebas (Aves probado contra el Worker de pruebas y en el emulador; pendiente en el teléfono; `documents/specs/aves.md`). **Cuidados de jaula** (2026-11-02): migración `0007` (alimentacion_jaula, bebida_jaula, sanidad_jaula; aplicada también en la base remota de pruebas), API bajo `/criaderos/:criaderoId/jaulas/:jaulaId/{alimentacion,bebida,sanidad}` (más `GET /alimentacion` y `fechaCreacion` en el historial de jaula) y clientes con fachada (`Alimentacion`, `Bebida`, `SanidadJaula` e `Historial`); excepción aprobada a las pantallas V1: `try/catch` con `Alert` en `AlimentacionJaulaScreen` y `BebidaJaulaScreen` (errores de red; `documents/specs/cuidados-jaula.md`). **Salud** (2026-11-02): migración `0008` (`tratamientos_ave`; aplicada también en la base remota de pruebas), API en `api/src/salud/` (`POST /criaderos/:criaderoId/aves/:aveId/diagnosticos`, `GET .../salud`) y cliente `SaludRepository.{js,sqlite.js,api.js}` con fachada (`actualizarEstadoSaludAve` omitida por decisión del usuario); excepción aprobada a `SaludAveScreen`: dos `Alert.alert` en los `catch` (`documents/specs/salud.md`).
 
 ## Decisiones vigentes (online-first)
 
@@ -45,7 +45,7 @@ routes -> factory -> service -> repository -> D1
 - **service** (`*.service.ts`): reglas de negocio, idempotencia y concurrencia. No importa Hono.
 - **repository** (`*.repository.ts`): SQL con prepared statements y `batch` para operaciones atómicas. Sin lógica HTTP.
 - **types** (`*.types.ts`): contratos de request/response y errores.
-- `api/src/app.ts` compone Hono y monta routers (inyectables en tests); `api/src/index.ts` exporta el Worker. Módulos existentes: `auth/`, `criaderos/`, `catalogs/`.
+- `api/src/app.ts` compone Hono y monta routers (inyectables en tests); `api/src/index.ts` exporta el Worker. Módulos existentes: `auth/`, `criaderos/`, `catalogs/`, `jaulas/`, `aves/`, `cuidados/`, `salud/`.
 - Antes de consultar o modificar un recurso de un criadero, validar ownership (`criaderos.id = ? AND user_id = ? AND deleted_at IS NULL`); si no es propietario, `403 FORBIDDEN`. No filtrar datos de otro criadero.
 
 ## Comandos (ejecutar desde `api/`)
@@ -70,7 +70,7 @@ Migraciones locales: `npx wrangler d1 migrations apply criadero-kikirikis-dev --
 - Dominio y campos en español; **API en camelCase**, **SQL en snake_case**.
 - Respuesta de éxito `{ "success": true, "data": … }`; error `{ "success": false, "error": "CODIGO", "message": "…" }` (opcional `missingFields`). Los códigos de error son estables (p. ej. `VALIDATION_ERROR`, `UNAUTHORIZED`, `INVALID_TOKEN`, `FORBIDDEN`, `CRIADERO_NOT_FOUND`, `*_CONCURRENCY_CONFLICT`); reutilizar los existentes antes de crear otros.
 - No sobrediseñar ni eliminar funcionalidades para simplificar. Cambios pequeños y revisables.
-- Migraciones D1: nunca editar una aplicada; todo cambio va en `NNNN_descripcion.sql` nueva (siguiente: `0008`). Ver `.claude/rules/api-migraciones-d1.md`.
+- Migraciones D1: nunca editar una aplicada; todo cambio va en `NNNN_descripcion.sql` nueva (siguiente: `0009`). Ver `.claude/rules/api-migraciones-d1.md`.
 
 ## Pruebas
 
@@ -126,12 +126,12 @@ Orden de autoridad ante contradicciones: **código real > este `CLAUDE.md` > `do
 | `documents/estado-actual.md` | Estado resumido y siguiente paso (se carga con el import de CLAUDE.md) |
 | `documents/bitacora.md` | Registro de sesiones, la más nueva arriba (lo escribe `/cerrar-dia`; el hook de inicio muestra las 3 últimas) |
 | `documents/arquitectura/arquitectura-v2.md` | Arquitectura online-first, identidad y riesgos |
-| `documents/arquitectura/modelo-datos-v2.md` | Estado real de D1 (`0001`–`0004`) y modelo futuro en **borrador** (DDL literal) |
+| `documents/arquitectura/modelo-datos-v2.md` | Estado real de D1 (`0001`–`0008`) y modelo futuro en **borrador** (DDL literal) |
 | `documents/arquitectura/roadmap-v2.md` | Siete fases de trabajo y su estado |
 | `documents/referencia-v1/baseline-v1.md` | Funciones y restricciones de V1 |
 | `documents/referencia-v1/analisis-v1-mapeo-api.md` | Análisis de V1 y mapeo repositorio → endpoint (muy largo: leer solo la sección necesaria; su Anexo B es literal) |
 | `documents/specs/plantilla-spec.md` | Plantilla ligera de especificación por módulo |
-| `documents/specs/*.md` | Specs: `aves`, `catalogos`, `jaulas`, `cuidados-jaula` |
+| `documents/specs/*.md` | Specs: `aves`, `catalogos`, `jaulas`, `cuidados-jaula`, `salud` |
 | `documents/historico/` | Documentos antiguos y la copia de las reglas antiguas de la app móvil; solo si se pide o falta un detalle |
 | `documents/traspaso/` | Traspaso (handoff, cierre, respuestas): **solo local**, ignorado por Git y respaldado fuera del repositorio |
 
