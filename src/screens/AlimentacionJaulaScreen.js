@@ -78,18 +78,36 @@ export default function AlimentacionJaulaScreen({
 
 
 
-        await registrarAlimentacion({
+        try {
 
-            jaulaId,
+            await registrarAlimentacion({
 
-            fecha:
-                new Date()
-                .toISOString(),
+                jaulaId,
 
-            tipo:
-                tipo.nombre
+                fecha:
+                    new Date()
+                    .toISOString(),
 
-        });
+                tipo:
+                    tipo.nombre
+
+            });
+
+        }
+        catch (error) {
+
+            console.error(
+                error
+            );
+
+            Alert.alert(
+                'Error',
+                'No fue posible guardar el registro.'
+            );
+
+            return;
+
+        }
 
 
 

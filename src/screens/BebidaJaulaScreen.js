@@ -79,18 +79,36 @@ export default function BebidaJaulaScreen({
 
 
 
-        await registrarBebida({
+        try {
 
-            jaulaId,
+            await registrarBebida({
 
-            fecha:
-                new Date()
-                .toISOString(),
+                jaulaId,
 
-            tipo:
-                tipo.nombre
+                fecha:
+                    new Date()
+                    .toISOString(),
 
-        });
+                tipo:
+                    tipo.nombre
+
+            });
+
+        }
+        catch (error) {
+
+            console.error(
+                error
+            );
+
+            Alert.alert(
+                'Error',
+                'No fue posible guardar el registro.'
+            );
+
+            return;
+
+        }
 
 
 
