@@ -1,0 +1,72 @@
+# JAULAS: vacio por codigo, alta, minuscula aceptada, duplicado, orden, "Vacia", eliminar y pasar a Inactivas.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - jaulas
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn: "Jaulas"
+- tapOn: ".*Nueva jaula.*"
+- tapOn: ".*Guardar jaula.*"
+- extendedWaitUntil:
+    visible: "Código requerido"
+    timeout: 10000
+- tapOn: "OK"
+- tapOn: "Ej. J001"
+- inputText: "jb-2"
+- hideKeyboard
+- tapOn: ".*Guardar jaula.*"
+- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: ".*JB-2.*"
+    timeout: 20000
+- tapOn: ".*Nueva jaula.*"
+- tapOn: "Ej. J001"
+- inputText: "JA-1"
+- hideKeyboard
+- tapOn: ".*Guardar jaula.*"
+- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: ".*JA-1.*"
+    timeout: 20000
+- assertVisible:
+    text: ".*JB-2.*"
+    below: ".*JA-1.*"
+- assertVisible: "Vacía"
+- takeScreenshot: jaulas-orden-vacia
+- tapOn: ".*Nueva jaula.*"
+- tapOn: "Ej. J001"
+- inputText: "JA-1"
+- hideKeyboard
+- tapOn: ".*Guardar jaula.*"
+- extendedWaitUntil:
+    visible: "Código duplicado"
+    timeout: 20000
+- takeScreenshot: jaulas-duplicado
+- tapOn: "OK"
+- pressKey: back
+- tapOn: ".*JA-1.*"
+- scrollUntilVisible:
+    element: ".*Eliminar"
+    timeout: 20000
+- tapOn: ".*Eliminar"
+- extendedWaitUntil:
+    visible: "Eliminar jaula"
+    timeout: 10000
+- takeScreenshot: jaulas-confirmar-eliminar
+- tapOn: "Eliminar"
+- tapOn:
+    text: "Aceptar"
+    optional: true
+- tapOn: ".*Inactivas.*"
+- extendedWaitUntil:
+    visible: ".*JA-1.*"
+    timeout: 20000
+- takeScreenshot: jaulas-inactivas

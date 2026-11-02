@@ -1,0 +1,53 @@
+# SEMILLA: --jaulas=JX-1,JX-2 --aves=AV-P:MACHO:JX-1,AV-M:HEMBRA
+# AVES: asignar un ave a una jaula, mover otra desde otra jaula (contadores) (el historial de jaula sigue en SQLite: flujo esperado-fallar/historial-jaula).
+# Datos por API: JX-1 con AV-P, JX-2 vacia, AV-M sin jaula.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - aves
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "30%,96%"
+- extendedWaitUntil:
+    visible: ".*JX-2.*"
+    timeout: 20000
+- takeScreenshot: jaulas-antes
+- tapOn: ".*JX-2.*"
+- tapOn: ".*Agregar"
+- extendedWaitUntil:
+    visible: ".*AV-M.*"
+    timeout: 20000
+- tapOn: ".*AV-M.*"
+- extendedWaitUntil:
+    visible: "Asignar ave"
+    timeout: 10000
+- tapOn: "Agregar"
+- extendedWaitUntil:
+    visible: "Ave asignada"
+    timeout: 20000
+- tapOn: "Aceptar"
+- tapOn: ".*Agregar"
+- tapOn: ".*AV-P.*"
+- extendedWaitUntil:
+    visible: ".*actualmente pertenece a la jaula JX-1.*"
+    timeout: 10000
+- takeScreenshot: ave-mover-confirmacion
+- tapOn: "Mover"
+- extendedWaitUntil:
+    visible: "Ave asignada"
+    timeout: 20000
+- tapOn: "Aceptar"
+- pressKey: back
+- extendedWaitUntil:
+    visible: "Ocupada"
+    timeout: 20000
+- assertVisible: "Vacía"
+- takeScreenshot: jaulas-contadores

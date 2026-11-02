@@ -1,0 +1,46 @@
+# SEMILLA: --jaulas=JX-1,JX-2 --aves=AV-P:MACHO:JX-1,AV-M:HEMBRA
+# AVES: alta con raza, sexo, padre y madre de la nube; datos previos preparados por API (AV-P, AV-M, JX-1, JX-2).
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - aves
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: ".*AV-P.*"
+    timeout: 20000
+- assertVisible: ".*AV-M.*"
+- tapOn: ".*Nueva ave.*"
+- tapOn: "Ej. K001"
+- inputText: "AV-H"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Padre"
+- tapOn: ".*AV-P.*"
+- tapOn: ".*AV-M.*"
+- tapOn: ".*Kikiris"
+- scrollUntilVisible:
+    element: ".*Macho"
+- tapOn: ".*Macho"
+- scrollUntilVisible:
+    element: ".*Guardar ave.*"
+- takeScreenshot: ave-formulario-completo
+- tapOn: ".*Guardar ave.*"
+- extendedWaitUntil:
+    visible: "Ave registrada"
+    timeout: 20000
+- takeScreenshot: ave-creada
+- tapOn: "Ver ave"
+- extendedWaitUntil:
+    visible: ".*AV-H.*"
+    timeout: 20000
+- takeScreenshot: ave-detalle

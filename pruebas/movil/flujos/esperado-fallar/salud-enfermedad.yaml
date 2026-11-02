@@ -1,0 +1,29 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-P:MACHO:JX-1
+# ESPERADO FALLAR (salud): registrar una enfermedad en un ave (Salud sigue en SQLite)
+# Si pasa, el informe avisa: migrado, quitar etiqueta.
+appId: host.exp.exponent
+tags:
+  - esperado-fallar
+  - salud
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "50%,96%"
+- tapOn: ".*AV-P.*"
+- scrollUntilVisible:
+    element: ".*Salud"
+- tapOn: ".*Salud"
+- tapOn: ".*Coriza.*"
+- scrollUntilVisible:
+    element: ".*Guardar diagnóstico.*"
+- tapOn: ".*Guardar diagnóstico.*"
+- extendedWaitUntil:
+    visible: "Registro guardado"
+    timeout: 15000
+- takeScreenshot: salud-resultado

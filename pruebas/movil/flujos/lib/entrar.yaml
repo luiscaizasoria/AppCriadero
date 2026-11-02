@@ -1,0 +1,13 @@
+# Abre la app (estado limpio) e inicia sesion con la cuenta desechable.
+appId: host.exp.exponent
+---
+- runFlow:
+    file: abrir-app.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+- runFlow:
+    file: iniciar-sesion.yaml
+    env:
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}

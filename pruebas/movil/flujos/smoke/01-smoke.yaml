@@ -1,0 +1,42 @@
+# SMOKE: iniciar sesion, elegir criadero, crear una jaula y verla en la lista, cerrar sesion desde Mas.
+appId: host.exp.exponent
+tags:
+  - smoke
+  - migrado
+---
+- runFlow:
+    file: ../lib/abrir-app.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+- runFlow:
+    file: ../lib/iniciar-sesion.yaml
+    env:
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- takeScreenshot: 01-inicio-tras-login
+- tapOn: "Jaulas"
+- tapOn: ".*Nueva jaula.*"
+- tapOn: "Ej. J001"
+- inputText: "smk-1"
+- tapOn: "Ej. Reproductores Sebright"
+- inputText: "Jaula smoke"
+- hideKeyboard
+- tapOn: ".*Guardar jaula.*"
+- extendedWaitUntil:
+    visible: "Jaula creada"
+    timeout: 20000
+- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: ".*SMK-1.*"
+    timeout: 20000
+- takeScreenshot: 02-jaula-en-lista
+- tapOn: "Más"
+- tapOn: ".*Cerrar sesión.*"
+- tapOn:
+    text: "Cerrar sesión"
+    index: 1
+- extendedWaitUntil:
+    visible: "Iniciar sesión"
+    timeout: 20000
+- takeScreenshot: 03-sesion-cerrada

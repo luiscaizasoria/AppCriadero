@@ -1,0 +1,28 @@
+# SEMILLA: --jaulas=JX-1
+# ESPERADO FALLAR (cuidados-jaula): guardar Sanidad de una jaula (hoy: FOREIGN KEY)
+# Si pasa, el informe avisa: migrado, quitar etiqueta.
+appId: host.exp.exponent
+tags:
+  - esperado-fallar
+  - cuidados-jaula
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "30%,96%"
+- tapOn: ".*JX-1.*"
+- scrollUntilVisible:
+    element: ".*Sanidad"
+- tapOn: ".*Sanidad"
+- scrollUntilVisible:
+    element: ".*Guardar sanidad.*"
+- tapOn: ".*Guardar sanidad.*"
+- extendedWaitUntil:
+    visible: "Sanidad registrada"
+    timeout: 15000
+- takeScreenshot: sanidad-resultado

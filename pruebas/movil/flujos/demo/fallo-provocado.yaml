@@ -1,0 +1,15 @@
+# DEMO: falla a proposito (texto inexistente) para comprobar que el informe trae captura y registros.
+# Solo se ejecuta con FALLO_PROVOCADO=1 node pruebas/movil/ejecutar.mjs smoke
+appId: host.exp.exponent
+tags:
+  - demo
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- assertVisible:
+    text: "Texto que no existe en ninguna pantalla"

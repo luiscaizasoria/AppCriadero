@@ -1,0 +1,18 @@
+# Inicia sesion con EMAIL y PASSWORD (variables, nunca en archivos) y elige el criadero.
+appId: host.exp.exponent
+---
+- tapOn: "correo@ejemplo.com"
+- inputText: ${EMAIL}
+- tapOn:
+    text: "Contraseña"
+    index: 1
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn: "Ingresar"
+- extendedWaitUntil:
+    visible: ${CRIADERO}
+    timeout: 30000
+- tapOn: ${CRIADERO}
+- extendedWaitUntil:
+    visible: "Jaulas"
+    timeout: 30000

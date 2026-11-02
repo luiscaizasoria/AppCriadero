@@ -1,0 +1,50 @@
+# CATALOGOS: lista cargada, alta de un elemento y duplicado (V1 muestra el error generico).
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - catalogos
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn: "Más"
+- tapOn: ".*Configuración.*"
+- tapOn: ".*Razas.*"
+- extendedWaitUntil:
+    visible: "Kikiris"
+    timeout: 20000
+- takeScreenshot: catalogo-razas-cargado
+- scrollUntilVisible:
+    element: ".*Nuevo elemento.*"
+    timeout: 30000
+- tapOn: ".*Nuevo elemento.*"
+- tapOn: "Nombre"
+- inputText: "Raza movil"
+- hideKeyboard
+- tapOn: ".*Guardar.*"
+- extendedWaitUntil:
+    visible: "Guardado"
+    timeout: 20000
+- tapOn: "Aceptar"
+- scrollUntilVisible:
+    element: ".*Raza movil.*"
+    direction: UP
+    timeout: 30000
+- scrollUntilVisible:
+    element: ".*Nuevo elemento.*"
+    timeout: 30000
+- takeScreenshot: catalogo-alta
+- tapOn: ".*Nuevo elemento.*"
+- tapOn: "Nombre"
+- inputText: "Raza movil"
+- hideKeyboard
+- tapOn: ".*Guardar.*"
+- extendedWaitUntil:
+    visible: "No fue posible guardar el elemento."
+    timeout: 20000
+- takeScreenshot: catalogo-duplicado

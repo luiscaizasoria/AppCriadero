@@ -1,0 +1,26 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-P:MACHO:JX-1,AV-M:HEMBRA,AV-H:MACHO::AV-P:AV-M
+# ESPERADO FALLAR (genealogia): el arbol genealogico debe mostrar al padre AV-P y la madre AV-M (hoy lee SQLite)
+# Si pasa, el informe avisa: migrado, quitar etiqueta.
+appId: host.exp.exponent
+tags:
+  - esperado-fallar
+  - genealogia
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "50%,96%"
+- tapOn: ".*AV-H.*"
+- scrollUntilVisible:
+    element: ".*Genealogía"
+- tapOn: ".*Genealogía"
+- extendedWaitUntil:
+    visible: ".*AV-P.*"
+    timeout: 15000
+- assertVisible: ".*AV-M.*"
+- takeScreenshot: genealogia-resultado

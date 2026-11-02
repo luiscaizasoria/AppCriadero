@@ -1,0 +1,29 @@
+# SEMILLA: --jaulas=JX-1
+# ESPERADO FALLAR (cuidados-jaula): guardar Bebida de una jaula (hoy: FOREIGN KEY)
+# Si pasa, el informe avisa: migrado, quitar etiqueta.
+appId: host.exp.exponent
+tags:
+  - esperado-fallar
+  - cuidados-jaula
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "30%,96%"
+- tapOn: ".*JX-1.*"
+- scrollUntilVisible:
+    element: ".*Bebida"
+- tapOn: ".*Bebida"
+- tapOn: ".*Agua"
+- scrollUntilVisible:
+    element: ".*Guardar"
+- tapOn: ".*Guardar"
+- extendedWaitUntil:
+    visible: "Bebida registrada"
+    timeout: 15000
+- takeScreenshot: bebida-resultado

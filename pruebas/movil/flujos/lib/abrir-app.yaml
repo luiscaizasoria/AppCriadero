@@ -1,0 +1,20 @@
+# Reinicia Expo Go (estado limpio) y abre la app de pruebas por enlace profundo.
+appId: host.exp.exponent
+---
+- clearState
+- openLink: exp://127.0.0.1:${PUERTO_METRO}
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 240000
+- tapOn: "Continue"
+- runFlow:
+    when:
+      visible: "Reload"
+    commands:
+      - pressKey: back
+- tapOn:
+    text: "Got it"
+    optional: true
+- extendedWaitUntil:
+    visible: "Iniciar sesi.n"
+    timeout: 60000

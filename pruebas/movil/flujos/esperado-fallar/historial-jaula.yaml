@@ -1,0 +1,25 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-P:MACHO:JX-1
+# ESPERADO FALLAR (historial): el historial de una jaula debe listar las aves asignadas (hoy HistorialRepository en SQLite)
+# Si pasa, el informe avisa: migrado, quitar etiqueta.
+appId: host.exp.exponent
+tags:
+  - esperado-fallar
+  - historial
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "30%,96%"
+- tapOn: ".*JX-1.*"
+- scrollUntilVisible:
+    element: ".*Historial"
+- tapOn: ".*Historial"
+- extendedWaitUntil:
+    visible: ".*AV-P.*"
+    timeout: 15000
+- takeScreenshot: historial-jaula-resultado

@@ -1,0 +1,28 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-P:MACHO:JX-1
+# ESPERADO FALLAR (huevos): registrar un huevo de un ave (Huevos sigue en SQLite)
+# Si pasa, el informe avisa: migrado, quitar etiqueta.
+appId: host.exp.exponent
+tags:
+  - esperado-fallar
+  - huevos
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "50%,96%"
+- tapOn: ".*AV-P.*"
+- scrollUntilVisible:
+    element: ".*Registrar huevo"
+- tapOn: ".*Registrar huevo"
+- scrollUntilVisible:
+    element: ".*Registrar huevo.*"
+- tapOn: ".*Registrar huevo.*"
+- extendedWaitUntil:
+    visible: "Huevo registrado"
+    timeout: 15000
+- takeScreenshot: huevo-resultado

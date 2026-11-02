@@ -1,0 +1,38 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-P:MACHO:JX-1,AV-M:HEMBRA
+# AVES: editar un ave con un codigo que ya existe muestra "Codigo duplicado".
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - aves
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: ".*AV-M.*"
+    timeout: 20000
+- tapOn: ".*AV-M.*"
+- scrollUntilVisible:
+    element: ".*Editar"
+- tapOn: ".*Editar"
+- extendedWaitUntil:
+    visible: 'Código *'
+    timeout: 20000
+- tapOn: "AV-M"
+- eraseText: 10
+- inputText: "AV-P"
+- hideKeyboard
+- scrollUntilVisible:
+    element: ".*Guardar cambios.*"
+- tapOn: ".*Guardar cambios.*"
+- extendedWaitUntil:
+    visible: "Código duplicado"
+    timeout: 20000
+- takeScreenshot: ave-codigo-duplicado

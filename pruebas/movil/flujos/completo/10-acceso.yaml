@@ -1,0 +1,42 @@
+# ACCESO: contrasena incorrecta muestra error y no entra; luego entra y cierra sesion.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - acceso
+---
+- runFlow:
+    file: ../lib/abrir-app.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+- tapOn: "correo@ejemplo.com"
+- inputText: ${EMAIL}
+- tapOn:
+    text: "Contraseña"
+    index: 1
+- inputText: "Incorrecta-123"
+- hideKeyboard
+- tapOn: "Ingresar"
+- extendedWaitUntil:
+    visible: ".*(ncorrect|nválid|redenciales).*"
+    timeout: 20000
+- takeScreenshot: acceso-error
+- assertVisible: "Iniciar sesi.n"
+- runFlow:
+    file: ../lib/abrir-app.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+- runFlow:
+    file: ../lib/iniciar-sesion.yaml
+    env:
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn: "Más"
+- tapOn: ".*Cerrar sesión.*"
+- tapOn:
+    text: "Cerrar sesión"
+    index: 1
+- extendedWaitUntil:
+    visible: "Iniciar sesi.n"
+    timeout: 20000
