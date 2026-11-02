@@ -1,0 +1,6 @@
+{
+  "name": "kikirikis-pruebas",
+  "private": true,
+  "type": "module",
+  "description": "Pruebas automatizadas (datos y movil). Sin dependencias: usa esbuild de api/node_modules solo para empaquetar los clientes REST reales."
+}

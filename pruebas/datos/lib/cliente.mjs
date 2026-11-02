@@ -1,0 +1,43 @@
+// Empaqueta con esbuild los clientes REST REALES de la app (src/api y src/repositories/*.api.js)
+// sustituyendo solo expo-secure-store por una memoria. No se modifica src/.
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import path from 'node:path';
+import fs from 'node:fs';
+
+const aqui = path.dirname(fileURLToPath(import.meta.url));
+const raiz = path.resolve(aqui, '../../..');
+const cache = path.resolve(raiz, 'pruebas/.cache');
+
+export async function cargarClientes() {
+    const esbuild = await import(pathToFileURL(path.join(raiz, 'api/node_modules/esbuild/lib/main.js')).href);
+
+    fs.mkdirSync(cache, { recursive: true });
+
+    const salida = path.join(cache, `clientes-${process.pid}.mjs`);
+
+    await esbuild.build({
+        stdin: {
+            resolveDir: raiz,
+            sourcefile: 'entrada.js',
+            contents: `
+export * as acceso from './src/api/accesoApi.js';
+export * as sesion from './src/api/sesion.js';
+export { ApiError } from './src/api/apiClient.js';
+export * as jaulas from './src/repositories/JaulaRepository.api.js';
+export * as aves from './src/repositories/AveRepository.api.js';
+export * as config from './src/repositories/ConfiguracionRepository.api.js';
+export * as salud from './src/repositories/EstadoSaludRepository.api.js';
+`
+        },
+        bundle: true,
+        platform: 'node',
+        format: 'esm',
+        outfile: salida,
+        logLevel: 'error',
+        alias: { 'expo-secure-store': path.join(aqui, '../stubs/secure-store.mjs') }
+    });
+
+    const modulo = await import(pathToFileURL(salida).href);
+    fs.rmSync(salida, { force: true });
+    return modulo;
+}

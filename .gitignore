@@ -154,3 +154,12 @@ CLAUDE.local.md
 api/.wrangler/
 # Documentos de traspaso (solo locales; respaldados fuera del repositorio)
 documents/traspaso/
+
+
+# ============================================================
+# Pruebas automatizadas (pruebas/)
+# ============================================================
+
+pruebas/node_modules/
+pruebas/informes/
+pruebas/.cache/
