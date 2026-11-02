@@ -229,6 +229,11 @@ export default function SaludAveScreen({
                     error
                 );
 
+                Alert.alert(
+                    'Error',
+                    'No fue posible cargar los datos de salud.'
+                );
+
             }
             finally{
 
@@ -335,6 +340,11 @@ export default function SaludAveScreen({
 
                 console.error(
                     error
+                );
+
+                Alert.alert(
+                    'Error',
+                    'No fue posible guardar el registro.'
                 );
 
 
