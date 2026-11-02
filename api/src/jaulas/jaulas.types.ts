@@ -69,6 +69,7 @@ export interface EventoHistorialJaula {
   tipoEvento: string;
   fecha: string;
   detalle: string | null;
+  fechaCreacion: string;
   aveCodigo: string | null;
 }
 

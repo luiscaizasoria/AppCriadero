@@ -425,7 +425,7 @@ describe("Aves D1 local (SQLite en memoria)",()=>{
 
     await db.prepare("DELETE FROM ave_evolucion WHERE ave_id = ?").bind(ave.id).run();
 
-    instante = "2026-11-01T08:00:00.000Z";
+    instante = "2099-01-01T08:00:00.000Z";
 
     const resultado = await aves.registrarEvolucion(criaderoA, ave.id,{
       pesoGramos:"850,5",

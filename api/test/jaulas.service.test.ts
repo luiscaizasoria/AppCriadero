@@ -377,7 +377,7 @@ describe("JaulaService (paridad con JaulaRepository de V1)",()=>{
     ];
 
     repository.historialCompleto = [
-      { id:"h1", jaulaId:jaula.id, aveId:"ave-a", tipoEvento:"INGRESO_AVE", fecha:"2026-10-30", detalle:"x", aveCodigo:"A1" }
+      { id:"h1", jaulaId:jaula.id, aveId:"ave-a", tipoEvento:"INGRESO_AVE", fecha:"2026-10-30", detalle:"x", fechaCreacion:"2026-10-30 12:00:00", aveCodigo:"A1" }
     ];
 
     const aves = await service.listarAvesHistoricas(CRIADERO, jaula.id);

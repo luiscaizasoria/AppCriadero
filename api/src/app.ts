@@ -4,6 +4,7 @@ import defaultAuthRouter from './auth/auth.routes';
 import defaultJaulasRouter from './jaulas/jaulas.routes';
 import defaultCatalogosRouter from './catalogs/catalogs.routes';
 import defaultAvesRouter from './aves/aves.routes';
+import defaultCuidadosRouter from './cuidados/cuidados.routes';
 
 
 export type Env = {
@@ -21,6 +22,7 @@ type AppOptions = {
   jaulasRouter?: AppRouter;
   catalogosRouter?: AppRouter;
   avesRouter?: AppRouter;
+  cuidadosRouter?: AppRouter;
 };
 
 
@@ -52,6 +54,10 @@ export function createApp(
     options.avesRouter ?? defaultAvesRouter;
 
 
+  const cuidadosRouter =
+    options.cuidadosRouter ?? defaultCuidadosRouter;
+
+
 
   app.get('/api/v1/health', (c) => {
 
@@ -67,6 +73,8 @@ export function createApp(
   app.route('/api/v1/criaderos', criaderosRouter);
 
   app.route('/api/v1/criaderos/:criaderoId/jaulas', jaulasRouter);
+
+  app.route('/api/v1/criaderos/:criaderoId/jaulas/:jaulaId', cuidadosRouter);
 
   app.route('/api/v1/criaderos/:criaderoId/catalogos', catalogosRouter);
 

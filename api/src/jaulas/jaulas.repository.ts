@@ -280,6 +280,7 @@ export class D1JaulaRepository implements JaulaRepository {
           h.tipo_evento AS tipoEvento,
           h.fecha,
           h.detalle,
+          h.fecha_creacion AS fechaCreacion,
           a.codigo AS aveCodigo
         FROM jaula_historial h
         LEFT JOIN aves a ON a.id = h.ave_id
