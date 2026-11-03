@@ -388,6 +388,12 @@ export default function SaludAveScreen({
 
     }
 
+    if(!ave){
+
+        return null;
+
+    }
+
 
 
 
