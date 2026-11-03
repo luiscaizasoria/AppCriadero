@@ -6,6 +6,7 @@ import defaultCatalogosRouter from './catalogs/catalogs.routes';
 import defaultAvesRouter from './aves/aves.routes';
 import defaultCuidadosRouter from './cuidados/cuidados.routes';
 import defaultSaludRouter from './salud/salud.routes';
+import defaultHuevosRouter from './huevos/huevos.routes';
 
 
 export type Env = {
@@ -25,6 +26,7 @@ type AppOptions = {
   avesRouter?: AppRouter;
   cuidadosRouter?: AppRouter;
   saludRouter?: AppRouter;
+  huevosRouter?: AppRouter;
 };
 
 
@@ -64,6 +66,10 @@ export function createApp(
     options.saludRouter ?? defaultSaludRouter;
 
 
+  const huevosRouter =
+    options.huevosRouter ?? defaultHuevosRouter;
+
+
 
   app.get('/api/v1/health', (c) => {
 
@@ -87,6 +93,8 @@ export function createApp(
   app.route('/api/v1/criaderos/:criaderoId/aves', avesRouter);
 
   app.route('/api/v1/criaderos/:criaderoId/aves/:aveId', saludRouter);
+
+  app.route('/api/v1/criaderos/:criaderoId', huevosRouter);
 
   app.route('/api/v1/auth', authRouter);
 
