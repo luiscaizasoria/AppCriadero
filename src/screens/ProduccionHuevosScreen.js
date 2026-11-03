@@ -9,7 +9,8 @@ import {
     Text,
     ScrollView,
     StyleSheet,
-    ActivityIndicator
+    ActivityIndicator,
+    Alert
 } from 'react-native';
 
 
@@ -196,6 +197,11 @@ export default function ProduccionHuevosScreen(){
                 console.error(
                     'Error cargando producción:',
                     error
+                );
+
+                Alert.alert(
+                    'Error',
+                    'No fue posible cargar la producción de huevos.'
                 );
 
             }
