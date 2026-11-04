@@ -2,6 +2,14 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-03 sesión 1
+- Hecho: módulo Huevos: migración `0009` y API `api/src/huevos/` (`07d203d`), clientes `HuevoRepository` y `ProduccionRepository` con fachadas (`c338b74`), aviso de carga en `ProduccionHuevosScreen` (`469b742`), pruebas y flujo `70-huevo` (`3436a62`); cuarta excepción de Salud, guarda de `ave` nula en `SaludAveScreen` (`17ea040`). `0009` aplicada en local, integración y base remota de pruebas.
+- Resultado: typecheck OK, 222 unitarias/HTTP y 72 de integración; `/probar datos` 49/49 (72,2 s, sin fuga), smoke verde (2,6 min), flujo `70-huevo` verde (111 s). Revisor de arquitectura: APROBADO. No se ejecutó `/probar completo`.
+- Decisión: código `H`+6 dígitos por criadero dentro del mismo batch del `INSERT`; periodos en UTC como V1; se implementaron las 6 funciones sin llamadores.
+- Decisión: quinta excepción a pantallas V1 (`Alert` en `ProduccionHuevosScreen`); `DetalleAveScreen` y `RegistrarHuevoScreen.cargarAve` no se tocan (sin aviso de red, como V1).
+- Pendiente: teléfono (registrar huevo, Producción, modo avión); `ProduccionHuevosScreen` sin flujo del emulador; concurrencia real del código no probada; `/probar completo` al cerrar Genealogía; push (requiere aprobación).
+- Próximo paso exacto: esperar indicación del usuario para Genealogía y Ciclo de vida.
+
 ## 2026-11-02 sesión 3
 - Hecho: módulo Salud: migración `0008` (`tratamientos_ave`) y API `api/src/salud/` (`7e02ccd`), cliente `SaludRepository.{js,sqlite.js,api.js}` (`e5805e6`), excepción aprobada a `SaludAveScreen` (`31b823c`), pruebas y flujo `60-salud-enfermedad` (`b9001bb`). `0008` aplicada en local, integración y base remota de pruebas.
 - Resultado: typecheck OK, 203 unitarias/HTTP y 54 de integración; `/probar datos` 44/44 (58 s, sin fuga), smoke verde (1,7 min), completo 25,2 min sin regresiones (`PENDIENTE DE MIGRAR: genealogia, huevos, dashboard`). Revisor de arquitectura: APROBADO.

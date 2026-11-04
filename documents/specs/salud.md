@@ -13,7 +13,8 @@ implementada (2026-11-02, rama `trabajo/migracion-nube`). Pendiente: comprobaci�
 - Cliente de la app: `SaludRepository.js` (fachada), `SaludRepository.sqlite.js` (código V1 intacto) y `SaludRepository.api.js`. `actualizarEstadoSaludAve` **no está** en `.api.js` (omitida por decisión del usuario; sin llamadores).
 - Commits: `7e02ccd` (API), `e5805e6` (cliente), `31b823c` (pantalla) y `b9001bb` (pruebas; caso `08-salud` y flujo `60-salud-enfermedad`).
 - Validación: typecheck OK; 203 pruebas unitarias/HTTP y 54 de integración en verde; `/probar datos` 44/44 (58 s, sin fuga entre cuentas); smoke verde (1,7 min); `/probar completo` 25,2 min sin regresiones, flujo `60-salud-enfermedad` migrado y en verde, pendientes `PENDIENTE DE MIGRAR: genealogia, huevos, dashboard`; `revisor-arquitectura-v2`: APROBADO.
-- Limitaciones conocidas: la ficha de ave sigue sin bajas ni huevos (ciclo de vida incompleto). `SaludAveScreen` no tiene guard si `ave` es `null` en el render: si `cargarDatos` falla, el aviso se muestra pero el render puede dar `TypeError` (`ave.codigo`, `ave.estado_salud`). El botón "Guardar diagnóstico" sigue sin `disabled`: un doble toque puede duplicar el diagnóstico.
+- Cuarta excepción aprobada (commit `17ea040`): guarda de `ave` nula en `SaludAveScreen` (ver "Excepciones técnicas"); ya no hay `TypeError` en el render si `cargarDatos` falla.
+- Limitaciones conocidas: la ficha de ave sigue sin bajas (ciclo de vida incompleto; los huevos ya se registran en la nube, pero el ciclo de vida no los muestra hasta Genealogía/Ciclo de vida). El botón "Guardar diagnóstico" sigue sin `disabled`: un doble toque puede duplicar el diagnóstico.
 
 Alcance: aves individuales (sin lotes), sin sincronización offline, D1 como fuente de verdad. Las líneas son del árbol actual (v1.0.3, `app.json:5`).
 
@@ -161,7 +162,8 @@ Migración `0008_salud.sql` (implementada; `0006` y `0007` no se editan). `diagn
 - **Errores de red/autenticación** (401, 403, `CRIADERO_NOT_FOUND`, fallos de red): los propaga el cliente REST (`ApiError`, `traducirErrorAve`).
 - **Tipos del cuerpo** (`VALIDATION_ERROR` por tipo incorrecto): solo para el binding a D1, como en `eventos`.
 - Lecturas de catálogo ENFERMEDADES/MEDICAMENTOS: excepción ya aprobada (`catalogos.md`); se conserva el `.api.js` con `leerCatalogoApi`.
-- **Avisos de error de red en `SaludAveScreen.js` (tercera excepción aprobada por el usuario a las pantallas V1, 2026-11-02, commit `31b823c`).** Solo se añadieron dos `Alert.alert` en los `catch` existentes: `cargarDatos` (`'No fue posible cargar los datos de salud.'`) y `guardar` (`'No fue posible guardar el registro.'`). No se añadió `disabled` al botón ni guard para `ave` null en el render (limitación conocida, ver "Estado"). `FinalizarTratamientoScreen` no necesitó excepción.
+- **Avisos de error de red en `SaludAveScreen.js` (tercera excepción aprobada por el usuario a las pantallas V1, 2026-11-02, commit `31b823c`).** Solo se añadieron dos `Alert.alert` en los `catch` existentes: `cargarDatos` (`'No fue posible cargar los datos de salud.'`) y `guardar` (`'No fue posible guardar el registro.'`). No se añadió `disabled` al botón (limitación conocida, ver "Estado"). `FinalizarTratamientoScreen` no necesitó excepción.
+- **Guarda de ave nula en `SaludAveScreen.js` (cuarta excepción aprobada por el usuario a las pantallas V1, commit `17ea040`).** Se añadió `if (!ave) { return null; }` justo después del bloque de `loading`. Motivo: errores de red; si `cargarDatos` fallaba, `ave` quedaba `null` y el render daba `TypeError` (`ave.codigo`, `ave.estado_salud`). Nada más cambió.
 
 ## Casos de paridad
 
@@ -192,4 +194,4 @@ Migración `0008_salud.sql` (implementada; `0006` y `0007` no se editan). `diagn
 
 ## Decisiones del usuario sobre pantallas V1 (resueltas)
 
-Las dudas sobre `SaludAveScreen` quedaron resueltas el 2026-11-02: se aprobó solo el aviso con `Alert` en los `catch` de `cargarDatos` y `guardar` (ver "Excepciones técnicas"). No se aprobó desactivar el botón ni proteger el render con `ave` null; quedan como limitaciones conocidas. `FinalizarTratamientoScreen` no necesita excepción: ya tiene `catch` con `Alert` y `disabled={guardando}`.
+Las dudas sobre `SaludAveScreen` quedaron resueltas el 2026-11-02: se aprobó el aviso con `Alert` en los `catch` de `cargarDatos` y `guardar` (ver "Excepciones técnicas"). El 2026-11-03 se aprobó además la guarda de `ave` nula en el render (cuarta excepción, `17ea040`). No se aprobó desactivar el botón; queda como limitación conocida. `FinalizarTratamientoScreen` no necesita excepción: ya tiene `catch` con `Alert` y `disabled={guardando}`.
