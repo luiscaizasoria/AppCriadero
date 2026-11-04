@@ -18,7 +18,7 @@ process.env.EXPO_PUBLIC_DATA_SOURCE = 'api';
 function marcaTiempo() {
     const d = new Date();
     const p = n => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
 }
 
 if (args.includes('--solo-limpiar')) {

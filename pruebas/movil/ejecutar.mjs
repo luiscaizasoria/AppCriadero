@@ -7,7 +7,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { urlApi } from '../datos/lib/entorno.mjs';
 import { limpiarCuentasDesechables } from '../datos/lib/limpiar.mjs';
-import { asegurarEmulador, asegurarExpoGo, asegurarMetro, adb, LOG_METRO } from './lib/entorno-movil.mjs';
+import { asegurarEmulador, asegurarExpoGo, asegurarMetro, verificarEntornoEmulador, adb, LOG_METRO } from './lib/entorno-movil.mjs';
 
 const aqui = path.dirname(fileURLToPath(import.meta.url));
 const raiz = path.resolve(aqui, '../..');
@@ -20,7 +20,10 @@ process.env.EXPO_PUBLIC_API_URL = URL_API;
 
 const p = n => String(n).padStart(2, '0');
 const d = new Date();
-const carpeta = path.join(raiz, 'pruebas/informes', `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}-${modo}`);
+// Una carpeta por ejecucion (hora completa y modo); si existiera, se anade un sufijo: nunca se sobrescribe otra.
+const base = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-${modo}`;
+let carpeta = path.join(raiz, 'pruebas/informes', base);
+for (let n = 2; fs.existsSync(carpeta); n++) carpeta = path.join(raiz, 'pruebas/informes', `${base}-${n}`);
 fs.mkdirSync(carpeta, { recursive: true });
 
 function listarFlujos() {
@@ -63,6 +66,18 @@ const t0 = Date.now();
 const entorno = { emulador: await asegurarEmulador() };
 asegurarExpoGo();
 entorno.metro = await asegurarMetro(URL_API);
+try {
+    entorno.red = (await verificarEntornoEmulador(URL_API)).desdeEmulador;
+} catch (e) {
+    const msg = `FALLO DE ENTORNO: ${e.message}`;
+    fs.writeFileSync(path.join(carpeta, 'resumen.md'), `# Flujos moviles (${modo}) - ${new Date().toISOString()}
+
+${msg}
+`);
+    console.log(`${msg}
+Informe: ${path.relative(process.cwd(), carpeta)}`);
+    process.exit(1);
+}
 
 // wrangler tail acotado a la ejecucion (solo diagnostico de fallos de API; --env test).
 const tailLog = path.join(carpeta, 'wrangler-tail.log');

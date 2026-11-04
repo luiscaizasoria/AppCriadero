@@ -57,3 +57,10 @@ El guardia de agentes compara texto; no analiza el contenido de los scripts. Por
 ## Excepciones del puerto 8090
 
 Los puertos 8081 y 8082 los suelen ocupar los Expo en túnel del usuario; las pruebas usan 8090 (cambiable con `PUERTO_METRO`).
+
+## Comprobación previa del emulador y versión de Node
+
+- Antes de lanzar Maestro, `ejecutar.mjs` verifica durante hasta 90 s: `sys.boot_completed`, que `pm list packages` responda, `adb reverse` y una petición HTTP a `/api/v1/health` hecha **desde el propio emulador** (`nc` por el puerto 80; el emulador no trae curl ni wget). Si falla, termina con `FALLO DE ENTORNO: <causa>` y no ejecuta flujos.
+- Cada ejecución escribe en su propia carpeta `pruebas/informes/AAAA-MM-DD-HHMMSS-<modo>` (con sufijo `-2`, `-3`… si coincidiera); nunca sobrescribe otra.
+- Node: el proyecto fija **Node 22** con `.nvmrc` en la raíz (sin `engines`, para no tocar los `package.json`). Las pruebas pasaron también con Node 24.
+- Emulador colgado (`pm list packages` con `Broken pipe`): `adb reboot` no basta; `adb -s emulator-5554 emu kill` y volver a arrancar el AVD lo resolvió.

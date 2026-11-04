@@ -36,6 +36,40 @@ export function asegurarExpoGo() {
     adb('shell', 'settings', 'put', 'secure', 'immersive_mode_confirmations', 'confirmed');
 }
 
+/**
+ * Comprueba el emulador ANTES de lanzar Maestro: arranque completo, servicio de paquetes, adb reverse y red
+ * hacia el Worker de pruebas hecha DESDE el emulador. Reintenta hasta 90 s; si no, lanza Error con la causa exacta.
+ * El emulador no trae curl ni wget: se usa nc (toybox) por el puerto 80 del host del Worker, que Cloudflare
+ * responde con una redireccion HTTP; eso prueba DNS, salida a Internet y que el Worker es alcanzable. El 200 de
+ * /api/v1/health por HTTPS se comprueba desde el PC. La URL no se escribe en ningun mensaje.
+ */
+export async function verificarEntornoEmulador(urlApi, limiteMs = 90000) {
+    const host = new URL(urlApi).hostname;
+    const t0 = Date.now();
+    let causa = 'sin comprobar';
+    while (Date.now() - t0 < limiteMs) {
+        causa = null;
+        const paquetes = adb('shell', 'pm', 'list', 'packages', '|', 'head', '-1');
+        if (adb('shell', 'getprop', 'sys.boot_completed') !== '1') causa = 'el emulador no termino de arrancar (sys.boot_completed distinto de 1)';
+        else if (!paquetes.startsWith('package:')) causa = `el servicio de paquetes del emulador no responde (pm list packages: "${paquetes.slice(0, 60)}")`;
+        else if (!adb('reverse', '--list').includes(`tcp:${PUERTO_METRO}`)) {
+            adb('reverse', `tcp:${PUERTO_METRO}`, `tcp:${PUERTO_METRO}`);
+            causa = `falta adb reverse tcp:${PUERTO_METRO} (se intento crearlo)`;
+        } else {
+            // nc cierra al terminar stdin: se espera 3 s tras enviar para recibir la respuesta.
+            const peticion = `(printf 'GET /api/v1/health HTTP/1.1\r\nHost: ${host}\r\nConnection: close\r\n\r\n'; sleep 3) | nc -w 8 ${host} 80`;
+            const r = spawnSync('adb', ['shell', peticion], { encoding: 'utf8' });
+            const linea = (r.stdout || '').split('\n')[0].trim();
+            if (/^HTTP\/1\.[01] (200|30[1278])/.test(linea)) return { desdeEmulador: linea };
+            causa = linea
+                ? `el Worker respondio desde el emulador algo inesperado: "${linea.slice(0, 60)}"`
+                : 'sin red desde el emulador hacia el Worker de pruebas (DNS o salida a Internet: nc no obtuvo respuesta)';
+        }
+        await espera(3000);
+    }
+    throw new Error(causa);
+}
+
 async function metroVivo() {
     try { return (await fetch(`http://127.0.0.1:${PUERTO_METRO}/status`)).ok; } catch { return false; }
 }
