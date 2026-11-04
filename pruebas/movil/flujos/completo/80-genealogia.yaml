@@ -1,9 +1,10 @@
 # SEMILLA: --jaulas=JX-1 --aves=AV-P:MACHO:JX-1,AV-M:HEMBRA,AV-H:MACHO::AV-P:AV-M
-# ESPERADO FALLAR (genealogia): el arbol genealogico debe mostrar al padre AV-P y la madre AV-M (hoy lee SQLite)
-# Si pasa, el informe avisa: migrado, quitar etiqueta.
+# GENEALOGIA: el arbol de AV-H muestra al padre AV-P y a la madre AV-M. AV-P y AV-M no son parientes,
+# por lo que no debe aparecer aviso de consanguinidad ni de relacion circular.
 appId: host.exp.exponent
 tags:
-  - esperado-fallar
+  - completo
+  - migrado
   - genealogia
 ---
 - runFlow:
@@ -23,4 +24,6 @@ tags:
     visible: ".*AV-P.*"
     timeout: 15000
 - assertVisible: ".*AV-M.*"
+- assertNotVisible: ".*Relación genealógica inválida.*"
+- assertNotVisible: ".*Consanguinidad detectada.*"
 - takeScreenshot: genealogia-resultado

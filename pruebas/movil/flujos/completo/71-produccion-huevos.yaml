@@ -1,0 +1,53 @@
+# SEMILLA: --jaulas=JX-1,JX-2 --aves=AV-P:MACHO:JX-1,AV-Q:HEMBRA:JX-2 --huevos=AV-P:JX-1:0,AV-P:JX-1:1,AV-Q:JX-2:0,AV-Q:JX-2:3,AV-Q::10
+# PRODUCCION: Más > Producción de huevos. Esperado (V1, UTC): hoy 2, semana 4 (el de hace 10 días no entra),
+# ranking AV-Q 3 y AV-P 2, por jaula JX-2 y JX-1 con 2 (el huevo de AV-Q sin jaula no cuenta).
+# No se afirma "Mes" (depende del día del mes) ni el horario/por día (zona horaria y formato de fecha).
+# RIESGO: si el flujo corre cerca de la medianoche UTC, "hoy" y "semana" pueden variar; repetir en ese caso.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - huevos
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn: "Más"
+- scrollUntilVisible:
+    element: ".*Producción de huevos"
+- tapOn: ".*Producción de huevos"
+- extendedWaitUntil:
+    visible: ".*Resumen"
+    timeout: 20000
+- assertNotVisible: ".*No fue posible cargar la producción de huevos.*"
+- assertVisible: ".*Hoy"
+- assertVisible:
+    text: "2"
+    below: ".*Hoy"
+    above: ".*Semana"
+- assertVisible:
+    text: "4"
+    below: ".*Semana"
+    above: ".*Mes"
+- scrollUntilVisible:
+    element: ".*Mejores ponedoras"
+- scrollUntilVisible:
+    element: "AV-Q"
+- assertVisible: "AV-Q"
+- assertVisible: "3 huevos"
+- scrollUntilVisible:
+    element: "AV-P"
+- assertVisible: "AV-P"
+- scrollUntilVisible:
+    element: ".*Producción por jaula"
+- scrollUntilVisible:
+    element: ".*JX-2"
+- assertVisible: ".*JX-2"
+- assertVisible: ".*JX-1"
+- assertVisible: "2 huevos"
+- assertNotVisible: ".*No fue posible cargar la producción de huevos.*"
+- takeScreenshot: produccion-huevos-resultado

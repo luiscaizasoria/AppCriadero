@@ -1,0 +1,32 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-C:MACHO:JX-1 --huevos=AV-C:JX-1:2,AV-C:JX-1:2
+# CICLO DE VIDA: Aves > AV-C > Ciclo de vida. Linea de tiempo con el alta del ave ("Llegada al criadero"
+# o "Nacimiento") y los 2 huevos del mismo dia agrupados ("2 huevos registrados").
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - ciclo-vida
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "50%,96%"
+- tapOn: ".*AV-C.*"
+- scrollUntilVisible:
+    element: ".*Ciclo de vida"
+- tapOn: ".*Ciclo de vida"
+- extendedWaitUntil:
+    visible: ".*(Llegada al criadero|Nacimiento|huevos? registrados?).*"
+    timeout: 20000
+- assertNotVisible: ".*No fue posible cargar el ciclo de vida del ave.*"
+- assertNotVisible: ".*Sin eventos todavía.*"
+- scrollUntilVisible:
+    element: ".*2 huevos registrados.*"
+- assertVisible: ".*2 huevos registrados.*"
+- assertNotVisible: ".*No fue posible cargar el ciclo de vida del ave.*"
+- takeScreenshot: ciclo-vida-resultado
