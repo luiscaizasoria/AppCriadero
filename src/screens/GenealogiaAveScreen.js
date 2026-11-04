@@ -687,7 +687,7 @@ function AncestorBranch({
                 }
                 highlight={
                     highlightIds?.has(
-                        Number(node.id)
+                        String(node.id)
                     )
                 }
                 onPress={() =>
@@ -969,9 +969,9 @@ function abrirAve(
 ) {
 
     if(
-        Number(currentAveId)
+        String(currentAveId)
         ===
-        Number(newAveId)
+        String(newAveId)
     ){
 
         return;
@@ -1085,12 +1085,12 @@ function analizarConsanguinidad(
 
     const profundidadPrimeroEnSegundo =
         mapaSegundo.get(
-            Number(primero.id)
+            String(primero.id)
         )?.depth;
 
     const profundidadSegundoEnPrimero =
         mapaPrimero.get(
-            Number(segundo.id)
+            String(segundo.id)
         )?.depth;
 
 
@@ -1148,9 +1148,9 @@ function analizarConsanguinidad(
                 (primero.padres || [])
                     .map(
                         item =>
-                            Number(item.nodo?.id)
+                            item.nodo?.id
                     )
-                    .filter(Number.isFinite)
+                    .filter(id => id !== undefined && id !== null)
             );
 
         const padresSegundo =
@@ -1158,9 +1158,9 @@ function analizarConsanguinidad(
                 (segundo.padres || [])
                     .map(
                         item =>
-                            Number(item.nodo?.id)
+                            item.nodo?.id
                     )
-                    .filter(Number.isFinite)
+                    .filter(id => id !== undefined && id !== null)
             );
 
         const padresComunes =
@@ -1228,7 +1228,7 @@ function obtenerMapaAncestros(
 
 
             const id =
-                Number(node.id);
+                String(node.id);
 
 
             const existente =
