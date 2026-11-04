@@ -8,8 +8,7 @@
  * misma logica de mezcla y orden que CicloVidaRepository.sqlite.js (V1).
  * Si una lectura falla, la funcion rechaza (la pantalla muestra su error).
  *
- * Limitacion conocida: las bajas (VENTA/MUERTE) no se incluyen (lista vacia)
- * hasta que se migre el modulo Bajas.
+ * Las bajas (VENTA/MUERTE) se leen de GET .../aves/:aveId/bajas.
  */
 
 import {
@@ -47,6 +46,21 @@ async function obtenerEvolucionesAve(
     );
 
     return data.evolucion.map(aSnake);
+
+}
+
+
+async function obtenerBajasAveCiclo(
+    aveId
+) {
+
+    const ruta = await rutaAves();
+
+    const data = await apiFetch(
+        `${ruta}/${encodeURIComponent(aveId)}/bajas`
+    );
+
+    return data.bajas.map(aSnake);
 
 }
 
@@ -198,12 +212,14 @@ export async function obtenerCicloVidaAve(
         historial,
         evoluciones,
         saludPlano,
-        huevosPlano
+        huevosPlano,
+        bajas
     ] = await Promise.all([
         obtenerHistorialAve(aveId),
         obtenerEvolucionesAve(aveId),
         obtenerHistorialSaludAve(aveId),
-        obtenerHuevosAve(aveId)
+        obtenerHuevosAve(aveId),
+        obtenerBajasAveCiclo(aveId)
     ]);
 
 
@@ -231,9 +247,6 @@ export async function obtenerCicloVidaAve(
         agruparHuevosPorDia(
             huevosPlano
         );
-
-
-    const bajas = [];
 
 
     const eventos = [];
@@ -638,8 +651,7 @@ export async function obtenerCicloVidaAve(
     }
 
 
-    // Bajas (VENTA/MUERTE): lista vacia hasta migrar el modulo Bajas
-    // (limitacion conocida; no existe bajas_ave en D1).
+    // Bajas (VENTA/MUERTE): GET .../bajas, ya ordenadas fecha DESC, id DESC.
     for (
         const item
         of bajas

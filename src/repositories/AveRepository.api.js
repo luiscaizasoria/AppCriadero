@@ -3,10 +3,9 @@
  * SQLite (AveRepository.sqlite.js): mismas funciones, mismos objetos
  * (snake_case, como salen de SQLite en V1) y mismos errores (cadenas de V1).
  *
- * Pendiente (modulo de Bajas, sin endpoint aun):
- *   - obtenerBajaAve devuelve null (V1: no hay fila en bajas_ave).
- *   - obtenerAvesVendidas / obtenerAvesFallecidas devuelven lo que da la API,
- *     que sin bajas registradas es [] (sin fecha_venta, comprador, etc.).
+ * Bajas: obtenerBajaAve lee GET .../bajas (null si no hay);
+ * obtenerAvesVendidas / obtenerAvesFallecidas usan ?estado= y la API
+ * incluye los campos de la baja (fecha_venta, comprador, etc.).
  * La foto (fotoUri) viaja como texto: es la ruta local del telefono.
  */
 
@@ -373,10 +372,18 @@ export async function obtenerAvesFallecidas() {
 }
 
 
-// Pendiente del modulo de Bajas (bajas_ave): sin endpoint, V1 devuelve
-// null cuando el ave no tiene baja.
-export async function obtenerBajaAve() {
+// Baja mas reciente del ave (GET .../bajas ya viene ordenada por fecha DESC);
+// null si no hay, como V1.
+export async function obtenerBajaAve(aveId) {
 
-    return null;
+    const ruta = await rutaAves();
+
+    const data = await apiFetch(
+        `${ruta}/${encodeURIComponent(aveId)}/bajas`
+    );
+
+    return data.bajas.length > 0
+        ? aSnake(data.bajas[0])
+        : null;
 
 }

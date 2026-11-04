@@ -16,6 +16,7 @@ type DependenciesFactory = (db: D1Database) => AveDependencies;
 
 const ERRORES_400 = new Set([
   'VALIDATION_ERROR',
+  'CELULAR_COMPRADOR_REQUERIDO',
   'PADRES_IGUALES',
   'PADRE_ES_MISMA_AVE',
   'MADRE_ES_MISMA_AVE',
@@ -172,6 +173,41 @@ export function createAvesRouter(buildDependencies: DependenciesFactory = create
     const { service } = buildDependencies(c.env.DB);
 
     return responder(c, await service.listarEvolucion(c.req.param('criaderoId')!, c.req.param('aveId')));
+  });
+
+  // GET /aves/:aveId/bajas
+  router.get('/:aveId/bajas', async (c) => {
+    const { service } = buildDependencies(c.env.DB);
+
+    return responder(c, await service.listarBajasAve(c.req.param('criaderoId')!, c.req.param('aveId')));
+  });
+
+  // POST /aves/:aveId/muerte
+  router.post('/:aveId/muerte', async (c) => {
+    const { service } = buildDependencies(c.env.DB);
+    const json = await leerJson(c);
+
+    if (!json.ok) return c.json(CUERPO_INVALIDO, 400);
+
+    return responder(
+      c,
+      await service.registrarMuerte(c.req.param('criaderoId')!, c.req.param('aveId'), json.body),
+      201
+    );
+  });
+
+  // POST /aves/:aveId/venta
+  router.post('/:aveId/venta', async (c) => {
+    const { service } = buildDependencies(c.env.DB);
+    const json = await leerJson(c);
+
+    if (!json.ok) return c.json(CUERPO_INVALIDO, 400);
+
+    return responder(
+      c,
+      await service.registrarVenta(c.req.param('criaderoId')!, c.req.param('aveId'), json.body),
+      201
+    );
   });
 
   // POST /aves

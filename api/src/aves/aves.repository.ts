@@ -8,6 +8,11 @@ import { v7 as uuidv7 } from 'uuid';
 import type {
   ActualizarAveInput,
   AveBajaListado,
+  BajaAve,
+  BajaMuerteInput,
+  BajaVentaInput,
+  CamposBajaMuerte,
+  CamposBajaVenta,
   AveCandidataPadre,
   AveDetalle,
   AveFila,
@@ -58,6 +63,12 @@ export interface AveRepository {
   obtenerContextoEvolucion(criaderoId: string, aveId: string): Promise<ContextoEvolucion | null>;
   registrarEvolucion(criaderoId: string, input: EvolucionInput): Promise<void>;
   finalizarTratamiento(criaderoId: string, input: FinalizarTratamientoInput): Promise<void>;
+  /** Todas las bajas del ave, fecha DESC, id DESC. */
+  listarBajasAve(criaderoId: string, aveId: string): Promise<BajaAve[]>;
+  /** Un solo batch: UPDATE aves, INSERT bajas_ave, INSERT ave_historial (orden de V1). */
+  registrarMuerte(criaderoId: string, input: BajaMuerteInput): Promise<void>;
+  /** Un solo batch: UPDATE aves, bajas_ave, 2 movimientos_financieros, ave_historial. */
+  registrarVenta(criaderoId: string, input: BajaVentaInput): Promise<void>;
 }
 
 const COLUMNAS_LISTADO = `
@@ -147,18 +158,33 @@ export class D1AveRepository implements AveRepository {
   }
 
   async listarBajas(criaderoId: string, estado: EstadoBajaAve): Promise<AveBajaListado[]> {
-    // V1 hace INNER JOIN con bajas_ave (modulo de bajas, aun sin tabla en D1):
-    // hasta entonces se listan las aves por estado, la mas reciente primero.
+    // V1: INNER JOIN con bajas_ave del tipo que corresponde, la baja mas reciente primero.
+    const esVenta = estado === 'VENDIDA';
+    const columnasBaja = esVenta
+      ? `b.fecha AS fechaVenta,
+         b.celular,
+         b.ciudad_destino AS ciudadDestino,
+         b.cooperativa_envio AS cooperativaEnvio,
+         b.comprador,
+         b.valor_venta AS valorVenta,
+         b.valor_envio AS valorEnvio,
+         b.detalle`
+      : `b.fecha AS fechaFallecimiento,
+         b.causa,
+         b.detalle`;
+
     const result = await this.db
       .prepare(`
-        SELECT ${COLUMNAS_LISTADO}
+        SELECT ${COLUMNAS_LISTADO}, ${columnasBaja}
         FROM aves a
         ${JOINS_LISTADO}
+        INNER JOIN bajas_ave b
+          ON b.ave_id = a.id AND b.criadero_id = a.criadero_id AND b.tipo = ?
         WHERE a.criadero_id = ? AND a.estado = ?
-        ORDER BY a.fecha_actualizacion DESC, a.codigo
+        ORDER BY b.fecha DESC
       `)
-      .bind(criaderoId, estado)
-      .all<AveListado>();
+      .bind(esVenta ? 'VENTA' : 'MUERTE', criaderoId, estado)
+      .all<AveListado & (CamposBajaVenta | CamposBajaMuerte)>();
 
     return result.results.map((fila) => {
       const { criaderoOrigen, metodoEnvio, fechaCreacion, ...resto } = fila;
@@ -167,6 +193,101 @@ export class D1AveRepository implements AveRepository {
       void fechaCreacion;
       return resto;
     });
+  }
+
+  async listarBajasAve(criaderoId: string, aveId: string): Promise<BajaAve[]> {
+    const result = await this.db
+      .prepare(`
+        SELECT
+          id,
+          tipo,
+          fecha,
+          causa,
+          celular,
+          ciudad_destino AS ciudadDestino,
+          cooperativa_envio AS cooperativaEnvio,
+          comprador,
+          valor_venta AS valorVenta,
+          valor_envio AS valorEnvio,
+          detalle
+        FROM bajas_ave
+        WHERE ave_id = ? AND criadero_id = ?
+        ORDER BY fecha DESC, id DESC
+      `)
+      .bind(aveId, criaderoId)
+      .all<BajaAve>();
+
+    return result.results;
+  }
+
+  async registrarMuerte(criaderoId: string, input: BajaMuerteInput): Promise<void> {
+    await this.db.batch([
+      this.db
+        .prepare(`
+          UPDATE aves SET estado = 'FALLECIDA', fecha_actualizacion = ?
+          WHERE id = ? AND criadero_id = ?
+        `)
+        .bind(input.fecha, input.aveId, criaderoId),
+      this.db
+        .prepare(`
+          INSERT INTO bajas_ave (id, criadero_id, ave_id, tipo, fecha, causa, detalle)
+          VALUES (?, ?, ?, 'MUERTE', ?, ?, ?)
+        `)
+        .bind(input.bajaId, criaderoId, input.aveId, input.fecha, input.causa, input.detalle),
+      this.db
+        .prepare(`
+          INSERT INTO ave_historial (id, criadero_id, ave_id, tipo_evento, fecha, detalle)
+          VALUES (?, ?, ?, 'MUERTE', ?, ?)
+        `)
+        .bind(input.historialId, criaderoId, input.aveId, input.fecha, input.detalleHistorial),
+    ]);
+  }
+
+  async registrarVenta(criaderoId: string, input: BajaVentaInput): Promise<void> {
+    const insertarIngreso = `
+      INSERT INTO movimientos_financieros
+        (id, criadero_id, tipo, categoria, fecha, valor, detalle, ave_id, origen_tipo, origen_id)
+      VALUES (?, ?, 'INGRESO', ?, ?, ?, ?, ?, 'VENTA_AVE', ?)
+    `;
+
+    await this.db.batch([
+      this.db
+        .prepare(`
+          UPDATE aves SET estado = 'VENDIDA', fecha_actualizacion = ?
+          WHERE id = ? AND criadero_id = ?
+        `)
+        .bind(input.fecha, input.aveId, criaderoId),
+      this.db
+        .prepare(`
+          INSERT INTO bajas_ave
+            (id, criadero_id, ave_id, tipo, fecha, celular, ciudad_destino,
+             cooperativa_envio, comprador, valor_venta, valor_envio, detalle)
+          VALUES (?, ?, ?, 'VENTA', ?, ?, ?, ?, ?, ?, ?, ?)
+        `)
+        .bind(
+          input.bajaId, criaderoId, input.aveId, input.fecha, input.celular,
+          input.ciudadDestino, input.cooperativaEnvio, input.comprador,
+          input.valorVenta, input.valorEnvio, input.detalle
+        ),
+      this.db
+        .prepare(insertarIngreso)
+        .bind(
+          input.ingresoVentaId, criaderoId, 'VENTA_AVE', input.fecha,
+          input.valorVenta ?? 0, input.detalleVenta, input.aveId, input.bajaId
+        ),
+      this.db
+        .prepare(insertarIngreso)
+        .bind(
+          input.ingresoEnvioId, criaderoId, 'ENVIO_AVE', input.fecha,
+          input.valorEnvio ?? 0, input.detalleEnvio, input.aveId, input.bajaId
+        ),
+      this.db
+        .prepare(`
+          INSERT INTO ave_historial (id, criadero_id, ave_id, tipo_evento, fecha, detalle)
+          VALUES (?, ?, ?, 'VENTA', ?, ?)
+        `)
+        .bind(input.historialId, criaderoId, input.aveId, input.fecha, input.detalleHistorial),
+    ]);
   }
 
   async listarPorJaula(criaderoId: string, jaulaId: string): Promise<AvePorJaula[]> {

@@ -37,8 +37,72 @@ export interface AveDetalle extends AveListado {
   fechaUltimoControlSalud: string | null;
 }
 
-/** Ave de VENDIDA/FALLECIDA (sin los datos de baja: la tabla bajas_ave es de otro modulo). */
-export type AveBajaListado = Omit<AveListado, 'criaderoOrigen' | 'metodoEnvio' | 'fechaCreacion'>;
+/** Campos de baja que acompanan al ave vendida (INNER JOIN bajas_ave tipo VENTA, como V1). */
+export interface CamposBajaVenta {
+  fechaVenta: string;
+  celular: string | null;
+  ciudadDestino: string | null;
+  cooperativaEnvio: string | null;
+  comprador: string | null;
+  valorVenta: number | null;
+  valorEnvio: number | null;
+  detalle: string | null;
+}
+
+/** Campos de baja que acompanan al ave fallecida (tipo MUERTE). */
+export interface CamposBajaMuerte {
+  fechaFallecimiento: string;
+  causa: string | null;
+  detalle: string | null;
+}
+
+/** Ave de VENDIDA/FALLECIDA con los datos de su baja. */
+export type AveBajaListado = Omit<AveListado, 'criaderoOrigen' | 'metodoEnvio' | 'fechaCreacion'> &
+  (CamposBajaVenta | CamposBajaMuerte);
+
+/** Fila de bajas_ave (obtenerBajaAve / ciclo de vida). */
+export interface BajaAve {
+  id: string;
+  tipo: string;
+  fecha: string;
+  causa: string | null;
+  celular: string | null;
+  ciudadDestino: string | null;
+  cooperativaEnvio: string | null;
+  comprador: string | null;
+  valorVenta: number | null;
+  valorEnvio: number | null;
+  detalle: string | null;
+}
+
+export interface BajaMuerteInput {
+  aveId: string;
+  bajaId: string;
+  historialId: string;
+  fecha: string;
+  causa: string | null;
+  detalle: string | null;
+  detalleHistorial: string;
+}
+
+export interface BajaVentaInput {
+  aveId: string;
+  bajaId: string;
+  ingresoVentaId: string;
+  ingresoEnvioId: string;
+  historialId: string;
+  fecha: string;
+  celular: string;
+  ciudadDestino: string | null;
+  cooperativaEnvio: string | null;
+  comprador: string | null;
+  valorVenta: number | null;
+  valorEnvio: number | null;
+  detalle: string | null;
+  detalleVenta: string;
+  detalleEnvio: string;
+  detalleHistorial: string;
+}
 
 export interface AvePorJaula {
   id: string;

@@ -11,6 +11,7 @@ import {
   MENSAJE_CODIGO_DUPLICADO,
   MENSAJE_FK,
   type AveBajaListado,
+  type BajaAve,
   type AveCandidataPadre,
   type AveDatos,
   type AveDetalle,
@@ -655,4 +656,137 @@ export class AveService {
 
     return this.obtener(criaderoId, aveId);
   }
+
+  /** obtenerBajasAve / obtenerBajaAve de V1: sin comprobar existencia (ave inexistente -> []). */
+  async listarBajasAve(criaderoId: string, aveId: string): Promise<Resultado<{ bajas: BajaAve[] }>> {
+    return {
+      success: true,
+      data: { bajas: await this.repository.listarBajasAve(criaderoId, aveId) },
+    };
+  }
+
+  /** Valida los textos opcionales de una baja (solo tipo de dato). */
+  private errorTextos(body: Record<string, unknown>, campos: string[]): Resultado<never> | null {
+    if (!esAusente(body.fecha) && typeof body.fecha !== 'string') {
+      return validationError('El campo fecha debe ser texto');
+    }
+
+    for (const campo of campos) {
+      const valor = body[campo];
+      if (!esAusente(valor) && typeof valor !== 'string') {
+        return validationError(`El campo ${campo} debe ser texto`);
+      }
+    }
+
+    return null;
+  }
+
+  /** registrarMuerteAve de V1 (tres escrituras en un batch). Sin comprobar el estado del ave. */
+  async registrarMuerte(
+    criaderoId: string,
+    aveId: string,
+    body: unknown
+  ): Promise<Resultado<{ id: string }>> {
+    if (!esObjeto(body)) return validationError('El cuerpo debe ser un objeto JSON');
+
+    const errorTipo = this.errorTextos(body, ['causa', 'detalle']);
+    if (errorTipo) return errorTipo;
+
+    if (!(await this.repository.obtenerFila(criaderoId, aveId))) return aveNoEncontrada();
+
+    const detalle = (body.detalle as string | null | undefined) || null;
+    const bajaId = this.newId();
+
+    await this.repository.registrarMuerte(criaderoId, {
+      aveId,
+      bajaId,
+      historialId: this.newId(),
+      fecha: (body.fecha as string | null | undefined) || this.now().toISOString(),
+      causa: (body.causa as string | null | undefined) || null,
+      detalle,
+      detalleHistorial: detalle || 'Ave dada de baja por fallecimiento.',
+    });
+
+    return { success: true, data: { id: bajaId } };
+  }
+
+  /** registrarVentaAve de V1 (cinco escrituras en un batch). Sin comprobar el estado del ave. */
+  async registrarVenta(
+    criaderoId: string,
+    aveId: string,
+    body: unknown
+  ): Promise<Resultado<{ id: string }>> {
+    if (!esObjeto(body)) return validationError('El cuerpo debe ser un objeto JSON');
+
+    const errorTipo = this.errorTextos(body, ['ciudadDestino', 'cooperativaEnvio', 'comprador', 'detalle']);
+    if (errorTipo) return errorTipo;
+
+    if (!esAusente(body.celular) && !esEscalar(body.celular)) {
+      return validationError('El campo celular debe ser texto');
+    }
+
+    const celular = normalizarCelular(body.celular);
+
+    if (celular === '') return fallo('CELULAR_COMPRADOR_REQUERIDO');
+
+    if (!(await this.repository.obtenerFila(criaderoId, aveId))) return aveNoEncontrada();
+
+    const ciudadDestino = (body.ciudadDestino as string | null | undefined) || null;
+    const cooperativaEnvio = (body.cooperativaEnvio as string | null | undefined) || null;
+    const comprador = (body.comprador as string | null | undefined) || null;
+    const detalle = (body.detalle as string | null | undefined) || null;
+
+    const sufijo = comprador ? ` a ${comprador}` : '';
+    const partesHistorial = ['Ave vendida.', `Celular: ${celular}`];
+
+    if (comprador) partesHistorial.push(`Comprador: ${comprador}`);
+    if (ciudadDestino) partesHistorial.push(`Destino: ${ciudadDestino}`);
+    if (detalle) partesHistorial.push(detalle);
+
+    const bajaId = this.newId();
+
+    await this.repository.registrarVenta(criaderoId, {
+      aveId,
+      bajaId,
+      ingresoVentaId: this.newId(),
+      ingresoEnvioId: this.newId(),
+      historialId: this.newId(),
+      fecha: (body.fecha as string | null | undefined) || this.now().toISOString(),
+      celular,
+      ciudadDestino,
+      cooperativaEnvio,
+      comprador,
+      valorVenta: numeroNoNegativo(body.valorVenta),
+      valorEnvio: numeroNoNegativo(body.valorEnvio),
+      detalle,
+      detalleVenta: `Venta de ave ${aveId}${sufijo}`,
+      detalleEnvio: `Envío de venta de ave ${aveId}${sufijo}`,
+      detalleHistorial: partesHistorial.join(' '),
+    });
+
+    return { success: true, data: { id: bajaId } };
+  }
+}
+
+/** normalizarCelular de V1 (BajaAveRepository.js:494-536). */
+export function normalizarCelular(valor: unknown): string {
+  const digitos = String(valor || '').replace(/\D/g, '');
+
+  if (digitos.length === 12 && digitos.startsWith('593')) return `0${digitos.slice(3)}`;
+  if (digitos.length === 9 && digitos.startsWith('9')) return `0${digitos}`;
+
+  return digitos;
+}
+
+/** numeroNoNegativo de V1 (:540-579): invalido, vacio o negativo -> null, sin lanzar. */
+export function numeroNoNegativo(valor: unknown): number | null {
+  if (valor === null || valor === undefined) return null;
+  if (typeof valor !== 'number' && typeof valor !== 'string' && typeof valor !== 'boolean') return null;
+  if (typeof valor === 'string' && valor.trim() === '') return null;
+
+  const numero = Number(valor);
+
+  if (!Number.isFinite(numero) || numero < 0) return null;
+
+  return numero;
 }

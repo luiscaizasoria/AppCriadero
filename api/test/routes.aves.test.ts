@@ -161,7 +161,9 @@ describe("HTTP Aves",()=>{
     await llamar(BASE,"propietario","POST",{ ...AVE, codigo:"B" });
     await llamar(BASE,"propietario","POST",{ ...AVE, codigo:"A" });
 
-    repository.aves.find(a=>a.codigo==="B")!.estado = "FALLECIDA";
+    const b = repository.aves.find(a=>a.codigo==="B")!;
+    b.estado = "FALLECIDA";
+    repository.sembrarBaja(CRIADERO,{ id:"baja-b", aveId:b.id, tipo:"MUERTE" });
 
     const activas = await (await llamar(BASE,"propietario")).json();
     const fallecidas = await (await llamar(`${BASE}?estado=FALLECIDA`,"propietario")).json();

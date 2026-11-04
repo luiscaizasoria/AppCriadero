@@ -2,6 +2,9 @@ import type { AveRepository, JaulaBasica } from "../../src/aves/aves.repository"
 import type {
   ActualizarAveInput,
   AveBajaListado,
+  BajaAve,
+  BajaMuerteInput,
+  BajaVentaInput,
   AveCandidataPadre,
   AveDetalle,
   AveFila,
@@ -37,6 +40,26 @@ export interface FilaHistorialAve {
   tipoEvento: string;
   fecha: string;
   detalle: string | null;
+}
+
+
+export interface FilaBaja extends BajaAve {
+  criaderoId: string;
+  aveId: string;
+}
+
+
+export interface FilaMovimiento {
+  id: string;
+  criaderoId: string;
+  tipo: string;
+  categoria: string;
+  fecha: string;
+  valor: number;
+  detalle: string;
+  aveId: string;
+  origenTipo: string;
+  origenId: string;
 }
 
 
@@ -80,6 +103,10 @@ export class FakeAveRepository implements AveRepository {
   jaulaHistorial: FilaJaulaHistorial[] = [];
 
   evoluciones: FilaEvolucion[] = [];
+
+  bajas: FilaBaja[] = [];
+
+  movimientos: FilaMovimiento[] = [];
 
   /** Diagnosticos sembrados por las pruebas (estado ACTIVO / CERRADO). */
   diagnosticos: Array<{ id: string; aveId: string; estado: string }> = [];
@@ -187,16 +214,177 @@ export class FakeAveRepository implements AveRepository {
   }
 
 
+  /** Siembra una baja sin pasar por el servicio (para listados). */
+  sembrarBaja(criaderoId: string, datos: Partial<FilaBaja> & { id: string; aveId: string; tipo: string }) {
+
+    this.bajas.push({
+      criaderoId,
+      fecha: "2026-10-30T12:00:00.000Z",
+      causa: null,
+      celular: null,
+      ciudadDestino: null,
+      cooperativaEnvio: null,
+      comprador: null,
+      valorVenta: null,
+      valorEnvio: null,
+      detalle: null,
+      ...datos
+    });
+
+  }
+
+
+  /** INNER JOIN con bajas_ave del tipo que corresponde, fecha DESC (como D1AveRepository). */
   async listarBajas(criaderoId: string, estado: EstadoBajaAve): Promise<AveBajaListado[]> {
 
-    return this.deCriadero(criaderoId)
-      .filter(a => a.estado === estado)
-      .sort((a, b) => this.comparar(a.codigo, b.codigo))
-      .map(a => {
-        const { criaderoOrigen, metodoEnvio, fechaCreacion, ...resto } = this.aListado(a);
-        void criaderoOrigen; void metodoEnvio; void fechaCreacion;
-        return resto;
-      });
+    const tipo = estado === "VENDIDA" ? "VENTA" : "MUERTE";
+    const resultado: Array<{ fecha: string; ave: AveBajaListado }> = [];
+
+    for (const baja of this.bajas.filter(b => b.criaderoId === criaderoId && b.tipo === tipo)) {
+
+      const ave = this.deCriadero(criaderoId).find(a => a.id === baja.aveId && a.estado === estado);
+
+      if (!ave) {
+        continue;
+      }
+
+      const { criaderoOrigen, metodoEnvio, fechaCreacion, ...resto } = this.aListado(ave);
+      void criaderoOrigen; void metodoEnvio; void fechaCreacion;
+
+      const extra = tipo === "VENTA"
+        ? {
+            fechaVenta: baja.fecha,
+            celular: baja.celular,
+            ciudadDestino: baja.ciudadDestino,
+            cooperativaEnvio: baja.cooperativaEnvio,
+            comprador: baja.comprador,
+            valorVenta: baja.valorVenta,
+            valorEnvio: baja.valorEnvio,
+            detalle: baja.detalle
+          }
+        : { fechaFallecimiento: baja.fecha, causa: baja.causa, detalle: baja.detalle };
+
+      resultado.push({ fecha: baja.fecha, ave: { ...resto, ...extra } });
+
+    }
+
+    return resultado.sort((a, b) => this.comparar(b.fecha, a.fecha)).map(r => r.ave);
+
+  }
+
+
+  async listarBajasAve(criaderoId: string, aveId: string): Promise<BajaAve[]> {
+
+    return this.bajas
+      .filter(b => b.criaderoId === criaderoId && b.aveId === aveId)
+      .sort((a, b) => this.comparar(b.fecha, a.fecha) || this.comparar(b.id, a.id))
+      .map(b => ({
+        id: b.id,
+        tipo: b.tipo,
+        fecha: b.fecha,
+        causa: b.causa,
+        celular: b.celular,
+        ciudadDestino: b.ciudadDestino,
+        cooperativaEnvio: b.cooperativaEnvio,
+        comprador: b.comprador,
+        valorVenta: b.valorVenta,
+        valorEnvio: b.valorEnvio,
+        detalle: b.detalle
+      }));
+
+  }
+
+
+  async registrarMuerte(criaderoId: string, input: BajaMuerteInput) {
+
+    const fila = this.deCriadero(criaderoId).find(a => a.id === input.aveId);
+
+    if (fila) {
+      fila.estado = "FALLECIDA";
+      fila.fechaActualizacion = input.fecha;
+    }
+
+    this.sembrarBaja(criaderoId, {
+      id: input.bajaId,
+      aveId: input.aveId,
+      tipo: "MUERTE",
+      fecha: input.fecha,
+      causa: input.causa,
+      detalle: input.detalle
+    });
+
+    this.historial.push({
+      id: input.historialId,
+      criaderoId,
+      aveId: input.aveId,
+      jaulaId: null,
+      tipoEvento: "MUERTE",
+      fecha: input.fecha,
+      detalle: input.detalleHistorial
+    });
+
+  }
+
+
+  async registrarVenta(criaderoId: string, input: BajaVentaInput) {
+
+    const fila = this.deCriadero(criaderoId).find(a => a.id === input.aveId);
+
+    if (fila) {
+      fila.estado = "VENDIDA";
+      fila.fechaActualizacion = input.fecha;
+    }
+
+    this.sembrarBaja(criaderoId, {
+      id: input.bajaId,
+      aveId: input.aveId,
+      tipo: "VENTA",
+      fecha: input.fecha,
+      celular: input.celular,
+      ciudadDestino: input.ciudadDestino,
+      cooperativaEnvio: input.cooperativaEnvio,
+      comprador: input.comprador,
+      valorVenta: input.valorVenta,
+      valorEnvio: input.valorEnvio,
+      detalle: input.detalle
+    });
+
+    this.movimientos.push(
+      {
+        id: input.ingresoVentaId,
+        criaderoId,
+        tipo: "INGRESO",
+        categoria: "VENTA_AVE",
+        fecha: input.fecha,
+        valor: input.valorVenta ?? 0,
+        detalle: input.detalleVenta,
+        aveId: input.aveId,
+        origenTipo: "VENTA_AVE",
+        origenId: input.bajaId
+      },
+      {
+        id: input.ingresoEnvioId,
+        criaderoId,
+        tipo: "INGRESO",
+        categoria: "ENVIO_AVE",
+        fecha: input.fecha,
+        valor: input.valorEnvio ?? 0,
+        detalle: input.detalleEnvio,
+        aveId: input.aveId,
+        origenTipo: "VENTA_AVE",
+        origenId: input.bajaId
+      }
+    );
+
+    this.historial.push({
+      id: input.historialId,
+      criaderoId,
+      aveId: input.aveId,
+      jaulaId: null,
+      tipoEvento: "VENTA",
+      fecha: input.fecha,
+      detalle: input.detalleHistorial
+    });
 
   }
 

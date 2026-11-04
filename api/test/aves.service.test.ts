@@ -517,6 +517,7 @@ describe("AveService (paridad con AveRepository de V1)",()=>{
     const vendida = await crear("D1");
 
     repository.aves.find(a => a.id === vendida.id)!.estado = "VENDIDA";
+    repository.sembrarBaja(CRIADERO,{ id:"baja-d1", aveId:vendida.id, tipo:"VENTA" });
 
     const activas = await service.listar(CRIADERO,"ACTIVA");
 
