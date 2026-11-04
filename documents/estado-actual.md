@@ -33,7 +33,7 @@ Migraciones `0001`–`0011` aplicadas en local, integración y base remota de pr
 
 ## Incidencias recurrentes
 
-- **Cloudflare error 7403** («The given account is not valid or is not authorized to access this service») en `wrangler d1 migrations apply ... --remote`: ocurrió dos veces (la primera, anterior, según el usuario; la segunda el 2026-11-04 al aplicar `0011`). `wrangler whoami` mostraba la sesión OAuth con `d1 (write)` y el segundo intento funcionó sin renovar la sesión. Qué hacer: reintentar; si persiste, `wrangler logout` y `wrangler login` (el usuario debe pulsar Allow).
+- **Cloudflare error 7403** («The given account is not valid or is not authorized to access this service») en `wrangler d1 migrations apply ... --remote`: ocurrió dos veces (la primera el 2026-11-01, durante la prueba de Aves; la segunda el 2026-11-04 al aplicar `0011`). `wrangler whoami` mostraba la sesión OAuth con `d1 (write)` y el segundo intento funcionó sin renovar la sesión. Qué hacer: reintentar; si persiste, `wrangler logout` y `wrangler login` (el usuario debe pulsar Allow).
 - Emulador con `pm list packages` en `Broken pipe`: `adb emu kill` y arrancar de nuevo (ver `pruebas/README.md`).
 
 ## Limitaciones conocidas
