@@ -230,6 +230,15 @@ export async function corregirVentaFinanciera({
     valorEnvio
 }) {
 
+    // V1 (numeroNoNegativo): NaN/Infinity -> VALOR_INVALIDO antes de operar.
+    // JSON los volveria null y el servidor los tomaria como 0.
+    if (
+        (typeof valorVenta === 'number' && !Number.isFinite(valorVenta)) ||
+        (typeof valorEnvio === 'number' && !Number.isFinite(valorEnvio))
+    ) {
+        throw new Error('VALOR_INVALIDO');
+    }
+
     const base = await rutaFinanzas();
 
     try {
