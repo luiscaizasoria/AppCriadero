@@ -4,9 +4,34 @@
 
 ## Estado
 
-borrador (2026-11-03). Sin implementar. Tiene una **dependencia con Finanzas** (tabla `movimientos_financieros`, sección "Dependencia con Finanzas") y varias dudas para el usuario (sección "Dudas").
+implementada (2026-11-04, rama `trabajo/migracion-nube`). Pendiente solo la comprobación en el teléfono físico (ver "Implementación y pendientes"). Las secciones de abajo conservan el análisis de V1 con el que se diseñó; donde dicen "propuesto" o describen el estado anterior de la API, prevalece "Implementación y pendientes" y el código.
 
-Alcance: aves individuales (sin lotes), sin sincronización offline, D1 como fuente de verdad. Las líneas son del árbol actual (v1.0.3, `app.json:5`).
+Alcance: aves individuales (sin lotes), sin sincronización offline, D1 como fuente de verdad. Las líneas son del árbol de V1 (v1.0.3, `app.json:5`).
+
+## Implementación y pendientes
+
+**Commits locales:** `9ac55e4` (specs de bajas y finanzas), `d75d030` (API, migración `0010` y cliente), `a97771a` (casos de datos `12-bajas` y limpieza de `bajas_ave` y `movimientos_financieros`), `55e5337` (flujos `90-baja-venta` y `91-baja-muerte`).
+
+**Implementado**
+- Migración `api/migrations/0010_bajas.sql`: `bajas_ave` y `movimientos_financieros` (opción A de la sección "Dependencia con Finanzas"). Aplicada en local, en integración y en la base remota de pruebas (`--env test`); Worker de pruebas desplegado.
+- API en `api/src/aves/` (mismo router y factory que Aves): `POST /criaderos/:criaderoId/aves/:aveId/muerte`, `POST .../venta` y `GET .../bajas`. `listarBajas` de `GET /aves?estado=VENDIDA|FALLECIDA` pasó a `INNER JOIN bajas_ave` con los campos de baja en el elemento.
+- Cliente `src/repositories/BajaAveRepository.{js,sqlite.js,api.js}` con fachada (`registrarMuerteAve` y `registrarVentaAve` en `.api.js`; `obtenerBajasAve` omitida y en `.sqlite.js` queda el código de V1). `AveRepository.api.js` `obtenerBajaAve` y `CicloVidaRepository.api.js` leen `GET /bajas` (ya no hay `bajas = []`).
+- Sin excepciones nuevas a pantallas V1 (`git diff -- src/screens` vacío): siguen siendo seis. `BajaAveScreen` ya tenía `try/catch` con `Alert` y `disabled={guardando}`.
+
+**Pruebas (2026-11-04):** 248 unitarias/HTTP y 84 de integración; `/probar datos` 75/75 (108 s); `/probar smoke` verde (103 s, informe `2026-11-04-120453-smoke`); flujos `90-baja-venta` y `91-baja-muerte` PASO (informes `2026-11-04-120757-completo` y `2026-11-04-121548-completo`). No se ejecutó `/probar completo` entero en este módulo. Revisor de arquitectura: APROBADO sin hallazgos bloqueantes.
+
+**Casos de paridad:** BAJ-01 a BAJ-17 cubiertos por pruebas de API, integración y casos de datos; BAJ-18 a BAJ-20 por los flujos del emulador y por la pantalla V1 ya existente (sin cambios).
+
+**Limitaciones conocidas**
+- En modo API las ventas se escriben en `movimientos_financieros` de D1, pero Finanzas, Inicio, Reportes y Clientes leen SQLite y **no las ven** hasta migrar Finanzas (y esas pantallas).
+- Ciudad destino y Cooperativa de envío de `BajaAveScreen` no están automatizadas en los flujos (sin `testID`).
+- V1 no libera la jaula al dar de baja (replicado). La doble baja se acepta (replicado, BAJ-10 y BAJ-13).
+- `obtenerBajasAve` omitida (sin llamadores).
+- `DetalleAveScreen` no muestra error si `obtenerBajaAve` falla por red (como V1; decisión del usuario, no es excepción).
+
+**Pendiente en el teléfono físico:** venta con teclado numérico y coma decimal, muerte, listas Vendidas y Fallecidas, Detalle del ave, Ciclo de vida, modo avión en "Confirmar baja" y fluidez de las listas.
+
+**Incidente de entorno (no del código):** un emulador con `pm list packages` en `Broken pipe`; `adb reboot` no sirvió y `adb emu kill` más arrancar de nuevo lo resolvió (ya anotado en `pruebas/README.md`).
 
 ## Fuente V1
 
@@ -14,7 +39,7 @@ Alcance: aves individuales (sin lotes), sin sincronización offline, D1 como fue
 - `src/screens/BajaAveScreen.js` (único llamador de `registrarMuerteAve`/`registrarVentaAve`: 145 y 205; import 17-20). Ruta `BajaAve` en `src/navigation/AvesStackNavigator.js:67-68`; única entrada: botón "⚫ Dar de baja" de `DetalleAveScreen.js:1020-1052`, solo con `ave.estado === 'ACTIVA'`.
 - `src/screens/DetalleAveScreen.js`: carga la baja con `obtenerBajaAve` (de `AveRepository`) en `cargarDatos` 107-116; tarjeta "Información de venta"/"Información de fallecimiento" 580-686 (solo si `ave.estado !== 'ACTIVA'`); `formatearDinero` 1207-.
 - Listas: `AveRepository.sqlite.js` `obtenerAvesVendidas` 1760-1826 y `obtenerAvesFallecidas` 1828-1889 (`INNER JOIN bajas_ave`), `obtenerBajaAve` 1891-1929. Consumidor: `AvesScreen.js:67-75`.
-- API actual: `api/src/aves/aves.repository.ts:149-170` (`listarBajas`, interino sin `bajas_ave`), `aves.types.ts:40-41,222`; cliente `AveRepository.api.js:350-382` (`obtenerAvesVendidas`/`Fallecidas` por `?estado=`; `obtenerBajaAve` devuelve `null`, 376-382); `CicloVidaRepository.api.js:236` (`const bajas = [];`) y 641-645.
+- API antes de Bajas (ya cambiada, ver "Implementación y pendientes"): `api/src/aves/aves.repository.ts:149-170` (`listarBajas`, interino sin `bajas_ave`), `aves.types.ts:40-41,222`; cliente `AveRepository.api.js:350-382` (`obtenerAvesVendidas`/`Fallecidas` por `?estado=`; `obtenerBajaAve` devuelve `null`, 376-382); `CicloVidaRepository.api.js:236` (`const bajas = [];`) y 641-645.
 - Esquema V1: `src/database/migrations.js:292-317` (`bajas_ave`), `:320-343` (`movimientos_financieros`), `:133-154` (`ave_historial`), `:364-365` (`idx_movimientos_fecha`); `migrationV5.js:18-28` (`celular`, `valor_envio`, `idx_bajas_ave_celular`); `migrationV6.js:20-50` (`movimientos_financieros_historial`, `idx_movimientos_financieros_origen`) y `:76-106` (relleno histórico de `ENVIO_AVE`).
 - Búsquedas sin límite en `src/` (resultados completos revisados):
   - `registrarMuerteAve`/`registrarVentaAve`: solo `BajaAveRepository.js` y `BajaAveScreen.js`.
@@ -35,7 +60,7 @@ Alcance: aves individuales (sin lotes), sin sincronización offline, D1 como fue
 
 ## Contrato del repositorio
 
-Fachada propuesta (como Aves/Salud): `BajaAveRepository.js` elige `.sqlite.js` (código V1 intacto, incluida `obtenerBajasAve`) o `.api.js` (solo `registrarMuerteAve` y `registrarVentaAve`). `obtenerBajaAve` sigue en `AveRepository` (su `.api.js` pasa de `null` a leer `GET /bajas`).
+Fachada implementada (como Aves/Salud): `BajaAveRepository.js` elige `.sqlite.js` (código V1 intacto, incluida `obtenerBajasAve`) o `.api.js` (solo `registrarMuerteAve` y `registrarVentaAve`). `obtenerBajaAve` sigue en `AveRepository` (su `.api.js` pasa de `null` a leer `GET /bajas`).
 
 ### `registrarMuerteAve({ aveId, causa, detalle })` (`BajaAveRepository.js:7-129`)
 
@@ -149,7 +174,7 @@ Sin endpoint para `obtenerBajasAve` (omitida). Sin DELETE/PUT de bajas (V1 no lo
 
 ## Tabla D1
 
-Migración propuesta `0010_bajas.sql` (la siguiente libre; `0001`–`0009` no se editan). Convención de `0006`–`0009`: `fecha_creacion` como en V1 (sin `created_at`/`updated_at`/`deleted_at`/`version`/CHECK), FK `ON DELETE RESTRICT ON UPDATE RESTRICT`.
+Migración implementada `api/migrations/0010_bajas.sql` (el DDL real es ese archivo; las tablas de abajo lo describen). Convención de `0006`–`0009`: `fecha_creacion` como en V1 (sin `created_at`/`updated_at`/`deleted_at`/`version`/CHECK), FK `ON DELETE RESTRICT ON UPDATE RESTRICT`.
 
 ### `bajas_ave` (replica `migrations.js:292-317` + `migrationV5.js:18-23`)
 
@@ -200,7 +225,7 @@ Migración propuesta `0010_bajas.sql` (la siguiente libre; `0001`–`0009` no se
 
 ## Dependencia con Finanzas
 
-**Qué necesita Bajas de Finanzas.** Solo escribir 2 filas por venta en `movimientos_financieros` (8 columnas: `tipo, categoria, fecha, valor, detalle, ave_id, origen_tipo, origen_id`) dentro del batch de `POST /venta`. No lee esa tabla, no escribe el historial, no usa los catálogos en el servidor (las categorías `VENTA_AVE` y `ENVIO_AVE` ya están en la plantilla de 42 ítems: `api/src/catalogs/defaultCatalogItems.ts:190,232`). La tabla no existe en D1 (búsqueda en `api/`: solo `aves.repository.ts`/`aves.types.ts`, y solo en comentarios sobre `bajas_ave`).
+**Qué necesita Bajas de Finanzas.** Solo escribir 2 filas por venta en `movimientos_financieros` (8 columnas: `tipo, categoria, fecha, valor, detalle, ave_id, origen_tipo, origen_id`) dentro del batch de `POST /venta`. No lee esa tabla, no escribe el historial, no usa los catálogos en el servidor (las categorías `VENTA_AVE` y `ENVIO_AVE` ya están en la plantilla de 42 ítems: `api/src/catalogs/defaultCatalogItems.ts:190,232`). Al redactar la spec la tabla no existía en D1; la crea `0010`.
 
 **Lo que comparte con `FinanzasRepository.js`** (evidencia de acoplamiento por `origen_tipo`/`origen_id`):
 - `obtenerVentaPorBajaId(bajaId)` (`:259-289`): `FROM bajas_ave b INNER JOIN aves a ... WHERE b.id = ? AND b.tipo = 'VENTA'`; se llama con `mov.origen_id` (`EditarMovimientoFinancieroScreen.js:118-126`).
@@ -217,7 +242,7 @@ Migración propuesta `0010_bajas.sql` (la siguiente libre; `0001`–`0009` no se
 - Tamaño: Finanzas son 13 funciones exportadas (`obtenerResumenFinanciero`, `obtenerMovimientosFinancieros`, `obtenerIngresos`, `obtenerEgresos`, `registrarIngreso`, `registrarEgreso`, `obtenerMovimientoPorId`, `obtenerVentaPorBajaId`, `actualizarMovimientoManual`, `corregirVentaFinanciera`, `obtenerHistorialMovimiento`, `obtenerConsolidadoCategorias`, `obtenerConsolidadoMensual`; `FinanzasRepository.js:6-760`), 3 pantallas (Finanzas, Nuevo y Editar movimiento) con filtros por periodo (`strftime`) y auditoría; es varias veces el trabajo de Bajas.
 - Riesgo: alto (mezcla dos dominios, retrasa Bajas, la spec de Finanzas aún no existe y no se ha leído `FinanzasScreen`/`Nuevo...` con esta profundidad). Ventaja: sin el desfase de lecturas.
 
-**Recomendación: Opción A.** Evidencia: (1) Bajas solo escribe y solo necesita la tabla (no el historial ni lecturas); (2) la tabla de V1 es de 11 columnas sin lógica y Finanzas la usa sin cambiarla (`origen_tipo`/`origen_id` ya la acoplan por construcción); (3) B triplica el alcance y el riesgo; (4) el desfase de lecturas de A es una limitación temporal y conocida, igual que con Alertas/Inicio. El orden pendiente ya pone Finanzas justo después de Bajas (`estado-actual.md`). Lo que Finanzas añadirá: `movimientos_financieros_historial` (`migrationV6.js:20-45`), endpoints y clientes, y el cierre de la limitación.
+**Decisión: Opción A** (aprobada por el usuario). Evidencia: (1) Bajas solo escribe y solo necesita la tabla (no el historial ni lecturas); (2) la tabla de V1 es de 11 columnas sin lógica y Finanzas la usa sin cambiarla (`origen_tipo`/`origen_id` ya la acoplan por construcción); (3) B triplica el alcance y el riesgo; (4) el desfase de lecturas de A es una limitación temporal y conocida, igual que con Alertas/Inicio. El orden pendiente ya pone Finanzas justo después de Bajas (`estado-actual.md`). Lo que Finanzas añadirá: `movimientos_financieros_historial` (`migrationV6.js:20-45`), endpoints y clientes, y el cierre de la limitación.
 
 ## Excepciones técnicas por pasar a online
 
@@ -261,12 +286,12 @@ Importes con `REAL` tal cual (ej. `12.5` = 12.5, no 1250). Ave `K001` ACTIVA sal
 
 ## Dudas
 
-DUDA PARA EL USUARIO:
+Resueltas por el usuario (2026-11-03 y 2026-11-04):
 
-1. **Fila `ENVIO_AVE` con valor 0.** El código real inserta siempre dos ingresos por venta, aunque no haya envío (la fila de envío con `valor 0`; `BajaAveRepository.js:325-353`). La migración V6 sí filtraba `> 0`, pero solo para el relleno de datos antiguos. La spec replica el código (siempre 2 filas). Efecto visible: en Finanzas esa fila de 0 aparece en el listado y cuenta en `COUNT(*)` del consolidado (`FinanzasRepository.js:704-716`). ¿Se confirma replicar así (lo que implica la regla), o se prefiere `> 0` (cambio de comportamiento)? No he podido comprobar el tag `v1.0.3` en Git (no puedo ejecutar comandos); el árbol actual es la fuente.
-2. **`detalle` de los movimientos con el UUID.** V1 escribe `Venta de ave ${aveId}` con el id entero (por ejemplo `Venta de ave 12`). En V2 `aveId` es un UUID v7 y el texto queda como `Venta de ave 0190…`. Se propone la fórmula literal de V1 con el id. Alternativa (cambia el texto): usar el `codigo` del ave. ¿Cuál?
-3. **Opción A o B de Finanzas.** Recomendación: A (crear `movimientos_financieros` en `0010_bajas.sql`, sin su historial). Necesita aprobación del plan. Consecuencia de A: en modo API, los ingresos de ventas no se verán en Finanzas/Inicio/Reportes hasta migrar Finanzas.
-4. **Excepciones a pantallas V1.** `BajaAveScreen` no necesita ninguna (tiene `try/catch` con `Alert` y `disabled`). `DetalleAveScreen.cargarDatos` tiene un `catch` que solo hace `console.error` (`:130-139`): si `obtenerBajaAve` falla por red, `baja` queda `null`, la tarjeta sale con valores vacíos y, como la lectura de huevos va después en el mismo `try` (`:118-126`), no se cargan los huevos. No es nuevo de Bajas (V1 ya no mostraba error ahí) y no propongo cambiarlo; solo se anota por si el usuario quiere tratarlo como excepción de errores de red.
+1. **Fila `ENVIO_AVE` con valor 0:** se replica V1; cada venta escribe siempre 2 filas en `movimientos_financieros` (la de envío con `valor 0` si no hay envío). Efecto: en Finanzas esa fila de 0 aparece en el listado y cuenta en `COUNT(*)` del consolidado (`FinanzasRepository.js:704-716`).
+2. **`detalle` de los movimientos:** fórmula literal de V1 con el id del ave (en V2, el UUID), no con el `codigo`.
+3. **Opción A de Finanzas:** `movimientos_financieros` se crea en `0010`; Finanzas (`0011`) añadirá `movimientos_financieros_historial`. Consecuencia aceptada: en modo API las ventas no se ven en Finanzas, Inicio, Reportes ni Clientes hasta migrar Finanzas.
+4. **Excepciones a pantallas V1:** ninguna. `BajaAveScreen` ya tiene `try/catch` con `Alert` y `disabled`. `DetalleAveScreen.cargarDatos` tiene un `catch` que solo hace `console.error` (`:130-139`): si `obtenerBajaAve` falla por red, `baja` queda `null`, la tarjeta sale con valores vacíos y no se cargan los huevos (la lectura va después en el mismo `try`, `:118-126`). Es comportamiento de V1 y se deja como está.
 
 Dudas técnicas (no bloquean):
 - `registrarVentaAve` normaliza el celular pero no valida longitud; se replica (BAJ-05).

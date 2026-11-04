@@ -2,6 +2,24 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-04 sesión 1
+- Hecho: módulo Bajas: specs de bajas y finanzas (`9ac55e4`), migración `0010` (`bajas_ave`, `movimientos_financieros`), API en `api/src/aves/` (`muerte`, `venta`, `bajas`; `listarBajas` con INNER JOIN) y cliente `BajaAveRepository.{js,sqlite.js,api.js}` (`d75d030`); casos de datos `12-bajas` y limpieza (`a97771a`); flujos `90-baja-venta` y `91-baja-muerte` (`55e5337`). Aparte: `8ff491b` (guardia: `probador-movil` escribe en `pruebas/datos/`, salvo `lib/limpiar.mjs`) y `6f5c9a8` (comprobación de red del emulador, carpetas de informe con segundos, `.nvmrc` con Node 22). `0010` aplicada en local, integración y base remota de pruebas; Worker de pruebas desplegado.
+- Resultado: 248 unitarias/HTTP y 84 de integración; `/probar datos` 75/75 (108 s); smoke verde (103 s); flujos `90` y `91` PASO; no se ejecutó `/probar completo` entero. Revisor de arquitectura: APROBADO sin hallazgos bloqueantes. Sin excepciones nuevas a pantallas V1 (siguen seis).
+- Decisiones del usuario: `ENVIO_AVE` siempre con 2 filas por venta (valor 0 si no hay envío); `detalle` de los movimientos con el id del ave; `movimientos_financieros` en `0010` y `movimientos_financieros_historial` en `0011` (Finanzas).
+- Incidente: emulador con `pm list packages` en `Broken pipe`; `adb reboot` no sirvió y `adb emu kill` más arrancar lo resolvió (anotado en `pruebas/README.md`).
+- Pendiente: teléfono (venta con coma decimal, muerte, listas Vendidas y Fallecidas, Detalle, Ciclo de vida, modo avión en "Confirmar baja"); las ventas de la nube no se ven en Finanzas, Inicio, Reportes ni Clientes hasta migrar Finanzas; Ciudad destino y Cooperativa sin automatizar; push por verificar (requiere aprobación).
+- Próximo paso exacto: Finanzas (`0011`) y comprobación de Bajas en el teléfono, según indique el usuario.
+
+## 2026-11-03 sesión 3
+- Hecho: push aprobado y hecho de 6 commits (`062261f..2b110c5`: `7b6dd2c`, `ecc41cf`, `010a223`, `906510e`, `706837c`, `2b110c5`).
+- Hecho: inicio de Bajas y Finanzas por orden del usuario (Bajas primero): specs en borrador sin commit, `documents/specs/bajas.md` y `documents/specs/finanzas.md`.
+- Hallazgos: `obtenerBajasAve`, `obtenerIngresos` y `obtenerEgresos` no tienen llamadores; V1 inserta siempre la fila `ENVIO_AVE`, también con valor 0 (`BajaAveRepository.js:325-353`), distinto de lo previsto; V1 no libera la jaula ni escribe `jaula_historial` al dar de baja; `obtenerConsolidadoMensual` no es una ventana de 12 meses (solo meses con movimientos).
+- Decisión propuesta, pendiente de aprobación: opción A para movimientos. Migración `0010` = `bajas_ave` + `movimientos_financieros`; `0011` (Finanzas) = `movimientos_financieros_historial`. Motivo: Bajas solo escribe 2 filas por venta y Finanzas tiene 13 funciones y 3 pantallas. Coste: las ventas de la nube no se ven en Finanzas, Inicio ni Reportes hasta migrar Finanzas.
+- Pendiente del usuario: `ENVIO_AVE` con valor 0 (A: replicar V1 siempre, recomendada; B: solo si es mayor que 0, filtro que solo existe en el relleno histórico de `migrationV6.js:98`) y `detalle` de los movimientos con el id del ave (A, recomendada) o con el código (B).
+- Resultado: `/probar completo` desde cero, 27,6 min, 15 flujos PASO, 0 regresiones; solo `PENDIENTE DE MIGRAR: dashboard`.
+- Pendiente: aprobación del plan de Bajas; implementar Bajas (`0010`, API, cliente, quitar `bajas = []` del ciclo de vida, listas con INNER JOIN a `bajas_ave`); luego Finanzas; commit de las specs; teléfono (Salud, Huevos, Genealogía, Ciclo de vida, Producción, modo avión).
+- Próximo paso exacto: el usuario responde "plan aprobado" con sus dos elecciones (sin ellas se aplican A y A) y se lanzan en paralelo la migración, la API y el cliente de Bajas.
+
 ## 2026-11-03 sesión 2
 - Hecho: Genealogía (sin endpoint ni migración; `GenealogiaRepository.{js,sqlite.js,api.js}`, `010a223`; pantalla `906510e`) y Ciclo de vida (`GET /aves/:aveId/evolucion` `ecc41cf`; `CicloVidaRepository.api.js` reúne historial, evolución, salud y huevos en el cliente). Pruebas: casos `09b`, `10`, `11` y flujos `71`, `80`, `81` (`706837c`).
 - Resultado: typecheck OK, 228 unitarias/HTTP y 75 de integración; `/probar datos` 65/65 (86,7 s, sin fuga); `/probar completo` desde cero 27,6 min, 15 flujos PASO, 0 regresiones, solo `PENDIENTE DE MIGRAR: dashboard`. Revisor de arquitectura: APROBADO.
