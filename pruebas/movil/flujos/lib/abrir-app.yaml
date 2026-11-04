@@ -1,11 +1,25 @@
 # Reinicia Expo Go (estado limpio) y abre la app de pruebas por enlace profundo.
+# Si Expo Go muestra "Something went wrong": captura pantalla y error log y reabre el enlace UNA vez.
+# Si persiste, el flujo falla y el ejecutor lo trata como FALLO DE ENTORNO (adjunta expo-go-error.txt).
 appId: host.exp.exponent
 ---
 - clearState
 - openLink: exp://127.0.0.1:${PUERTO_METRO}
 - extendedWaitUntil:
-    visible: "Continue"
-    timeout: 240000
+    visible: "(Continue|Something went wrong.*)"
+    timeout: 90000
+- runFlow:
+    when:
+      visible: "Something went wrong.*"
+    commands:
+      - takeScreenshot: expo-go-error-intento-1
+      - tapOn: "View error log"
+      - takeScreenshot: expo-go-error-log-intento-1
+      - pressKey: back
+      - openLink: exp://127.0.0.1:${PUERTO_METRO}
+      - extendedWaitUntil:
+          visible: "Continue"
+          timeout: 90000
 - tapOn: "Continue"
 - runFlow:
     when:

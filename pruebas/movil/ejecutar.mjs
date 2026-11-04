@@ -7,7 +7,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { urlApi } from '../datos/lib/entorno.mjs';
 import { limpiarCuentasDesechables } from '../datos/lib/limpiar.mjs';
-import { asegurarEmulador, asegurarExpoGo, asegurarMetro, verificarEntornoEmulador, adb, LOG_METRO } from './lib/entorno-movil.mjs';
+import { asegurarEmulador, asegurarExpoGo, asegurarMetro, verificarEntornoEmulador, infoMetro, metroEstado, adb, LOG_METRO } from './lib/entorno-movil.mjs';
 
 const aqui = path.dirname(fileURLToPath(import.meta.url));
 const raiz = path.resolve(aqui, '../..');
@@ -68,6 +68,10 @@ asegurarExpoGo();
 entorno.metro = await asegurarMetro(URL_API);
 try {
     entorno.red = (await verificarEntornoEmulador(URL_API)).desdeEmulador;
+    const metro = infoMetro();
+    if (!metro) throw new Error('nadie escucha en el puerto de Metro');
+    if (entorno.metro === 'arrancado' && metro.inicioMs < t0 - 5000) throw new Error(`el Metro que sirve la app (pid ${metro.pid}) no es el que arranco el ejecutor`);
+    entorno.metroInfo = `pid ${metro.pid} (${metro.nombre}), desde ${new Date(metro.inicioMs).toISOString()}`;
 } catch (e) {
     const msg = `FALLO DE ENTORNO: ${e.message}`;
     fs.writeFileSync(path.join(carpeta, 'resumen.md'), `# Flujos moviles (${modo}) - ${new Date().toISOString()}
@@ -85,28 +89,68 @@ const tail = spawn('npx', ['wrangler', 'tail', '--env', 'test', '--format', 'pre
     cwd: path.join(raiz, 'api'), shell: true, stdio: ['ignore', fs.openSync(tailLog, 'w'), 'ignore']
 });
 
+// Texto visible en el emulador (uiautomator) y, si Expo Go muestra "Something went wrong", abre "View error log" y lo vuelca.
+function textosPantalla() {
+    adb('shell', 'uiautomator', 'dump', '/sdcard/kikirikis-ui.xml');
+    const xml = spawnSync('adb', ['exec-out', 'cat', '/sdcard/kikirikis-ui.xml'], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }).stdout ?? '';
+    return { xml, textos: [...xml.matchAll(/text="([^"]+)"/g)].map(m => m[1]) };
+}
+
+async function evidenciaExpoGo(dir) {
+    const antes = textosPantalla();
+    const lineas = [`Estado de Metro: ${await metroEstado()}`, `adb reverse: ${adb('reverse', '--list').replace(/\s+/g, ' ')}`, '', 'Textos en pantalla:', ...antes.textos.map(t => '  ' + t)];
+    const m = antes.xml.match(/text="View error log"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/) || antes.xml.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"[^>]*text="View error log"/);
+    if (m) {
+        adb('shell', 'input', 'tap', String(Math.round((+m[1] + +m[3]) / 2)), String(Math.round((+m[2] + +m[4]) / 2)));
+        await new Promise(r => setTimeout(r, 2500));
+        lineas.push('', 'Texto del error log de Expo Go:', ...textosPantalla().textos.map(t => '  ' + t));
+    } else lineas.push('', '(no aparecio "View error log" en la pantalla)');
+    fs.writeFileSync(path.join(dir, 'expo-go-error.txt'), lineas.join('\n'));
+}
+
 function guardarEvidencia(x, offsetMetro, ini) {
     const sal = ruta => path.join(x.dirMaestro, ruta);
     fs.writeFileSync(sal('pantalla-final.png'), spawnSync('adb', ['exec-out', 'screencap', '-p'], { maxBuffer: 32 * 1024 * 1024 }).stdout);
     fs.writeFileSync(sal('logcat.txt'), spawnSync('adb', ['logcat', '-d', '-v', 'time', 'ReactNativeJS:V', 'AndroidRuntime:E', '*:S'], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).stdout ?? '');
-    if (fs.existsSync(LOG_METRO)) fs.writeFileSync(sal('metro.txt'), fs.readFileSync(LOG_METRO).subarray(offsetMetro));
+    if (fs.existsSync(LOG_METRO)) {
+        const completo = fs.readFileSync(LOG_METRO);
+        const nuevo = completo.subarray(offsetMetro).toString('utf8');
+        fs.writeFileSync(sal('metro.txt'), [
+            `# Log completo de Metro (${completo.length} bytes; ${offsetMetro} ya existian al empezar el flujo).`,
+            nuevo.trim() ? '# Salida escrita durante el flujo:' : '# Metro no escribio nada durante el flujo (en modo CI casi no registra; no significa que estuviera caido: ver el estado en expo-go-error.txt).',
+            '', completo.toString('utf8'), nuevo.trim() ? `\n# --- solo durante el flujo ---\n${nuevo}` : ''
+        ].join('\n'));
+    }
     fs.writeFileSync(sal('intervalo.txt'), `${ini} -> ${new Date().toISOString()} (cruzar con wrangler-tail.log)\n`);
 }
 
 const resultados = [];
-for (const flujo of listarFlujos()) {
+let abrirFallidosSeguidos = 0;
+let abortar = null;
+for (const [indice, flujo] of listarFlujos().entries()) {
     const offsetMetro = fs.existsSync(LOG_METRO) ? fs.statSync(LOG_METRO).size : 0;
     adb('logcat', '-c');
     const ini = new Date().toISOString();
     const x = correrFlujo(flujo);
     const paso = x.r.status === 0;
+    // Fallo al abrir la app (nunca llego a una pantalla de la app): es de entorno, no una regresion.
+    const abrirFallo = !paso && /abrir-app\.yaml\.\.\. FAILED|"Continue" is visible\.\.\. FAILED/.test(x.salida);
     let estado;
     if (flujo.esperadoFallar) estado = paso ? 'MIGRADO, QUITAR ETIQUETA' : 'FALLO COMO SE ESPERABA';
-    else estado = paso ? 'PASO' : (x.infra ? 'FALLO DE ENTORNO' : 'REGRESION');
+    else estado = paso ? 'PASO' : ((x.infra || abrirFallo) ? 'FALLO DE ENTORNO' : 'REGRESION');
     if (!paso) guardarEvidencia(x, offsetMetro, ini);
+    if (abrirFallo) await evidenciaExpoGo(x.dirMaestro);
     const falla = x.salida.split('\n').filter(l => /FAILED|not found|is false/.test(l)).slice(0, 2).join(' | ').slice(0, 220);
     resultados.push({ flujo: flujo.nombre, modulo: flujo.modulo, estado, seg: x.seg, intentos: x.intentos, falla: paso ? '' : falla });
     console.log(`${estado.padEnd(26)} ${flujo.nombre} (${x.seg} s)${paso ? '' : '\n   ' + falla}`);
+    abrirFallidosSeguidos = abrirFallo ? abrirFallidosSeguidos + 1 : 0;
+    if (abrirFallo && (indice === 0 || abrirFallidosSeguidos >= 2)) {
+        abortar = indice === 0
+            ? 'el primer flujo no pudo abrir la app en Expo Go (abrir-app.yaml)'
+            : 'dos flujos seguidos no pudieron abrir la app en Expo Go (abrir-app.yaml)';
+        console.log(`FALLO DE ENTORNO: ${abortar}. Se aborta la ejecucion (ver expo-go-error.txt, logcat.txt y metro.txt en ${path.relative(process.cwd(), x.dirMaestro)}).`);
+        break;
+    }
 }
 try { tail.kill(); spawnSync('taskkill', ['/F', '/T', '/PID', String(tail.pid)]); } catch { /* ya terminado */ }
 
@@ -121,7 +165,8 @@ const resumen = [
     ...(lineaPendiente ? [lineaPendiente, ''] : []),
     `# Flujos moviles (${modo}) - ${new Date().toISOString()}`,
     '',
-    `Resultado: **${veredicto}** en ${total} min. Entorno: emulador ${entorno.emulador}, Metro ${entorno.metro}.`,
+    ...(abortar ? [`FALLO DE ENTORNO: ${abortar}. Ejecucion abortada; los flujos restantes no se lanzaron.`, ""] : []),
+    `Resultado: **${veredicto}** en ${total} min. Entorno: emulador ${entorno.emulador}, Metro ${entorno.metro} (${entorno.metroInfo ?? 'sin datos'}), red desde el emulador: ${entorno.red ?? 'sin datos'}.`,
     `Paso: ${cuenta('PASO')} | Regresion: ${cuenta('REGRESION')} | Entorno: ${cuenta('FALLO DE ENTORNO')} | Fallo como se esperaba: ${cuenta('FALLO COMO SE ESPERABA')} | Migrado, quitar etiqueta: ${cuenta('MIGRADO, QUITAR ETIQUETA')}`,
     `Limpieza de cuentas desechables: ${limpieza.ok ? 'hecha' : 'FALLO'} ${JSON.stringify(limpieza.recuento ?? limpieza.detalle ?? '')}`,
     '',

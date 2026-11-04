@@ -70,6 +70,18 @@ export async function verificarEntornoEmulador(urlApi, limiteMs = 90000) {
     throw new Error(causa);
 }
 
+/** Proceso que escucha en el puerto de Metro y desde cuando (para comprobar que es el Metro del ejecutor). */
+export function infoMetro() {
+    const orden = `Get-NetTCPConnection -LocalPort ${PUERTO_METRO} -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1 | ForEach-Object { $p = Get-Process -Id $_.OwningProcess; '{0}|{1}|{2}' -f $p.Id, $p.ProcessName, $p.StartTime.ToUniversalTime().ToString('o') }`;
+    const r = spawnSync('powershell', ['-NoProfile', '-Command', orden], { encoding: 'utf8' });
+    const [pid, nombre, inicio] = (r.stdout || '').trim().split('|');
+    return pid ? { pid: Number(pid), nombre, inicioMs: Date.parse(inicio) } : null;
+}
+
+export async function metroEstado() {
+    try { return `/status ${(await fetch(`http://127.0.0.1:${PUERTO_METRO}/status`)).status}`; } catch (e) { return `/status sin respuesta (${e.message})`; }
+}
+
 async function metroVivo() {
     try { return (await fetch(`http://127.0.0.1:${PUERTO_METRO}/status`)).ok; } catch { return false; }
 }
@@ -85,9 +97,11 @@ export async function asegurarMetro(urlApi) {
     }
     fs.mkdirSync(path.dirname(LOG_METRO), { recursive: true });
     const salida = fs.openSync(LOG_METRO, 'w');
+    // Cabecera propia: el log nunca queda vacio (Expo en modo CI casi no escribe) y deja constancia de quien lo arranco.
+    fs.writeSync(salida, `[ejecutor ${new Date().toISOString()}] arrancando Metro en el puerto ${PUERTO_METRO} (pid del ejecutor ${process.pid})\n`);
     spawn('npx', ['expo', 'start', '--port', PUERTO_METRO, '--offline'], {
         cwd: raiz, detached: true, stdio: ['ignore', salida, salida], shell: true,
-        env: { ...process.env, CI: '1', EXPO_NO_TELEMETRY: '1', EXPO_NO_TYPESCRIPT_SETUP: '1', EXPO_PUBLIC_DATA_SOURCE: 'api', EXPO_PUBLIC_API_URL: urlApi }
+        env: { ...process.env, CI: '1', EXPO_NO_TELEMETRY: '1', EXPO_NO_TYPESCRIPT_SETUP: '1', EXPO_DEBUG: '1', EXPO_PUBLIC_DATA_SOURCE: 'api', EXPO_PUBLIC_API_URL: urlApi }
     }).unref();
     for (let i = 0; i < 60 && !(await metroVivo()); i++) await espera(2000);
     if (!(await metroVivo())) throw new Error(`Metro no respondio en el puerto ${PUERTO_METRO} (log: ${LOG_METRO})`);
