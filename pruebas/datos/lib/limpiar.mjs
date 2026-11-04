@@ -20,6 +20,8 @@ const SQL = [
     `DELETE FROM huevos WHERE criadero_id IN (${CR});`,
     `DELETE FROM tratamientos_ave WHERE criadero_id IN (${CR});`,
     `DELETE FROM diagnosticos_ave WHERE criadero_id IN (${CR});`,
+    `DELETE FROM movimientos_financieros WHERE criadero_id IN (${CR});`,
+    `DELETE FROM bajas_ave WHERE criadero_id IN (${CR});`,
     `UPDATE aves SET padre_id=NULL, madre_id=NULL WHERE criadero_id IN (${CR});`,
     `DELETE FROM aves WHERE criadero_id IN (${CR});`,
     `DELETE FROM alimentacion_jaula WHERE criadero_id IN (${CR});`,
@@ -69,6 +71,14 @@ export function limpiarCuentasDesechables() {
     }
 
     return { ok: true, recuento: recuento() };
+}
+
+/** Movimientos financieros de un criadero en D1 (solo lectura, --env test), ordenados por fecha y categoría. */
+export function movimientosPorCriadero(criaderoId) {
+    if (!/^[0-9a-f-]{36}$/i.test(criaderoId)) throw new Error('criaderoId no valido');
+    const consulta = `SELECT tipo, categoria, fecha, valor, detalle, ave_id, origen_tipo, origen_id FROM movimientos_financieros WHERE criadero_id='${criaderoId}' ORDER BY fecha, categoria`;
+    const q = wrangler(['--command', `"${consulta}"`]);
+    return JSON.parse(q.stdout.slice(q.stdout.indexOf('[')))[0].results;
 }
 
 /** Ítems de catálogo de un criadero en D1 (todos los catálogos, incluidos los de onboarding). Solo lectura, --env test. */

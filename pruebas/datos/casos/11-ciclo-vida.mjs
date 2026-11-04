@@ -48,7 +48,7 @@ prueba('ciclo-vida', 'debe incluir la evolucion con el cambio de peso y ordenar 
     assert.ok(evo.some(e => /1500/.test(e.detalle) && /1600/.test(e.detalle)), 'debe mostrar el cambio de peso 1500 a 1600');
     const tiempos = ev.map(e => Date.parse(e.fecha)).filter(t => !Number.isNaN(t));
     assert.ok(tiempos.every((t, i) => i === 0 || tiempos[i - 1] >= t), 'orden por fecha descendente');
-    assert.ok(!ev.some(e => ['VENTA', 'MUERTE', 'BAJA'].includes(e.tipo)), 'sin bajas en modo API (Bajas pendiente)');
+    assert.ok(!ev.some(e => ['VENTA', 'MUERTE', 'BAJA'].includes(e.tipo)), 'un ave sin baja no tiene eventos VENTA/MUERTE');
 });
 
 prueba('ciclo-vida', 'debe devolver lista vacia para un ave inexistente o de otra cuenta', async () => {

@@ -37,6 +37,7 @@ export * as alimentacion from './src/repositories/AlimentacionRepository.api.js'
 export * as bebida from './src/repositories/BebidaRepository.api.js';
 export * as sanidad from './src/repositories/SanidadJaulaRepository.api.js';
 export * as historial from './src/repositories/HistorialRepository.api.js';
+export * as bajas from './src/repositories/BajaAveRepository.api.js';
 `
         },
         bundle: true,
