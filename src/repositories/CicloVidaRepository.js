@@ -4,9 +4,8 @@
  *   - SQLite local (V1, por defecto): CicloVidaRepository.sqlite.js
  *   - API en la nube:                  CicloVidaRepository.api.js
  *
- * obtenerCicloVidaAve no tiene endpoint aun (depende de huevos, bajas y
- * salud): sigue en SQLite tambien en modo API (solo lee; con ids de la nube
- * devuelve []).
+ * En modo API, obtenerCicloVidaAve reune en el cliente las lecturas de ave,
+ * historial, evolucion, salud y huevos (sin endpoint propio).
  */
 
 import {
@@ -31,7 +30,7 @@ function origen() {
 
 
 export function obtenerCicloVidaAve(...args) {
-    return sqlite().obtenerCicloVidaAve(...args);
+    return origen().obtenerCicloVidaAve(...args);
 }
 
 export function registrarEventoCicloVida(...args) {
