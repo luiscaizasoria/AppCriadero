@@ -1,0 +1,149 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-VA:MACHO:JX-1,AV-VB:HEMBRA:JX-1,AV-HJ:MACHO::AV-VA
+# BAJA POR VENTA: Detalle > Dar de baja > Venta. AV-VA con todos los datos (valor 12.5, envio 3.25); aviso
+# "Celular requerido" sin celular; AV-VB sin valor de envio. Ambas aparecen en Vendidas; el Detalle muestra
+# "Informacion de venta"; el Ciclo de vida muestra "Ave vendida"; la Genealogia de AV-HJ (hijo de AV-VA) la sigue mostrando.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - bajas
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: ".*AV-VA.*"
+    timeout: 20000
+- tapOn: "AV-VA"
+- scrollUntilVisible:
+    element: ".*Dar de baja.*"
+- tapOn: ".*Dar de baja.*"
+- extendedWaitUntil:
+    visible: ".*Baja del ave.*"
+    timeout: 15000
+- tapOn: ".*Venta"
+# Venta sin celular: aviso
+- scrollUntilVisible:
+    element: ".*Confirmar baja.*"
+- tapOn: ".*Confirmar baja.*"
+- extendedWaitUntil:
+    visible: "Celular requerido"
+    timeout: 10000
+- assertVisible: "Ingrese el número celular del comprador."
+- tapOn: "OK"
+# Formulario completo
+- scrollUntilVisible:
+    element: "Ej. 0991234567"
+    direction: UP
+- tapOn: "Ej. 0991234567"
+- inputText: "0991234567"
+- tapOn: "Nombre del comprador"
+- inputText: "Comprador Uno"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Valor de envío"
+- tapOn:
+    text: "Opcional"
+    index: 0
+- inputText: "12.5"
+- hideKeyboard
+- tapOn:
+    text: "Opcional"
+    index: 1
+- inputText: "3.25"
+- hideKeyboard
+- takeScreenshot: baja-venta-formulario
+- scrollUntilVisible:
+    element: ".*Confirmar baja.*"
+- tapOn: ".*Confirmar baja.*"
+- extendedWaitUntil:
+    visible: "Proceso completado"
+    timeout: 20000
+- assertVisible: "El ave fue registrada como vendida."
+- tapOn: "Aceptar"
+# Lista de vendidas
+- tapOn: ".*Vendidas"
+- extendedWaitUntil:
+    visible: ".*AV-VA.*"
+    timeout: 20000
+- takeScreenshot: baja-venta-lista-vendidas
+# Detalle de la vendida
+- tapOn: "AV-VA"
+- scrollUntilVisible:
+    element: ".*Información de venta.*"
+- assertVisible: ".*Información de venta.*"
+- assertVisible: ".*Comprador Uno.*"
+- scrollUntilVisible:
+    element: ".*0991234567.*"
+- scrollUntilVisible:
+    element: ".*12[.,]50.*"
+- assertVisible: ".*12[.,]50.*"
+- assertVisible: ".*3[.,]25.*"
+- takeScreenshot: baja-venta-detalle
+# Ciclo de vida
+- scrollUntilVisible:
+    element: ".*Ciclo de vida"
+- tapOn: ".*Ciclo de vida"
+- extendedWaitUntil:
+    visible: ".*Ave vendida.*"
+    timeout: 20000
+- assertNotVisible: ".*No fue posible cargar el ciclo de vida del ave.*"
+- takeScreenshot: baja-venta-ciclo-vida
+- back
+- back
+# Segunda venta, sin valor de envio
+- tapOn: ".*Activas"
+- extendedWaitUntil:
+    visible: ".*AV-VB.*"
+    timeout: 20000
+- tapOn: "AV-VB"
+- scrollUntilVisible:
+    element: ".*Dar de baja.*"
+- tapOn: ".*Dar de baja.*"
+- extendedWaitUntil:
+    visible: ".*Baja del ave.*"
+    timeout: 15000
+- tapOn: ".*Venta"
+- tapOn: "Ej. 0991234567"
+- inputText: "0987654321"
+- tapOn: "Nombre del comprador"
+- inputText: "Comprador Dos"
+- hideKeyboard
+- scrollUntilVisible:
+    element: ".*Confirmar baja.*"
+- tapOn: ".*Confirmar baja.*"
+- extendedWaitUntil:
+    visible: "Proceso completado"
+    timeout: 20000
+- tapOn: "Aceptar"
+- tapOn: ".*Vendidas"
+- extendedWaitUntil:
+    visible: ".*AV-VB.*"
+    timeout: 20000
+- assertVisible: ".*AV-VA.*"
+- tapOn: "AV-VB"
+- scrollUntilVisible:
+    element: ".*Información de venta.*"
+- assertVisible: ".*Comprador Dos.*"
+- takeScreenshot: baja-venta-sin-envio
+- back
+# Genealogia del hijo: el padre vendido sigue en el arbol
+- tapOn: ".*Activas"
+- extendedWaitUntil:
+    visible: ".*AV-HJ.*"
+    timeout: 20000
+- tapOn: "AV-HJ"
+- scrollUntilVisible:
+    element: ".*Genealogía"
+- tapOn: ".*Genealogía"
+- extendedWaitUntil:
+    visible: ".*AV-VA.*"
+    timeout: 15000
+- assertNotVisible: ".*Relación genealógica inválida.*"
+- takeScreenshot: baja-venta-genealogia

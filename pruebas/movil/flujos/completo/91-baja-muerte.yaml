@@ -1,0 +1,60 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-FA:HEMBRA:JX-1
+# BAJA POR FALLECIMIENTO: Detalle > Dar de baja > Fallecimiento con causa. El ave aparece en Fallecidas, el
+# Detalle muestra "Informacion de fallecimiento" y el Ciclo de vida "Fallecimiento".
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - bajas
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: ".*AV-FA.*"
+    timeout: 20000
+- tapOn: ".*AV-FA.*"
+- scrollUntilVisible:
+    element: ".*Dar de baja.*"
+- tapOn: ".*Dar de baja.*"
+- extendedWaitUntil:
+    visible: ".*Baja del ave.*"
+    timeout: 15000
+- tapOn: ".*Fallecimiento"
+- tapOn: "Ej. Enfermedad"
+- inputText: "Enfermedad respiratoria"
+- hideKeyboard
+- takeScreenshot: baja-muerte-formulario
+- scrollUntilVisible:
+    element: ".*Confirmar baja.*"
+- tapOn: ".*Confirmar baja.*"
+- extendedWaitUntil:
+    visible: "Proceso completado"
+    timeout: 20000
+- assertVisible: "El ave fue registrada como fallecida."
+- tapOn: "Aceptar"
+- tapOn: ".*Fallecidas"
+- extendedWaitUntil:
+    visible: ".*AV-FA.*"
+    timeout: 20000
+- takeScreenshot: baja-muerte-lista-fallecidas
+- tapOn: ".*AV-FA.*"
+- scrollUntilVisible:
+    element: ".*Información de fallecimiento.*"
+- assertVisible: ".*Información de fallecimiento.*"
+- assertVisible: ".*Enfermedad respiratoria.*"
+- takeScreenshot: baja-muerte-detalle
+- scrollUntilVisible:
+    element: ".*Ciclo de vida"
+- tapOn: ".*Ciclo de vida"
+- extendedWaitUntil:
+    visible: ".*Fallecimiento.*"
+    timeout: 20000
+- assertNotVisible: ".*No fue posible cargar el ciclo de vida del ave.*"
+- takeScreenshot: baja-muerte-ciclo-vida
