@@ -1,0 +1,148 @@
+# SEMILLA: --jaulas=JX-1
+# FINANZAS: movimientos manuales. Registra un INGRESO (12.5) y un EGRESO (3.25), verifica lista y resumen
+# (Ingresos / Egresos / Balance), cambia de periodo, edita el ingreso (20) y comprueba lista, resumen e
+# historial de correcciones. Los campos Valor y Detalle no tienen placeholder: se alcanzan por posicion
+# relativa a su etiqueta ("below").
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - finanzas
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "70%,96%"
+- extendedWaitUntil:
+    visible: "Consolidado por categoría"
+    timeout: 20000
+- assertVisible: "Sin ingresos en el período."
+- takeScreenshot: finanzas-vacio
+# Ingreso manual
+- tapOn: ".*Nuevo movimiento.*"
+- extendedWaitUntil:
+    visible: ".*Guardar movimiento.*"
+    timeout: 15000
+- tapOn: "Venta de huevos"
+- tapOn:
+    below: "Valor"
+- inputText: "12.5"
+- hideKeyboard
+- tapOn:
+    below: "Detalle"
+- inputText: "Ingreso manual uno"
+- hideKeyboard
+- takeScreenshot: finanzas-ingreso-formulario
+- tapOn: ".*Guardar movimiento.*"
+- extendedWaitUntil:
+    visible: "Movimiento guardado"
+    timeout: 20000
+- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: ".*Ingreso manual uno.*"
+    timeout: 20000
+# Egreso manual
+- tapOn: ".*Nuevo movimiento.*"
+- extendedWaitUntil:
+    visible: ".*Guardar movimiento.*"
+    timeout: 15000
+- tapOn: ".*Egreso"
+- tapOn: "Alimento"
+- tapOn:
+    below: "Valor"
+- inputText: "3.25"
+- hideKeyboard
+- tapOn:
+    below: "Detalle"
+- inputText: "Egreso manual uno"
+- hideKeyboard
+- tapOn: ".*Guardar movimiento.*"
+- extendedWaitUntil:
+    visible: "Movimiento guardado"
+    timeout: 20000
+- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: ".*Egreso manual uno.*"
+    timeout: 20000
+# Resumen del mes (arriba) y lista (el mas nuevo primero)
+- assertVisible: "\\$12[.]50"
+- assertVisible: "\\$3[.]25"
+- assertVisible: "\\$9[.]25"
+- takeScreenshot: finanzas-resumen-mes
+- scrollUntilVisible:
+    element: ".*Egreso manual uno.*"
+- assertVisible: ".*-\\$3[.]25.*"
+- scrollUntilVisible:
+    element: ".*Ingreso manual uno.*"
+- assertVisible: ".*\\+\\$12[.]50.*"
+# Cambio de periodo: los movimientos de hoy se mantienen
+- scrollUntilVisible:
+    element: "Este año"
+    direction: UP
+    speed: 80
+- tapOn: "Este año"
+- extendedWaitUntil:
+    visible: "\\$9[.]25"
+    timeout: 15000
+- assertVisible: "\\$12[.]50"
+- tapOn: "Todo"
+- extendedWaitUntil:
+    visible: "\\$9[.]25"
+    timeout: 15000
+- assertVisible: "\\$12[.]50"
+- assertVisible: "\\$3[.]25"
+- takeScreenshot: finanzas-periodo-todo
+- tapOn: "Este mes"
+- extendedWaitUntil:
+    visible: "\\$9[.]25"
+    timeout: 15000
+# Editar el ingreso
+- scrollUntilVisible:
+    element: ".*Ingreso manual uno.*"
+- tapOn: ".*Ingreso manual uno.*"
+- extendedWaitUntil:
+    visible: ".*Editar movimiento.*"
+    timeout: 15000
+- assertVisible: ".*Movimiento manual.*"
+- scrollUntilVisible:
+    element: "Este movimiento todavía no tiene correcciones registradas."
+- scrollUntilVisible:
+    element: "12.5"
+    direction: UP
+- tapOn: "12.5"
+- eraseText: 10
+- inputText: "20"
+- hideKeyboard
+- takeScreenshot: finanzas-editar-formulario
+- scrollUntilVisible:
+    element: ".*Guardar cambios.*"
+- tapOn: ".*Guardar cambios.*"
+- extendedWaitUntil:
+    visible: "Movimiento actualizado"
+    timeout: 20000
+- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: "Consolidado por categoría"
+    timeout: 20000
+- assertVisible: "\\$20[.]00"
+- assertVisible: "\\$16[.]75"
+- scrollUntilVisible:
+    element: ".*Ingreso manual uno.*"
+- assertVisible: ".*\\+\\$20[.]00.*"
+- takeScreenshot: finanzas-tras-edicion
+# Historial del movimiento editado
+- tapOn: ".*Ingreso manual uno.*"
+- extendedWaitUntil:
+    visible: ".*Editar movimiento.*"
+    timeout: 15000
+- scrollUntilVisible:
+    element: "Historial de correcciones"
+- scrollUntilVisible:
+    element: ".*Valor: \\$12[.]50.*"
+- assertVisible: ".*Valor: \\$12[.]50.*\\$20[.]00.*"
+- takeScreenshot: finanzas-historial

@@ -1,0 +1,111 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-FV:MACHO:JX-1
+# FINANZAS: venta de un ave (valor 12.5, sin envio) desde Bajas; Finanzas muestra el ingreso con la insignia
+# "Venta" y el movimiento de envio con 0. Se corrige la venta (20.25 y envio 3.1): Ingresos pasa a 23.35.
+# Un movimiento automatico no se edita como manual: abre el formulario "Corregir venta".
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - finanzas
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: ".*AV-FV.*"
+    timeout: 20000
+- tapOn: "AV-FV"
+- scrollUntilVisible:
+    element: ".*Dar de baja.*"
+- tapOn: ".*Dar de baja.*"
+- extendedWaitUntil:
+    visible: ".*Baja del ave.*"
+    timeout: 15000
+- tapOn: ".*Venta"
+- tapOn: "Ej. 0991234567"
+- inputText: "0991234567"
+- tapOn: "Nombre del comprador"
+- inputText: "Comprador Fin"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Valor de envío"
+- tapOn:
+    text: "Opcional"
+    index: 0
+- inputText: "12.5"
+- hideKeyboard
+- scrollUntilVisible:
+    element: ".*Confirmar baja.*"
+- tapOn: ".*Confirmar baja.*"
+- extendedWaitUntil:
+    visible: "Proceso completado"
+    timeout: 20000
+- tapOn: "Aceptar"
+# Finanzas
+- tapOn:
+    point: "70%,96%"
+- extendedWaitUntil:
+    visible: "Consolidado por categoría"
+    timeout: 20000
+- assertVisible: "\\$12[.]50"
+- scrollUntilVisible:
+    element: ".*Ave: AV-FV.*"
+- assertVisible: ".*Venta"
+- assertVisible: ".*\\+\\$12[.]50.*"
+- takeScreenshot: finanzas-venta-ingreso
+# Abrir el movimiento de la venta
+- tapOn: ".*Ave: AV-FV.*"
+- extendedWaitUntil:
+    visible: ".*Corregir venta.*"
+    timeout: 15000
+- assertVisible: ".*Venta de ave AV-FV.*"
+- assertVisible: ".*Este movimiento fue generado por una venta.*"
+- assertNotVisible: ".*Guardar cambios.*"
+- assertVisible: ".*Comprador Fin.*"
+- takeScreenshot: finanzas-corregir-venta
+# Valor invalido
+- tapOn: "12.5"
+- eraseText: 10
+- inputText: "abc"
+- hideKeyboard
+- scrollUntilVisible:
+    element: ".*Guardar corrección.*"
+- tapOn: ".*Guardar corrección.*"
+- extendedWaitUntil:
+    visible: "Valor inválido"
+    timeout: 10000
+- assertVisible: "El valor del ave y el valor de envío deben ser números mayores o iguales a cero."
+- tapOn: "OK"
+# Correccion valida
+- scrollUntilVisible:
+    element: "Valor del ave"
+    direction: UP
+- tapOn: "abc"
+- eraseText: 10
+- inputText: "20.25"
+- hideKeyboard
+- tapOn:
+    below: "Valor de envío"
+- eraseText: 10
+- inputText: "3.1"
+- hideKeyboard
+- takeScreenshot: finanzas-correccion-formulario
+- scrollUntilVisible:
+    element: ".*Guardar corrección.*"
+- tapOn: ".*Guardar corrección.*"
+- extendedWaitUntil:
+    visible: "Venta corregida"
+    timeout: 20000
+- assertVisible: "Se actualizaron la venta y sus movimientos financieros relacionados."
+- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: "Consolidado por categoría"
+    timeout: 20000
+- assertVisible: "\\$23[.]35"
+- takeScreenshot: finanzas-tras-correccion
