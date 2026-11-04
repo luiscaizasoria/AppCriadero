@@ -17,6 +17,7 @@ const SQL = [
     `DELETE FROM ave_historial WHERE criadero_id IN (${CR});`,
     `DELETE FROM jaula_historial WHERE criadero_id IN (${CR});`,
     `DELETE FROM ave_evolucion WHERE criadero_id IN (${CR});`,
+    `DELETE FROM huevos WHERE criadero_id IN (${CR});`,
     `DELETE FROM tratamientos_ave WHERE criadero_id IN (${CR});`,
     `DELETE FROM diagnosticos_ave WHERE criadero_id IN (${CR});`,
     `UPDATE aves SET padre_id=NULL, madre_id=NULL WHERE criadero_id IN (${CR});`,

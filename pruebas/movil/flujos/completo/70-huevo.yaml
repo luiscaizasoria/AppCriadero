@@ -1,9 +1,9 @@
 # SEMILLA: --jaulas=JX-1 --aves=AV-P:MACHO:JX-1
-# ESPERADO FALLAR (huevos): registrar un huevo de un ave (Huevos sigue en SQLite)
-# Si pasa, el informe avisa: migrado, quitar etiqueta.
+# HUEVOS: registrar un huevo de un ave; el código H000001 aparece en la lista de huevos del ave.
 appId: host.exp.exponent
 tags:
-  - esperado-fallar
+  - completo
+  - migrado
   - huevos
 ---
 - runFlow:
@@ -21,8 +21,19 @@ tags:
 - tapOn: ".*Registrar huevo"
 - scrollUntilVisible:
     element: ".*Registrar huevo.*"
-- tapOn: ".*Registrar huevo.*"
+# En el formulario el título y el botón comparten texto: el botón es el segundo.
+- tapOn:
+    text: ".*Registrar huevo.*"
+    index: 1
 - extendedWaitUntil:
     visible: "Huevo registrado"
     timeout: 15000
+- assertVisible: ".*H000001.*"
+- tapOn: "Aceptar"
+- scrollUntilVisible:
+    element: ".*Huevos registrados.*"
+- scrollUntilVisible:
+    element: "H000001"
+- assertVisible: "H000001"
+- assertNotVisible: ".*No existen huevos registrados.*"
 - takeScreenshot: huevo-resultado
