@@ -2,6 +2,15 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-03 sesión 2
+- Hecho: Genealogía (sin endpoint ni migración; `GenealogiaRepository.{js,sqlite.js,api.js}`, `010a223`; pantalla `906510e`) y Ciclo de vida (`GET /aves/:aveId/evolucion` `ecc41cf`; `CicloVidaRepository.api.js` reúne historial, evolución, salud y huevos en el cliente). Pruebas: casos `09b`, `10`, `11` y flujos `71`, `80`, `81` (`706837c`).
+- Resultado: typecheck OK, 228 unitarias/HTTP y 75 de integración; `/probar datos` 65/65 (86,7 s, sin fuga); `/probar completo` desde cero 27,6 min, 15 flujos PASO, 0 regresiones, solo `PENDIENTE DE MIGRAR: dashboard`. Revisor de arquitectura: APROBADO.
+- Decisión: opción A para Genealogía (3 lecturas por estado en el cliente, `String(id)` por UUID); evolución como único endpoint nuevo; bajas vacías en el ciclo de vida hasta Bajas.
+- Decisión: sexta excepción a pantallas V1 (`GenealogiaAveScreen`, ids `String`); sin `Alert` en su `catch` (un fallo de red muestra "No fue posible encontrar el ave.").
+- Limitación: la rama circular de `relacionesInvalidas` no se puede provocar por la API; solo revisión de código, sin prueba automática.
+- Pendiente: teléfono (Genealogía, Ciclo de vida, Producción, modo avión); Inicio/Alertas/Reportes (SQLite); Bajas; R2; Google Sign-In; push (requiere aprobación).
+- Próximo paso exacto: esperar indicación del usuario (candidatos: Bajas, Finanzas, R2, Google, fase 6).
+
 ## 2026-11-03 sesión 1
 - Hecho: módulo Huevos: migración `0009` y API `api/src/huevos/` (`07d203d`), clientes `HuevoRepository` y `ProduccionRepository` con fachadas (`c338b74`), aviso de carga en `ProduccionHuevosScreen` (`469b742`), pruebas y flujo `70-huevo` (`3436a62`); cuarta excepción de Salud, guarda de `ave` nula en `SaludAveScreen` (`17ea040`). `0009` aplicada en local, integración y base remota de pruebas.
 - Resultado: typecheck OK, 222 unitarias/HTTP y 72 de integración; `/probar datos` 49/49 (72,2 s, sin fuga), smoke verde (2,6 min), flujo `70-huevo` verde (111 s). Revisor de arquitectura: APROBADO. No se ejecutó `/probar completo`.

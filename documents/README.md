@@ -31,7 +31,7 @@ Ante una contradicción prevalece, de mayor a menor:
 | `documents/bitacora.md` | Registro de sesiones, la más nueva arriba (lo escribe `/cerrar-dia`); al pasar de 300 líneas se archiva en `historico/bitacora-AAAA-MM.md` |
 | `documents/arquitectura/` | `arquitectura-v2.md` (arquitectura online-first, identidad, riesgos), `modelo-datos-v2.md` (estado real de D1 y borrador del modelo futuro) y `roadmap-v2.md` (siete fases) |
 | `documents/referencia-v1/` | `baseline-v1.md` (funciones y restricciones de V1) y `analisis-v1-mapeo-api.md` (análisis de V1 y mapeo repositorio → endpoint; el Anexo B es literal) |
-| `documents/specs/` | Una spec por módulo (`aves`, `catalogos`, `jaulas`, `cuidados-jaula`, `salud`, `huevos`) y `plantilla-spec.md` (plantilla ligera) |
+| `documents/specs/` | Una spec por módulo (`aves`, `catalogos`, `jaulas`, `cuidados-jaula`, `salud`, `huevos`, `genealogia`, `ciclo-vida`) y `plantilla-spec.md` (plantilla ligera) |
 | `documents/historico/` | Documentos antiguos (contexto V1 y V2 previo a online-first, estado de V1) y la copia de las reglas antiguas de la app móvil; no se edita |
 | `pruebas/README.md` | Pruebas automáticas (`/probar datos`, `smoke`, `completo`): capa de datos contra el Worker de pruebas y flujos Maestro en el emulador |
 | `documents/traspaso/` | Handoff, cierre y respuestas del traspaso: solo local, ignorado por Git |
@@ -99,7 +99,8 @@ Procedimiento detallado: skill `migrar-repositorio-a-api`.
 
 - Aves: implementado (API y cliente), probado en local e integración; pendiente Worker de pruebas y teléfono. Spec `specs/aves.md` (estado, excepciones técnicas y limitaciones).
 - Salud (`0008`) y Huevos (`0009`): implementados (2026-11-02 y 2026-11-03); specs `specs/salud.md` y `specs/huevos.md`.
-- Orden siguiente: Bajas, Finanzas, R2, Google Sign-In; Genealogía y Ciclo de vida (a la espera de indicación); después Alertas, Inicio y Reportes.
+- Genealogía (sin endpoint ni migración) y Ciclo de vida (`GET /aves/:aveId/evolucion`): implementados (2026-11-03); specs `specs/genealogia.md` y `specs/ciclo-vida.md`.
+- Orden siguiente: a la espera de indicación del usuario (candidatos: Bajas, Finanzas, R2, Google Sign-In; después Alertas, Inicio y Reportes).
 - R2 va como módulo aparte; propuesta de claves de objeto: `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`. Hoy `foto_r2_key` guarda la ruta local.
 
 ## Pendientes

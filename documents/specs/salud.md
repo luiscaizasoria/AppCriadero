@@ -12,9 +12,9 @@ implementada (2026-11-02, rama `trabajo/migracion-nube`). Pendiente: comprobaci�
 - API en `api/src/salud/`: `POST /api/v1/criaderos/:criaderoId/aves/:aveId/diagnosticos` y `GET /api/v1/criaderos/:criaderoId/aves/:aveId/salud`.
 - Cliente de la app: `SaludRepository.js` (fachada), `SaludRepository.sqlite.js` (código V1 intacto) y `SaludRepository.api.js`. `actualizarEstadoSaludAve` **no está** en `.api.js` (omitida por decisión del usuario; sin llamadores).
 - Commits: `7e02ccd` (API), `e5805e6` (cliente), `31b823c` (pantalla) y `b9001bb` (pruebas; caso `08-salud` y flujo `60-salud-enfermedad`).
-- Validación: typecheck OK; 203 pruebas unitarias/HTTP y 54 de integración en verde; `/probar datos` 44/44 (58 s, sin fuga entre cuentas); smoke verde (1,7 min); `/probar completo` 25,2 min sin regresiones, flujo `60-salud-enfermedad` migrado y en verde, pendientes `PENDIENTE DE MIGRAR: genealogia, huevos, dashboard`; `revisor-arquitectura-v2`: APROBADO.
+- Validación: typecheck OK; 203 pruebas unitarias/HTTP y 54 de integración en verde; `/probar datos` 44/44 (58 s, sin fuga entre cuentas); smoke verde (1,7 min); `/probar completo` 25,2 min sin regresiones, flujo `60-salud-enfermedad` migrado y en verde, pendientes entonces `PENDIENTE DE MIGRAR: genealogia, huevos, dashboard` (hoy solo `dashboard`); `revisor-arquitectura-v2`: APROBADO.
 - Cuarta excepción aprobada (commit `17ea040`): guarda de `ave` nula en `SaludAveScreen` (ver "Excepciones técnicas"); ya no hay `TypeError` en el render si `cargarDatos` falla.
-- Limitaciones conocidas: la ficha de ave sigue sin bajas (ciclo de vida incompleto; los huevos ya se registran en la nube, pero el ciclo de vida no los muestra hasta Genealogía/Ciclo de vida). El botón "Guardar diagnóstico" sigue sin `disabled`: un doble toque puede duplicar el diagnóstico.
+- Limitaciones conocidas: la ficha de ave sigue sin bajas (el ciclo de vida no muestra `VENTA`/`MUERTE` hasta Bajas; los diagnósticos y los huevos ya aparecen en él desde Ciclo de vida, 2026-11-03). El botón "Guardar diagnóstico" sigue sin `disabled`: un doble toque puede duplicar el diagnóstico.
 
 Alcance: aves individuales (sin lotes), sin sincronización offline, D1 como fuente de verdad. Las líneas son del árbol actual (v1.0.3, `app.json:5`).
 

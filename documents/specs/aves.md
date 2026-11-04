@@ -30,7 +30,7 @@ Diferencias que exige el paso a online (además de UUID v7, `criadero_id`, auten
 
 - La foto local se guarda en `foto_r2_key`; **no es una clave de objeto**. R2 queda pendiente como módulo aparte (propuesta de claves: `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`).
 - `obtenerAvesVendidas` y `obtenerAvesFallecidas` no hacen JOIN con `bajas_ave` (tabla inexistente en D1); se retoma en el módulo Bajas. `obtenerBajaAve` devuelve `null`.
-- `obtenerCicloVidaAve` y `obtenerEvolucionAve` siguen en SQLite en modo API (el ciclo de vida queda vacío hasta que existan huevos, bajas y salud).
+- `obtenerCicloVidaAve` y `obtenerEvolucionAve` siguen en SQLite en modo API (el ciclo de vida queda vacío hasta que existan huevos, bajas y salud). **[Desfasado, 2026-11-03: `obtenerCicloVidaAve` ya usa la API (reúne historial, evolución, salud y huevos en el cliente; solo faltan las bajas) y existe `GET /aves/:aveId/evolucion`; ver `ciclo-vida.md`.]**
 - `NuevaAveScreen.js` usa `Number(item.id)` (líneas ~385, 1766 y 1794): con UUID da `NaN`, con efecto menor en el filtro de padres y en la excepción de sexo. No se tocó la pantalla.
 
 ## Fuente V1
@@ -645,7 +645,7 @@ Equivalencia de errores V1 -> V2 (R-P14 y R-P14a, 2026-10-29): se conservan como
 ### GET `/api/v1/criaderos/:criaderoId/aves/:aveId`
 
 - Equivale a `obtenerAvePorId` (cualquier estado). `data.ave` con los campos anteriores más `fechaUltimoControlSalud`. Errores: 404 `AVE_NOT_FOUND`, 404 `CRIADERO_NOT_FOUND`, 401, 403.
-- Genealogía, evolución, salud, huevos, ciclo de vida y baja se sirven en otros módulos o endpoints (`/genealogia`, `/evolucion`, `/salud`, `/huevos`, `/ciclo-vida`, `/baja`). Este módulo **no** define endpoints propios de historial ni de evolución (R-P15: solo `ciclo-vida`; el resto se decide en las specs de Evolución). "Finalizar tratamiento" se define más abajo (ruta decidida en R-P1b).
+- Genealogía, evolución, salud, huevos, ciclo de vida y baja se sirven en otros módulos o endpoints (`/genealogia`, `/evolucion`, `/salud`, `/huevos`, `/ciclo-vida`, `/baja`) **[desfasado, 2026-11-03: no hay `/ciclo-vida` ni `/genealogia`; ambos se calculan en el cliente (`ciclo-vida.md`, `genealogia.md`)]**. Este módulo **no** define endpoints propios de historial ni de evolución (R-P15: solo `ciclo-vida`; el resto se decide en las specs de Evolución). "Finalizar tratamiento" se define más abajo (ruta decidida en R-P1b).
 
 ### POST `/api/v1/criaderos/:criaderoId/aves`
 
@@ -743,7 +743,7 @@ Todas las filas tienen estado "aprobada por el usuario, 2026-10-29". El texto or
 | R-P12 *[técnica, se mantiene]* (fotos diferidas a la fase de R2; mientras tanto la foto es opcional y no se puede quitar al editar, como V1) | Fotos en R2: diferido a la fase de R2. Mientras tanto la foto es opcional y no se puede quitar al editar, como V1. | aprobada por el usuario, 2026-10-29 |
 | R-P13 *[revocada 2026-10-29]* | Rechazar fechas futuras (`VALIDATION_ERROR`). | aprobada por el usuario, 2026-10-29 |
 | R-P14 *[resuelta: replicar V1]* | Conservar los códigos de error de V1 (`CODIGO_AVE_DUPLICADO`, `PADRE_NO_MACHO`, `MADRE_NO_HEMBRA`) para que las pantallas muestren los mismos mensajes; los nuevos siguen la convención actual de la API. | aprobada por el usuario, 2026-10-29 |
-| R-P15 *[resuelta: replicar V1]* | Historial y evolución: solo `ciclo-vida`; el resto se decide en las specs de Evolución. | aprobada por el usuario, 2026-10-29 |
+| R-P15 *[resuelta: replicar V1; desfasada 2026-11-03: no hay endpoint `/ciclo-vida`, ver `ciclo-vida.md`]* | Historial y evolución: solo `ciclo-vida`; el resto se decide en las specs de Evolución. | aprobada por el usuario, 2026-10-29 |
 | R-P16 *[resuelta: replicar V1]* | Edad: el cliente replica ambas funciones tal cual. | aprobada por el usuario, 2026-10-29 |
 | R-P17 *[resuelta: replicar V1]* | Origen editable en la edición: replicarlo. | aprobada por el usuario, 2026-10-29 |
 
