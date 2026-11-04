@@ -167,6 +167,13 @@ export function createAvesRouter(buildDependencies: DependenciesFactory = create
     return responder(c, await service.listarHistorial(c.req.param('criaderoId')!, c.req.param('aveId')));
   });
 
+  // GET /aves/:aveId/evolucion
+  router.get('/:aveId/evolucion', async (c) => {
+    const { service } = buildDependencies(c.env.DB);
+
+    return responder(c, await service.listarEvolucion(c.req.param('criaderoId')!, c.req.param('aveId')));
+  });
+
   // POST /aves
   router.post('/', async (c) => {
     const { service } = buildDependencies(c.env.DB);

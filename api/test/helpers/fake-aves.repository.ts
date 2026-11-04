@@ -14,6 +14,7 @@ import type {
   CrearAveInput,
   EstadoBajaAve,
   EventoAveInput,
+  EvolucionAve,
   EvolucionInput,
   FinalizarTratamientoInput,
   HistorialAve
@@ -511,6 +512,22 @@ export class FakeAveRepository implements AveRepository {
         fechaCreacion: "2026-10-30 12:00:00",
         jaulaCodigo: this.codigoJaula(h.jaulaId)
       }));
+
+  }
+
+
+  async listarEvolucion(criaderoId: string, aveId: string): Promise<EvolucionAve[]> {
+
+    const ave = this.aves.find(a => a.id === aveId && a.criaderoId === criaderoId);
+
+    if (!ave) {
+      return [];
+    }
+
+    return this.evoluciones
+      .filter(e => e.aveId === aveId)
+      .sort((a, b) => this.comparar(b.fecha, a.fecha) || this.comparar(b.id, a.id))
+      .map(e => ({ ...e, fechaCreacion: "2026-10-30 12:00:00" }));
 
   }
 

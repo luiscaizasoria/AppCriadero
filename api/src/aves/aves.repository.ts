@@ -20,6 +20,7 @@ import type {
   CrearAveInput,
   EstadoBajaAve,
   EventoAveInput,
+  EvolucionAve,
   EvolucionInput,
   FinalizarTratamientoInput,
   HistorialAve,
@@ -52,6 +53,7 @@ export interface AveRepository {
   actualizar(criaderoId: string, input: ActualizarAveInput): Promise<void>;
   cambiarJaula(criaderoId: string, input: CambiarJaulaInput): Promise<void>;
   listarHistorial(criaderoId: string, aveId: string): Promise<HistorialAve[]>;
+  listarEvolucion(criaderoId: string, aveId: string): Promise<EvolucionAve[]>;
   insertarEvento(criaderoId: string, input: EventoAveInput): Promise<void>;
   obtenerContextoEvolucion(criaderoId: string, aveId: string): Promise<ContextoEvolucion | null>;
   registrarEvolucion(criaderoId: string, input: EvolucionInput): Promise<void>;
@@ -506,6 +508,30 @@ export class D1AveRepository implements AveRepository {
       `)
       .bind(aveId, criaderoId)
       .all<HistorialAve>();
+
+    return result.results;
+  }
+
+  async listarEvolucion(criaderoId: string, aveId: string): Promise<EvolucionAve[]> {
+    const result = await this.db
+      .prepare(`
+        SELECT
+          id,
+          ave_id AS aveId,
+          fecha,
+          foto_r2_key AS fotoUri,
+          peso_gramos AS pesoGramos,
+          altura_cm AS alturaCm,
+          largo_cm AS largoCm,
+          caracteristicas,
+          observacion,
+          fecha_creacion AS fechaCreacion
+        FROM ave_evolucion
+        WHERE ave_id = ? AND criadero_id = ?
+        ORDER BY fecha DESC, id DESC
+      `)
+      .bind(aveId, criaderoId)
+      .all<EvolucionAve>();
 
     return result.results;
   }

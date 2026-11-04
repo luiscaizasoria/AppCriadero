@@ -19,6 +19,7 @@ import {
   type AveParaAsignar,
   type AvePorJaula,
   type EstadoBajaAve,
+  type EvolucionAve,
   type HistorialAve,
   type Resultado,
 } from './aves.types';
@@ -474,6 +475,17 @@ export class AveService {
     return {
       success: true,
       data: { historial: await this.repository.listarHistorial(criaderoId, aveId) },
+    };
+  }
+
+  /** obtenerEvolucionAve de V1 (sin comprobar existencia: ave inexistente -> []). */
+  async listarEvolucion(
+    criaderoId: string,
+    aveId: string
+  ): Promise<Resultado<{ evolucion: EvolucionAve[] }>> {
+    return {
+      success: true,
+      data: { evolucion: await this.repository.listarEvolucion(criaderoId, aveId) },
     };
   }
 

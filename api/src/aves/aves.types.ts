@@ -103,6 +103,19 @@ export interface ContextoEvolucion {
   totalEvoluciones: number;
 }
 
+export interface EvolucionAve {
+  id: string;
+  aveId: string;
+  fecha: string;
+  fotoUri: string | null;
+  pesoGramos: number | null;
+  alturaCm: number | null;
+  largoCm: number | null;
+  caracteristicas: string | null;
+  observacion: string | null;
+  fechaCreacion: string;
+}
+
 export interface HistorialAve {
   id: string;
   aveId: string;
