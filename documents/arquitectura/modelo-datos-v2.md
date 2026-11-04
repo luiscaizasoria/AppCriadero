@@ -4,7 +4,7 @@
 
 Este documento registra el modelo de datos de V2 en tres niveles, de mayor a menor autoridad:
 
-1. **Estado real de D1** (migraciones `0001`–`0010`): lo que existe hoy. Si algo no coincide con una decisión posterior, el esquema real y el código prevalecen.
+1. **Estado real de D1** (migraciones `0001`–`0011`): lo que existe hoy. Si algo no coincide con una decisión posterior, el esquema real y el código prevalecen.
 2. **Decisiones y modelos aprobados**: reglas de diseño tomadas de forma incremental.
 3. **Modelo futuro de negocio**: borrador **no aprobado** (sección final), que debe validarse contra el código real de V1 antes de crear migraciones.
 
@@ -16,11 +16,11 @@ Este documento registra el modelo de datos de V2 en tres niveles, de mayor a men
 - **Multi-criadero:** `users 1 — N criaderos 1 — N entidades de negocio`. Los datos se aíslan por `criadero_id`; la propiedad se resuelve por `entidad.criadero_id -> criaderos.user_id`, sin duplicar `user_id` salvo necesidad técnica documentada.
 - **Aves individuales, sin lotes.** El alcance funcional es el de V1.
 - **Fotos:** el binario va a R2; D1 guarda la clave del objeto y metadatos.
-- **El esquema D1 de negocio está parcial.** Hoy están implementadas las tablas descritas en la sección siguiente (hasta `0010`: jaulas, aves, historiales, cuidados de jaula, tratamientos de salud, huevos, bajas y movimientos financieros); el resto es borrador.
+- **El esquema D1 de negocio está parcial.** Hoy están implementadas las tablas descritas en la sección siguiente (hasta `0011`: jaulas, aves, historiales, cuidados de jaula, tratamientos de salud, huevos, bajas, movimientos financieros y su historial); el resto es borrador.
 
 > **Nota sobre la numeración.** Las decisiones #1–#11 se redactaron cuando la arquitectura todavía era offline-first. Se conservan con su numeración porque el código las cita (por ejemplo, `api/src/catalogs/defaultCatalogItems.ts` cita el "Modelo aprobado #11"). Lo que dependía de sincronización fue **reemplazado por online-first** y así se indica en cada caso.
 
-## Estado real de D1 (migraciones 0001–0010)
+## Estado real de D1 (migraciones 0001–0011)
 
 Migraciones aplicadas, en `api/migrations/`:
 
@@ -35,7 +35,42 @@ Migraciones aplicadas, en `api/migrations/`:
 | `0007_cuidados_jaula.sql` | `alimentacion_jaula`, `bebida_jaula` y `sanidad_jaula` (eventos inmutables; `fecha_creacion`, sin `version`/`deleted_at`/`CHECK`; FK `RESTRICT`; índices `(jaula_id, fecha)`; aplicada en local, integración y base remota de pruebas) |
 | `0008_salud.sql` | `tratamientos_ave` (`diagnostico_id` nullable como en V1; `fecha_creacion`, sin `version`/`deleted_at`/`CHECK`; FK `RESTRICT`; índices `ix_tratamientos_ave_ave` e `ix_tratamientos_ave_diagnostico`; `diagnosticos_ave` ya existía en `0006`; aplicada en local, integración y base remota de pruebas) |
 | `0009_huevos.sql` | `huevos` (`codigo` `H`+6 dígitos, `UNIQUE (criadero_id, codigo)` porque el contador es por criadero; `jaula_id` y `observacion` nullable; `estado` por defecto `REGISTRADO`; `fecha_creacion`, sin `version`/`deleted_at`/`CHECK`; FK `RESTRICT` a criaderos, aves y jaulas; índices `ux_huevos_criadero_codigo`, `ix_huevos_ave_fecha`, `ix_huevos_criadero_fecha` e `ix_huevos_jaula`; aplicada en local, integración y base remota de pruebas). El DDL de `huevos` de la sección final (borrador) queda superado por esta migración |
-| `0010_bajas.sql` | `bajas_ave` y `movimientos_financieros` (columnas de V1; `tipo` sin `CHECK`; importes `REAL`; `origen_id TEXT` sin FK, en `VENTA_AVE` es `bajas_ave.id`; `fecha_creacion`, sin `version`/`deleted_at`; FK `RESTRICT` a criaderos y aves; índices `ix_bajas_ave_ave`, `ix_bajas_ave_celular`, `ix_movimientos_criadero_fecha` e `ix_movimientos_origen`; aplicada en local, integración y base remota de pruebas). `movimientos_financieros_historial` la añadirá Finanzas en `0011` |
+| `0010_bajas.sql` | `bajas_ave` y `movimientos_financieros` (columnas de V1; `tipo` sin `CHECK`; importes `REAL`; `origen_id TEXT` sin FK, en `VENTA_AVE` es `bajas_ave.id`; `fecha_creacion`, sin `version`/`deleted_at`; FK `RESTRICT` a criaderos y aves; índices `ix_bajas_ave_ave`, `ix_bajas_ave_celular`, `ix_movimientos_criadero_fecha` e `ix_movimientos_origen`; aplicada en local, integración y base remota de pruebas) |
+| `0011_finanzas_historial.sql` | `movimientos_financieros_historial` (auditoría de correcciones; 15 columnas de datos de V1 con su nulabilidad; `accion` sin `CHECK`; `origen_id` sin FK; `id`, `movimiento_id` y `origen_id` `TEXT`; `criadero_id` con FK; FK `RESTRICT` a criaderos y movimientos; sin `fecha_creacion`, `version` ni `deleted_at`; índice `ix_movimientos_historial_movimiento (movimiento_id)`; aplicada en local, integración y base remota de pruebas) |
+
+DDL real de `0011` (`api/migrations/0011_finanzas_historial.sql`, sin los comentarios):
+
+```sql
+CREATE TABLE movimientos_financieros_historial (
+    id TEXT PRIMARY KEY NOT NULL,
+    criadero_id TEXT NOT NULL,
+    movimiento_id TEXT NOT NULL,
+    fecha TEXT NOT NULL,
+    accion TEXT NOT NULL,
+    tipo_anterior TEXT,
+    tipo_nuevo TEXT,
+    categoria_anterior TEXT,
+    categoria_nueva TEXT,
+    fecha_movimiento_anterior TEXT,
+    fecha_movimiento_nueva TEXT,
+    valor_anterior REAL,
+    valor_nuevo REAL,
+    detalle_anterior TEXT,
+    detalle_nuevo TEXT,
+    origen_tipo TEXT,
+    origen_id TEXT,
+
+    FOREIGN KEY (criadero_id)
+        REFERENCES criaderos(id)
+        ON DELETE RESTRICT ON UPDATE RESTRICT,
+    FOREIGN KEY (movimiento_id)
+        REFERENCES movimientos_financieros(id)
+        ON DELETE RESTRICT ON UPDATE RESTRICT
+);
+
+CREATE INDEX ix_movimientos_historial_movimiento
+    ON movimientos_financieros_historial(movimiento_id);
+```
 
 DDL real de `0010` (`api/migrations/0010_bajas.sql`, sin los comentarios):
 
@@ -1328,47 +1363,9 @@ CREATE INDEX ix_tratamientos_ave_fecha
 -- bajas_ave y movimientos_financieros: ya no son borrador. Su DDL real es
 -- api/migrations/0010_bajas.sql (ver "Estado real de D1"). El borrador anterior
 -- (CHECK, version, deleted_at, categoria_item_id/categoria_codigo) quedó superado.
--- Nota para Finanzas (0011): el historial de abajo apunta a movimientos_financieros(id),
--- que ya existe con las columnas de V1 (categoria TEXT, sin deleted_at ni version).
-
-CREATE TABLE movimientos_financieros_historial (
-    id TEXT PRIMARY KEY NOT NULL,
-    criadero_id TEXT NOT NULL,
-    movimiento_id TEXT NOT NULL,
-    fecha TEXT NOT NULL,
-    accion TEXT NOT NULL CHECK (accion IN (
-        'EDICION_MANUAL',
-        'CREACION_POR_CORRECCION',
-        'CORRECCION_VENTA',
-        'CORRECCION_ENVIO'
-    )),
-    tipo_anterior TEXT,
-    tipo_nuevo TEXT,
-    categoria_anterior TEXT,
-    categoria_nueva TEXT,
-    fecha_movimiento_anterior TEXT,
-    fecha_movimiento_nueva TEXT,
-    valor_anterior REAL,
-    valor_nuevo REAL,
-    detalle_anterior TEXT,
-    detalle_nuevo TEXT,
-    origen_tipo TEXT,
-    origen_id TEXT,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (criadero_id)
-        REFERENCES criaderos(id)
-        ON DELETE RESTRICT
-        ON UPDATE RESTRICT,
-
-    FOREIGN KEY (movimiento_id)
-        REFERENCES movimientos_financieros(id)
-        ON DELETE CASCADE
-        ON UPDATE RESTRICT
-);
-
-CREATE INDEX ix_movimientos_historial_movimiento
-    ON movimientos_financieros_historial(movimiento_id, fecha);
+-- movimientos_financieros_historial: ya no es borrador. Su DDL real es
+-- api/migrations/0011_finanzas_historial.sql (ver "Estado real de D1"). El borrador
+-- anterior (CHECK en accion, created_at, ON DELETE CASCADE) quedó superado.
 
 CREATE TABLE ave_evolucion (
     id TEXT PRIMARY KEY NOT NULL,

@@ -4,14 +4,14 @@
 
 V2 es **online-first** (D1 y R2 como fuentes de verdad, sin sincronización offline). La API en `api/` ya tiene la plataforma base, autenticación con email y contraseña, criaderos y onboarding. V1.0.3 sigue siendo la referencia funcional y la app móvil continúa usando su SQLite local hasta que cada módulo se reemplace por su cliente REST.
 
-Rama de trabajo: `trabajo/migracion-nube` (desde `main`; rama única, sin PR; se fusiona a `main` solo cuando el usuario lo pida). Última actualización de este documento: 31 de octubre de 2026.
+Rama de trabajo: `trabajo/migracion-nube` (desde `main`; rama única, sin PR; se fusiona a `main` solo cuando el usuario lo pida). Última actualización de este documento: 4 de noviembre de 2026.
 
 ## Fases
 
 ### Fase 1 — Plataforma base: completada
 
 - Proyecto TypeScript con Cloudflare Workers y Hono en `api/`.
-- D1 con migraciones `0001`–`0004` y `GET /api/v1/health`.
+- D1 con migraciones `0001`–`0004` (hoy el esquema llega a `0011`) y `GET /api/v1/health`.
 - Arquitectura `routes -> factory -> service -> repository` y composición de `app.ts` inyectable.
 - Pruebas unitarias, HTTP e integración con D1 local.
 
@@ -57,9 +57,10 @@ Estado de los módulos (2026-11-04, rama `trabajo/migracion-nube`):
 - **Huevos**: implementado (2026-11-03). Migración `0009` (`huevos`), API en `api/src/huevos/` (`POST` y `GET .../aves/:aveId/huevos`, `GET .../huevos/siguiente-codigo` y `GET .../huevos/produccion/{resumen,ranking,por-dia,por-dia-historico,por-hora,por-jaula,por-ave,total}`; código `H`+6 dígitos por criadero; periodos en UTC) y clientes `HuevoRepository` y `ProduccionRepository` con fachadas. Excepción aprobada: un `Alert` de carga en `ProduccionHuevosScreen` (quinta; `DetalleAveScreen` y `RegistrarHuevoScreen.cargarAve` no se tocan). Probado en local, integración (72), unitarias/HTTP (222), Worker de pruebas y emulador; **pendiente:** teléfono; Alertas, Inicio y Reportes siguen en SQLite y el ciclo de vida del ave ya muestra los huevos (Ciclo de vida, 2026-11-03). Detalle en `documents/specs/huevos.md`.
 - **Genealogía**: implementada (2026-11-03). Sin endpoint ni migración (opción A del usuario): `GenealogiaRepository.api.js` reutiliza el algoritmo de V1 y lee las aves con `GET /aves?estado=ACTIVA|VENDIDA|FALLECIDA`. Sexta excepción aprobada a pantallas V1 (`GenealogiaAveScreen.js`, ids `String`). Probada en el Worker de pruebas y en el emulador; **pendiente:** teléfono, y aves vendidas/fallecidas (ya con Bajas, 2026-11-04). Detalle en `documents/specs/genealogia.md`.
 - **Ciclo de vida**: implementado (2026-11-03). Nuevo `GET /aves/:aveId/evolucion` (solo lectura, sin migración); `CicloVidaRepository.api.js` reúne historial, evolución, salud y huevos en el cliente (las bajas se leen con `GET /bajas` desde Bajas, 2026-11-04). Sin excepción de pantalla. **Pendiente:** teléfono. Detalle en `documents/specs/ciclo-vida.md`.
-- **Bajas**: implementado (2026-11-04). Migración `0010` (`bajas_ave` y `movimientos_financieros`), API en `api/src/aves/` (`POST .../aves/:aveId/muerte`, `POST .../venta`, `GET .../bajas`; las listas `GET /aves?estado=VENDIDA|FALLECIDA` usan `INNER JOIN bajas_ave`) y cliente `BajaAveRepository.{js,sqlite.js,api.js}` (`obtenerBajasAve` omitida); `obtenerBajaAve` y el ciclo de vida leen `GET /bajas`. Cada venta escribe 2 ingresos (`VENTA_AVE` y `ENVIO_AVE`, este con valor 0 si no hay envío). Sin excepciones nuevas a pantallas V1. Probado en local, integración (84), unitarias/HTTP (248), Worker de pruebas (`/probar datos` 75/75) y emulador (flujos `90` y `91`); **pendiente:** teléfono. Limitación: Finanzas, Inicio, Reportes y Clientes (SQLite) no ven las ventas de la nube hasta migrar Finanzas (`0011` = `movimientos_financieros_historial`). Detalle en `documents/specs/bajas.md`.
+- **Bajas**: implementado (2026-11-04). Migración `0010` (`bajas_ave` y `movimientos_financieros`), API en `api/src/aves/` (`POST .../aves/:aveId/muerte`, `POST .../venta`, `GET .../bajas`; las listas `GET /aves?estado=VENDIDA|FALLECIDA` usan `INNER JOIN bajas_ave`) y cliente `BajaAveRepository.{js,sqlite.js,api.js}` (`obtenerBajasAve` omitida); `obtenerBajaAve` y el ciclo de vida leen `GET /bajas`. Cada venta escribe 2 ingresos (`VENTA_AVE` y `ENVIO_AVE`, este con valor 0 si no hay envío). Sin excepciones nuevas a pantallas V1. Probado en local, integración (84), unitarias/HTTP (248), Worker de pruebas (`/probar datos` 75/75) y emulador (flujos `90` y `91`); **pendiente:** teléfono. Limitación: Finanzas, Inicio, Reportes y Clientes (SQLite) no ven las ventas de la nube hasta migrar Finanzas (hecho el 2026-11-04) y la fase 6. Detalle en `documents/specs/bajas.md`.
+- **Finanzas**: implementado (2026-11-04). Migración `0011` (`movimientos_financieros_historial`), API en `api/src/finanzas/` (11 endpoints bajo `/criaderos/:criaderoId/finanzas`: resumen, movimientos, ingresos, egresos, movimiento por id, edición, historial, venta por baja, corrección de venta y consolidados por categoría y mensual) y cliente `FinanzasRepository.{js,sqlite.js,api.js}` más `src/api/finanzasApi.js` (`obtenerIngresos` y `obtenerEgresos` omitidas, sin llamadores). Sin excepciones a pantallas V1 (siguen seis). Paridad con el código real de V1: 235 comparaciones sin diferencias. Probado en local, integración (119), unitarias/HTTP (285), Worker de pruebas (`/probar datos` 87/87), smoke y emulador (flujos `95` y `96`); **pendiente:** teléfono. Limitación: Inicio, Reportes, Clientes y Alertas siguen en SQLite y no ven finanzas ni ventas de la nube hasta la fase 6. Detalle en `documents/specs/finanzas.md`.
 - **Huevos, cobertura nueva (2026-11-03):** caso `09b-huevos-formas` y flujo `71-produccion-huevos`.
-- **Orden siguiente:** a la espera de indicación del usuario; candidatos Finanzas (`0011`), R2 (módulo aparte; claves propuestas `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`), Google Sign-In y la fase 6 (Alertas, Inicio, Reportes).
+- **Orden siguiente:** a la espera de indicación del usuario; comprobación en el teléfono y candidatos R2 (módulo aparte; claves propuestas `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`), Google Sign-In y la fase 6 (Alertas, Inicio, Reportes y Clientes, que necesitarán `GET /finanzas/resumen?periodo=MES|TODO` o `GET /finanzas/movimientos`).
 - **Catálogos**: **implementado** en la rama `trabajo/migracion-nube`. Seis endpoints bajo `/api/v1/criaderos/:criaderoId/catalogos` (solo los 7 catálogos básicos), plantilla de criadero de 42 ítems, sin migración nueva y cliente de la app `ConfiguracionRepository.js` (conmutador) con `.sqlite.js` y `.api.js`. Validado con pruebas unitarias, HTTP e integración y con el Worker local. **Pendiente:** validar en el teléfono y redesplegar en el Worker de pruebas. Detalle en `documents/specs/catalogos.md`.
 
 Puerta previa a Aves (actualizada 2026-10-31):
@@ -71,7 +72,7 @@ Puerta previa a Aves (actualizada 2026-10-31):
 
 ### Fase 5 — Funcionalidades derivadas
 
-- Bajas (muerte y venta, con sus movimientos financieros): implementadas (2026-11-04).
+- Bajas (muerte y venta, con sus movimientos financieros): implementadas (2026-11-04). Finanzas: implementada (2026-11-04).
 - Evolución física, genealogía y ciclo de vida.
 - Alimentación, bebida y sanidad de jaula.
 - Clientes derivados de las ventas.
@@ -80,7 +81,7 @@ Puerta previa a Aves (actualizada 2026-10-31):
 
 - Dashboard, producción de huevos, alertas, reportes y exportación.
 - Dependen de los CRUD transaccionales anteriores.
-- **Pendientes de migración a la API:** Alertas, Inicio y Reportes siguen leyendo el SQLite local (`AlertasRepository`, `DashboardRepository`, `ReportesRepository`). Mientras tanto no ven los datos de la nube (p. ej. las alertas "Sin alimentación registrada hoy" no ven los cuidados de jaula) y dos cuentas en el mismo teléfono comparten los contadores de Inicio.
+- **Pendientes de migración a la API:** Alertas, Inicio, Reportes y Clientes siguen leyendo el SQLite local (`AlertasRepository`, `DashboardRepository`, `ReportesRepository`). Mientras tanto no ven los datos de la nube (p. ej. las alertas "Sin alimentación registrada hoy" no ven los cuidados de jaula) y dos cuentas en el mismo teléfono comparten los contadores de Inicio.
 
 ### Fase 7 — Reemplazo de los conectores locales del móvil por REST
 

@@ -4,9 +4,46 @@
 
 ## Estado
 
-borrador (revisado 2026-11-04 contra el código V1, rama `trabajo/migracion-nube`). Alcance: movimientos financieros manuales y de venta de aves individuales (sin lotes), sin sincronización offline, D1 como fuente de verdad. Las líneas son del árbol de V1 (v1.0.3, `app.json:5`). Nada se ejecutó: es lectura de código; el comportamiento de SQLite que se cita es el documentado del motor y se marca donde hay que verificarlo en una prueba.
+implementada (2026-11-04, rama `trabajo/migracion-nube`). Pendiente solo la comprobación en el teléfono físico y, en la fase 6, que Inicio, Reportes, Clientes y Alertas lean de la API (ver "Implementación y pendientes"). Las secciones de abajo conservan el análisis de V1 con el que se diseñó; donde dicen "propuesto" o "falta", prevalece "Implementación y pendientes" y el código.
 
-Estado de D1 al redactar: `movimientos_financieros` y `bajas_ave` **ya existen** (migración `0010`, `api/migrations/0010_bajas.sql:24-84`); Bajas ya escribe las dos filas de cada venta (`api/src/aves/aves.repository.ts:246-291`). **Falta** solo `movimientos_financieros_historial` (migración `0011`) y la API/cliente de Finanzas.
+Alcance: movimientos financieros manuales y de venta de aves individuales (sin lotes), sin sincronización offline, D1 como fuente de verdad. Las líneas son del árbol de V1 (v1.0.3, `app.json:5`).
+
+Estado de D1 al redactar el análisis: `movimientos_financieros` y `bajas_ave` ya existían (migración `0010`); Bajas escribe las dos filas de cada venta (`api/src/aves/aves.repository.ts:246-291`). La migración `0011` añadió `movimientos_financieros_historial`.
+
+## Implementación y pendientes
+
+**Commits locales:** `e7198f3` (docs de `CLAUDE.md` y la regla de migraciones), `7d6adbe` (API, migración `0011` y cliente), `5ce9ac3` (casos de datos `13-finanzas`, borrado del historial en la limpieza y guarda de `NaN` en el cliente) y `ca9cd7b` (flujos de pantalla `95-finanzas-movimientos` y `96-finanzas-correccion-venta`).
+
+**Implementado**
+- Migración `api/migrations/0011_finanzas_historial.sql` (`movimientos_financieros_historial`, índice `ix_movimientos_historial_movimiento`). Aplicada en local, en integración y en la base remota de pruebas (`--env test`); Worker de pruebas desplegado. Ver incidencia 7403 en `estado-actual.md`.
+- API en `api/src/finanzas/` (routes, factory, service, repository, types), 11 endpoints bajo `/api/v1/criaderos/:criaderoId/finanzas`: `GET /resumen?periodo=`, `GET /movimientos`, `POST /ingresos`, `POST /egresos`, `GET /movimientos/:id`, `PUT /movimientos/:id`, `GET /movimientos/:id/historial`, `GET /ventas/:bajaId`, `POST /ventas/:bajaId/correccion`, `GET /consolidado/categorias?periodo=` y `GET /consolidado/mensual?limite=`.
+- Cliente `src/repositories/FinanzasRepository.{js,sqlite.js,api.js}` con fachada y `src/api/finanzasApi.js`. `.api.js` exporta 11 funciones; `obtenerIngresos` y `obtenerEgresos` se omiten (sin llamadores) y en `.sqlite.js` queda el código de V1.
+- Sin excepciones a pantallas V1 (`git diff -- src/screens` vacío): siguen siendo seis.
+
+**Pruebas (2026-11-04)**
+- 285 unitarias/HTTP y 119 de integración (antes 248 y 84); también pasan con Node 22.23.4 (`npx node@22`).
+- Paridad real con V1: `api/test/integration/finanzas.paridad-v1.d1.test.ts` ejecuta el código REAL de V1 (`FinanzasRepository.sqlite.js`) sobre `better-sqlite3` en memoria con un adaptador de expo-sqlite y lo compara con la API (mismos datos, relojes fijos): 235 comparaciones `toStrictEqual`, 0 diferencias. Cubre 515 movimientos (15 variados y 500 pseudoaleatorios), el resumen con 6 periodos y 7 relojes de borde (mes, año, bisiesto), el consolidado por categoría (5 periodos x 4 relojes), el mensual con límites (`undefined`, 12, 0, "x", 3, 1, 500, -1, "5", `null`), listado, movimiento por id, venta por baja, historial, 7 altas manuales, 16 ediciones y 12 correcciones de venta. Normalizaciones admitidas: ids (INTEGER en V1, UUID en V2), camelCase a snake_case, `fecha_creacion` y el id del ave dentro de `detalle`.
+- `/probar datos` 87/87 en 157 s (informe `2026-11-04-145000-datos`); `/probar smoke` verde en 110 s (informe `2026-11-04-145005-smoke`); flujos `95` (156 s) y `96` (139 s) PASO.
+- Resultado de `/probar completo`: pendiente.
+- Revisor de arquitectura: APROBADO con un hallazgo importante (I-1: un `NaN` se guardaba como 0 en ingresos y egresos), corregido: la API rechaza `valor` `null`/ausente con 400. M-1 (corrección de venta con `NaN`): V1 lanza `VALOR_INVALIDO` antes de la transacción (`FinanzasRepository.sqlite.js:781-810` y `:403-430`; `numeroNoNegativo` devuelve 0 para null/undefined/'' y `null` para no finito o negativo); el `NaN` viaja por JSON como `null` y el servidor lo tomaba como 0. Se resolvió en el cliente: `corregirVentaFinanciera` lanza `Error('VALOR_INVALIDO')` antes de enviar si recibe un `number` no finito (probado en el caso de datos).
+
+**Resolución de las dudas del usuario (2026-11-04)**
+- Excepciones a pantallas V1 por errores de red: **ninguna**; replicar V1 tal cual. `FinanzasScreen` y `NuevoMovimientoFinancieroScreen` quedan con `console.error` y sin aviso, y `cargarCategorias` sin `try/catch`.
+- Orden de implementación: el módulo completo de una vez.
+- `obtenerIngresos` y `obtenerEgresos`: omitidas.
+
+**Excepciones técnicas añadidas por la implementación** (además de las de la sección "Excepciones técnicas por pasar a online")
+- Los 400 técnicos de la API: `valor` no numérico, `null` o ausente en altas y edición, y cuerpo que no es un objeto. V1 no los daba en el repositorio; se anotan como excepción técnica.
+- Diferencia residual: `registrarIngreso`/`registrarEgreso` con `NaN` desde la pantalla (`'1,5'`, FIN-13). V1 fallaba al insertar (resultado exacto sin confirmar); en V2 el servidor responde 400. En ambos casos la pantalla solo hace `console.error` y no guarda.
+
+**Limitaciones conocidas**
+- Inicio (`DashboardRepository`), Reportes (`ReportesRepository`), Clientes y Alertas (`AlertasRepository`) siguen en SQLite y no ven finanzas ni ventas de la nube hasta la fase 6. Necesitarán `GET /resumen?periodo=MES|TODO` o `GET /movimientos` (tabla "Qué leen de Finanzas los repositorios que siguen en SQLite").
+- `CREACION_POR_CORRECCION` no se puede provocar con la API pública (Bajas siempre crea el `ENVIO_AVE`): solo está cubierto por la prueba de integración.
+- Periodos en UTC (como V1): un movimiento creado de noche en Ecuador puede caer en el mes siguiente.
+- Errores de red sin aviso en `FinanzasScreen` y `NuevoMovimientoFinancieroScreen` (V1 solo hace `console.error`; decisión del usuario de no tocarlas). `cargarCategorias` sin `try/catch`.
+- Los flujos del emulador no cubren el movimiento de envío por separado, el filtro por tipo ni las categorías propias.
+
+**Pendiente en el teléfono físico:** teclado numérico con punto y coma decimal, modo avión al abrir, guardar y corregir, hora local frente a UTC cerca de fin de mes y scroll con muchos movimientos.
 
 ## Fuente V1
 
@@ -234,7 +271,7 @@ Consumo (`guardarVenta`, `EditarMovimientoFinancieroScreen.js:253-309`): `parseN
 | `EditarMovimientoFinancieroScreen` | `obtenerMovimientoPorId` (`:70`), catálogo (`:85-95`), `obtenerHistorialMovimiento` (`:112`), `obtenerVentaPorBajaId` (`:124`), `actualizarMovimientoManual` (`:218`), `corregirVentaFinanciera` (`:280`) | `ActivityIndicator` mientras `loading` (`:312-321`); `disabled={guardando}` y texto `Guardando...` (`:435,536`) | `cargar` **sí** (`:65-158`), `guardarManual` **sí** (`:215-249`), `guardarVenta` **sí** (`:277-308`); todos con `console.error` + `Alert` | `Error` / `No fue posible cargar el movimiento.`; `Categoría requerida` / `Seleccione una categoría.`; `Valor inválido` / `Ingrese un valor mayor a cero.`; `Movimiento actualizado` / `Los cambios fueron guardados y quedaron registrados en el historial de correcciones.`; `Error` / `No fue posible actualizar el movimiento.`; `Valor inválido` / `El valor del ave y el valor de envío deben ser números mayores o iguales a cero.`; `Venta corregida` / `Se actualizaron la venta y sus movimientos financieros relacionados.`; `Error` / `No fue posible corregir la venta.` |
 
 - Si `cargar` falla en Editar, tras el `Alert` la pantalla queda con `movimiento = null` y muestra `Movimiento no encontrado.` (`:324-332`).
-- **Ausencias de manejo de errores de red** (evidencia de arriba; la decisión de tratarlas como excepción es del usuario, ver DUDA PARA EL USUARIO 2): (a) `FinanzasScreen.cargar` (`catch` sin `Alert`); (b) `NuevoMovimientoFinancieroScreen.guardar` (`catch` sin `Alert`); (c) `NuevoMovimientoFinancieroScreen.cargarCategorias` (sin `try/catch`). `EditarMovimientoFinancieroScreen` no tiene ausencias.
+- **Ausencias de manejo de errores de red** (evidencia de arriba; el usuario decidió no tratarlas como excepción, ver "Decisiones del usuario"): (a) `FinanzasScreen.cargar` (`catch` sin `Alert`); (b) `NuevoMovimientoFinancieroScreen.guardar` (`catch` sin `Alert`); (c) `NuevoMovimientoFinancieroScreen.cargarCategorias` (sin `try/catch`). `EditarMovimientoFinancieroScreen` no tiene ausencias.
 - IDs: ninguna de las tres pantallas aplica `Number()`/`parseInt` a `id`, `origen_id` ni `ave_id` (revisadas completas); los `id` solo son `key`, parámetro de navegación `movimientoId` y comparaciones `categoria?.codigo === item.codigo`. No hace falta excepción por UUID.
 
 ## Catálogo `CATEGORIAS_FINANCIERAS`
@@ -347,7 +384,7 @@ No hacen falta endpoints nuevos de Finanzas para esos lectores. `BackupRepositor
 - **`400 VALIDATION_ERROR` por tipos del cuerpo** (cuerpo no JSON, `detalle` no texto, importe no serializable): solo para enlazar a D1 sin 500; no es regla de negocio (en V1 `detalle.trim` ya fallaría con `TypeError`).
 - **Errores de red y autenticación** (401, 403, `CRIADERO_NOT_FOUND`, caída de red): los propaga el cliente REST (`ApiError`).
 - **Texto `Venta de ave ${ave_id}`** lleva el UUID de V2 (consecuencia de UUID v7).
-- Las excepciones a pantallas V1 por errores de red **no están aprobadas**: ver DUDA PARA EL USUARIO 2.
+- Las excepciones a pantallas V1 por errores de red **no se aprobaron** (decisión del usuario, 2026-11-04): ver "Decisiones del usuario".
 
 ## Casos de paridad
 
@@ -413,12 +450,14 @@ Convención: importes con decimales (`12.5`, `3.25`, `0.1`, `0.2`, `19.99`, `123
 7. **Dos movimientos de venta pueden quedar con `valor 0`** (el de envío se crea siempre): las listas los muestran como `+$0.00`. Se replica.
 8. **Texto `Venta de ave ${ave_id}`** llevará un UUID largo en V2 (en V1 un entero), tanto en Bajas como en la corrección; se replica el texto con el id.
 
-## DUDA PARA EL USUARIO
+## Decisiones del usuario (resueltas 2026-11-04)
 
-1. **Excepciones a pantallas V1 por errores de red** (V1 no las tiene; precedente: las ya aprobadas en Alimentación, Bebida, Salud y Producción de huevos). Decide el usuario cuáles se aprueban; esta spec no las aplica:
+Las tres preguntas siguientes quedaron resueltas: (1) ninguna excepción a pantallas V1; (2) módulo completo de una vez; (3) `obtenerIngresos`/`obtenerEgresos` omitidas. Se conserva el texto original como constancia del análisis.
+
+1. **Excepciones a pantallas V1 por errores de red** (V1 no las tiene; precedente: las ya aprobadas en Alimentación, Bebida, Salud y Producción de huevos). **Resuelta: ninguna se aprueba.** Constancia de los casos analizados:
    - `FinanzasScreen.js:137-144`: el `catch` de `cargar` solo hace `console.error`; con la red caída muestra el estado previo (ceros en la primera carga) como si no hubiera datos. La pantalla no importa `Alert`. Mismo caso que HUE-25 (`ProduccionHuevosScreen`, ya aprobado).
    - `NuevoMovimientoFinancieroScreen.js:184-191`: el `catch` de `guardar` solo hace `console.error`; con la red caída el usuario no ve nada y el botón se rehabilita (posible doble envío sin saber si guardó).
    - `NuevoMovimientoFinancieroScreen.js:76-96`: `cargarCategorias` sin `try/catch` y sin `await` en `useEffect` (`:60-64`); con la red caída hay una promesa rechazada sin manejar y no aparecen categorías.
    - Sin excepción necesaria: `EditarMovimientoFinancieroScreen.js` (ya tiene `try/catch` con `Alert` en `:145-154,239-245,298-304`) y los IDs UUID (ninguna pantalla usa `Number()`/`parseInt` sobre ids).
-2. **Orden de implementación** (decisión de plan; ya no hay dependencia con Bajas porque `bajas_ave` y `movimientos_financieros` existen): ¿Finanzas completa de una vez (con `GET /ventas/:bajaId` y la corrección) o por tramos?
-3. **`obtenerIngresos`/`obtenerEgresos`**: esta spec las **omite** por no tener llamadores (criterio de Salud). Si el usuario prefiere implementarlas, serían `GET /movimientos?tipo=INGRESO|EGRESO` sin la clave `tipo`.
+2. **Orden de implementación** (resuelta: módulo completo de una vez; decisión de plan; ya no hay dependencia con Bajas porque `bajas_ave` y `movimientos_financieros` existen): ¿Finanzas completa de una vez (con `GET /ventas/:bajaId` y la corrección) o por tramos?
+3. **`obtenerIngresos`/`obtenerEgresos`** (resuelta: omitidas): esta spec las **omite** por no tener llamadores (criterio de Salud). Si el usuario prefiere implementarlas, serían `GET /movimientos?tipo=INGRESO|EGRESO` sin la clave `tipo`.
