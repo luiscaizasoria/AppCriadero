@@ -29,7 +29,7 @@ $PerfilesEscritura = @{
     'specs'   = @{ Permitir = @('^documents/specs/'); Denegar = @() }
     'd1'      = @{ Permitir = @('^api/migrations/', '^documents/specs/'); Denegar = @() }
     'api'     = @{ Permitir = @('^api/(src|test)/'); Denegar = @() }
-    'pruebas' = @{ Permitir = @('^pruebas/movil/flujos/'); Denegar = @() }
+    'pruebas' = @{ Permitir = @('^pruebas/movil/flujos/', '^pruebas/datos/'); Denegar = @('^pruebas/datos/lib/limpiar\.mjs$') }
     'cliente' = @{
         Permitir = @('^src/(repositories|api|config|services)/', '^src/screens/acceso/', '^src/navigation/AccesoNavigator\.js$')
         Denegar  = @('^src/repositories/.*\.sqlite\.js$')
