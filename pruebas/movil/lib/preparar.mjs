@@ -3,6 +3,11 @@
 // Imprime JSON {email,password,criadero,...}. Nada se escribe en archivos del repositorio.
 import { registrar, crearCriaderoHttp, http } from '../../datos/lib/http.mjs';
 import { claveAleatoria, DOMINIO } from '../../datos/lib/entorno.mjs';
+import { contadorRed } from '../../datos/lib/red.mjs';
+
+// Reintentos (2, espera de 3 s) solo para errores de red en las llamadas por API; el contador lo lee el ejecutor.
+process.env.REINTENTOS_RED = '1';
+process.on('exit', () => console.error(`[red] reintentos=${contadorRed.reintentos}`));
 
 const arg = n => process.argv.find(a => a.startsWith(`--${n}=`))?.split('=')[1];
 const sufijo = Date.now().toString(36);

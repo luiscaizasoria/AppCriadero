@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DOMINIO } from './entorno.mjs';
+import { PATRON_RED, contadorRed } from './red.mjs';
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const cwd = path.join(raiz, 'api');
@@ -45,11 +46,18 @@ const CONSULTA = [
 ].join(', ');
 
 function wrangler(extra) {
-    return spawnSync(
-        'npx',
-        ['wrangler', 'd1', 'execute', 'criadero-kikirikis-test', '--remote', '--env', 'test', '--json', ...extra],
-        { cwd, encoding: 'utf8', shell: true, timeout: 120000 }
-    );
+    // Hasta 2 reintentos (espera de 3 s) SOLO si la salida es un error de red; un error de la API (p. ej. 7403) no se reintenta.
+    for (let i = 0; ; i++) {
+        const r = spawnSync(
+            'npx',
+            ['wrangler', 'd1', 'execute', 'criadero-kikirikis-test', '--remote', '--env', 'test', '--json', ...extra],
+            { cwd, encoding: 'utf8', shell: true, timeout: 120000 }
+        );
+        const texto = `${r.stdout ?? ''}${r.stderr ?? ''}`;
+        if (r.status === 0 || !PATRON_RED.test(texto) || i >= 2) return r;
+        contadorRed.reintentos++;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 3000);
+    }
 }
 
 export function recuento() {

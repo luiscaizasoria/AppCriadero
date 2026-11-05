@@ -7,6 +7,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { urlApi } from '../datos/lib/entorno.mjs';
 import { limpiarCuentasDesechables } from '../datos/lib/limpiar.mjs';
+import { comprobarConectividadPc, tablaLatencias, PATRON_RED, contadorRed, dormir } from '../datos/lib/red.mjs';
 import { asegurarEmulador, asegurarExpoGo, asegurarMetro, verificarEntornoEmulador, infoMetro, metroEstado, adb, LOG_METRO } from './lib/entorno-movil.mjs';
 
 const aqui = path.dirname(fileURLToPath(import.meta.url));
@@ -63,18 +64,47 @@ function correrFlujo(flujo, intento = 1) {
 }
 
 const t0 = Date.now();
+// Comprobacion previa de conectividad PC -> Worker: 10 GET /health separadas 3 s, exige >= 9 respuestas 200.
+// Si no se cumple: espera 5 min y repite hasta 3 veces; despues aborta con FALLO DE RED sin lanzar flujos.
+// SIN_PRECOMPROBACION_RED=1 (y RED_* para acortar tiempos) existen solo para probar este ejecutor de forma controlada.
+const SIN_PRECOMPROBACION = process.env.SIN_PRECOMPROBACION_RED === '1';
+const conectividad = { intentos: [] };
+if (!SIN_PRECOMPROBACION) {
+    const REPETICIONES = 3;
+    const ESPERA_MS = Number(process.env.RED_ESPERA_MS || 5 * 60 * 1000);
+    for (let intento = 0; intento <= REPETICIONES; intento++) {
+        const c = await comprobarConectividadPc(URL_API, {
+            peticiones: Number(process.env.RED_PETICIONES || 10),
+            separacionMs: Number(process.env.RED_SEPARACION_MS || 3000),
+            minimo: Number(process.env.RED_MINIMO || 9)
+        });
+        conectividad.intentos.push(c);
+        if (c.ok) break;
+        console.log(`Conectividad insuficiente: ${c.oks} de ${c.filas.length} respuestas 200 (comprobacion ${intento + 1}).`);
+        if (intento === REPETICIONES) {
+            const causa = `el PC no alcanza el Worker de pruebas: ${c.oks} de ${c.filas.length} peticiones dieron 200 tras ${intento + 1} comprobaciones`;
+            const lineas = ['EJECUCIÓN INCOMPLETA POR RED', '', `# Flujos moviles (${modo}) - ${new Date().toISOString()}`, '', `FALLO DE RED: ${causa}`, `Hora: ${new Date().toISOString()}`, 'No se lanzo ningun flujo.', '',
+                ...conectividad.intentos.flatMap((x, i) => [`## Comprobacion ${i + 1}`, '', ...tablaLatencias(x), ''])];
+            fs.writeFileSync(path.join(carpeta, 'resumen.md'), lineas.join('\n'));
+            console.log(lineas.join('\n'));
+            console.log(`Informe: ${path.relative(process.cwd(), carpeta)}`);
+            process.exit(1);
+        }
+        await dormir(ESPERA_MS);
+    }
+}
 const entorno = { emulador: await asegurarEmulador() };
 asegurarExpoGo();
 entorno.metro = await asegurarMetro(URL_API);
 try {
-    entorno.red = (await verificarEntornoEmulador(URL_API)).desdeEmulador;
+    entorno.red = SIN_PRECOMPROBACION ? 'omitida (prueba controlada del ejecutor)' : (await verificarEntornoEmulador(URL_API)).desdeEmulador;
     const metro = infoMetro();
     if (!metro) throw new Error('nadie escucha en el puerto de Metro');
     if (entorno.metro === 'arrancado' && metro.inicioMs < t0 - 5000) throw new Error(`el Metro que sirve la app (pid ${metro.pid}) no es el que arranco el ejecutor`);
     entorno.metroInfo = `pid ${metro.pid} (${metro.nombre}), desde ${new Date(metro.inicioMs).toISOString()}`;
 } catch (e) {
-    const msg = `FALLO DE ENTORNO: ${e.message}`;
-    fs.writeFileSync(path.join(carpeta, 'resumen.md'), `# Flujos moviles (${modo}) - ${new Date().toISOString()}
+    const msg = `${e.tipo === 'RED' ? 'FALLO DE RED' : 'FALLO DE ENTORNO'}: ${e.message}`;
+    fs.writeFileSync(path.join(carpeta, 'resumen.md'), `${e.tipo === 'RED' ? 'EJECUCIÓN INCOMPLETA POR RED' + String.fromCharCode(10) + String.fromCharCode(10) : ''}# Flujos moviles (${modo}) - ${new Date().toISOString()}
 
 ${msg}
 `);
@@ -127,6 +157,9 @@ function guardarEvidencia(x, offsetMetro, ini) {
 const resultados = [];
 let abrirFallidosSeguidos = 0;
 let abortar = null;
+let abortarRed = null;
+let redSeguidos = 0;
+let reintentosPreparar = 0;
 for (const [indice, flujo] of listarFlujos().entries()) {
     const offsetMetro = fs.existsSync(LOG_METRO) ? fs.statSync(LOG_METRO).size : 0;
     adb('logcat', '-c');
@@ -135,15 +168,35 @@ for (const [indice, flujo] of listarFlujos().entries()) {
     const paso = x.r.status === 0;
     // Fallo al abrir la app (nunca llego a una pantalla de la app): es de entorno, no una regresion.
     const abrirFallo = !paso && /abrir-app\.yaml\.\.\. FAILED|"Continue" is visible\.\.\. FAILED/.test(x.salida);
+    // Fallo de RED hacia el Worker: la preparacion por API no conecta (fetch failed, ConnectTimeoutError, ...) o la app/el
+    // emulador no alcanzan el Worker. Nunca se asigna a respuestas HTTP 4xx/5xx ni a fallos de pantalla con la red sana.
+    const lineaRed = x.salida.split('\n').find(l => /ENOTFOUND|ConnectTimeoutError|UND_ERR_CONNECT_TIMEOUT|ECONNRESET|EAI_AGAIN/.test(l)) ?? x.salida.split(String.fromCharCode(10)).find(l => PATRON_RED.test(l));
+    const redPreparar = !paso && x.r.status === 3 && Boolean(lineaRed);
+    for (const m of x.salida.matchAll(/\[red\] reintentos=(\d+)/g)) reintentosPreparar += Number(m[1]);
+    let redPantalla = null;
+    if (!paso && !abrirFallo && !redPreparar && !flujo.esperadoFallar) {
+        if (textosPantalla().textos.some(t => /No fue posible conectar con el servidor/.test(t))) redPantalla = 'la app muestra "No fue posible conectar con el servidor"';
+        else {
+            try { await verificarEntornoEmulador(URL_API, 1); } catch (e) { if (e.tipo === 'RED') redPantalla = `el emulador no alcanza el Worker (${e.message})`; }
+        }
+    }
+    const redFallo = Boolean(redPreparar || redPantalla);
     let estado;
-    if (flujo.esperadoFallar) estado = paso ? 'MIGRADO, QUITAR ETIQUETA' : 'FALLO COMO SE ESPERABA';
+    if (redFallo) estado = 'FALLO DE RED';
+    else if (flujo.esperadoFallar) estado = paso ? 'MIGRADO, QUITAR ETIQUETA' : 'FALLO COMO SE ESPERABA';
     else estado = paso ? 'PASO' : ((x.infra || abrirFallo) ? 'FALLO DE ENTORNO' : 'REGRESION');
     if (!paso) guardarEvidencia(x, offsetMetro, ini);
     if (abrirFallo) await evidenciaExpoGo(x.dirMaestro);
-    const falla = x.salida.split('\n').filter(l => /FAILED|not found|is false/.test(l)).slice(0, 2).join(' | ').slice(0, 220);
+    const falla = (redPreparar ? lineaRed.trim().slice(0, 220) : (redPantalla || '')) || x.salida.split('\n').filter(l => /FAILED|not found|is false/.test(l)).slice(0, 2).join(' | ').slice(0, 220);
     resultados.push({ flujo: flujo.nombre, modulo: flujo.modulo, estado, seg: x.seg, intentos: x.intentos, falla: paso ? '' : falla });
     console.log(`${estado.padEnd(26)} ${flujo.nombre} (${x.seg} s)${paso ? '' : '\n   ' + falla}`);
     abrirFallidosSeguidos = abrirFallo ? abrirFallidosSeguidos + 1 : 0;
+    redSeguidos = redFallo ? redSeguidos + 1 : 0;
+    if (redSeguidos >= 2) {
+        abortarRed = `dos flujos seguidos no alcanzan el Worker (${redPreparar ? lineaRed.trim().slice(0, 160) : redPantalla}); se ejecutaron ${resultados.length} flujos`;
+        console.log(`FALLO DE RED: ${abortarRed}. Se aborta la ejecucion.`);
+        break;
+    }
     if (abrirFallo && (indice === 0 || abrirFallidosSeguidos >= 2)) {
         abortar = indice === 0
             ? 'el primer flujo no pudo abrir la app en Expo Go (abrir-app.yaml)'
@@ -156,29 +209,37 @@ try { tail.kill(); spawnSync('taskkill', ['/F', '/T', '/PID', String(tail.pid)])
 
 const limpieza = sinLimpiar ? { ok: true, detalle: 'omitida' } : limpiarCuentasDesechables();
 const cuenta = e => resultados.filter(r => r.estado === e).length;
+const limpiezaRed = !limpieza.ok && PATRON_RED.test(String(limpieza.detalle ?? ''));
+const fallosRed = cuenta('FALLO DE RED') + (limpiezaRed ? 1 : 0);
+const reintentosRed = reintentosPreparar + contadorRed.reintentos;
 const regresiones = cuenta('REGRESION') + cuenta('FALLO DE ENTORNO');
 const total = ((Date.now() - t0) / 1000 / 60).toFixed(1);
 const pendientes = [...new Set(resultados.filter(r => r.estado === 'FALLO COMO SE ESPERABA' && r.modulo).map(r => r.modulo))];
 const lineaPendiente = pendientes.length ? `PENDIENTE DE MIGRAR: ${pendientes.join(', ')}` : null;
-const veredicto = regresiones > 0 ? 'ROJO' : (pendientes.length ? 'SIN REGRESIONES, CON MODULOS PENDIENTES (no es verde)' : 'VERDE');
+const veredicto = regresiones > 0 ? 'ROJO' : (fallosRed > 0 ? 'INCOMPLETA POR RED (no es verde)' : pendientes.length ? 'SIN REGRESIONES, CON MODULOS PENDIENTES (no es verde)' : 'VERDE');
 const resumen = [
+    ...(fallosRed ? ['EJECUCIÓN INCOMPLETA POR RED', ''] : []),
     ...(lineaPendiente ? [lineaPendiente, ''] : []),
     `# Flujos moviles (${modo}) - ${new Date().toISOString()}`,
     '',
+    ...(abortarRed ? [`FALLO DE RED: ${abortarRed}. Ejecucion abortada; los flujos restantes no se lanzaron.`, ''] : []),
     ...(abortar ? [`FALLO DE ENTORNO: ${abortar}. Ejecucion abortada; los flujos restantes no se lanzaron.`, ""] : []),
     `Resultado: **${veredicto}** en ${total} min. Entorno: emulador ${entorno.emulador}, Metro ${entorno.metro} (${entorno.metroInfo ?? 'sin datos'}), red desde el emulador: ${entorno.red ?? 'sin datos'}.`,
-    `Paso: ${cuenta('PASO')} | Regresion: ${cuenta('REGRESION')} | Entorno: ${cuenta('FALLO DE ENTORNO')} | Fallo como se esperaba: ${cuenta('FALLO COMO SE ESPERABA')} | Migrado, quitar etiqueta: ${cuenta('MIGRADO, QUITAR ETIQUETA')}`,
-    `Limpieza de cuentas desechables: ${limpieza.ok ? 'hecha' : 'FALLO'} ${JSON.stringify(limpieza.recuento ?? limpieza.detalle ?? '')}`,
+    `Paso: ${cuenta('PASO')} | Regresion: ${cuenta('REGRESION')} | Fallo de red: ${cuenta('FALLO DE RED')} | Entorno: ${cuenta('FALLO DE ENTORNO')} | Fallo como se esperaba: ${cuenta('FALLO COMO SE ESPERABA')} | Migrado, quitar etiqueta: ${cuenta('MIGRADO, QUITAR ETIQUETA')}`,
+    `Reintentos de red: ${reintentosRed} (preparacion por API ${reintentosPreparar}, limpieza ${contadorRed.reintentos})`,
+    `Limpieza de cuentas desechables: ${limpieza.ok ? 'hecha' : 'FALLO'}${limpiezaRed ? ' POR RED (ejecutar: node pruebas/datos/ejecutar.mjs --solo-limpiar)' : ''} ${JSON.stringify(limpieza.recuento ?? limpieza.detalle ?? '')}`,
     '',
     '| Flujo | Resultado | Segundos | Detalle |', '|---|---|---|---|',
     ...resultados.map(r => `| ${r.flujo} | ${r.estado} | ${r.seg} | ${r.falla.replace(/\|/g, '/')} |`),
     '',
+    ...(conectividad.intentos.length ? ['', ...tablaLatencias(conectividad.intentos[conectividad.intentos.length - 1]), ''] : []),
     'En cada flujo fallido: capturas de Maestro, pantalla-final.png, logcat.txt, metro.txt e intervalo.txt (cruzar con wrangler-tail.log).'
 ];
 fs.writeFileSync(path.join(carpeta, 'resumen.md'), resumen.join('\n'));
-fs.writeFileSync(path.join(carpeta, 'resultados.json'), JSON.stringify({ modo, entorno, resultados, limpieza }, null, 2));
+fs.writeFileSync(path.join(carpeta, 'resultados.json'), JSON.stringify({ modo, entorno, resultados, limpieza, reintentosRed, conectividad }, null, 2));
+if (fallosRed) console.log('EJECUCIÓN INCOMPLETA POR RED');
 if (lineaPendiente) console.log(`
 ${lineaPendiente}`);
 console.log(`\n${veredicto} (${modo}): ${cuenta('PASO')} pasaron, ${regresiones} regresiones, ${cuenta('FALLO COMO SE ESPERABA')} fallos esperados, ${cuenta('MIGRADO, QUITAR ETIQUETA')} para quitar etiqueta, ${total} min`);
 console.log(`Informe: ${path.relative(process.cwd(), carpeta)}`);
-process.exit(regresiones === 0 ? 0 : 1);
+process.exit(regresiones === 0 && fallosRed === 0 ? 0 : 1);

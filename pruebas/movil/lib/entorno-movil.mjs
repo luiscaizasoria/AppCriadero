@@ -47,8 +47,10 @@ export async function verificarEntornoEmulador(urlApi, limiteMs = 90000) {
     const host = new URL(urlApi).hostname;
     const t0 = Date.now();
     let causa = 'sin comprobar';
+    let tipo = 'ENTORNO';
     while (Date.now() - t0 < limiteMs) {
         causa = null;
+        tipo = 'ENTORNO';
         const paquetes = adb('shell', 'pm', 'list', 'packages', '|', 'head', '-1');
         if (adb('shell', 'getprop', 'sys.boot_completed') !== '1') causa = 'el emulador no termino de arrancar (sys.boot_completed distinto de 1)';
         else if (!paquetes.startsWith('package:')) causa = `el servicio de paquetes del emulador no responde (pm list packages: "${paquetes.slice(0, 60)}")`;
@@ -61,13 +63,16 @@ export async function verificarEntornoEmulador(urlApi, limiteMs = 90000) {
             const r = spawnSync('adb', ['shell', peticion], { encoding: 'utf8' });
             const linea = (r.stdout || '').split('\n')[0].trim();
             if (/^HTTP\/1\.[01] (200|30[1278])/.test(linea)) return { desdeEmulador: linea };
+            tipo = 'RED';
             causa = linea
                 ? `el Worker respondio desde el emulador algo inesperado: "${linea.slice(0, 60)}"`
                 : 'sin red desde el emulador hacia el Worker de pruebas (DNS o salida a Internet: nc no obtuvo respuesta)';
         }
         await espera(3000);
     }
-    throw new Error(causa);
+    const e = new Error(causa);
+    e.tipo = tipo; // 'RED' si el emulador no llega al Worker; 'ENTORNO' en lo demas (emulador, adb, paquetes)
+    throw e;
 }
 
 /** Proceso que escucha en el puerto de Metro y desde cuando (para comprobar que es el Metro del ejecutor). */

@@ -1,16 +1,19 @@
 // HTTP crudo (sin sesion) para comprobar status y codigos de error de la API.
 import { urlApi } from './entorno.mjs';
+import { conReintentosRed } from './red.mjs';
 
 export async function http(metodo, ruta, { token, body } = {}) {
     const cabeceras = { Accept: 'application/json' };
     if (body !== undefined) cabeceras['Content-Type'] = 'application/json';
     if (token) cabeceras.Authorization = `Bearer ${token}`;
 
-    const r = await fetch(`${urlApi()}${ruta}`, {
+    const llamar = () => fetch(`${urlApi()}${ruta}`, {
         method: metodo,
         headers: cabeceras,
         body: body === undefined ? undefined : JSON.stringify(body)
     });
+    // Solo errores de red (fetch lanza); un 4xx/5xx es una respuesta y nunca se reintenta.
+    const r = process.env.REINTENTOS_RED === '1' ? await conReintentosRed(llamar) : await llamar();
 
     let json = null;
     try { json = await r.json(); } catch { /* sin cuerpo */ }
