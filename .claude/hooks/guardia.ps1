@@ -30,6 +30,7 @@ $PerfilesEscritura = @{
     'd1'      = @{ Permitir = @('^api/migrations/', '^documents/specs/'); Denegar = @() }
     'api'     = @{ Permitir = @('^api/(src|test)/'); Denegar = @() }
     'pruebas' = @{ Permitir = @('^pruebas/movil/flujos/', '^pruebas/datos/'); Denegar = @('^pruebas/datos/lib/limpiar\.mjs$') }
+    'claude'  = @{ Permitir = @('^\.claude/(agents|skills|rules)/'); Denegar = @('^\.claude/agents/mantenimiento-claude\.md$', '^\.claude/hooks/', '^\.claude/settings.*\.json$') }
     'cliente' = @{
         Permitir = @('^src/(repositories|api|config|services)/', '^src/screens/acceso/', '^src/navigation/AccesoNavigator\.js$')
         Denegar  = @('^src/repositories/.*\.sqlite\.js$')

@@ -49,6 +49,7 @@ Ante una contradicción prevalece, de mayor a menor:
 - `probador-integracion-api`: levanta el Worker local con una D1 temporal, hace llamadas HTTP reales, comprueba D1 y los errores de la spec, limpia y reporta.
 - `probador-movil`: evalúa y define cómo validar la app contra la API (emulador Android, adb, Maestro) y reduce lo que exige el teléfono físico a una lista corta.
 - `redactor-documentacion`: mantiene `documents/` coherente con el código y con la regla del proyecto.
+- `mantenimiento-claude`: aplica cambios concretos en `.claude/agents/`, `.claude/skills/` y `.claude/rules/` (nunca su propio archivo, `hooks/` ni `settings*.json`; Bash solo lectura de git). Lo invoca el usuario cuando hace falta; el perfil `claude` de `.claude/hooks/guardia.ps1` lo restringe.
 
 ### Flujo por módulo y qué le toca al usuario
 

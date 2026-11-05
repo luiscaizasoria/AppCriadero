@@ -19,6 +19,7 @@ $PerfilesPorAgente = @{
     'ejecutor-de-pruebas'        = @{ Bash = 'ejecutor' }
     'probador-integracion-api'   = @{ Bash = 'integracion' }
     'probador-movil'             = @{ Escritura = 'pruebas'; Bash = 'movil' }
+    'mantenimiento-claude'       = @{ Escritura = 'claude'; Bash = 'lectura-git' }
 }
 
 $entrada = [Console]::In.ReadToEnd()
