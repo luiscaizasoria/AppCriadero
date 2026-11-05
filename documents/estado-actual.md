@@ -4,7 +4,7 @@ Se carga solo desde `CLAUDE.md` (import). Historial: `documents/bitacora.md`. Ac
 
 ## Rama y reglas de trabajo
 
-- Rama única: `trabajo/migracion-nube` (desde `main`). Último push: `41c2406`. Commits locales sin push: `3defe9f` y la documentación de la sesión 2 del 2026-11-05 (push pendiente de aprobación del usuario). Sin PR; fusión a `main` solo si el usuario lo pide. Cloudflare: solo `--env test` / base de pruebas, con aprobación; nunca `criadero-kikirikis-dev`, `controlgastos-*` ni `delete` sin aprobación.
+- Rama única: `trabajo/migracion-nube` (desde `main`). Último push: `2d16117` (incluye `3defe9f` y `41c2406`; ya no hay pendientes de push anteriores a Clientes). Clientes queda sin push hasta que el orquestador lo empuje. Sin PR; fusión a `main` solo si el usuario lo pide. Cloudflare: solo `--env test` / base de pruebas, con aprobación; nunca `criadero-kikirikis-dev`, `controlgastos-*` ni `delete` sin aprobación.
 
 ## Módulos hechos
 
@@ -21,29 +21,29 @@ Se carga solo desde `CLAUDE.md` (import). Historial: `documents/bitacora.md`. Ac
 | Ciclo de vida (sin migración) | `GET /aves/:aveId/evolucion` | `CicloVidaRepository` | sí (flujo `81`) | no |
 | Bajas (`0010`) | sí (`api/src/aves/`) | `BajaAveRepository` (sin `obtenerBajasAve`) | sí (flujos `90`, `91`) | no |
 | Finanzas (`0011`) | sí (`api/src/finanzas/`) | `FinanzasRepository`, `finanzasApi.js` (sin `obtenerIngresos`/`obtenerEgresos`) | sí (87/87; flujos `95` y `96` en el completo del 2026-11-05) | no |
+| Clientes (sin migración) | sí (`api/src/clientes/`, solo lectura) | `ClientesRepository` | sí (datos 96/96; flujo `98`) | no |
 
-Migraciones `0001`–`0011` aplicadas en local, integración y base remota de pruebas (la siguiente es `0012`). Pruebas (2026-11-04): 285 unitarias/HTTP y 119 de integración (Node 22); paridad de Finanzas con V1: 235 comparaciones, 0 diferencias; `/probar datos` 87/87. `/probar completo` del 2026-11-05 (`2026-11-05-103724-completo`): 19 PASO, 0 regresiones, 1 fallo esperado (dashboard).
+Migraciones `0001`–`0011` aplicadas en local, integración y base remota de pruebas (la siguiente es `0012`). Pruebas (2026-11-05, Node 24 del entorno): 298 unitarias/HTTP y 130 de integración; paridad con V1: Finanzas 235 comparaciones y Clientes 45, 0 diferencias; `/probar datos` 96/96 casos. `/probar completo` del 2026-11-05 (`2026-11-05-103724-completo`): 19 PASO, 0 regresiones, 1 fallo esperado (dashboard).
 
 ## Módulos pendientes (orden)
 
 1. Teléfono: Bajas y Finanzas (teclado numérico, modo avión, hora local frente a UTC, scroll).
-2. Fase 6: Inicio, Reportes, Clientes y Alertas (siguen en SQLite); necesitarán `GET /finanzas/resumen` o `GET /finanzas/movimientos`. Plan pedido; sin código hasta "plan aprobado".
+2. Fase 6, módulo por módulo: Reportes, Alertas e Inicio, en ese orden (siguen en SQLite); necesitarán `GET /finanzas/resumen` o `GET /finanzas/movimientos`. Plan pedido; sin código hasta "plan aprobado".
 3. R2 (fotos; claves propuestas `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`) y Google Sign-In (con `/auth/me` y refresh token).
 
 ## Incidencias recurrentes
 
 - Cloudflare error 7403 en `wrangler d1 migrations apply ... --remote` (2026-11-01 y 2026-11-04). Reintentar; si persiste, `wrangler logout` y `wrangler login` (el usuario pulsa Allow).
 - `/probar completo`: Expo Go "Something went wrong" al abrir (`2026-11-04-150506-completo`, causa no determinada) y cortes de red hacia Cloudflare (`2026-11-04-183443-completo`). El ejecutor hace comprobación previa, reintenta solo al preparar y limpiar y aborta tras dos fallos de red seguidos (`52b9641`).
-- Emulador colgado (2026-11-05: `adb getprop` sin respuesta) o con `pm list packages` en `Broken pipe`. El ejecutor tiene límites de 6 min por flujo y 60 min por ejecución, y una recuperación automática del emulador tras dos FALLO DE ENTORNO seguidos (`3defe9f`). Si no basta: cerrar el ejecutor y los adb, `adb emu kill` y arrancar el AVD con Start-Process desde PowerShell (no con `&` desde bash); ver `pruebas/README.md`.
+- Emulador colgado (2026-11-05: `adb getprop` sin respuesta) o con `pm list packages` en `Broken pipe`. El ejecutor tiene límites de 6 min por flujo y 60 min por ejecución, y una recuperación automática del emulador tras dos FALLO DE ENTORNO seguidos (`3defe9f`). Si no basta: cerrar el ejecutor y los adb, `adb emu kill` y arrancar el AVD con Start-Process desde PowerShell (no con `&` desde bash); ver `pruebas/README.md`. Un flujo puede llevar `# SEGUNDA-CUENTA` para que el ejecutor le pase EMAIL2, PASSWORD2 y CRIADERO2 (cuenta desechable con criadero vacío).
 
 ## Limitaciones conocidas
 
-- Inicio, Alertas, Reportes y Clientes leen SQLite: no ven finanzas, ventas, cuidados, huevos ni salud de la nube. Dos cuentas en el mismo teléfono ven los contadores del SQLite compartido.
+- Inicio, Alertas y Reportes leen SQLite (Reportes incluida `obtenerExportacionClientes`): no ven finanzas, ventas, cuidados, huevos ni salud de la nube. Dos cuentas en el mismo teléfono ven los contadores del SQLite compartido.
 - Bajas: V1 no libera la jaula al dar de baja (replicado). `DetalleAveScreen` no avisa si falla `obtenerBajaAve` por red.
 - Finanzas: periodos en UTC como V1 (un movimiento nocturno puede caer en el mes siguiente); sin aviso de red en `FinanzasScreen` ni en `NuevoMovimientoFinancieroScreen` (decisión del usuario); `registrarIngreso`/`registrarEgreso` con `NaN` devuelven 400; `CREACION_POR_CORRECCION` solo cubierto por integración; los flujos no cubren envío por separado, filtro por tipo ni categorías propias.
-- Errores de red sin aviso, como V1: `DetalleAveScreen` y `RegistrarHuevoScreen.cargarAve`. Genealogía muestra un texto en lugar de `Alert`.
-- Salud: "Guardar diagnóstico" sin `disabled` (doble toque puede duplicar); finalizar tratamiento en API no escribe `RECUPERACION` (lo hace la pantalla).
-- Huevos: concurrencia real por criadero sin probar. Aves: `obtenerEvolucionAve` sigue en SQLite en modo API; `NuevaAveScreen` usa `Number(item.id)`.
+- Errores de red sin aviso, como V1: `DetalleAveScreen`, `RegistrarHuevoScreen.cargarAve` y `DetalleClienteScreen` (muestra "Cliente no encontrado."). Genealogía muestra un texto en lugar de `Alert`. Clientes: la foto del ave es la ruta local hasta R2.
+- Salud: "Guardar diagnóstico" sin `disabled` (doble toque puede duplicar); finalizar tratamiento en API no escribe `RECUPERACION` (lo hace la pantalla). Huevos: concurrencia real por criadero sin probar. Aves: `obtenerEvolucionAve` sigue en SQLite en modo API; `NuevaAveScreen` usa `Number(item.id)`.
 - Fotos: R2 sin hacer; `foto_r2_key` guarda la ruta local del teléfono. Google Sign-In pendiente; token de 60 min sin refresh (al vencer, 401 y vuelta al inicio de sesión). PBKDF2 a 100000 iteraciones: 13–20 ms de CPU (riesgo conocido).
 
 ## Excepciones aprobadas a pantallas V1 (seis; Bajas y Finanzas no añaden)
@@ -56,4 +56,4 @@ Migraciones `0001`–`0011` aplicadas en local, integración y base remota de pr
 
 ## Siguiente paso exacto
 
-Presentar el plan de la fase 6 (Inicio, Reportes, Clientes y Alertas) y esperar "plan aprobado". Mientras, esperar indicación para: teléfono (Bajas y Finanzas), push de `3defe9f` y de la documentación, R2 o Google Sign-In.
+Siguiente módulo de la fase 6 (Reportes): plan y "plan aprobado" antes de programar. Mientras, esperar indicación para: teléfono (Bajas, Finanzas y Clientes), push de Clientes, R2 o Google Sign-In.

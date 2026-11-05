@@ -2,6 +2,16 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-05 sesión 3
+- Hecho (sin commit; hashes por confirmar): fase 6, módulo Clientes. Spec `documents/specs/clientes.md`; API `api/src/clientes/` (3 GET bajo `/criaderos/:criaderoId/clientes`, solo lectura, 2 llamadas a D1 por endpoint, probado con pocos datos y con 2000 ventas); cliente `ClientesRepository.{js,sqlite.js,api.js}`; casos `14-clientes` y ampliación de `05-aislamiento`; flujo `completo/98-clientes.yaml` con aislamiento de dos cuentas (`# SEGUNDA-CUENTA`, `preparar.mjs --segunda-cuenta`). Worker de pruebas desplegado (`--env test`), sin migración.
+- Resultado: revisión de arquitectura APROBADO; typecheck OK; 298 unitarias/HTTP y 130 de integración (Node por defecto, 24); paridad con el código real de V1: 45 comparaciones, 0 diferencias.
+- Resultado: `/probar datos` VERDE 96/96 (173,9 s); `/probar smoke` VERDE (2,2 min); flujo `98` PASO en 204 s, con la segunda cuenta mostrando "No hay clientes para mostrar".
+- Decisión del usuario: servidor para los cuatro módulos de la fase 6; ninguna excepción a pantallas V1; orden Clientes, Reportes, Alertas, Inicio, módulo por módulo, con push al cerrar cada uno si datos y smoke están en verde.
+- Decisión: un criadero inexistente responde 403 (no 404), como el resto de módulos; motivo: coherencia con el ownership existente.
+- Decisión: el celular viaja codificado en la ruta (`encodeURIComponent`); motivo: un `+` en la consulta se convertiría en espacio. Sin índice nuevo.
+- Pendiente: foto del ave (R2); `DetalleClienteScreen` muestra "Cliente no encontrado." ante error de red (como V1); D-2 (UUID v7 monotónico) sin comprobar; teléfono físico; Reportes, Alertas e Inicio.
+- Próximo paso exacto: módulo Reportes, empezando por su spec con `analista-codigo-v1`.
+
 ## 2026-11-05 sesión 2
 - Hecho: defensas del ejecutor móvil (`3defe9f`): máximo 6 min por flujo (se termina el árbol de procesos y, aparte, el java de Maestro; se desinstalan los paquetes de Maestro y se comprueba que vuelve a conectar con un flujo mínimo), 60 min por ejecución (EJECUCIÓN ABORTADA POR TIEMPO), una recuperación del emulador tras dos FALLO DE ENTORNO seguidos, `resumen.md` reescrito tras cada flujo y registros incrementales (logcat, Metro, wrangler tail y eventos).
 - Hecho (sin commit): prueba con flujos temporales ya borrados: flujo colgado marcado a los 45 s, dos colgados seguidos con una recuperación en 43 s, límite global de prueba de 120 s con resumen de lo ejecutado; sin procesos sueltos al terminar.
