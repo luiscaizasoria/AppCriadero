@@ -9,6 +9,7 @@ import defaultSaludRouter from './salud/salud.routes';
 import defaultHuevosRouter from './huevos/huevos.routes';
 import defaultFinanzasRouter from './finanzas/finanzas.routes';
 import defaultClientesRouter from './clientes/clientes.routes';
+import defaultReportesRouter from './reportes/reportes.routes';
 
 
 export type Env = {
@@ -31,6 +32,7 @@ type AppOptions = {
   huevosRouter?: AppRouter;
   finanzasRouter?: AppRouter;
   clientesRouter?: AppRouter;
+  reportesRouter?: AppRouter;
 };
 
 
@@ -82,6 +84,10 @@ export function createApp(
     options.clientesRouter ?? defaultClientesRouter;
 
 
+  const reportesRouter =
+    options.reportesRouter ?? defaultReportesRouter;
+
+
 
   app.get('/api/v1/health', (c) => {
 
@@ -111,6 +117,8 @@ export function createApp(
   app.route('/api/v1/criaderos/:criaderoId/finanzas', finanzasRouter);
 
   app.route('/api/v1/criaderos/:criaderoId/clientes', clientesRouter);
+
+  app.route('/api/v1/criaderos/:criaderoId/reportes', reportesRouter);
 
   app.route('/api/v1/auth', authRouter);
 
