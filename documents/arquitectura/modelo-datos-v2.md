@@ -1098,7 +1098,7 @@ Otros puntos detectados al comparar el borrador con las decisiones aprobadas y c
 10. **Tipos y obligatoriedad.** `cantidad TEXT` en alimentación y bebida, `edad_meses_compra`, campos opcionales y obligatorios por pantalla, y la zona horaria de las fechas.
 11. **Fotos en R2.** El borrador usa `foto_r2_key`; la convención del proyecto es `r2_object_key`. Definir nombres y el patrón de claves (aislamiento por usuario y criadero) junto con la fase de R2.
 12. **Índices y paginación.** Los índices no están acordados (validar con `EXPLAIN QUERY PLAN`); la convención de paginación tampoco.
-13. **Clientes y producción.** Se derivan de `bajas_ave` (ventas) y `huevos`; por ahora no tienen tablas propias. Clientes está implementado (2026-11-05) sin migración nueva: lee `bajas_ave` y `aves`.
+13. **Clientes y producción.** Se derivan de `bajas_ave` (ventas) y `huevos`; por ahora no tienen tablas propias. Clientes está implementado (2026-11-05) sin migración nueva: lee `bajas_ave` y `aves`. Reportes también (2026-11-05, sin migración): solo lee `aves`, `jaulas`, `huevos`, `diagnosticos_ave`, `bajas_ave` y `movimientos_financieros`; no se creó `0012` (la siguiente sigue libre).
 
 ### Decisiones posteriores al borrador (2026-10-29)
 

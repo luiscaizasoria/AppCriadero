@@ -2,6 +2,18 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-05 sesión 4
+- Hecho (sin commit; hashes por confirmar): fase 6, módulo Reportes. Spec `documents/specs/reportes.md` (la herramienta de escritura del analista la rechazó y el orquestador la guardó por partes con el contrato fijado); API `api/src/reportes/` (10 GET bajo `/criaderos/:criaderoId/reportes`: 4 resúmenes y 6 exportaciones con claves PascalCase dentro de `filas`; solo lectura, sin migración); cliente `ReportesRepository.{js,sqlite.js,api.js}` (sqlite = V1 renombrado sin cambios); caso `15-reportes` y 10 rutas en `05-aislamiento`; flujo `completo/97-reportes.yaml` con segunda cuenta. Worker de pruebas desplegado (`--env test`).
+- Resultado: revisión de arquitectura APROBADO; typecheck OK; 317 unitarias/HTTP y 145 de integración. Paridad con el código real de V1 de las 10 funciones: 0 diferencias tras ajustar dos desempates (top 5 enfermedades con `enfermedad DESC` y exportación de clientes con `celular DESC`; la spec proponía ASC y la paridad lo desmintió).
+- Resultado: consultas D1 por endpoint: 2 (3 en salud y producción), iguales con datos grandes (60 jaulas, 300 aves, 2000 huevos, 2000 movimientos). Exportación de huevos: 252 KB con 2000 huevos y 2,4 MB con 20 000 (local).
+- Resultado: `/probar datos` VERDE 104/104 (255,3 s; primer intento 102/104 por dos errores del propio caso, corregidos); `/probar smoke` VERDE; flujo `97` PASO en 151 s (primer intento falló por el texto "OK" del Alert en Android).
+- Decisión: claves PascalCase en las exportaciones; motivo: son las cabeceras del CSV.
+- Decisión: `OrigenId` del CSV de finanzas pasa a UUID v7; motivo: diferencia exigida por el paso a online.
+- Decisión: sin migración `0012` (índice de `diagnosticos_ave` no necesario); motivo: las cifras medidas no lo requieren.
+- Decisión: un criadero inexistente responde 403; motivo: coherencia con el ownership existente.
+- Pendiente: medir CPU y tamaño con exportaciones de decenas de miles de filas en D1 real; hoja de compartir y contenido del CSV sin verificar en emulador; `ReportesScreen.js:82-87` deja los resúmenes en cero ante error de red (como V1); orden de empates verificado solo en better-sqlite3, no en el SQLite del teléfono; teléfono físico.
+- Próximo paso exacto: módulo Alertas, empezando por su spec (`documents/specs/alertas.md`) con `analista-codigo-v1`.
+
 ## 2026-11-05 sesión 3
 - Hecho (sin commit; hashes por confirmar): fase 6, módulo Clientes. Spec `documents/specs/clientes.md`; API `api/src/clientes/` (3 GET bajo `/criaderos/:criaderoId/clientes`, solo lectura, 2 llamadas a D1 por endpoint, probado con pocos datos y con 2000 ventas); cliente `ClientesRepository.{js,sqlite.js,api.js}`; casos `14-clientes` y ampliación de `05-aislamiento`; flujo `completo/98-clientes.yaml` con aislamiento de dos cuentas (`# SEGUNDA-CUENTA`, `preparar.mjs --segunda-cuenta`). Worker de pruebas desplegado (`--env test`), sin migración.
 - Resultado: revisión de arquitectura APROBADO; typecheck OK; 298 unitarias/HTTP y 130 de integración (Node por defecto, 24); paridad con el código real de V1: 45 comparaciones, 0 diferencias.
