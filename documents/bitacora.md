@@ -2,6 +2,16 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-05 sesión 2
+- Hecho: defensas del ejecutor móvil (`3defe9f`): máximo 6 min por flujo (se termina el árbol de procesos y, aparte, el java de Maestro; se desinstalan los paquetes de Maestro y se comprueba que vuelve a conectar con un flujo mínimo), 60 min por ejecución (EJECUCIÓN ABORTADA POR TIEMPO), una recuperación del emulador tras dos FALLO DE ENTORNO seguidos, `resumen.md` reescrito tras cada flujo y registros incrementales (logcat, Metro, wrangler tail y eventos).
+- Hecho (sin commit): prueba con flujos temporales ya borrados: flujo colgado marcado a los 45 s, dos colgados seguidos con una recuperación en 43 s, límite global de prueba de 120 s con resumen de lo ejecutado; sin procesos sueltos al terminar.
+- Fallos reales hallados y corregidos en esa prueba: el java de Maestro sobrevivía al `taskkill`; el servidor de Maestro del emulador quedaba inservible tras matarlo; 20 procesos `wrangler tail` quedaban vivos por el orden de cierre.
+- Resultado: `/probar completo` desde cero (`2026-11-05-103724-completo`): 19 PASO, 0 regresiones, 0 fallos de red o de entorno, 0 reintentos de red, 1 fallo esperado (dashboard), 32,0 min. Primer completo sin regresiones desde Finanzas; el veredicto "CON MODULOS PENDIENTES" se debe solo a Inicio (sigue en SQLite). Flujos `90`, `91`, `95` y `96` confirmados con sus esperas por condición.
+- Decisión: límites de 6 min por flujo y 60 min por ejecución; motivo: el emulador colgado de hoy bloqueó el ejecutor más de 30 min.
+- Decisión: la documentación de esta sesión queda sin push; motivo: el push requiere aprobación del usuario.
+- Pendiente: teléfono (Bajas y Finanzas); fase 6 (plan pedido, sin código hasta "plan aprobado"); R2; Google Sign-In; commit de `3defe9f` y de la documentación, sin push. Límites conocidos: tras un flujo colgado, restaurar Maestro añade unos 35 s (el tiempo puede pasar el límite en ese margen); la recuperación del emulador no se probó con emulador realmente muerto.
+- Próximo paso exacto: presentar el plan de la fase 6 y esperar "plan aprobado".
+
 ## 2026-11-05 sesión 1
 - Hecho: push aprobado y hecho de `52b9641` y `ae81dca`; último push `ae81dca`, sin pendientes de push.
 - Hecho (sin commit): flujos `90` y `91` esperan por condición antes de tocar Vendidas o Fallecidas (dos sitios en `90`); flujo `96` espera ".*Vendidas.*" (20 s) tras "Aceptar", toca Finanzas con retry (3) hasta ver "Consolidado por categoría" y lo comprueba con assertVisible; `95` sin cambios (ya espera "Jaulas").
