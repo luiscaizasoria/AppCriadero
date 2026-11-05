@@ -44,7 +44,8 @@ function listarFlujos() {
                 archivo: path.join(base, f),
                 esperadoFallar: tags.includes('esperado-fallar'),
                 modulo: texto.match(/^# ESPERADO FALLAR [(]([^)]+)[)]/m)?.[1] ?? null,
-                semilla: (texto.match(/^# SEMILLA: (.*)$/m)?.[1] ?? '').split(' ').filter(Boolean)
+                // '# SEGUNDA-CUENTA' en el flujo pide una segunda cuenta desechable vacia (EMAIL2, PASSWORD2, CRIADERO2).
+                semilla: [...(texto.match(/^# SEMILLA: (.*)$/m)?.[1] ?? '').split(' ').filter(Boolean), ...(/^# SEGUNDA-CUENTA/m.test(texto) ? ['--segunda-cuenta'] : [])]
             });
         }
     }

@@ -10,4 +10,5 @@ FLUJO="$1"; shift
 DATOS="$(node "$RAIZ/pruebas/movil/lib/preparar.mjs" "$@")" || exit 3
 campo() { echo "$DATOS" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d)['$1']))"; }
 maestro test -e "EMAIL=$(campo email)" -e "PASSWORD=$(campo password)" -e "CRIADERO=$(campo criadero)" \
+  -e "EMAIL2=$(campo email2)" -e "PASSWORD2=$(campo password2)" -e "CRIADERO2=$(campo criadero2)" \
   -e "PUERTO_METRO=${ENLACE_PUERTO_PRUEBA:-${PUERTO_METRO:-8090}}" --test-output-dir "${SALIDA_MAESTRO:-$RAIZ/pruebas/.cache/maestro}" "$FLUJO"

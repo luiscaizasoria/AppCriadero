@@ -1,0 +1,188 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-CA:MACHO:JX-1,AV-CB:HEMBRA:JX-1
+# SEGUNDA-CUENTA
+# CLIENTES: dos ventas al MISMO celular (la segunda escrita con guiones, se normaliza a digitos) con nombre y
+# ciudad distintos. Mas > Clientes muestra UN cliente con nombre y ciudad de la ultima venta, 2 compras y el total
+# de ventas (10 + 7.5). El detalle lista las compras (codigos de las aves, valores) y no muestra
+# "Cliente no encontrado.". Esperas solo por condicion.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - clientes
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+# Venta 1: AV-CA, valor 10, ciudad Quito
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: ".*AV-CA.*"
+    timeout: 20000
+- tapOn: "AV-CA"
+- scrollUntilVisible:
+    element: ".*Dar de baja.*"
+- tapOn: ".*Dar de baja.*"
+- extendedWaitUntil:
+    visible: ".*Baja del ave.*"
+    timeout: 15000
+- tapOn: ".*Venta"
+- extendedWaitUntil:
+    visible: "Ej. 0991234567"
+    timeout: 15000
+- tapOn: "Ej. 0991234567"
+- inputText: "0991234567"
+- tapOn: "Nombre del comprador"
+- inputText: "Cliente Primero"
+- tapOn:
+    below: "Ciudad destino"
+- inputText: "Quito"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Valor de envío"
+- tapOn:
+    text: "Opcional"
+    index: 0
+- inputText: "10"
+- hideKeyboard
+- scrollUntilVisible:
+    element: ".*Confirmar baja.*"
+- tapOn: ".*Confirmar baja.*"
+- extendedWaitUntil:
+    visible: "Proceso completado"
+    timeout: 20000
+- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: ".*Vendidas.*"
+    timeout: 20000
+- tapOn: ".*Vendidas"
+- extendedWaitUntil:
+    visible: ".*AV-CA.*"
+    timeout: 20000
+# Venta 2: AV-CB, mismo celular con guiones, otro nombre y ciudad, valor 7.5
+- tapOn: ".*Activas"
+- extendedWaitUntil:
+    visible: ".*AV-CB.*"
+    timeout: 20000
+- tapOn: "AV-CB"
+- scrollUntilVisible:
+    element: ".*Dar de baja.*"
+- tapOn: ".*Dar de baja.*"
+- extendedWaitUntil:
+    visible: ".*Baja del ave.*"
+    timeout: 15000
+- tapOn: ".*Venta"
+- extendedWaitUntil:
+    visible: "Ej. 0991234567"
+    timeout: 15000
+- tapOn: "Ej. 0991234567"
+- inputText: "099-123-4567"
+- tapOn: "Nombre del comprador"
+- inputText: "Cliente Ultimo"
+- tapOn:
+    below: "Ciudad destino"
+- inputText: "Cuenca"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Valor de envío"
+- tapOn:
+    text: "Opcional"
+    index: 0
+- inputText: "7.5"
+- hideKeyboard
+- scrollUntilVisible:
+    element: ".*Confirmar baja.*"
+- tapOn: ".*Confirmar baja.*"
+- extendedWaitUntil:
+    visible: "Proceso completado"
+    timeout: 20000
+- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: ".*Vendidas.*"
+    timeout: 20000
+- tapOn: ".*Vendidas"
+- extendedWaitUntil:
+    visible: ".*AV-CB.*"
+    timeout: 20000
+- assertVisible: ".*AV-CA.*"
+# Mas > Clientes (espera un texto de la pantalla antes de tocar la barra)
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- assertVisible: "Reportes"
+- tapOn: "Clientes"
+- extendedWaitUntil:
+    visible: ".*Cliente Ultimo.*"
+    timeout: 25000
+- assertNotVisible: "No hay clientes para mostrar"
+- assertNotVisible: ".*No fue posible cargar los clientes.*"
+- assertNotVisible: ".*Cliente Primero.*"
+- assertVisible: ".*Cuenca.*"
+- assertNotVisible: ".*Quito.*"
+- assertVisible: ".*0991234567.*"
+- assertVisible: "2"
+- assertVisible: ".*17[.,]50.*"
+- takeScreenshot: clientes-lista
+# Detalle
+- tapOn: ".*Cliente Ultimo.*"
+- extendedWaitUntil:
+    visible: ".*Compras realizadas.*"
+    timeout: 25000
+- assertNotVisible: "Cliente no encontrado."
+- assertVisible: ".*0991234567.*"
+- assertVisible: ".*Cuenca.*"
+- assertVisible: "2"
+- assertVisible: ".*17[.,]50.*"
+- scrollUntilVisible:
+    element: ".*AV-CB.*"
+- assertVisible: ".*AV-CB.*"
+- scrollUntilVisible:
+    element: ".*7[.,]50.*"
+- assertVisible: ".*7[.,]50.*"
+- scrollUntilVisible:
+    element: ".*AV-CA.*"
+- assertVisible: ".*AV-CA.*"
+- scrollUntilVisible:
+    element: ".*10[.,]00.*"
+- assertVisible: ".*10[.,]00.*"
+- takeScreenshot: clientes-detalle
+# AISLAMIENTO: vuelve a la raiz de Mas (tocar la pestana activa vacia su pila), cierra sesion y entra con la
+# segunda cuenta; sus Clientes deben estar vacios (no comparte el SQLite de la primera).
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- scrollUntilVisible:
+    element: ".*Cerrar sesión.*"
+- tapOn: ".*Cerrar sesión.*"
+- tapOn:
+    text: "Cerrar sesión"
+    index: 1
+- extendedWaitUntil:
+    visible: "Iniciar sesi.n"
+    timeout: 20000
+- runFlow:
+    file: ../lib/iniciar-sesion.yaml
+    env:
+      EMAIL: ${EMAIL2}
+      PASSWORD: ${PASSWORD2}
+      CRIADERO: ${CRIADERO2}
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- tapOn: "Clientes"
+- extendedWaitUntil:
+    visible: "No hay clientes para mostrar"
+    timeout: 25000
+- assertNotVisible: ".*Cliente Ultimo.*"
+- assertNotVisible: ".*0991234567.*"
+- takeScreenshot: clientes-aislamiento

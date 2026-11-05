@@ -1,5 +1,6 @@
 // Prepara datos por API (no navegando) para un flujo: cuenta desechable + criadero + datos opcionales.
-// Uso: node pruebas/movil/lib/preparar.mjs [--jaulas=J-01,J-02] [--aves=A-01:MACHO,A-02:HEMBRA] [--huevos=A-01:J-01:0]
+// Uso: node pruebas/movil/lib/preparar.mjs [--jaulas=J-01,J-02] [--aves=A-01:MACHO,A-02:HEMBRA] [--huevos=A-01:J-01:0] [--segunda-cuenta]
+// --segunda-cuenta crea otra cuenta desechable con su criadero vacio (email2, password2, criadero2) para flujos de aislamiento.
 // Imprime JSON {email,password,criadero,...}. Nada se escribe en archivos del repositorio.
 import { registrar, crearCriaderoHttp, http } from '../../datos/lib/http.mjs';
 import { claveAleatoria, DOMINIO } from '../../datos/lib/entorno.mjs';
@@ -38,5 +39,12 @@ for (const par of (arg('huevos') || '').split(',').filter(Boolean)) {
     const fecha = new Date(Date.now() - Number(dias || 0) * 86400000).toISOString();
     const r = await http('POST', `${base}/aves/${salida.aves[ave]}/huevos`, { token: cuenta.token, body: { fecha, jaulaId: jaula ? salida.jaulas[jaula] : undefined } });
     if (r.status !== 201) throw new Error(`huevo ${par}: ${JSON.stringify(r.json)}`);
+}
+if (process.argv.includes('--segunda-cuenta')) {
+    const cuenta2 = await registrar('Prueba movil 2', `movil-${sufijo}b@${DOMINIO}`, claveAleatoria());
+    salida.email2 = `movil-${sufijo}b@${DOMINIO}`;
+    salida.password2 = cuenta2.password ?? null;
+    salida.criadero2 = 'Criadero segundo';
+    await crearCriaderoHttp(cuenta2.token, salida.criadero2);
 }
 console.log(JSON.stringify(salida));

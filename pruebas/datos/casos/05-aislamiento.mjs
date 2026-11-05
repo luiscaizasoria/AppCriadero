@@ -42,6 +42,9 @@ prueba('aislamiento', 'debe dar 403 a A en TODOS los endpoints con el criaderoId
         ['DELETE', `${b}/catalogos/RAZAS/items/${B.itemId}`, undefined, f],
         ['GET', `${b}/onboarding`, undefined, f],
         ['POST', `${b}/onboarding/complete`, {}, f],
-        ['PUT', `${b}/configuracion`, { moneda: 'USD' }, f]
+        ['PUT', `${b}/configuracion`, { moneda: 'USD' }, f],
+        ['GET', `${b}/clientes`, undefined, f],
+        ['GET', `${b}/clientes/0991234567`, undefined, f],
+        ['GET', `${b}/clientes/0991234567/compras`, undefined, f]
     ]);
 });

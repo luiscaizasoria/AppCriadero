@@ -39,6 +39,7 @@ export * as sanidad from './src/repositories/SanidadJaulaRepository.api.js';
 export * as historial from './src/repositories/HistorialRepository.api.js';
 export * as bajas from './src/repositories/BajaAveRepository.api.js';
 export * as finanzas from './src/repositories/FinanzasRepository.api.js';
+export * as clientes from './src/repositories/ClientesRepository.api.js';
 `
         },
         bundle: true,
