@@ -1,0 +1,5 @@
+# Flujo minimo que el ejecutor lanza tras terminar un flujo colgado: comprueba que Maestro vuelve a conectar con el emulador.
+appId: host.exp.exponent
+---
+- launchApp
+- assertVisible: ".*"
