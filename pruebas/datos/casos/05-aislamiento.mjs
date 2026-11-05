@@ -45,6 +45,16 @@ prueba('aislamiento', 'debe dar 403 a A en TODOS los endpoints con el criaderoId
         ['PUT', `${b}/configuracion`, { moneda: 'USD' }, f],
         ['GET', `${b}/clientes`, undefined, f],
         ['GET', `${b}/clientes/0991234567`, undefined, f],
-        ['GET', `${b}/clientes/0991234567/compras`, undefined, f]
+        ['GET', `${b}/clientes/0991234567/compras`, undefined, f],
+        ['GET', `${b}/reportes/aves`, undefined, f],
+        ['GET', `${b}/reportes/salud`, undefined, f],
+        ['GET', `${b}/reportes/produccion`, undefined, f],
+        ['GET', `${b}/reportes/finanzas`, undefined, f],
+        ['GET', `${b}/reportes/exportaciones/aves`, undefined, f],
+        ['GET', `${b}/reportes/exportaciones/ventas`, undefined, f],
+        ['GET', `${b}/reportes/exportaciones/clientes`, undefined, f],
+        ['GET', `${b}/reportes/exportaciones/finanzas`, undefined, f],
+        ['GET', `${b}/reportes/exportaciones/huevos`, undefined, f],
+        ['GET', `${b}/reportes/exportaciones/jaulas`, undefined, f]
     ]);
 });

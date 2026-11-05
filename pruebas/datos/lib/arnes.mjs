@@ -20,7 +20,7 @@ export async function ejecutarTodo({ filtro } = {}) {
             await caso.fn();
         } catch (e) {
             estado = 'fallo';
-            detalle = e?.stack?.split('\n').slice(0, 4).join(' | ') || String(e);
+            detalle = e?.stack?.split('\n').slice(0, Number(process.env.DETALLE_LINEAS || 4)).join(' | ') || String(e);
         }
         const ms = Date.now() - t0;
         resultados.push({ grupo: caso.grupo, nombre: caso.nombre, estado, ms, detalle });

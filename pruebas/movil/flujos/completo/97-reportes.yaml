@@ -1,0 +1,114 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-RA:MACHO:JX-1,AV-RB:HEMBRA:JX-1 --huevos=AV-RA:JX-1:0,AV-RA:JX-1:0,AV-RB:JX-1:0
+# SEGUNDA-CUENTA
+# REPORTES: Mas > Reportes con datos: Activas 2, Vendidas 0, Fallecidas 0; huevos hoy 3 y mes 3 (todos de hoy, UTC);
+# mejor ponedora AV-RA (2 huevos); ingresos, egresos y utilidad $0.00. "Exportar Aves" no muestra el Alert de
+# error y el boton vuelve a "Exportar Aves" (la hoja de compartir del sistema se cierra con back; su contenido y el
+# CSV no se comprueban aqui, ver /probar datos y la paridad). Segunda cuenta vacia: ceros, "Sin datos" y, al
+# exportar Ventas, Alert "Sin datos / No hay informacion para exportar.". Esperas solo por condicion.
+# RIESGO: cerca de la medianoche UTC "hoy" puede variar; repetir en ese caso.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - reportes
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+# Mas > Reportes (espera un texto de Mas antes de tocar la barra)
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- tapOn: "Reportes"
+- extendedWaitUntil:
+    visible: "Resumen y exportaci.n del criadero"
+    timeout: 25000
+- extendedWaitUntil:
+    visible: ".*Activas: 2.*"
+    timeout: 25000
+- assertVisible: ".*Vendidas: 0.*"
+- assertVisible: ".*Fallecidas: 0.*"
+- assertVisible: ".*Hoy: 3 huevos.*"
+- assertVisible: ".*Mes: 3 huevos.*"
+- assertVisible: ".*Mejor ponedora: AV-RA.*"
+- assertNotVisible: ".*Mejor ponedora: Sin datos.*"
+- scrollUntilVisible:
+    element: ".*Ingresos: .0[.]00.*"
+- assertVisible: ".*Ingresos: .0[.]00.*"
+- assertVisible: ".*Egresos: .0[.]00.*"
+- assertVisible: ".*Utilidad: .0[.]00.*"
+- scrollUntilVisible:
+    element: "Exportar Aves"
+- assertVisible: "Exportar Jaulas"
+- takeScreenshot: reportes-datos
+# Exportar Aves: sin Alert de error; el boton vuelve a su texto tras la hoja de compartir
+- tapOn: "Exportar Aves"
+- extendedWaitUntil:
+    notVisible: "Generando..."
+    timeout: 30000
+- assertNotVisible: ".*No fue posible generar la exportaci.n.*"
+- assertNotVisible: "Sin datos"
+- takeScreenshot: reportes-exportar-aves
+# Cierra la hoja de compartir solo si tapa la pantalla (si el boton ya es visible, no se pulsa back)
+- runFlow:
+    when:
+      notVisible: "Exportar Aves"
+    commands:
+      - back
+- extendedWaitUntil:
+    visible: "Exportar Aves"
+    timeout: 20000
+# AISLAMIENTO: vuelve a la raiz de Mas, cierra sesion y entra con la segunda cuenta
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- scrollUntilVisible:
+    element: ".*Cerrar sesión.*"
+- tapOn: ".*Cerrar sesión.*"
+- tapOn:
+    text: "Cerrar sesión"
+    index: 1
+- extendedWaitUntil:
+    visible: "Iniciar sesi.n"
+    timeout: 20000
+- runFlow:
+    file: ../lib/iniciar-sesion.yaml
+    env:
+      EMAIL: ${EMAIL2}
+      PASSWORD: ${PASSWORD2}
+      CRIADERO: ${CRIADERO2}
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- tapOn: "Reportes"
+- extendedWaitUntil:
+    visible: "Resumen y exportaci.n del criadero"
+    timeout: 25000
+- extendedWaitUntil:
+    visible: ".*Activas: 0.*"
+    timeout: 25000
+- assertVisible: ".*Hoy: 0 huevos.*"
+- assertVisible: ".*Mejor ponedora: Sin datos.*"
+- assertNotVisible: ".*AV-RA.*"
+- scrollUntilVisible:
+    element: "Exportar Ventas"
+- tapOn: "Exportar Ventas"
+- extendedWaitUntil:
+    visible: "Sin datos"
+    timeout: 25000
+- assertVisible: ".*No hay informaci.n para exportar.*"
+- takeScreenshot: reportes-sin-datos
+- tapOn: "OK|Aceptar"
+- extendedWaitUntil:
+    visible: "Exportar Ventas"
+    timeout: 15000
