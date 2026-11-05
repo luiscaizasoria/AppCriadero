@@ -39,6 +39,9 @@ tags:
     timeout: 20000
 - assertVisible: "El ave fue registrada como fallecida."
 - tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: ".*Fallecidas.*"
+    timeout: 20000
 - tapOn: ".*Fallecidas"
 - extendedWaitUntil:
     visible: ".*AV-FA.*"

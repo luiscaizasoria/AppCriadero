@@ -2,6 +2,28 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-05 sesión 1
+- Hecho: push aprobado y hecho de `52b9641` y `ae81dca`; último push `ae81dca`, sin pendientes de push.
+- Hecho (sin commit): flujos `90` y `91` esperan por condición antes de tocar Vendidas o Fallecidas (dos sitios en `90`); flujo `96` espera ".*Vendidas.*" (20 s) tras "Aceptar", toca Finanzas con retry (3) hasta ver "Consolidado por categoría" y lo comprueba con assertVisible; `95` sin cambios (ya espera "Jaulas").
+- Resultado: `/probar completo` `2026-11-04-190615-completo` (no válido como cierre): 18 PASO, 1 regresión en `96` por sincronía (inferencia a partir de la captura y el resumen; solo tenía resumen.md), 9 reintentos de red absorbidos y el fallo esperado de dashboard.
+- Resultado: repetición solo del `96`, dos veces seguidas: PASO en 182 s (`2026-11-05-091332-completo`) y PASO en 175 s (`2026-11-05-091732-completo`). `90`, `91` y `95` no se repitieron hoy.
+- Incidencia: el emulador quedó colgado (`adb getprop` sin respuesta, ejecutor bloqueado más de 30 min). Se resolvió cerrando el ejecutor y los adb, `adb emu kill` y arrancando el AVD otra vez con Start-Process desde PowerShell (no con `&` desde bash, que muere con la tarea).
+- Decisión: espera por condición en lugar de toque fijo; motivo: el toque perdido tras la venta causó la regresión del `96`.
+- Decisión: no dar por válido ningún `/probar completo` hasta uno limpio; motivo: la última ejecución completa tuvo una regresión.
+- Pendiente: `/probar completo` sin regresiones al empezar el siguiente bloque; commit de los flujos `90`, `91` y `96` (sin confirmar); teléfono (Bajas y Finanzas); fase 6, R2 y Google Sign-In.
+- Próximo paso exacto: empezar el siguiente bloque con un `/probar completo` y anotar su resultado en Finanzas.
+
+## 2026-11-04 sesión 3
+- Hecho: ejecutor móvil: aborto rápido por fallo al abrir la app, espera de 90 s, captura del error de Expo Go y log de Metro (`15d1e59`); resultado FALLO DE RED, comprobación previa de conectividad, reintentos solo al preparar y limpiar, aborto a dos fallos de red seguidos (`52b9641`); agente `mantenimiento-claude` con escritura solo en `.claude/agents`, skills y rules (`ae81dca`); CLAUDE.md y regla de migraciones con `0011` aplicada y `0012` siguiente, fechas del incidente 7403 (`b8a9fd9`).
+- Hecho: tres `/probar completo` de Finanzas, ninguno válido como cierre: `2026-11-04-150506-completo` (19 regresiones por error de Expo Go al abrir, causa no determinada); `2026-11-04-183443-completo` (1 PASO y 18 regresiones por cortes de red hacia Cloudflare); `2026-11-04-190615-completo` (57,5 min, 18 PASO, 1 regresión en `96-finanzas-correccion-venta`, toque perdido en Finanzas tras la venta, y 1 fallo esperado de dashboard; 9 reintentos de red y conectividad previa 10/10).
+- Verificación: con un host no válido, la comprobación previa aborta tras 4 comprobaciones; sin ella, 2 flujos FALLO DE RED; cuentas desechables a 0 tras limpiar. Node 22.23.4 (`npx node@22`): 285 unitarias/HTTP y 119 de integración en verde.
+- Decisión: sin excepciones a pantallas V1 en Finanzas (siguen seis); motivo: replicar V1 tal cual.
+- Decisión: `obtenerIngresos` y `obtenerEgresos` omitidas; motivo: sin llamadores en V1.
+- Decisión: el `NaN` de `corregirVentaFinanciera` se valida en el cliente con `VALOR_INVALIDO`; motivo: V1 lanza ese mismo error.
+- Decisión: `limpiar.mjs` y el guardia se editan desde la sesión principal; motivo: por confirmar.
+- Pendiente: decidir si se arregla la espera del flujo `96` y se repite solo ese flujo; `/probar completo` válido de Finanzas (marcador pendiente); push de `52b9641` y `ae81dca` (aprobación); teléfono (Finanzas y Bajas: teclado numérico, modo avión, hora local frente a UTC, scroll); fase 6, R2 y Google Sign-In.
+- Próximo paso exacto: arreglar la espera del flujo `96` si el usuario lo aprueba y lanzar un `/probar completo` limpio que anote su resultado.
+
 ## 2026-11-04 sesión 2
 - Hecho: módulo Finanzas: avance de docs `e7198f3`; migración `0011` (`movimientos_financieros_historial`), API `api/src/finanzas/` (11 endpoints) y cliente `FinanzasRepository.{js,sqlite.js,api.js}` + `finanzasApi.js` (`7d6adbe`); casos de datos `13-finanzas`, limpieza del historial y guarda de `NaN` (`5ce9ac3`); flujos `95-finanzas-movimientos` y `96-finanzas-correccion-venta` (`ca9cd7b`). `0011` aplicada en local, integración y base remota de pruebas; Worker de pruebas desplegado.
 - Resultado: 285 unitarias/HTTP y 119 de integración; paridad con el código real de V1 (`finanzas.paridad-v1.d1.test.ts`): 235 comparaciones, 0 diferencias; `/probar datos` 87/87 (157 s); smoke verde (110 s); flujos `95` y `96` PASO. Revisor de arquitectura: APROBADO (I-1 `NaN` guardado como 0, corregido con 400; M-1 corrección con `NaN`, resuelta en el cliente). Resultado de `/probar completo`: pendiente.

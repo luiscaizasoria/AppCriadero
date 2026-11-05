@@ -68,6 +68,9 @@ tags:
 - assertVisible: "El ave fue registrada como vendida."
 - tapOn: "Aceptar"
 # Lista de vendidas
+- extendedWaitUntil:
+    visible: ".*Vendidas.*"
+    timeout: 20000
 - tapOn: ".*Vendidas"
 - extendedWaitUntil:
     visible: ".*AV-VA.*"
@@ -122,6 +125,9 @@ tags:
     visible: "Proceso completado"
     timeout: 20000
 - tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: ".*Vendidas.*"
+    timeout: 20000
 - tapOn: ".*Vendidas"
 - extendedWaitUntil:
     visible: ".*AV-VB.*"

@@ -47,12 +47,20 @@ tags:
     visible: "Proceso completado"
     timeout: 20000
 - tapOn: "Aceptar"
-# Finanzas
-- tapOn:
-    point: "70%,96%"
+# La app vuelve a la raiz (pestaña Aves): esperar su pantalla antes de tocar la barra de pestañas
 - extendedWaitUntil:
-    visible: "Consolidado por categoría"
+    visible: ".*Vendidas.*"
     timeout: 20000
+# Finanzas: si el toque se pierde, se repite hasta ver un texto propio de Finanzas
+- retry:
+    maxRetries: 3
+    commands:
+      - tapOn:
+          point: "70%,96%"
+      - extendedWaitUntil:
+          visible: "Consolidado por categoría"
+          timeout: 10000
+- assertVisible: "Consolidado por categoría"
 - assertVisible: "\\$12[.]50"
 - scrollUntilVisible:
     element: ".*Ave: AV-FV.*"
