@@ -2,6 +2,20 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-07 sesión 1
+- Contexto: Reportes cerrado y empujado en `2317c11`; sesión retomada tras un corte por límite de uso del 2026-11-05.
+- Hecho (sin commit; hashes por confirmar): fase 6, módulo Alertas. Spec `documents/specs/alertas.md`; API `api/src/alertas/` (un GET bajo `/criaderos/:criaderoId/alertas`, 5 llamadas fijas a D1, sin migración); cliente `AlertasRepository.{js,sqlite.js,api.js}` (sqlite = V1 renombrado 100%; en modo API solo `obtenerTodasLasAlertas` y `obtenerResumenAlertas`); caso `16-alertas` y ruta en `05-aislamiento`; flujo `completo/99-alertas.yaml` con segunda cuenta. Worker de pruebas desplegado (`--env test`).
+- Resultado: revisión de arquitectura APROBADO; typecheck OK; 333 unitarias/HTTP y 167 de integración.
+- Resultado: paridad con el código real de V1: 324 comparaciones, 962 alertas, 0 diferencias; hipótesis de orden rowid ASC confirmada en better-sqlite3.
+- Resultado: datos grandes con 5 llamadas a D1 (152 alertas, 31 KB; 3 llamadas de 62 ms o menos en local).
+- Resultado: `/probar datos` VERDE 110/110 (248,9 s, a la primera); `/probar smoke` VERDE; flujo `99` PASO en 140 s (las dos primeras ejecuciones fallaron por errores del propio flujo).
+- Decisión: un solo endpoint y resumen derivado en el cliente; motivo: una petición por llamada, sin caché, como V1 que recalcula.
+- Decisión: días de tratamiento calculados en SQL con `julianday(?)`; motivo: conservar el borde de 7 días de V1.
+- Decisión: sin migración `0012`; motivo: el módulo solo lee y no crea tablas.
+- Decisión del usuario aplicada: sin excepciones a pantallas V1; motivo: replicar V1 tal cual.
+- Pendiente: tres `catch` que solo hacen `console.error` (`AlertasScreen`, `InicioScreen`, `MasMenuScreen`), así que un error de red se ve como "sin alertas", como en V1; orden rowid y punto flotante (D-2, D-3) sin comprobar en el SQLite del teléfono ni en D1 real; Inicio sin verificar; teléfono físico; `/probar completo` final de la fase.
+- Próximo paso exacto: módulo Inicio, empezando por su spec con `analista-codigo-v1`.
+
 ## 2026-11-05 sesión 4
 - Hecho (sin commit; hashes por confirmar): fase 6, módulo Reportes. Spec `documents/specs/reportes.md` (la herramienta de escritura del analista la rechazó y el orquestador la guardó por partes con el contrato fijado); API `api/src/reportes/` (10 GET bajo `/criaderos/:criaderoId/reportes`: 4 resúmenes y 6 exportaciones con claves PascalCase dentro de `filas`; solo lectura, sin migración); cliente `ReportesRepository.{js,sqlite.js,api.js}` (sqlite = V1 renombrado sin cambios); caso `15-reportes` y 10 rutas en `05-aislamiento`; flujo `completo/97-reportes.yaml` con segunda cuenta. Worker de pruebas desplegado (`--env test`).
 - Resultado: revisión de arquitectura APROBADO; typecheck OK; 317 unitarias/HTTP y 145 de integración. Paridad con el código real de V1 de las 10 funciones: 0 diferencias tras ajustar dos desempates (top 5 enfermedades con `enfermedad DESC` y exportación de clientes con `celular DESC`; la spec proponía ASC y la paridad lo desmintió).
