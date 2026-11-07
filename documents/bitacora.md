@@ -2,6 +2,20 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-07 sesión 2
+- Hecho: fase 6, módulo Inicio. Spec `documents/specs/inicio.md`; API `api/src/inicio/` (`GET /dashboard`, 6 llamadas fijas a D1 frente a 12 de V1, sin migración); cliente `DashboardRepository.{js,sqlite.js,api.js}`; caso `17-inicio` y ruta en `05-aislamiento`; flujo `completo/94-inicio.yaml` (sustituye a `esperado-fallar/inicio.yaml`, borrado con `git rm`; el ejecutor omite `esperado-fallar` si no existe). Worker de pruebas desplegado (`--env test`).
+- Commits: código empujado en `b086dfa` (API), `5777404` (cliente) y `eb8a18e` (pruebas); esta entrada sin commit.
+- Resultado: revisión de arquitectura APROBADO; typecheck OK; 349 unitarias/HTTP y 196 de integración.
+- Resultado: paridad con el código real de V1, 140 comparaciones y 0 diferencias tras ajustar dos desempates: mejor ponedora por menor `codigo` y hora pico por hora MAYOR; las dos hipótesis de la spec eran erróneas.
+- Resultado: datos grandes con 6 llamadas a D1 (respuesta 1007 B; 11 a 43 ms en local).
+- Resultado: `/probar datos` 115/115 (265,3 s; la limpieza final falló una vez por error transitorio de la API de Cloudflare y se repitió a mano bien); `/probar smoke` VERDE; flujo `94` PASO aislado en 207 s (el primer intento falló por falta de scroll).
+- Resultado: `/probar completo` final de la fase (`2026-11-07-165323-completo`): ROJO, NO se da por válido. 18 PASO, 1 regresión (`94-inicio` por falta de scroll con la segunda cuenta: Total 1 y tarjeta bajo el borde visible; fallo del flujo, no de API ni app), 1 fallo de entorno (`96` cortado por el tope de 60 min); abortado a los 61,5 min con 20 de 23 flujos. Los flujos fueron ~1,9 veces más lentos que el completo válido del 2026-11-05 (`10-acceso` 193 s frente a 103 s); causa no determinada.
+- Decisión: servidor para los cuatro módulos de la fase 6 y sin excepciones a pantallas V1; motivo: decisión del usuario, replicar V1 tal cual.
+- Decisión: el módulo se llama `inicio/` (no `dashboard/`) con `inicioRouter`; motivo: nombre en español como el resto de módulos.
+- Decisión: módulo por módulo, con push al cerrar cada uno si datos y smoke están en verde, y parar para avisar si una comprobación falla; motivo: decisión del usuario.
+- Pendiente: corregir el scroll del flujo `94`; decidir el tope de 60 min del ejecutor; repetir `/probar completo` una vez (con aprobación) y cerrar la fase 6 en la documentación solo si queda sin regresiones; CLAUDE.md pendiente de actualizar al cerrar la fase; teléfono físico (Bajas, Finanzas, Clientes, Reportes, Alertas, Inicio); R2 y Google Sign-In.
+- Próximo paso exacto: esperar la decisión del usuario sobre el flujo `94` y el tope de tiempo.
+
 ## 2026-11-07 sesión 1
 - Contexto: Reportes cerrado y empujado en `2317c11`; sesión retomada tras un corte por límite de uso del 2026-11-05.
 - Hecho (sin commit; hashes por confirmar): fase 6, módulo Alertas. Spec `documents/specs/alertas.md`; API `api/src/alertas/` (un GET bajo `/criaderos/:criaderoId/alertas`, 5 llamadas fijas a D1, sin migración); cliente `AlertasRepository.{js,sqlite.js,api.js}` (sqlite = V1 renombrado 100%; en modo API solo `obtenerTodasLasAlertas` y `obtenerResumenAlertas`); caso `16-alertas` y ruta en `05-aislamiento`; flujo `completo/99-alertas.yaml` con segunda cuenta. Worker de pruebas desplegado (`--env test`).
