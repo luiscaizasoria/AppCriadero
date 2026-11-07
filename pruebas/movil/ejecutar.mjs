@@ -35,6 +35,7 @@ function listarFlujos() {
     const salida = [];
     for (const dir of dirs) {
         const base = path.join(aqui, 'flujos', dir);
+        if (!fs.existsSync(base)) continue; // esperado-fallar desaparece cuando ya no queda nada por migrar
         for (const f of fs.readdirSync(base).filter(f => f.endsWith('.yaml')).sort()) {
             const texto = fs.readFileSync(path.join(base, f), 'utf8');
             const tags = [...(texto.split('\n---')[0].match(/^\s+- ([\w-]+)$/gm) ?? [])].map(t => t.replace(/^\s+- /, ''));

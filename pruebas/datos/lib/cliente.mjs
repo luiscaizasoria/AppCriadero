@@ -42,6 +42,7 @@ export * as finanzas from './src/repositories/FinanzasRepository.api.js';
 export * as clientes from './src/repositories/ClientesRepository.api.js';
 export * as reportes from './src/repositories/ReportesRepository.api.js';
 export * as alertas from './src/repositories/AlertasRepository.api.js';
+export * as dashboard from './src/repositories/DashboardRepository.api.js';
 `
         },
         bundle: true,

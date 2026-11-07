@@ -1,0 +1,114 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-IA:MACHO:JX-1,AV-IB:HEMBRA:JX-1 --huevos=AV-IA:JX-1:0,AV-IA:JX-1:0,AV-IB:JX-1:0
+# SEGUNDA-CUENTA
+# INICIO (dashboard de la nube): 2 aves activas, 0 vendidas y 0 fallecidas, 0 en tratamiento, una raza (Kikiris) con 2 aves,
+# 3 huevos de hoy y del mes, mejor ponedora AV-IA (2 contra 1), mayor postura distinta de "Sin datos", jaulas 1 total y 1 ocupada
+# (ocupacion 100%), finanzas $0.00 y alertas: JX-1 sin alimentacion ni bebida (Total 2, Advertencias 2, Criticas 0); hay huevos
+# hoy, asi que no hay alerta de produccion. La segunda cuenta (criadero vacio) ve ceros y "Sin datos" y nada de AV-IA ni JX-1
+# (aislamiento entre dos cuentas en el mismo telefono). Esperas solo por condicion.
+# RIESGO: los huevos de hoy se crean al preparar; no ejecutar cerca de las 00:00 UTC.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - inicio
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+# Inicio es la pestana raiz tras entrar; espera a que los datos carguen
+- extendedWaitUntil:
+    visible: "Estado general del criadero"
+    timeout: 25000
+- extendedWaitUntil:
+    visible: ".*Aves activas: 2.*"
+    timeout: 25000
+- assertVisible: ".*Razas presentes: 1.*"
+- assertVisible: "Vendidas"
+- assertVisible: "Fallecidas"
+- assertVisible: "Tratamiento"
+- takeScreenshot: inicio-aves
+- scrollUntilVisible:
+    element: "Kikiris"
+- assertVisible: ".*2 aves.*"
+- assertVisible: ".*100%.*"
+- assertNotVisible: "Sin información de razas."
+- scrollUntilVisible:
+    element: "Mejor ponedora"
+- assertVisible: ".*3 huevos.*"
+- assertVisible: "AV-IA"
+- assertVisible: "Mayor postura"
+- assertVisible: ".*[0-9][0-9]:00.*"
+- assertNotVisible: "Sin datos"
+- takeScreenshot: inicio-produccion
+- scrollUntilVisible:
+    element: ".*Promedio huevos diarios.*"
+- assertNotVisible: "Sin información de producción."
+- scrollUntilVisible:
+    element: ".*Total: 2.*"
+- assertVisible: ".*Críticas: 0.*"
+- assertVisible: ".*Advertencias: 2.*"
+- assertNotVisible: ".*No existen alertas.*"
+- scrollUntilVisible:
+    element: "Sin alimentación registrada"
+- scrollUntilVisible:
+    element: "Sin bebida registrada"
+- assertNotVisible: "Sin producción registrada"
+- takeScreenshot: inicio-alertas
+- scrollUntilVisible:
+    element: ".*Finanzas del mes.*"
+- scrollUntilVisible:
+    element: ".*Ocupadas: 1.*"
+- assertVisible: ".*Total: 1.*"
+- assertVisible: ".*100%.*"
+- assertVisible: ".*\\$0[.]00.*"
+- takeScreenshot: inicio-finanzas-jaulas
+# AISLAMIENTO: Mas, cerrar sesion y entrar con la segunda cuenta
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- scrollUntilVisible:
+    element: ".*Cerrar sesión.*"
+- tapOn: ".*Cerrar sesión.*"
+- tapOn:
+    text: "Cerrar sesión"
+    index: 1
+- extendedWaitUntil:
+    visible: "Iniciar sesi.n"
+    timeout: 20000
+- runFlow:
+    file: ../lib/iniciar-sesion.yaml
+    env:
+      EMAIL: ${EMAIL2}
+      PASSWORD: ${PASSWORD2}
+      CRIADERO: ${CRIADERO2}
+- extendedWaitUntil:
+    visible: "Estado general del criadero"
+    timeout: 25000
+- extendedWaitUntil:
+    visible: ".*Aves activas: 0.*"
+    timeout: 25000
+- assertVisible: ".*Razas presentes: 0.*"
+- assertNotVisible: "AV-IA"
+- assertNotVisible: "Kikiris"
+- scrollUntilVisible:
+    element: "Sin información de razas."
+- scrollUntilVisible:
+    element: "Mejor ponedora"
+- assertVisible: "Sin datos"
+- assertNotVisible: "AV-IA"
+- scrollUntilVisible:
+    element: "Sin información de producción."
+- scrollUntilVisible:
+    element: ".*Total: 1.*"
+- assertVisible: ".*Advertencias: 1.*"
+- assertVisible: "Sin producción registrada"
+- assertNotVisible: "Sin alimentación registrada"
+- assertNotVisible: "Sin bebida registrada"
+- assertNotVisible: ".*JX-1.*"
+- takeScreenshot: inicio-aislamiento
