@@ -1,0 +1,116 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-AA:MACHO:JX-1,AV-AB:HEMBRA:JX-1
+# SEGUNDA-CUENTA
+# ALERTAS: sin cuidados ni huevos hoy, la cuenta con datos tiene 3 alertas MEDIO (alimentacion y bebida de JX-1 y
+# produccion): Criticas 0, Advertencias 3, Total 3, sin "No existen alertas.". La accion de la alerta de
+# alimentacion abre la pantalla de alimentacion (boton "Guardar"); con back se vuelve a Inicio y desde
+# la pestana Mas se recupera Alertas. La insignia de Mas muestra el total. La segunda cuenta (criadero vacio, sin
+# jaulas ni aves) ve SOLO la alerta de produccion. No se prueba Inicio (sigue en SQLite). Esperas solo por condicion.
+# RIESGO: si ya hay huevos o cuidados de hoy no hay alerta; la semilla no los crea.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - alertas
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+# Mas (espera un texto de Mas antes de tocar la barra)
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- extendedWaitUntil:
+    visible: ".*🔔 3.*"
+    timeout: 25000
+- takeScreenshot: alertas-insignia
+- tapOn: "Alertas"
+- extendedWaitUntil:
+    visible: "Estado y pendientes del criadero"
+    timeout: 25000
+- extendedWaitUntil:
+    visible: ".*Total: 3.*"
+    timeout: 25000
+- assertVisible: ".*Críticas: 0.*"
+- assertVisible: ".*Advertencias: 3.*"
+- assertNotVisible: ".*No existen alertas.*"
+- assertVisible: "Sin alimentación registrada"
+- assertVisible: "La jaula JX-1 no tiene alimentación registrada hoy."
+- assertVisible: "Sin bebida registrada"
+- assertVisible: "La jaula JX-1 no tiene bebida registrada hoy."
+- scrollUntilVisible:
+    element: "Sin producción registrada"
+- assertVisible: "No existen huevos registrados hoy."
+- assertNotVisible: "Gastos superiores a ingresos"
+- takeScreenshot: alertas-lista
+# Accion de la alerta de alimentacion
+- scrollUntilVisible:
+    element: ".*Registrar alimentación.*"
+    direction: UP
+- tapOn: ".*Registrar alimentación.*"
+- extendedWaitUntil:
+    visible: ".*Guardar.*"
+    timeout: 20000
+- assertVisible: ".*Alimentación.*"
+- takeScreenshot: alertas-accion-alimentacion
+- back
+# back vuelve a la pestana Inicio (la ultima pestana de la historia), no a Alertas
+- extendedWaitUntil:
+    visible: "Estado general del criadero"
+    timeout: 20000
+# Mas vuelve a su raiz (la pila de Mas se vacio al navegar a Jaulas); se abre Alertas otra vez
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- tapOn: "Alertas"
+- extendedWaitUntil:
+    visible: ".*Total: 3.*"
+    timeout: 25000
+# AISLAMIENTO: raiz de Mas, cerrar sesion y entrar con la segunda cuenta
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- scrollUntilVisible:
+    element: ".*Cerrar sesión.*"
+- tapOn: ".*Cerrar sesión.*"
+- tapOn:
+    text: "Cerrar sesión"
+    index: 1
+- extendedWaitUntil:
+    visible: "Iniciar sesi.n"
+    timeout: 20000
+- runFlow:
+    file: ../lib/iniciar-sesion.yaml
+    env:
+      EMAIL: ${EMAIL2}
+      PASSWORD: ${PASSWORD2}
+      CRIADERO: ${CRIADERO2}
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- tapOn: "Alertas"
+- extendedWaitUntil:
+    visible: "Estado y pendientes del criadero"
+    timeout: 25000
+- extendedWaitUntil:
+    visible: "Sin producción registrada"
+    timeout: 25000
+- assertVisible: "No existen huevos registrados hoy."
+- assertVisible: ".*Total: 1.*"
+- assertVisible: ".*Advertencias: 1.*"
+- assertNotVisible: ".*JX-1.*"
+- assertNotVisible: "Sin alimentación registrada"
+- assertNotVisible: "Sin bebida registrada"
+- assertNotVisible: ".*No existen alertas.*"
+- takeScreenshot: alertas-aislamiento

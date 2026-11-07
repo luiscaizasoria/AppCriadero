@@ -55,6 +55,7 @@ prueba('aislamiento', 'debe dar 403 a A en TODOS los endpoints con el criaderoId
         ['GET', `${b}/reportes/exportaciones/clientes`, undefined, f],
         ['GET', `${b}/reportes/exportaciones/finanzas`, undefined, f],
         ['GET', `${b}/reportes/exportaciones/huevos`, undefined, f],
-        ['GET', `${b}/reportes/exportaciones/jaulas`, undefined, f]
+        ['GET', `${b}/reportes/exportaciones/jaulas`, undefined, f],
+        ['GET', `${b}/alertas`, undefined, f]
     ]);
 });

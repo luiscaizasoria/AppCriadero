@@ -41,6 +41,7 @@ export * as bajas from './src/repositories/BajaAveRepository.api.js';
 export * as finanzas from './src/repositories/FinanzasRepository.api.js';
 export * as clientes from './src/repositories/ClientesRepository.api.js';
 export * as reportes from './src/repositories/ReportesRepository.api.js';
+export * as alertas from './src/repositories/AlertasRepository.api.js';
 `
         },
         bundle: true,
