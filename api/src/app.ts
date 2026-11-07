@@ -11,6 +11,7 @@ import defaultFinanzasRouter from './finanzas/finanzas.routes';
 import defaultClientesRouter from './clientes/clientes.routes';
 import defaultReportesRouter from './reportes/reportes.routes';
 import defaultAlertasRouter from './alertas/alertas.routes';
+import defaultInicioRouter from './inicio/inicio.routes';
 
 
 export type Env = {
@@ -35,6 +36,7 @@ type AppOptions = {
   clientesRouter?: AppRouter;
   reportesRouter?: AppRouter;
   alertasRouter?: AppRouter;
+  inicioRouter?: AppRouter;
 };
 
 
@@ -94,6 +96,10 @@ export function createApp(
     options.alertasRouter ?? defaultAlertasRouter;
 
 
+  const inicioRouter =
+    options.inicioRouter ?? defaultInicioRouter;
+
+
 
   app.get('/api/v1/health', (c) => {
 
@@ -127,6 +133,8 @@ export function createApp(
   app.route('/api/v1/criaderos/:criaderoId/reportes', reportesRouter);
 
   app.route('/api/v1/criaderos/:criaderoId/alertas', alertasRouter);
+
+  app.route('/api/v1/criaderos/:criaderoId/dashboard', inicioRouter);
 
   app.route('/api/v1/auth', authRouter);
 
