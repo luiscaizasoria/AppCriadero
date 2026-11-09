@@ -45,6 +45,7 @@ Ante una contradicción prevalece, de mayor a menor:
 | `documents/ux/validacion-bloque-a.md` | Fase UX: validación del bloque A (navegación y orientación) |
 | `documents/ux/propuesta-visual.md` | Fase UX: propuesta visual  |
 | `documents/ux/muestrario-visual.html` | Fase UX: muestrario visual  |
+| `documents/ux/propuesta-visual-v2.md` y `muestrario-visual-v2.html` | Fase UX: propuesta visual v2 (tres variantes vivas: Pajarera tropical, Atardecer andino y Fiesta de colores; fuentes, componentes, rendimiento y flujos afectados) y su muestrario HTML (abre en el navegador; las fuentes vienen de Google Fonts solo ahí). Sustituye a la v1 descartada por el usuario. Validaciones: `validacion-propuesta-visual-v2.md` |
 | `documents/historico/` | Documentos antiguos (contexto V1 y V2 previo a online-first, estado de V1) y la copia de las reglas antiguas de la app móvil; no se edita |
 | `pruebas/README.md` | Pruebas automáticas (`/probar datos`, `smoke`, `completo`): capa de datos contra el Worker de pruebas y flujos Maestro en el emulador |
 | `documents/traspaso/` | Handoff, cierre y respuestas del traspaso: solo local, ignorado por Git |
