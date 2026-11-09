@@ -48,6 +48,9 @@ tags:
 - extendedWaitUntil:
     visible: ".*Nueva ave.*"
     timeout: 15000
+# C3 UX: Inicio tiene un acceso rapido "Nueva ave"; "Accesos rápidos" solo existe en Inicio, asi que el
+# "Nueva ave" visible es el boton de la lista de Aves y no el de Inicio
+- assertNotVisible: "Accesos rápidos"
 - assertNotVisible: ".*Guardar diagnóstico.*"
 - assertNotVisible: "Ficha del ave"
 # atras del telefono: pestana anterior (Finanzas), sin pasar por Salud ni la ficha; luego Inicio
@@ -57,6 +60,6 @@ tags:
     timeout: 15000
 - back
 - extendedWaitUntil:
-    visible: "Estado general del criadero"
+    visible: "Tus aves registradas"
     timeout: 15000
 - takeScreenshot: nav-pestanas-historia

@@ -19,18 +19,27 @@ tags:
       EMAIL: ${EMAIL}
       PASSWORD: ${PASSWORD}
       CRIADERO: ${CRIADERO}
-# Inicio es la pestana raiz tras entrar; espera a que los datos carguen
+# Inicio es la pestana raiz tras entrar; espera a que los datos carguen (C3 UX: la espera usa el titulo de la
+# primera seccion, que solo aparece con los datos cargados; no depende del subtitulo de la cabecera)
 - extendedWaitUntil:
-    visible: "Estado general del criadero"
+    visible: "Tus aves registradas"
     timeout: 25000
-- extendedWaitUntil:
-    visible: ".*Aves activas: 2.*"
-    timeout: 25000
-- assertVisible: ".*Razas presentes: 1.*"
+# Primera pantalla: aviso de alertas y las 4 tarjetas de aves (arriba, antes de desplazar)
+- assertVisible: ".*2 alertas por atender.*"
 - assertVisible: "Vendidas"
 - assertVisible: "Fallecidas"
 - assertVisible: "Tratamiento"
 - takeScreenshot: inicio-aves
+# Accesos rapidos (solo los tres aprobados; sin "Registrar huevo")
+- scrollUntilVisible:
+    element: "Accesos rápidos"
+- assertVisible: "Nueva ave"
+- assertVisible: "Nuevo movimiento"
+- assertNotVisible: ".*Registrar huevo.*"
+# La tarjeta de razas queda debajo de cabecera, aviso, metricas y accesos: hay que desplazar
+- scrollUntilVisible:
+    element: ".*Aves activas: 2.*"
+- assertVisible: ".*Razas presentes: 1.*"
 - scrollUntilVisible:
     element: "Kikiris"
 - assertVisible: ".*2 aves.*"
@@ -40,7 +49,8 @@ tags:
     element: "Mejor ponedora"
 - assertVisible: ".*3 huevos.*"
 - assertVisible: "AV-IA"
-- assertVisible: "Mayor postura"
+- scrollUntilVisible:
+    element: "Mayor postura"
 - assertVisible: ".*[0-9][0-9]:00.*"
 - assertNotVisible: "Sin datos"
 - takeScreenshot: inicio-produccion
@@ -60,11 +70,17 @@ tags:
 - takeScreenshot: inicio-alertas
 - scrollUntilVisible:
     element: ".*Finanzas del mes.*"
+# Los importes de la tarjeta de finanzas se comprueban antes de bajar a Jaulas (la tarjeta queda arriba)
+- scrollUntilVisible:
+    element: ".*\\$0[.]00.*"
+- assertVisible: ".*\\$0[.]00.*"
 - scrollUntilVisible:
     element: ".*Ocupadas: 1.*"
 - assertVisible: ".*Total: 1.*"
+# La barra "Ocupacion" queda bajo "Ocupadas: 1": hay que desplazar hasta ella (fallo del 2026-11-09, linea 80)
+- scrollUntilVisible:
+    element: "Ocupación"
 - assertVisible: ".*100%.*"
-- assertVisible: ".*\\$0[.]00.*"
 - takeScreenshot: inicio-finanzas-jaulas
 # AISLAMIENTO: Mas, cerrar sesion y entrar con la segunda cuenta
 - tapOn:
@@ -88,11 +104,12 @@ tags:
       PASSWORD: ${PASSWORD2}
       CRIADERO: ${CRIADERO2}
 - extendedWaitUntil:
-    visible: "Estado general del criadero"
+    visible: "Tus aves registradas"
     timeout: 25000
-- extendedWaitUntil:
-    visible: ".*Aves activas: 0.*"
-    timeout: 25000
+# Segunda cuenta: una sola alerta (produccion) -> singular en el aviso
+- assertVisible: ".*1 alerta por atender.*"
+- scrollUntilVisible:
+    element: ".*Aves activas: 0.*"
 - assertVisible: ".*Razas presentes: 0.*"
 - assertNotVisible: "AV-IA"
 - assertNotVisible: "Kikiris"

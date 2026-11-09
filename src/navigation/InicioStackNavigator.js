@@ -7,6 +7,12 @@ import {
 import InicioScreen
     from '../screens/InicioScreen';
 
+import AlertasScreen
+    from '../screens/AlertasScreen';
+
+import NuevoMovimientoFinancieroScreen
+    from '../screens/NuevoMovimientoFinancieroScreen';
+
 import { opcionesPila, SIN_CABECERA } from './opcionesPila';
 import { pantallasAve, pantallasJaula } from './pantallasCompartidas';
 
@@ -32,6 +38,16 @@ export default function InicioStackNavigator() {
                     InicioScreen
                 }
                 options={SIN_CABECERA}
+            />
+
+            <Stack.Screen
+                name="Alertas"
+                component={AlertasScreen}
+            />
+
+            <Stack.Screen
+                name="NuevoMovimientoFinanciero"
+                component={NuevoMovimientoFinancieroScreen}
             />
 
             {pantallasAve(Stack)}

@@ -22,13 +22,16 @@ export default function Boton({
     variante = 'primario',
     icono,
     cargando = false,
+    atenuado = false,
     disabled = false,
     testID,
     accessibilityLabel,
     style
 }) {
     const v = VARIANTES[variante] || VARIANTES.primario;
-    const inactivo = disabled || cargando;
+    // `atenuado`: mientras envía, el botón conserva su texto, se ve apagado y no acepta otro toque
+    // (sin spinner animado, que retrasa la detección de reposo de Maestro).
+    const inactivo = disabled || cargando || atenuado;
     const deshabilitado = disabled && !v.subrayado;
     const colorTexto = deshabilitado ? colors.disabledText : v.texto;
     return (
@@ -38,13 +41,13 @@ export default function Boton({
             testID={testID}
             accessibilityRole="button"
             accessibilityLabel={accessibilityLabel || titulo}
-            accessibilityState={{ disabled: inactivo, busy: cargando }}
+            accessibilityState={{ disabled: inactivo, busy: cargando || atenuado }}
             sinMinimo
             style={[
                 estilos.base,
                 { minHeight: v.alto, backgroundColor: v.fondo, borderColor: v.borde },
                 deshabilitado && estilos.deshabilitado,
-                disabled && v.subrayado && estilos.apagado,
+                (atenuado || (disabled && v.subrayado)) && estilos.apagado,
                 style
             ]}
         >

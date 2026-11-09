@@ -1,154 +1,32 @@
 import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { colors, spacing, typography } from '../../theme';
 
-
-import {
-    View,
-    Text,
-    StyleSheet
-} from 'react-native';
-
-
-import {
-    COLORS
-} from '../../config/constants';
-
-
-
-export default function ProgressBar({
-
-    label,
-
-    value,
-
-    max = 100,
-
-    suffix = '%'
-
-}) {
-
-
-    const porcentaje =
-        max > 0
-        ?
-        Math.min(
-            (value / max) * 100,
-            100
-        )
-        :
-        0;
-
-
+// Barra de progreso con etiqueta y valor ("100%": valor y sufijo en un mismo Text).
+export default function ProgressBar({ label, value, max = 100, suffix = '%' }) {
+    const porcentaje = max > 0 ? Math.min((value / max) * 100, 100) : 0;
 
     return (
-
-        <View
-            style={styles.container}
-        >
-
-
-            <View
-                style={styles.header}
-            >
-
-                <Text
-                    style={styles.label}
-                >
-
-                    {label}
-
-                </Text>
-
-
-                <Text
-                    style={styles.value}
-                >
-
+        <View style={estilos.contenedor}>
+            <View style={estilos.cabecera}>
+                <Text style={estilos.etiqueta}>{label}</Text>
+                <Text style={estilos.valor}>
                     {value}
                     {suffix}
-
                 </Text>
-
-
             </View>
-
-
-
-
-            <View
-                style={styles.background}
-            >
-
-
-                <View
-                    style={[
-                        styles.progress,
-
-                        {
-                            width:
-                                `${porcentaje}%`
-                        }
-
-                    ]}
-                />
-
-
+            <View style={estilos.fondo}>
+                <View style={[estilos.progreso, { width: `${porcentaje}%` }]} />
             </View>
-
-
         </View>
-
     );
-
 }
 
-
-
-
-
-const styles =
-StyleSheet.create({
-
-
-    container:{
-        marginBottom:15
-    },
-
-
-    header:{
-        flexDirection:'row',
-        justifyContent:'space-between',
-        marginBottom:6
-    },
-
-
-    label:{
-        fontWeight:'600',
-        color:
-            COLORS.text
-    },
-
-
-    value:{
-        fontWeight:'bold',
-        color:
-            COLORS.primary
-    },
-
-
-    background:{
-        height:12,
-        backgroundColor:'#e8eeee',
-        borderRadius:10,
-        overflow:'hidden'
-    },
-
-
-    progress:{
-        height:'100%',
-        backgroundColor:
-            COLORS.primary,
-        borderRadius:10
-    }
-
-
+const estilos = StyleSheet.create({
+    contenedor: { marginBottom: spacing.md },
+    cabecera: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+    etiqueta: { ...typography.etiqueta, color: colors.text },
+    valor: { ...typography.etiqueta, color: colors.primaryDark },
+    fondo: { height: 12, backgroundColor: colors.primarySoft, borderRadius: 6, overflow: 'hidden' },
+    progreso: { height: '100%', backgroundColor: colors.primary, borderRadius: 6 }
 });

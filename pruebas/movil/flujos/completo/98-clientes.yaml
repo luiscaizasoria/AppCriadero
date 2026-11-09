@@ -126,7 +126,11 @@ tags:
 - assertVisible: ".*Cuenca.*"
 - assertNotVisible: ".*Quito.*"
 - assertVisible: ".*0991234567.*"
-- assertVisible: "2"
+# C3 UX: la insignia de Mas (barra inferior) puede mostrar un numero; el "2" debe ser el valor de Compras
+# (testID cliente-compras; en la lista se repite por tarjeta, con un solo cliente en la lista hay un 2)
+- assertVisible:
+    id: "cliente-compras"
+    text: "2"
 - assertVisible: ".*17[.,]50.*"
 - takeScreenshot: clientes-lista
 # Detalle
@@ -137,7 +141,9 @@ tags:
 - assertNotVisible: "Cliente no encontrado."
 - assertVisible: ".*0991234567.*"
 - assertVisible: ".*Cuenca.*"
-- assertVisible: "2"
+- assertVisible:
+    id: "cliente-compras"
+    text: "2"
 - assertVisible: ".*17[.,]50.*"
 - scrollUntilVisible:
     element: ".*AV-CB.*"

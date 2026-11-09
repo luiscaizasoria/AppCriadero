@@ -1,73 +1,32 @@
 import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { colors, radii, spacing, typography } from '../theme';
+import IconoCirculo from './IconoCirculo';
 
-import {
-    View,
-    Text,
-    StyleSheet
-} from 'react-native';
-
-import {
-    COLORS
-} from '../config/constants';
-
-
-export default function ProductionInfoCard({
-    icon,
-    title,
-    value
-}) {
-
+// Fila de dato de producción (Mejor ponedora / Mayor postura): círculo de icono, título y valor.
+export default function ProductionInfoCard({ icono, indice = 0, title, value }) {
     return (
-
-        <View style={styles.container}>
-
-            <Text style={styles.icon}>
-                {icon}
-            </Text>
-
-            <Text style={styles.title}>
-                {title}
-            </Text>
-
-            <Text style={styles.value}>
+        <View style={estilos.contenedor}>
+            <IconoCirculo icono={icono} indice={indice} tamano={36} />
+            <Text style={estilos.titulo}>{title}</Text>
+            <Text style={estilos.valor} maxFontSizeMultiplier={1.3}>
                 {value}
             </Text>
-
         </View>
-
     );
-
 }
 
-
-const styles = StyleSheet.create({
-
-    container:{
-        backgroundColor:'#f7fafa',
-        borderRadius:12,
-        paddingVertical:10,
-        paddingHorizontal:14,
-        flexDirection:'row',
-        alignItems:'center',
-        marginTop:8
+const estilos = StyleSheet.create({
+    contenedor: {
+        backgroundColor: colors.surfaceAlt,
+        borderRadius: radii.md,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: spacing.sm,
+        minHeight: 52
     },
-
-    icon:{
-        fontSize:22,
-        marginRight:10
-    },
-
-    title:{
-        flex:1,
-        fontSize:14,
-        fontWeight:'600',
-        color:COLORS.text
-    },
-
-    value:{
-        fontSize:18,
-        fontWeight:'bold',
-        color:COLORS.primary
-    }
-
+    titulo: { ...typography.etiqueta, flex: 1, color: colors.text, marginLeft: spacing.sm },
+    valor: { ...typography.subtitulo, color: colors.primaryDark }
 });

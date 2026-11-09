@@ -8,9 +8,7 @@ import {
     View,
     Text,
     ScrollView,
-    StyleSheet,
-    ActivityIndicator,
-    TouchableOpacity
+    StyleSheet
 } from 'react-native';
 
 
@@ -30,22 +28,49 @@ import AlertCard
     from '../components/AlertCard';
 
 
-import Card
-    from '../components/Card';
+import FondoPantalla
+    from '../components/FondoPantalla';
 
 
-import Header
-    from '../components/Header';
+import Tarjeta
+    from '../components/Tarjeta';
 
 
-import SectionTitle
-    from '../components/SectionTitle';
+import TituloSeccion
+    from '../components/TituloSeccion';
+
+
+import ResumenAlertas
+    from '../components/ResumenAlertas';
+
+
+import Pulsable
+    from '../components/Pulsable';
+
+
+import Icono
+    from '../components/Icono';
+
+
+import EstadoCarga
+    from '../components/EstadoCarga';
+
+
+import EstadoError
+    from '../components/EstadoError';
+
+
+import EstadoVacio
+    from '../components/EstadoVacio';
 
 
 
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    radii,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -55,27 +80,32 @@ const FILTROS = [
 
     {
         codigo:'TODAS',
-        nombre:'Todas'
+        nombre:'Todas',
+        icono:'filtros'
     },
 
     {
         codigo:'SALUD',
-        nombre:'🩺 Salud'
+        nombre:'Salud',
+        icono:'salud'
     },
 
     {
         codigo:'JAULA',
-        nombre:'🏠 Jaulas'
+        nombre:'Jaulas',
+        icono:'jaulas'
     },
 
     {
         codigo:'PRODUCCION',
-        nombre:'🥚 Producción'
+        nombre:'Producción',
+        icono:'huevo'
     },
 
     {
         codigo:'FINANZAS',
-        nombre:'💰 Finanzas'
+        nombre:'Finanzas',
+        icono:'finanzas'
     }
 
 ];
@@ -123,6 +153,16 @@ export default function AlertasScreen({
     ] = useState(true);
 
 
+    // Solo para mostrar el estado de error con reintento (la carga no cambia).
+    const [
+
+        error,
+
+        setError
+
+    ] = useState(null);
+
+
 
 
 
@@ -137,6 +177,8 @@ export default function AlertasScreen({
 
 
                 setLoading(true);
+
+                setError(null);
 
 
 
@@ -161,6 +203,10 @@ export default function AlertasScreen({
 
                     error
 
+                );
+
+                setError(
+                    error
                 );
 
 
@@ -260,21 +306,50 @@ export default function AlertasScreen({
 
         return (
 
-            <View
-                style={styles.center}
-            >
+            <FondoPantalla>
 
-                <ActivityIndicator
+                <View
+                    style={styles.center}
+                >
 
-                    size="large"
+                    <EstadoCarga />
 
-                    color={
-                        COLORS.primary
-                    }
+                </View>
 
-                />
+            </FondoPantalla>
 
-            </View>
+        );
+
+    }
+
+
+
+    if(
+        error
+        &&
+        alertas.length === 0
+    ){
+
+        return (
+
+            <FondoPantalla>
+
+                <View
+                    style={styles.center}
+                >
+
+                    <EstadoError
+                        mensaje={
+                            error?.message
+                        }
+                        onReintentar={
+                            cargar
+                        }
+                    />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -286,9 +361,9 @@ export default function AlertasScreen({
 
 
 
-
-
     return (
+
+        <FondoPantalla>
 
         <ScrollView
 
@@ -303,28 +378,14 @@ export default function AlertasScreen({
         >
 
 
-
-            <Header
-
-                title="Alertas"
-
-                subtitle="Estado y pendientes del criadero"
-
-            />
-
-
-
-
-
-
-
-
-
-            <SectionTitle>
+            <TituloSeccion
+                icono="filtros"
+                indice={0}
+            >
 
                 Filtros
 
-            </SectionTitle>
+            </TituloSeccion>
 
 
 
@@ -345,11 +406,22 @@ export default function AlertasScreen({
                         item => (
 
 
-                            <TouchableOpacity
+                            <Pulsable
 
                                 key={
                                     item.codigo
                                 }
+
+                                testID={
+                                    `filtro-${item.codigo.toLowerCase()}`
+                                }
+
+                                accessibilityRole="button"
+
+                                accessibilityState={{
+                                    selected:
+                                        filtro === item.codigo
+                                }}
 
                                 style={[
 
@@ -375,6 +447,29 @@ export default function AlertasScreen({
                             >
 
 
+                                <Icono
+
+                                    nombre={
+                                        item.icono
+                                    }
+
+                                    tamano={18}
+
+                                    color={
+                                        filtro === item.codigo
+                                        ?
+                                        colors.white
+                                        :
+                                        colors.primaryDark
+                                    }
+
+                                    style={
+                                        styles.filterIcono
+                                    }
+
+                                />
+
+
                                 <Text
 
                                     style={[
@@ -398,7 +493,7 @@ export default function AlertasScreen({
                                 </Text>
 
 
-                            </TouchableOpacity>
+                            </Pulsable>
 
 
                         )
@@ -415,256 +510,224 @@ export default function AlertasScreen({
 
 
 
-
-
-
-            <SectionTitle>
+            <TituloSeccion
+                icono="reportes"
+                indice={2}
+            >
 
                 Resumen
 
-            </SectionTitle>
+            </TituloSeccion>
 
 
 
 
 
-            <Card>
+            <ResumenAlertas
 
+                criticas={
+                    criticas
+                }
 
+                advertencias={
+                    advertencias
+                }
 
-                <Text style={styles.summary}>
+                total={
+                    alertasFiltradas.length
+                }
 
-                    🔴 Críticas:
-
-                    {' '}
-
-                    {
-                        criticas
-                    }
-
-                </Text>
-
-
-
-
-                <Text style={styles.summary}>
-
-                    🟡 Advertencias:
-
-                    {' '}
-
-                    {
-                        advertencias
-                    }
-
-                </Text>
-
-
-
-
-                <Text style={styles.summary}>
-
-                    🔔 Total:
-
-                    {' '}
-
-                    {
-                        alertasFiltradas.length
-                    }
-
-                </Text>
-
-
-            </Card>
+            />
 
 
 
 
 
 
-
-
-
-            <SectionTitle>
+            <TituloSeccion
+                icono="alertas"
+                indice={3}
+            >
 
                 Alertas pendientes
 
-            </SectionTitle>
+            </TituloSeccion>
 
 
 
 
 
 
+            {
 
-            <Card>
-
-
-
-                {
-
-                    alertasFiltradas.length === 0
+                alertasFiltradas.length === 0
 
 
-                    ?
+                ?
 
 
-                    <Text>
+                <Tarjeta>
 
-                        ✅ No existen alertas.
+                    <EstadoVacio
+                        titulo="No existen alertas."
+                        testID="alertas-vacio"
+                    />
 
-                    </Text>
+                </Tarjeta>
 
 
 
-                    :
+                :
 
 
 
-                    alertasFiltradas.map(
+                alertasFiltradas.map(
 
-                        (item,index)=>(
+                    (item,index)=>(
 
 
-                            <AlertCard
+                        <AlertCard
 
-                                key={
-                                    index
+                            key={
+                                index
+                            }
+
+
+                            testID={
+                                `alerta-${index}`
+                            }
+
+
+                            nivel={
+                                item.nivel
+                            }
+
+
+
+                            tipo={
+                                item.tipo
+                            }
+
+
+
+                            titulo={
+                                item.titulo
+                            }
+
+
+
+                            mensaje={
+                                item.mensaje
+                            }
+
+
+                            accionDestino={
+                                item.accionDestino
+                            }
+
+
+
+                            onPress={()=>{
+
+
+
+                                if(
+                                    item.accionDestino === 'DETALLE_AVE'
+                                ){
+
+                                    navigation.navigate(
+
+                                        'DetalleAve',
+
+                                        {
+                                            aveId:
+                                                item.entidadId
+                                        }
+
+                                    );
+
                                 }
 
 
 
-                                nivel={
-                                    item.nivel
+
+                                if(
+                                    item.accionDestino === 'BEBIDA_JAULA'
+                                ){
+
+                                    navigation.navigate(
+
+                                        'BebidaJaula',
+
+                                        {
+                                            jaulaId:
+                                                item.entidadId
+                                        }
+
+                                    );
+
                                 }
 
 
 
-                                tipo={
-                                    item.tipo
+
+                                if(
+                                    item.accionDestino === 'ALIMENTACION_JAULA'
+                                ){
+
+                                    navigation.navigate(
+
+                                        'AlimentacionJaula',
+
+                                        {
+                                            jaulaId:
+                                                item.entidadId
+                                        }
+
+                                    );
+
                                 }
 
 
 
-                                titulo={
-                                    item.titulo
+
+                                if(
+                                    item.accionDestino === 'DETALLE_JAULA'
+                                ){
+
+                                    navigation.navigate(
+
+                                        'DetalleJaula',
+
+                                        {
+                                            jaulaId:
+                                                item.entidadId
+                                        }
+
+                                    );
+
                                 }
 
 
-
-                                mensaje={
-                                    item.mensaje
-                                }
+                            }}
 
 
-                                accionDestino={
-                                    item.accionDestino
-                                }
+                        />
 
-
-
-                                onPress={()=>{
-
-
-
-                                    if(
-                                        item.accionDestino === 'DETALLE_AVE'
-                                    ){
-
-                                        navigation.navigate(
-
-                                            'DetalleAve',
-
-                                            {
-                                                aveId:
-                                                    item.entidadId
-                                            }
-
-                                        );
-
-                                    }
-
-
-
-
-                                    if(
-                                        item.accionDestino === 'BEBIDA_JAULA'
-                                    ){
-
-                                        navigation.navigate(
-
-                                            'BebidaJaula',
-
-                                            {
-                                                jaulaId:
-                                                    item.entidadId
-                                            }
-
-                                        );
-
-                                    }
-
-
-
-
-                                    if(
-                                        item.accionDestino === 'ALIMENTACION_JAULA'
-                                    ){
-
-                                        navigation.navigate(
-
-                                            'AlimentacionJaula',
-
-                                            {
-                                                jaulaId:
-                                                    item.entidadId
-                                            }
-
-                                        );
-
-                                    }
-
-
-
-
-                                    if(
-                                        item.accionDestino === 'DETALLE_JAULA'
-                                    ){
-
-                                        navigation.navigate(
-
-                                            'DetalleJaula',
-
-                                            {
-                                                jaulaId:
-                                                    item.entidadId
-                                            }
-
-                                        );
-
-                                    }
-
-
-                                }}
-
-
-                            />
-
-
-                        )
 
                     )
 
-                }
+                )
 
-
-            </Card>
+            }
 
 
 
 
 
         </ScrollView>
+
+        </FondoPantalla>
 
     );
 
@@ -686,10 +749,7 @@ StyleSheet.create({
 
     container:{
 
-        flex:1,
-
-        backgroundColor:
-            COLORS.background
+        flex:1
 
     },
 
@@ -697,9 +757,19 @@ StyleSheet.create({
 
     content:{
 
-        padding:16,
+        padding:spacing.pantalla,
 
-        paddingBottom:40
+        paddingBottom:spacing.xxl
+
+    },
+
+
+
+    subtitulo:{
+
+        ...typography.cuerpoFuerte,
+
+        color:colors.textSecondary
 
     },
 
@@ -711,7 +781,7 @@ StyleSheet.create({
 
         flexWrap:'wrap',
 
-        marginBottom:10
+        marginBottom:spacing.sm
 
     },
 
@@ -719,17 +789,21 @@ StyleSheet.create({
 
     filter:{
 
-        backgroundColor:'#e8eeee',
+        flexDirection:'row',
 
-        paddingHorizontal:14,
+        alignItems:'center',
 
-        paddingVertical:9,
+        minHeight:44,
 
-        borderRadius:20,
+        backgroundColor:colors.primarySoft,
 
-        marginRight:8,
+        paddingHorizontal:spacing.md,
 
-        marginBottom:8
+        borderRadius:radii.pill,
+
+        marginRight:spacing.sm,
+
+        marginBottom:spacing.sm
 
     },
 
@@ -738,7 +812,15 @@ StyleSheet.create({
     filterActive:{
 
         backgroundColor:
-            COLORS.primary
+            colors.primary
+
+    },
+
+
+
+    filterIcono:{
+
+        marginRight:6
 
     },
 
@@ -746,8 +828,10 @@ StyleSheet.create({
 
     filterText:{
 
+        ...typography.etiqueta,
+
         color:
-            COLORS.text
+            colors.primaryDark
 
     },
 
@@ -755,22 +839,7 @@ StyleSheet.create({
 
     filterTextActive:{
 
-        color:'#fff',
-
-        fontWeight:'bold'
-
-    },
-
-
-
-    summary:{
-
-        fontSize:17,
-
-        marginBottom:10,
-
-        color:
-            COLORS.text
+        color:colors.white
 
     },
 
@@ -788,31 +857,3 @@ StyleSheet.create({
 
 
 });
-export async function obtenerResumenAlertas(){
-
-    const alertas =
-        await obtenerTodasLasAlertas();
-
-
-    return {
-
-        total:
-            alertas.length,
-
-
-        criticas:
-            alertas.filter(
-                x =>
-                x.nivel === 'ALTO'
-            ).length,
-
-
-        advertencias:
-            alertas.filter(
-                x =>
-                x.nivel === 'MEDIO'
-            ).length
-
-    };
-
-}

@@ -529,6 +529,7 @@ function Metric({
                     styles.metricValue
                 }
                 numberOfLines={1}
+                testID={label === 'Compras' ? 'cliente-compras' : undefined}
             >
                 {value}
             </Text>

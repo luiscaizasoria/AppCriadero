@@ -8,8 +8,7 @@ import {
     View,
     Text,
     ScrollView,
-    StyleSheet,
-    ActivityIndicator
+    StyleSheet
 } from 'react-native';
 
 
@@ -18,21 +17,53 @@ import {
 } from '@react-navigation/native';
 
 
+import {
+    useSafeAreaInsets
+} from 'react-native-safe-area-context';
 
-import Header
-    from '../components/Header';
 
-import Card
-    from '../components/Card';
 
-import SectionTitle
-    from '../components/SectionTitle';
+import FondoPantalla
+    from '../components/FondoPantalla';
+
+import PantallaHeader
+    from '../components/PantallaHeader';
+
+import BarraEstado
+    from '../components/BarraEstado';
+
+import Tarjeta
+    from '../components/Tarjeta';
+
+import TituloSeccion
+    from '../components/TituloSeccion';
 
 import MetricCard
     from '../components/MetricCard';
 
 import AlertCard
     from '../components/AlertCard';
+
+import ResumenAlertas
+    from '../components/ResumenAlertas';
+
+import AccesoRapido
+    from '../components/AccesoRapido';
+
+import IconoCirculo
+    from '../components/IconoCirculo';
+
+import Icono
+    from '../components/Icono';
+
+import EstadoCarga
+    from '../components/EstadoCarga';
+
+import EstadoError
+    from '../components/EstadoError';
+
+import EstadoVacio
+    from '../components/EstadoVacio';
 
 
 import ProductionMetricCard
@@ -57,8 +88,10 @@ import FinanzasBarChart
 
 
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -83,6 +116,10 @@ export default function InicioScreen({
 }){
 
 
+    const insets =
+        useSafeAreaInsets();
+
+
     const [
         data,
         setData
@@ -101,6 +138,13 @@ export default function InicioScreen({
         loading,
         setLoading
     ] = useState(true);
+
+
+    // Solo para mostrar el estado de error con reintento (la carga no cambia).
+    const [
+        error,
+        setError
+    ] = useState(null);
 
 
     const [
@@ -125,6 +169,8 @@ export default function InicioScreen({
 
 
                 setLoading(true);
+
+                setError(null);
 
 
 
@@ -163,6 +209,7 @@ export default function InicioScreen({
                 );
 
 
+
                 setResumenAlertas(
                     resumenAlertasData
                 );
@@ -174,6 +221,10 @@ export default function InicioScreen({
 
                 console.error(
                     'Error dashboard:',
+                    error
+                );
+
+                setError(
                     error
                 );
 
@@ -208,24 +259,128 @@ export default function InicioScreen({
 
 
 
+    // Misma navegación de siempre: cada alerta abre su pantalla dentro de esta pestaña.
+    const abrirAlerta = item => {
+
+        if(
+            item.accionDestino === 'DETALLE_AVE'
+        ){
+
+            navigation.navigate(
+                'DetalleAve',
+                {
+                    aveId:item.entidadId
+                }
+            );
+
+        }
+
+
+
+        if(
+            item.accionDestino === 'BEBIDA_JAULA'
+        ){
+
+            navigation.navigate(
+                'BebidaJaula',
+                {
+                    jaulaId:item.entidadId
+                }
+            );
+
+        }
+
+
+
+        if(
+            item.accionDestino === 'ALIMENTACION_JAULA'
+        ){
+
+            navigation.navigate(
+                'AlimentacionJaula',
+                {
+                    jaulaId:item.entidadId
+                }
+            );
+
+        }
+
+
+
+        if(
+            item.accionDestino === 'DETALLE_JAULA'
+        ){
+
+            navigation.navigate(
+                'DetalleJaula',
+                {
+                    jaulaId:item.entidadId
+                }
+            );
+
+        }
+
+    };
+
+
+
+
+
 
     if(loading){
 
         return(
 
-            <View style={styles.center}>
+            <FondoPantalla>
 
-                <ActivityIndicator
-
-                    size="large"
-
-                    color={
-                        COLORS.primary
-                    }
-
+                <BarraEstado
+                    estilo="dark"
+                    navigation={navigation}
                 />
 
-            </View>
+                <View style={styles.center}>
+
+                    <EstadoCarga />
+
+                </View>
+
+            </FondoPantalla>
+
+        );
+
+    }
+
+
+
+    if(
+        error
+        &&
+        !data
+    ){
+
+        return(
+
+            <FondoPantalla>
+
+                <BarraEstado
+                    estilo="dark"
+                    navigation={navigation}
+                />
+
+                <View style={styles.center}>
+
+                    <EstadoError
+                        mensaje={
+                            error?.message
+                        }
+                        onReintentar={
+                            cargar
+                        }
+                    />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -235,307 +390,267 @@ export default function InicioScreen({
 
 
 
+    const totalAlertas =
+        alertas.length;
 
 
 
     return(
 
-        <ScrollView
+        <FondoPantalla>
 
-            style={styles.container}
-
-            contentContainerStyle={
-                styles.content
-            }
-
-        >
+            <BarraEstado
+                estilo="light"
+                navigation={navigation}
+            />
 
 
+            <PantallaHeader
 
-            <Header
+                titulo="Criadero Kikirikis"
 
-                title="Criadero Kikirikis"
+                insetSuperior={
+                    insets.top
+                }
 
-                subtitle="Estado general del criadero"
+                testID="inicio-cabecera"
 
             />
 
 
 
+            <ScrollView
 
+                style={styles.container}
 
+                contentContainerStyle={
+                    styles.content
+                }
 
-
-
-            <SectionTitle>
-                Aves
-            </SectionTitle>
-
-
-
-            <View style={styles.row}>
-
-
-                <MetricCard
-
-                    icon="🐔"
-
-                    title="Activas"
-
-                    value={
-                        String(
-                            data?.aves?.activas || 0
-                        )
-                    }
-
-                />
-
-
-
-                <MetricCard
-
-                    icon="💰"
-
-                    title="Vendidas"
-
-                    value={
-                        String(
-                            data?.aves?.vendidas || 0
-                        )
-                    }
-
-                />
-
-
-            </View>
-
-
-
-
-
-
-            <View style={styles.row}>
-
-
-                <MetricCard
-
-                    icon="⚰"
-
-                    title="Fallecidas"
-
-                    value={
-                        String(
-                            data?.aves?.fallecidas || 0
-                        )
-                    }
-
-                />
-
-
-
-                <MetricCard
-
-                    icon="🟡"
-
-                    title="Tratamiento"
-
-                    value={
-                        String(
-                            data?.salud?.tratamiento || 0
-                        )
-                    }
-
-                />
-
-
-            </View>
-
-
-
-
-
-
-
-
-
-
-
-
-            <SectionTitle>
-                🐔 Distribución por raza
-            </SectionTitle>
-
-
-
-            <Card>
-
-
-                <Text style={styles.razaResumen}>
-
-                    Razas presentes:
-                    {' '}
-                    {
-                        data?.totalRazas || 0
-                    }
-
-                </Text>
-
-
-                <Text style={styles.razaResumen}>
-
-                    Aves activas:
-                    {' '}
-                    {
-                        data?.aves?.activas || 0
-                    }
-
-                </Text>
+            >
 
 
 
                 {
-                    Array.isArray(
-                        data?.avesPorRaza
-                    )
-                    &&
-                    data.avesPorRaza.length > 0
-
+                    totalAlertas > 0
                     ?
+                    <Tarjeta
 
-                    data.avesPorRaza.map(
-                        item => (
-
-                            <View
-
-                                key={
-                                    item.raza
-                                }
-
-                                style={
-                                    styles.razaItem
-                                }
-
-                            >
-
-
-                                <View
-                                    style={
-                                        styles.razaCabecera
-                                    }
-                                >
-
-                                    <Text
-                                        style={
-                                            styles.razaNombre
-                                        }
-                                    >
-                                        {item.raza}
-                                    </Text>
-
-
-                                    <Text
-                                        style={
-                                            styles.razaCantidad
-                                        }
-                                    >
-                                        {
-                                            item.cantidad
-                                        }
-                                        {' '}
-                                        {
-                                            Number(
-                                                item.cantidad
-                                            ) === 1
-                                            ?
-                                            'ave'
-                                            :
-                                            'aves'
-                                        }
-                                    </Text>
-
-                                </View>
-
-
-                                <ProgressBar
-
-                                    label={
-                                        item.raza
-                                    }
-
-                                    value={
-                                        Number(
-                                            item.porcentaje || 0
-                                        )
-                                    }
-
-                                    suffix="%"
-
-                                />
-
-
-                            </View>
-
-                        )
-                    )
-
-                    :
-
-                    <Text
-                        style={
-                            styles.razaSinDatos
+                        onPress={() =>
+                            navigation.navigate(
+                                'Alertas'
+                            )
                         }
-                    >
-                        Sin información de razas.
-                    </Text>
 
+                        franja={
+                            colors.warning
+                        }
+
+                        testID="inicio-aviso-alertas"
+
+                    >
+
+                        <View style={styles.aviso}>
+
+                            <IconoCirculo
+                                icono="alertas"
+                                color={
+                                    colors.warningSoft
+                                }
+                                colorIcono={
+                                    colors.warningText
+                                }
+                                tamano={40}
+                            />
+
+                            <Text style={styles.avisoTexto}>
+                                {
+                                    totalAlertas === 1
+                                    ?
+                                    '1 alerta por atender'
+                                    :
+                                    `${totalAlertas} alertas por atender`
+                                }
+                            </Text>
+
+                            <Icono
+                                nombre="siguiente"
+                                tamano={22}
+                                color={
+                                    colors.primaryDark
+                                }
+                            />
+
+                        </View>
+
+                    </Tarjeta>
+                    :
+                    null
                 }
 
 
-            </Card>
+
+                <TituloSeccion
+                    icono="aves"
+                    indice={0}
+                >
+                    Tus aves registradas
+                </TituloSeccion>
 
 
 
+                <View style={styles.row}>
 
 
+                    <MetricCard
 
+                        icono="aves"
 
+                        indice={0}
 
-
-
-
-            <SectionTitle>
-                🥚 Producción
-            </SectionTitle>
-
-
-
-            <Card>
-
-
-                <View style={styles.productionRow}>
-
-
-                    <ProductionMetricCard
-
-                        icon="🥚"
-
-                        title="Hoy"
+                        title="Activas"
 
                         value={
-                            data?.huevos?.hoy || 0
+                            String(
+                                data?.aves?.activas || 0
+                            )
                         }
 
                     />
 
 
-                    <ProductionMetricCard
+                    <View style={styles.separador} />
 
-                        icon="📅"
 
-                        title="Este mes"
+                    <MetricCard
+
+                        icono="venta"
+
+                        indice={1}
+
+                        title="Vendidas"
 
                         value={
-                            data?.huevos?.mes || 0
+                            String(
+                                data?.aves?.vendidas || 0
+                            )
+                        }
+
+                    />
+
+
+                </View>
+
+
+
+                <View style={styles.row}>
+
+
+                    <MetricCard
+
+                        icono="fallecimiento"
+
+                        indice={2}
+
+                        title="Fallecidas"
+
+                        value={
+                            String(
+                                data?.aves?.fallecidas || 0
+                            )
+                        }
+
+                    />
+
+
+                    <View style={styles.separador} />
+
+
+                    <MetricCard
+
+                        icono="salud"
+
+                        indice={3}
+
+                        title="Tratamiento"
+
+                        value={
+                            String(
+                                data?.salud?.tratamiento || 0
+                            )
+                        }
+
+                    />
+
+
+                </View>
+
+
+
+                <TituloSeccion
+                    icono="flash-outline"
+                    indice={4}
+                >
+                    Accesos rápidos
+                </TituloSeccion>
+
+
+
+                <View style={styles.accesos}>
+
+
+                    <AccesoRapido
+
+                        icono="anadir"
+
+                        indice={0}
+
+                        titulo="Nueva ave"
+
+                        testID="acceso-nueva-ave"
+
+                        onPress={() =>
+                            navigation.navigate(
+                                'NuevaAve'
+                            )
+                        }
+
+                    />
+
+
+                    <AccesoRapido
+
+                        icono="finanzas"
+
+                        indice={1}
+
+                        titulo="Nuevo movimiento"
+
+                        testID="acceso-nuevo-movimiento"
+
+                        onPress={() =>
+                            navigation.navigate(
+                                'NuevoMovimientoFinanciero'
+                            )
+                        }
+
+                    />
+
+
+                    <AccesoRapido
+
+                        icono="alertas"
+
+                        indice={3}
+
+                        titulo="Alertas"
+
+                        testID="acceso-alertas"
+
+                        onPress={() =>
+                            navigation.navigate(
+                                'Alertas'
+                            )
                         }
 
                     />
@@ -546,180 +661,367 @@ export default function InicioScreen({
 
 
 
-                <ProductionInfoCard
 
-                    icon="🏆"
 
-                    title="Mejor ponedora"
-
-                    value={
-                        data?.mejorPonedora?.codigo ||
-                        'Sin datos'
-                    }
-
-                />
+                <TituloSeccion
+                    icono="aves"
+                    indice={2}
+                >
+                    Distribución por raza
+                </TituloSeccion>
 
 
 
-                <ProductionInfoCard
-
-                    icon="⏰"
-
-                    title="Mayor postura"
-
-                    value={
-                        data?.horaPico?.hora
-                        ?
-                        `${data.horaPico.hora}:00`
-                        :
-                        'Sin datos'
-                    }
-
-                />
+                <Tarjeta>
 
 
-            </Card>
+                    <Text style={styles.razaResumen}>
+
+                        Razas presentes:
+                        {' '}
+                        {
+                            data?.totalRazas || 0
+                        }
+
+                    </Text>
 
 
+                    <Text style={styles.razaResumen}>
+
+                        Aves activas:
+                        {' '}
+                        {
+                            data?.aves?.activas || 0
+                        }
+
+                    </Text>
 
 
-
-
-
-
-
-
-
-            <SectionTitle>
-                📈 Indicadores
-            </SectionTitle>
-
-
-
-            <Card>
-
-
-                <Text>
-                    🥚 Promedio huevos diarios
-                </Text>
-
-
-                <Text style={styles.money}>
 
                     {
-                        data?.promedioHuevos || 0
+                        Array.isArray(
+                            data?.avesPorRaza
+                        )
+                        &&
+                        data.avesPorRaza.length > 0
+
+                        ?
+
+                        data.avesPorRaza.map(
+                            item => (
+
+                                <View
+
+                                    key={
+                                        item.raza
+                                    }
+
+                                    style={
+                                        styles.razaItem
+                                    }
+
+                                >
+
+
+                                    <View
+                                        style={
+                                            styles.razaCabecera
+                                        }
+                                    >
+
+                                        <Text
+                                            style={
+                                                styles.razaNombre
+                                            }
+                                        >
+                                            {item.raza}
+                                        </Text>
+
+
+                                        <Text
+                                            style={
+                                                styles.razaCantidad
+                                            }
+                                        >
+                                            {
+                                                item.cantidad
+                                            }
+                                            {' '}
+                                            {
+                                                Number(
+                                                    item.cantidad
+                                                ) === 1
+                                                ?
+                                                'ave'
+                                                :
+                                                'aves'
+                                            }
+                                        </Text>
+
+                                    </View>
+
+
+                                    <ProgressBar
+
+                                        label={
+                                            item.raza
+                                        }
+
+                                        value={
+                                            Number(
+                                                item.porcentaje || 0
+                                            )
+                                        }
+
+                                        suffix="%"
+
+                                    />
+
+
+                                </View>
+
+                            )
+                        )
+
+                        :
+
+                        <Text
+                            style={
+                                styles.razaSinDatos
+                            }
+                        >
+                            Sin información de razas.
+                        </Text>
+
                     }
 
-                </Text>
 
-
-
-
-                <ProgressBar
-
-                    label="Ocupación de jaulas"
-
-                    value={
-                        data?.ocupacionJaulas?.porcentaje || 0
-                    }
-
-                    suffix="%"
-
-                />
-
-
-            </Card>
+                </Tarjeta>
 
 
 
 
 
 
+                <TituloSeccion
+                    icono="huevo"
+                    indice={1}
+                >
+                    Producción
+                </TituloSeccion>
 
 
 
+                <Tarjeta>
 
 
-            <SectionTitle>
-                📊 Producción últimos días
-            </SectionTitle>
+                    <View style={styles.productionRow}>
+
+
+                        <ProductionMetricCard
+
+                            icono="huevo"
+
+                            indice={2}
+
+                            title="Hoy"
+
+                            value={
+                                data?.huevos?.hoy || 0
+                            }
+
+                        />
+
+
+                        <ProductionMetricCard
+
+                            icono="calendar-outline"
+
+                            indice={0}
+
+                            title="Este mes"
+
+                            value={
+                                data?.huevos?.mes || 0
+                            }
+
+                        />
+
+
+                    </View>
 
 
 
-            <Card>
+                    <ProductionInfoCard
 
+                        icono="trophy-outline"
 
-                {
-                    data?.produccionSemana?.length > 0
+                        indice={4}
 
-                    ?
+                        title="Mejor ponedora"
 
-                    <ProduccionBarChart
-
-                        data={
-                            data.produccionSemana
+                        value={
+                            data?.mejorPonedora?.codigo ||
+                            'Sin datos'
                         }
 
                     />
 
 
-                    :
 
-                    <Text>
-                        Sin información de producción.
+                    <ProductionInfoCard
+
+                        icono="time-outline"
+
+                        indice={3}
+
+                        title="Mayor postura"
+
+                        value={
+                            data?.horaPico?.hora
+                            ?
+                            `${data.horaPico.hora}:00`
+                            :
+                            'Sin datos'
+                        }
+
+                    />
+
+
+                </Tarjeta>
+
+
+
+
+
+
+                <TituloSeccion
+                    icono="produccion"
+                    indice={0}
+                >
+                    Indicadores
+                </TituloSeccion>
+
+
+
+                <Tarjeta>
+
+
+                    <View style={styles.indicadorFila}>
+
+                        <Icono
+                            nombre="huevo"
+                            tamano={20}
+                            color={colors.primaryDark}
+                        />
+
+                        <Text style={styles.indicadorTexto}>
+                            Promedio huevos diarios
+                        </Text>
+
+                    </View>
+
+
+                    <Text
+                        style={styles.money}
+                        maxFontSizeMultiplier={1.3}
+                    >
+
+                        {
+                            data?.promedioHuevos || 0
+                        }
+
                     </Text>
 
-                }
 
 
-            </Card>
+                    <ProgressBar
+
+                        label="Ocupación de jaulas"
+
+                        value={
+                            data?.ocupacionJaulas?.porcentaje || 0
+                        }
+
+                        suffix="%"
+
+                    />
 
 
-
-
-
-
-
-
-
-
-
-            <SectionTitle>
-                🔔 Alertas
-            </SectionTitle>
-
+                </Tarjeta>
 
 
 
-            <Card>
-
-
-                <Text style={styles.alertResumen}>
-                    🔴 Críticas:
-                    {' '}
-                    {resumenAlertas.criticas}
-                </Text>
-
-
-                <Text style={styles.alertResumen}>
-                    🟡 Advertencias:
-                    {' '}
-                    {resumenAlertas.advertencias}
-                </Text>
-
-
-                <Text style={styles.alertResumen}>
-                    🔔 Total:
-                    {' '}
-                    {resumenAlertas.total}
-                </Text>
-
-
-            </Card>
 
 
 
-            <Card>
+                <TituloSeccion
+                    icono="reportes"
+                    indice={2}
+                >
+                    Producción últimos días
+                </TituloSeccion>
+
+
+
+                <Tarjeta>
+
+
+                    {
+                        data?.produccionSemana?.length > 0
+
+                        ?
+
+                        <ProduccionBarChart
+
+                            data={
+                                data.produccionSemana
+                            }
+
+                        />
+
+
+                        :
+
+                        <Text style={styles.cuerpo}>
+                            Sin información de producción.
+                        </Text>
+
+                    }
+
+
+                </Tarjeta>
+
+
+
+
+
+
+                <TituloSeccion
+                    icono="alertas"
+                    indice={3}
+                >
+                    Alertas
+                </TituloSeccion>
+
+
+
+                <ResumenAlertas
+
+                    criticas={
+                        resumenAlertas.criticas
+                    }
+
+                    advertencias={
+                        resumenAlertas.advertencias
+                    }
+
+                    total={
+                        resumenAlertas.total
+                    }
+
+                />
+
 
 
                 {
@@ -727,9 +1029,14 @@ export default function InicioScreen({
 
                     ?
 
-                    <Text>
-                        ✅ No existen alertas pendientes.
-                    </Text>
+                    <Tarjeta>
+
+                        <EstadoVacio
+                            titulo="No existen alertas pendientes."
+                            testID="inicio-alertas-vacio"
+                        />
+
+                    </Tarjeta>
 
 
                     :
@@ -743,6 +1050,11 @@ export default function InicioScreen({
 
                                 key={
                                     index
+                                }
+
+
+                                testID={
+                                    `inicio-alerta-${index}`
                                 }
 
 
@@ -771,67 +1083,11 @@ export default function InicioScreen({
                                 }
 
 
-                                onPress={() => {
-
-                                    if(
-                                        item.accionDestino === 'DETALLE_AVE'
-                                    ){
-
-                                        navigation.navigate(
-                                            'DetalleAve',
-                                            {
-                                                aveId:item.entidadId
-                                            }
-                                        );
-
-                                    }
-
-
-
-                                    if(
-                                        item.accionDestino === 'BEBIDA_JAULA'
-                                    ){
-
-                                        navigation.navigate(
-                                            'BebidaJaula',
-                                            {
-                                                jaulaId:item.entidadId
-                                            }
-                                        );
-
-                                    }
-
-
-
-                                    if(
-                                        item.accionDestino === 'ALIMENTACION_JAULA'
-                                    ){
-
-                                        navigation.navigate(
-                                            'AlimentacionJaula',
-                                            {
-                                                jaulaId:item.entidadId
-                                            }
-                                        );
-
-                                    }
-
-
-
-                                    if(
-                                        item.accionDestino === 'DETALLE_JAULA'
-                                    ){
-
-                                        navigation.navigate(
-                                            'DetalleJaula',
-                                            {
-                                                jaulaId:item.entidadId
-                                            }
-                                        );
-
-                                    }
-
-                                }}
+                                onPress={() =>
+                                    abrirAlerta(
+                                        item
+                                    )
+                                }
 
                             />
 
@@ -843,119 +1099,130 @@ export default function InicioScreen({
                 }
 
 
-            </Card>
 
 
 
 
+                <TituloSeccion
+                    icono="finanzas"
+                    indice={4}
+                >
+                    Finanzas del mes
+                </TituloSeccion>
 
 
 
+                <Tarjeta>
 
 
+                    <FinanzasBarChart
 
+                        ingresos={
+                            data?.finanzas?.ingresos || 0
+                        }
 
-            <SectionTitle>
-                💰 Finanzas del mes
-            </SectionTitle>
 
+                        egresos={
+                            data?.finanzas?.egresos || 0
+                        }
 
 
+                        utilidad={
+                            data?.finanzas?.utilidad || 0
+                        }
 
-            <Card>
 
+                    />
 
-                <FinanzasBarChart
 
-                    ingresos={
-                        data?.finanzas?.ingresos || 0
-                    }
+                </Tarjeta>
 
 
-                    egresos={
-                        data?.finanzas?.egresos || 0
-                    }
 
 
-                    utilidad={
-                        data?.finanzas?.utilidad || 0
-                    }
 
 
-                />
+                <TituloSeccion
+                    icono="jaulas"
+                    indice={1}
+                >
+                    Jaulas
+                </TituloSeccion>
 
 
-            </Card>
 
+                <Tarjeta>
 
 
+                    <View style={styles.indicadorFila}>
 
+                        <Icono
+                            nombre="jaulas"
+                            tamano={20}
+                            color={colors.primaryDark}
+                        />
 
+                        <Text style={styles.indicadorTexto}>
 
+                            Total:
+                            {' '}
+                            {
+                                data?.jaulas?.total || 0
+                            }
 
+                        </Text>
 
+                    </View>
 
 
 
-            <SectionTitle>
-                🏠 Jaulas
-            </SectionTitle>
+                    <View style={[styles.indicadorFila, styles.jaulaTexto]}>
 
+                        <Icono
+                            nombre="aves"
+                            tamano={20}
+                            color={colors.primaryDark}
+                        />
 
+                        <Text style={styles.indicadorTexto}>
 
+                            Ocupadas:
+                            {' '}
+                            {
+                                data?.jaulas?.ocupadas || 0
+                            }
 
-            <Card>
+                        </Text>
 
+                    </View>
 
-                <Text>
 
-                    🏠 Total:
-                    {' '}
-                    {
-                        data?.jaulas?.total || 0
-                    }
 
-                </Text>
+                    <ProgressBar
 
+                        label="Ocupación"
 
+                        value={
+                            data?.ocupacionJaulas?.porcentaje || 0
+                        }
 
+                        suffix="%"
 
-                <Text style={styles.jaulaTexto}>
+                    />
 
-                    🐔 Ocupadas:
-                    {' '}
-                    {
-                        data?.jaulas?.ocupadas || 0
-                    }
 
-                </Text>
+                </Tarjeta>
 
 
 
-                <ProgressBar
+            </ScrollView>
 
-                    label="Ocupación"
-
-                    value={
-                        data?.ocupacionJaulas?.porcentaje || 0
-                    }
-
-                    suffix="%"
-
-                />
-
-
-            </Card>
-
-
-
-
-
-        </ScrollView>
+        </FondoPantalla>
 
     );
 
 }
+
 
 
 
@@ -969,99 +1236,124 @@ StyleSheet.create({
 
 
     container:{
-        flex:1,
-        backgroundColor:
-            COLORS.background
+        flex:1
     },
 
 
     content:{
-        padding:16
+        padding:spacing.pantalla,
+        paddingTop:spacing.md,
+        paddingBottom:spacing.xxl
     },
 
 
     row:{
         flexDirection:'row',
-        justifyContent:'space-between'
+        marginBottom:spacing.md
+    },
+
+
+    separador:{
+        width:spacing.md
+    },
+
+
+    accesos:{
+        flexDirection:'row',
+        marginRight:-spacing.sm,
+        marginBottom:spacing.md
+    },
+
+
+    aviso:{
+        flexDirection:'row',
+        alignItems:'center'
+    },
+
+
+    avisoTexto:{
+        ...typography.subtitulo,
+        flex:1,
+        color:colors.text,
+        marginHorizontal:spacing.md
+    },
+
+
+    productionRow:{
+        flexDirection:'row',
+        marginHorizontal:-spacing.xs
+    },
+
+
+    indicadorFila:{
+        flexDirection:'row',
+        alignItems:'center'
+    },
+
+
+    indicadorTexto:{
+        ...typography.cuerpoFuerte,
+        color:colors.text,
+        marginLeft:spacing.sm
     },
 
 
     money:{
-        fontSize:24,
-        fontWeight:'bold',
-        color:
-            COLORS.primary,
-        marginBottom:10
+        ...typography.display,
+        color:colors.primaryDark,
+        marginTop:spacing.xs,
+        marginBottom:spacing.md
     },
 
 
     jaulaTexto:{
-        marginTop:10,
-        marginBottom:15
+        marginTop:spacing.sm,
+        marginBottom:spacing.md
+    },
+
+
+    cuerpo:{
+        ...typography.cuerpo,
+        color:colors.text
     },
 
 
     razaResumen:{
-
-        fontSize:15,
-
-        color:
-            COLORS.text,
-
+        ...typography.cuerpo,
+        color:colors.text,
         marginBottom:6
-
     },
 
 
     razaItem:{
-
-        marginTop:14
-
+        marginTop:spacing.md
     },
 
 
     razaCabecera:{
-
         flexDirection:'row',
-
         justifyContent:'space-between',
-
         alignItems:'center',
-
         marginBottom:4
-
     },
 
 
     razaNombre:{
-
-        fontSize:16,
-
-        fontWeight:'600',
-
-        color:
-            COLORS.text
-
+        ...typography.cuerpoFuerte,
+        color:colors.text
     },
 
 
     razaCantidad:{
-
-        fontSize:14,
-
-        color:
-            COLORS.textSecondary
-
+        ...typography.secundario,
+        color:colors.textSecondary
     },
 
 
     razaSinDatos:{
-
-        marginTop:12,
-
-        color:
-            COLORS.textSecondary
-
+        ...typography.cuerpo,
+        marginTop:spacing.md,
+        color:colors.textSecondary
     },
 
 

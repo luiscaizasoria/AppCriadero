@@ -18,9 +18,9 @@ tags:
       EMAIL: ${EMAIL}
       PASSWORD: ${PASSWORD}
       CRIADERO: ${CRIADERO}
-# 1) Desde Inicio
+# 1) Desde Inicio (C3 UX: la espera usa el titulo de la primera seccion, que aparece con los datos cargados)
 - extendedWaitUntil:
-    visible: "Estado general del criadero"
+    visible: "Tus aves registradas"
     timeout: 25000
 - scrollUntilVisible:
     element: ".*Registrar alimentación.*"
@@ -30,7 +30,7 @@ tags:
 - takeScreenshot: nav-inicio-alimentacion
 - back
 - extendedWaitUntil:
-    visible: "Estado general del criadero"
+    visible: "Tus aves registradas"
     timeout: 20000
 - assertNotVisible: ".*Guardar"
 # La pestana Jaulas sigue en su lista
@@ -48,7 +48,7 @@ tags:
     timeout: 20000
 - tapOn: "Alertas"
 - extendedWaitUntil:
-    visible: "Estado y pendientes del criadero"
+    visible: "Alertas pendientes"
     timeout: 25000
 - scrollUntilVisible:
     element: ".*Registrar bebida.*"
@@ -59,7 +59,42 @@ tags:
 - tapOn:
     id: "cabecera-atras"
 - extendedWaitUntil:
-    visible: "Estado y pendientes del criadero"
+    visible: "Alertas pendientes"
     timeout: 20000
 - assertNotVisible: ".*Guardar"
 - takeScreenshot: nav-alertas-vuelta
+# 3) C3 UX: los accesos de Inicio abren Alertas y Nuevo movimiento DENTRO de la pila de Inicio; la flecha vuelve a Inicio
+- tapOn:
+    point: "10%,96%"
+- extendedWaitUntil:
+    visible: "Tus aves registradas"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "acceso-alertas"
+- tapOn:
+    id: "acceso-alertas"
+- extendedWaitUntil:
+    visible: "Alertas pendientes"
+    timeout: 25000
+- tapOn:
+    id: "cabecera-atras"
+- extendedWaitUntil:
+    visible: "Tus aves registradas"
+    timeout: 20000
+- assertNotVisible: "Alertas pendientes"
+- scrollUntilVisible:
+    element:
+      id: "acceso-nuevo-movimiento"
+- tapOn:
+    id: "acceso-nuevo-movimiento"
+- extendedWaitUntil:
+    visible: ".*Guardar movimiento.*"
+    timeout: 15000
+- tapOn:
+    id: "cabecera-atras"
+- extendedWaitUntil:
+    visible: "Tus aves registradas"
+    timeout: 20000
+- assertNotVisible: ".*Guardar movimiento.*"
+- takeScreenshot: nav-inicio-accesos-vuelta

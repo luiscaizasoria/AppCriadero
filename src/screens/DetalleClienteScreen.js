@@ -496,6 +496,7 @@ function SummaryMetric({
                 style={
                     styles.summaryValue
                 }
+                testID={label === 'Compras' ? 'cliente-compras' : undefined}
             >
                 {value}
             </Text>

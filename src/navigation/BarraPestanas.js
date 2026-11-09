@@ -16,8 +16,8 @@ const ICONOS = {
     'Más': ['mas', 'masActivo', 'tab-mas']
 };
 
-// Las alertas pendientes cambian con las acciones del usuario; se vuelven a leer al cambiar de
-// pestaña, como mucho una vez cada 10 s (la misma función que usa Más: obtenerResumenAlertas).
+// Las alertas pendientes cambian con las acciones del usuario; se vuelven a leer al enfocar Inicio
+// o Más, como mucho una vez cada 10 s (la misma función que usa Más: obtenerResumenAlertas).
 const INTERVALO_MIN_MS = 10000;
 
 // Barra inferior a ancho completo (mínimo 64 de alto): cinco pestañas iguales (20 % cada una, para
@@ -35,7 +35,13 @@ export default function BarraPestanas({ state, descriptors, navigation }) {
         montada.current = false;
     }, []);
 
+    // Solo se relee al enfocar Inicio o Más (la insignia vive en Más); cambiar a Jaulas, Aves o
+    // Finanzas no dispara GET /alertas.
+    const ruta = state.routes[state.index];
+    const rutaActiva = ruta ? ruta.name : '';
+
     useEffect(() => {
+        if (rutaActiva !== 'Inicio' && rutaActiva !== 'Más') return;
         const ahora = Date.now();
         if (ultimaLectura.current && ahora - ultimaLectura.current < INTERVALO_MIN_MS) {
             return;
@@ -47,7 +53,7 @@ export default function BarraPestanas({ state, descriptors, navigation }) {
                 if (montada.current) setPendientes(Number(resumen && resumen.total) || 0);
             })
             .catch(() => {});
-    }, [state.index]);
+    }, [rutaActiva]);
 
     return (
         <View style={[estilos.barra, { paddingBottom: estilos.barra.paddingBottom + insets.bottom }]}>

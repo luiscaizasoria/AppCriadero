@@ -116,7 +116,7 @@ export default function LoginScreen({
             <Boton
                 titulo={procesando ? 'Ingresando...' : 'Ingresar'}
                 onPress={entrar}
-                cargando={procesando}
+                atenuado={procesando}
                 testID="login-ingresar"
                 style={estilos.principal}
             />

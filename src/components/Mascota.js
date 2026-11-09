@@ -4,10 +4,11 @@ import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 import { colors, useReducirMovimiento } from '../theme';
 
 // Kikiriki dibujado con react-native-svg (única pantalla de uso de la librería).
-// `saltando` hace un único Animated.loop nativo (se detiene al desmontar o con reducir movimiento).
-// Decorativa: oculta a lectores de pantalla.
+// `saltando` da `saltos` saltos (3 por omisión) y queda quieta: el bucle es FINITO porque uno
+// infinito impide a Maestro detectar la pantalla en reposo. Se detiene al desmontar y no salta con
+// "reducir movimiento". Decorativa: oculta a lectores de pantalla.
 // Uso: <Mascota tamano={96} saltando />
-export default function Mascota({ tamano = 96, saltando = false, color = colors.turquesa, style }) {
+export default function Mascota({ tamano = 96, saltando = false, saltos = 3, color = colors.turquesa, style }) {
     const reducir = useReducirMovimiento();
     const salto = useRef(new Animated.Value(0)).current;
 
@@ -31,11 +32,12 @@ export default function Mascota({ tamano = 96, saltando = false, color = colors.
                     useNativeDriver: true
                 }),
                 Animated.delay(380)
-            ])
+            ]),
+            { iterations: saltos }
         );
         bucle.start();
         return () => bucle.stop();
-    }, [saltando, reducir, tamano, salto]);
+    }, [saltando, saltos, reducir, tamano, salto]);
 
     return (
         <Animated.View

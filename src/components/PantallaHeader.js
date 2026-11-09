@@ -12,6 +12,7 @@ import Pulsable from './Pulsable';
 // `onAtras` (opcional) dibuja la flecha "atrás". `insetSuperior` suma el área de la barra de estado.
 export default function PantallaHeader({
     titulo,
+    subtitulo,
     migas = [],
     accion,
     onAtras,
@@ -75,6 +76,7 @@ export default function PantallaHeader({
                     </Text>
                     {accion || null}
                 </View>
+                {subtitulo ? <Text style={estilos.subtitulo}>{subtitulo}</Text> : null}
             </View>
         </LinearGradient>
     );
@@ -120,5 +122,6 @@ const estilos = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center'
     },
-    titulo: { ...typography.titulo, color: colors.white, flex: 1 }
+    titulo: { ...typography.titulo, color: colors.white, flex: 1 },
+    subtitulo: { ...typography.secundario, color: colors.white, marginTop: 2 }
 });

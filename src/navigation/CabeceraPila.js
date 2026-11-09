@@ -2,6 +2,7 @@ import React from 'react';
 import { StackActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PantallaHeader from '../components/PantallaHeader';
+import BarraEstado from '../components/BarraEstado';
 import { tituloRuta } from './titulos';
 import { useContextos } from './contextoPantalla';
 
@@ -25,12 +26,15 @@ export default function CabeceraPila({ navigation, route, options, seccion }) {
     const titulo = (options && options.title) || tituloRuta(route.name, route.params);
 
     return (
-        <PantallaHeader
-            titulo={titulo}
-            migas={migas}
-            onAtras={indice > 0 ? () => navigation.goBack() : undefined}
-            insetSuperior={insets.top}
-            testID="cabecera"
-        />
+        <>
+            <BarraEstado estilo="light" navigation={navigation} />
+            <PantallaHeader
+                titulo={titulo}
+                migas={migas}
+                onAtras={indice > 0 ? () => navigation.goBack() : undefined}
+                insetSuperior={insets.top}
+                testID="cabecera"
+            />
+        </>
     );
 }

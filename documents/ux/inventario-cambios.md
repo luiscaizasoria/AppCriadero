@@ -115,6 +115,51 @@ Textos nuevos (ningún flujo los busca): «Criadero Kikirikis», «Control de av
 
 Riesgo para flujos: «Iniciar sesión» sigue siendo el título (smoke `01:40`, `10-acceso:24,41`). Mientras envía, el botón muestra spinner en lugar del texto «Ingresando...»/«Creando...» (la etiqueta de accesibilidad conserva el texto).
 
+## Sub-bloque C3 (Inicio y Alertas; 2026-11-09)
+
+Lógica, repositorios llamados (`obtenerDashboard`, `obtenerTodasLasAlertas`, `obtenerResumenAlertas`), cálculo de cada dato, filtros, mensajes y navegación de las alertas (`DetalleAve`, `BebidaJaula`, `AlimentacionJaula`, `DetalleJaula`) sin cambio. Revertir = revertir el commit de C3 (nuevos: `BarraEstado`, `TituloSeccion`, `ResumenAlertas`, `AccesoRapido`).
+
+| Archivo | Cambio |
+|---|---|
+| `InicioScreen.js` | `FondoPantalla` (1 degradado) + `PantallaHeader` (2.º degradado) con título «Criadero Kikirikis» y subtítulo «Estado general del criadero» (nueva prop `subtitulo`); secciones con `TituloSeccion` (icono en círculo en lugar del emoji); métricas en `MetricCard` de color (cifra Fredoka 38); aviso «N alertas por atender» (solo si N>0; abre Más > Alertas) y 3 accesos rápidos (Nueva ave -> `NuevaAve`; Nuevo movimiento -> `Finanzas/NuevoMovimientoFinanciero`; Alertas -> `Más/Alertas`; todos con `initial:false`; sin «Registrar huevo»). Estados: carga (`EstadoCarga`, sin cabecera, igual que antes de cargar), error (`EstadoError` con «Reintentar» = misma `cargar`; solo si falló y no hay datos) y vacío de alertas (`EstadoVacio`). Orden de secciones igual que V1. testID: `inicio-cabecera`, `inicio-aviso-alertas`, `acceso-nueva-ave`, `acceso-nuevo-movimiento`, `acceso-alertas`, `inicio-alerta-N`, `inicio-alertas-vacio` |
+| `AlertasScreen.js` | `FondoPantalla`; filtros como píldoras de 44 con icono + texto (testID `filtro-todas`, `filtro-salud`...); resumen con `ResumenAlertas`; vacío con `EstadoVacio`; carga y error (con «Reintentar») como Inicio. Se quita el título «Alertas» del cuerpo (ya lo muestra la cabecera de la pila); el texto «Estado y pendientes del criadero» se conserva. Se elimina un `obtenerResumenAlertas` duplicado y sin uso que estaba al final del archivo (la barra, Más e Inicio usan el del repositorio) |
+| `AlertCard.js` | Tarjeta con franja (crítica = roja, advertencia = naranja), círculo de icono por tipo, chip con icono + texto («Crítica» / «Advertencia»), tipo («Salud», «Jaula», «Producción», «Finanzas»; antes el código en mayúsculas), título, mensaje y acción de 48 (mismos textos con flecha, sin emoji). Toda la tarjeta sigue siendo el área de toque |
+| `MetricCard`, `ProductionMetricCard`, `ProductionInfoCard`, `charts/{ProgressBar,FinanzasBarChart,ProduccionBarChart}` | Restyling con el tema, emojis -> iconos; misma estructura de `Text` (valor + sufijo en un solo texto) |
+| `components/{BarraEstado,TituloSeccion,ResumenAlertas,AccesoRapido}.js` (nuevos) | `BarraEstado`: `StatusBar` solo con la pantalla enfocada (`light` sobre cabecera violeta, `dark` sobre fondos claros); `ResumenAlertas`: contadores de color, cada uno un solo `Text` («Críticas: 0») |
+| `CabeceraPila.js` | `BarraEstado estilo="light"` (barra de estado legible sobre el degradado) |
+| `BarraPestanas.js` | La insignia de Más se relee solo al enfocar Inicio o Más (antes en cada cambio de pestaña), máx. una vez cada 10 s; sin tocar repositorios |
+| `LoginScreen.js`, `Boton.js` | «Ingresar»: `Boton` con nueva prop `atenuado` mientras envía (apagado al 50 %, no acepta otro toque, conserva el texto «Ingresando...» y sin spinner). Registro y Selección de criadero siguen con `cargando` |
+| `Mascota.js` | Bucle FINITO: 3 saltos y queda quieta (prop `saltos`); sin saltos con «reducir movimiento» |
+
+Textos visibles (antes -> después) y flujos que los usan (`pruebas/movil/flujos/completo/`):
+
+| Antes | Después | Flujos |
+|---|---|---|
+| «Aves» (título de sección de Inicio) | «Tus aves registradas» (aprobado) | ninguno lo busca; `tapOn: "Aves"` es la barra |
+| «🐔 Distribución por raza», «🥚 Producción», «📈 Indicadores», «📊 Producción últimos días», «🔔 Alertas», «💰 Finanzas del mes», «🏠 Jaulas» | mismo texto sin emoji | `94:62` (`.*Finanzas del mes.*` sigue valiendo); el resto no se busca |
+| «🥚 Promedio huevos diarios» | «Promedio huevos diarios» | `94:48` (regex `.*...*`, vale) |
+| «🔴 Críticas: N», «🟡 Advertencias: N», «🔔 Total: N» (Inicio y Alertas) | «Críticas: N», «Advertencias: N», «Total: N» (un solo texto, con icono aparte) | `94:50-53,107-109`, `99:36-40,63-65,76-78,113-114` (regex `.*Total: 3.*`, valen) |
+| «🏠 Total: N», «🐔 Ocupadas: N» (Jaulas de Inicio) | «Total: N», «Ocupadas: N» | `94:63-65` (valen) |
+| «✅ No existen alertas pendientes.» / «✅ No existen alertas.» | mismo texto sin emoji | `94:54,116`, `99:41,118` (`assertNotVisible .*No existen alertas.*`, valen) |
+| Acciones «💧 Registrar bebida →», «🍚 Registrar alimentación →», «🐔 Revisar ave →» | sin emoji (conservan la flecha) | `99:53-55`, `86:26-27,54-55` (regex `.*Registrar ...*`, valen) |
+| Tipo de alerta en mayúsculas («SALUD», «JAULA»...) | «Salud», «Jaula», «Producción», «Finanzas» | ninguno los busca |
+| Filtros «🩺 Salud», «🏠 Jaulas», «🥚 Producción», «💰 Finanzas» | sin emoji, con icono | ninguno |
+| Barras de Inicio «💰 Ingresos», «📉 Egresos», «📊 Utilidad» | «Ingresos», «Egresos», «Utilidad» | ninguno (`94:67` busca `$0.00`, se conserva) |
+| (nuevos) «N alertas por atender», «Accesos rápidos», «Nueva ave», «Nuevo movimiento», «Alertas» (acceso), «Crítica», «Advertencia» (chips) | — | «Nueva ave» y «Nuevo movimiento» también los buscan `40:22`, `82:55`, `84:33,45`, `85:49`, `95:27,50` con la pestaña de Aves o Finanzas activa; con Inicio inactivo sus pantallas se desmontan de la vista, pero vigilar `85:49` (cambio de pestaña) |
+| «🔔 N» (insignia de Más, `AlertBadge`) | SIN CAMBIO en C3 (es de Más, bloque h) | `99:29` (`.*🔔 3.*`) sigue valiendo hasta ese bloque; entonces hay que actualizarlo |
+| Cabecera de Inicio | ahora fija, fuera del scroll, y solo aparece cuando cargan los datos (igual que el título de V1) | `94:23-24`, `84:19`, `85:60`, `86:23` esperan «Estado general del criadero»: sin cambio |
+
+Correcciones del validador (2026-11-09):
+
+- Subtítulos «Estado general del criadero» (Inicio) y «Estado y pendientes del criadero» (Alertas) QUITADOS (el usuario pidió omitirlos). Los flujos `94:23-24`, `84:19`, `85:60`, `86:23` que esperan «Estado general del criadero» deben actualizarse (usar `inicio-cabecera` o «Criadero Kikirikis»).
+- Navegación: `InicioStackNavigator` registra ahora `Alertas` y `NuevoMovimientoFinanciero`; el aviso «N alertas por atender», «Alertas» y «Nuevo movimiento» navegan DENTRO de la pestaña Inicio (`navigation.navigate('Alertas')` / `('NuevoMovimientoFinanciero')`, sin `initial:false`). Flecha, miga «Inicio ›» y «atrás» del teléfono vuelven a Inicio. Siguen registradas en sus pilas originales (Más, Finanzas). Se sustituye lo anotado arriba sobre `Más/Alertas` y `Finanzas/NuevoMovimientoFinanciero`.
+- testID `cliente-compras` en el valor de «Compras» (`ClientesScreen` `Metric`, `DetalleClienteScreen` `SummaryMetric`; en la lista se repite por cliente).
+- `Boton`: `accessibilityState.busy` también con `atenuado` (disabled ya incluía `atenuado`).
+- CAMBIO VISUAL APROBADO RESPECTO A V1: ante un fallo de red, Inicio y Alertas muestran el estado de error con la mascota y «Reintentar» (V1 dejaba ceros). Aprobado por el usuario en esta fase («estados de error con la mascota»). La carga no cambia.
+- PENDIENTES DE DECISIÓN (mantenidos, sin aprobación explícita): «Accesos rápidos», «Nueva ave», «Nuevo movimiento», «Alertas» (acceso), chips «Crítica»/«Advertencia» y tipos de alerta en minúsculas («Salud», «Jaula», «Producción», «Finanzas»).
+
+Riesgos para `94-inicio.yaml`: la primera pantalla tiene cabecera, aviso (si hay alertas), 4 tarjetas y 3 accesos antes de «Distribución por raza»; «Aves activas: N», «Razas presentes: N», «Vendidas», «Fallecidas» y «Tratamiento» siguen en la primera pantalla en un teléfono de ~900 dp (estimado, no medido; con pantallas más bajas hay que añadir un `scrollUntilVisible` antes de `94:27`). El `scrollUntilVisible` pendiente de `94:111` no se toca aquí.
+
 ## Decisiones
 
 Del usuario, 2026-11-09:

@@ -1,91 +1,38 @@
 import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { colors, radii, spacing, typography } from '../theme';
+import IconoCirculo from './IconoCirculo';
 
-import {
-    View,
-    Text,
-    StyleSheet
-} from 'react-native';
-
-import {
-    COLORS
-} from '../config/constants';
-
-
-export default function ProductionMetricCard({
-    icon,
-    title,
-    value,
-    suffix='huevos'
-}) {
-
+// Métrica de producción (Hoy / Este mes): círculo de icono, título y "N huevos".
+// El valor y el sufijo van en un mismo Text ("3 huevos").
+export default function ProductionMetricCard({ icono, indice = 0, title, value, suffix = 'huevos' }) {
     return (
-
-        <View style={styles.container}>
-
-            <Text style={styles.icon}>
-                {icon}
-            </Text>
-
-            <View style={styles.content}>
-
-                <Text style={styles.title}>
-                    {title}
-                </Text>
-
-                <Text style={styles.value}>
+        <View style={estilos.contenedor}>
+            <IconoCirculo icono={icono} indice={indice} tamano={40} />
+            <View style={estilos.contenido}>
+                <Text style={estilos.titulo}>{title}</Text>
+                <Text style={estilos.valor} maxFontSizeMultiplier={1.3}>
                     {value}
                     {' '}
-                    <Text style={styles.suffix}>
-                        {suffix}
-                    </Text>
+                    <Text style={estilos.sufijo}>{suffix}</Text>
                 </Text>
-
             </View>
-
         </View>
-
     );
-
 }
 
-
-const styles = StyleSheet.create({
-
-    container:{
-        flex:1,
-        backgroundColor:'#f7fafa',
-        borderRadius:12,
-        padding:10,
-        flexDirection:'row',
-        alignItems:'center',
-        marginHorizontal:5
+const estilos = StyleSheet.create({
+    contenedor: {
+        flex: 1,
+        backgroundColor: colors.surfaceAlt,
+        borderRadius: radii.md,
+        padding: spacing.md,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginHorizontal: spacing.xs
     },
-
-    icon:{
-        fontSize:20,
-        marginRight:8
-    },
-
-    content:{
-        flex:1
-    },
-
-    title:{
-        fontSize:13,
-        color:COLORS.textSecondary,
-        fontWeight:'600'
-    },
-
-    value:{
-        fontSize:22,
-        fontWeight:'bold',
-        color:COLORS.primary
-    },
-
-    suffix:{
-        fontSize:12,
-        fontWeight:'normal',
-        color:COLORS.textSecondary
-    }
-
+    contenido: { flex: 1, marginLeft: spacing.sm },
+    titulo: { ...typography.secundario, color: colors.textSecondary },
+    valor: { ...typography.subtitulo, color: colors.primaryDark },
+    sufijo: { ...typography.secundario, color: colors.textSecondary }
 });

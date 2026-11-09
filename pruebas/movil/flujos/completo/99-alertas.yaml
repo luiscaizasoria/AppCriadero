@@ -30,8 +30,9 @@ tags:
     timeout: 25000
 - takeScreenshot: alertas-insignia
 - tapOn: "Alertas"
+# C3 UX: "Alertas pendientes" es el titulo de seccion de la pantalla Alertas (la pantalla ya no tiene subtitulo)
 - extendedWaitUntil:
-    visible: "Estado y pendientes del criadero"
+    visible: "Alertas pendientes"
     timeout: 25000
 - extendedWaitUntil:
     visible: ".*Total: 3.*"
@@ -63,8 +64,8 @@ tags:
 - extendedWaitUntil:
     visible: ".*Total: 3.*"
     timeout: 25000
-- assertVisible: "Estado y pendientes del criadero"
-- assertNotVisible: "Estado general del criadero"
+- assertVisible: "Alertas pendientes"
+- assertNotVisible: "Tus aves registradas"
 - assertNotVisible: ".*Guardar.*"
 # Tocar la pestana Mas (activa) vuelve a la raiz de su pila; se abre Alertas otra vez
 - tapOn:
@@ -104,7 +105,7 @@ tags:
     timeout: 20000
 - tapOn: "Alertas"
 - extendedWaitUntil:
-    visible: "Estado y pendientes del criadero"
+    visible: "Alertas pendientes"
     timeout: 25000
 - extendedWaitUntil:
     visible: "Sin producción registrada"
