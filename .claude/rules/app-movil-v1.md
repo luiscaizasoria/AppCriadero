@@ -11,6 +11,10 @@ paths:
 
 La app V1 es la referencia funcional y el contrato de V2: conserva pantallas, lógica y comportamiento; solo cambia dónde guarda los datos. Cada repositorio (`src/repositories/`) se reemplazará, uno por uno, por un cliente REST con la misma interfaz. Solo se modifica `src/` cuando la tarea lo pide expresamente (ver la skill `migrar-repositorio-a-api`).
 
+## Fase UX (decisión del usuario, 2026-11-09)
+
+En la fase UX las pantallas, los estilos, los componentes, la navegación y `App.js` SÍ se pueden modificar (solo por el agente `disenador-ux` o con orden expresa), con límites duros: la lógica de negocio, `src/repositories/`, `src/api/`, las llamadas a repositorios, las validaciones, los nombres de campo y los mensajes de error de datos no cambian; no se inventan procesos ni catálogos. Se permiten `testID` en elementos nuevos o modificados. Los cambios de texto visible o de estructura se anotan en `documents/ux/inventario-cambios.md`, porque los flujos de `pruebas/movil` buscan por texto y hay que actualizarlos. Donde esta regla choque con las de abajo (pantallas "sin tocar", tabs raíz), prevalece esta durante la fase UX; los tabs raíz solo cambian con la propuesta aprobada.
+
 ## Reglas de desarrollo
 
 - No eliminar ni reescribir V1 hasta que los endpoints V2 equivalentes estén construidos y validados. La migración es repositorio por repositorio, no en un solo cambio.

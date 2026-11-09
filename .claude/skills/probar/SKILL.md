@@ -26,5 +26,5 @@ Pruebas automáticas (detalle y cómo se instalaron las herramientas: `pruebas/R
 ## Reglas
 
 - Solo `--env test` / `criadero-kikirikis-test`: el ejecutor ya lo respeta (borrado solo de `%@kikirikis.test`). Nada contra `criadero-kikirikis-dev`, `controlgastos-*` ni producción.
-- No modifiques pantallas V1 ni añadas `testID`: los flujos identifican elementos por texto visible.
+- Fuera de la fase UX no modifiques pantallas V1 ni añadas `testID`; los flujos identifican elementos por texto visible (en la fase UX se permiten `testID` y los cambios de texto se actualizan en los flujos).
 - No instales herramientas ni cambies `package.json`; si falta algo, indícalo.

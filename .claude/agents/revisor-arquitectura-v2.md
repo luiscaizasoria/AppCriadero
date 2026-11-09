@@ -14,7 +14,7 @@ Lista de comprobación (cada punto: CUMPLE / NO CUMPLE con `archivo:línea` y mo
 3. **SQL:** ninguna consulta fuera de `*.repository.ts`; prepared statements (`prepare().bind()`); sin concatenar valores.
 4. **Paridad con V1:** el comportamiento replica el repositorio V1 (misma salida, mismos efectos); **sin** validaciones, límites, rechazos ni `version` que V1 no tuviera.
 5. **Errores:** códigos y mensajes de V1 conservados (los que las pantallas reconocen); formato `{ success, data }` / `{ success: false, error, message }`.
-6. **Cliente de la app:** mismas funciones, mismo objeto devuelto (snake_case de V1) y mismos errores que el repositorio V1; pantallas V1 sin modificar; interruptor SQLite/API intacto (por defecto SQLite).
+6. **Cliente de la app:** mismas funciones, mismo objeto devuelto (snake_case de V1) y mismos errores que el repositorio V1; pantallas V1 sin modificar (salvo en la fase UX, solo estilos y navegación); interruptor SQLite/API intacto (por defecto SQLite).
 7. **Migraciones:** archivos nuevos `NNNN_*.sql`, sin editar las aplicadas; orden correcto (`0005` jaulas, `0006` aves e historiales); sin CHECK, límites ni columnas que V1 no tenga (salvo `id` UUID v7, `criadero_id`).
 8. **Alcance:** sin sincronización offline, sin lotes de aves, sin roles; D1 y R2 como fuente de verdad.
 9. **Secretos y dependencias:** sin secretos en el diff; sin dependencias nuevas no aprobadas.

@@ -15,6 +15,7 @@ $PerfilesPorAgente = @{
     'implementador-api'          = @{ Escritura = 'api'; Bash = 'impl-api' }
     'implementador-cliente-app'  = @{ Escritura = 'cliente'; Bash = 'cliente' }
     'disenador-ux'               = @{ Escritura = 'ux'; Bash = 'ux' }
+    'validador-ux'               = @{ Escritura = 'validador-ux'; Bash = 'validador-ux' }
     'revisor-de-cambios'         = @{ Bash = 'lectura-git' }
     'revisor-arquitectura-v2'    = @{ Bash = 'lectura-git' }
     'ejecutor-de-pruebas'        = @{ Bash = 'ejecutor' }
