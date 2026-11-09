@@ -6,6 +6,7 @@ Fecha de inicio: 2026-11-09. Se completa tras cada bloque (un registro por panta
 
 | Bloque | Pantalla / archivo | Textos cambiados | Navegación | Componentes nuevos | Estado |
 |---|---|---|---|---|---|
+| C0 | Ninguna pantalla modificada. Archivos nuevos: `src/theme/{colors,typography,spacing,radii,shadows,icons,index}.js` | ninguno | ninguna | `Icono`, `Boton`, `CampoTexto`, `Tarjeta`, `Insignia`, `EstadoVacio`, `EstadoError`, `EstadoCarga`, `Aviso`, `PantallaHeader` (en `src/components/`; nadie los importa aún) | hecho (2026-11-09); revertir = borrar los archivos nuevos |
 | (vacío hasta empezar el Bloque C0) | | | | | pendiente |
 
 Cada fila: archivo, texto antes -> después, cambio de navegación (origen -> destino), componentes del tema usados, `testID` añadidos.
