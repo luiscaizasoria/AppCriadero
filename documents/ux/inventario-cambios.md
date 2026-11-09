@@ -18,6 +18,7 @@ Fecha de inicio: 2026-11-09. Se completa tras cada bloque (un registro por panta
 | A | `DetalleJaulaScreen.js`, `DetalleJaulaInactivaScreen.js` | ninguno | `abrirAve` hace `navigate('DetalleAve',{aveId})` en la misma pila (se elimina la rama con `Alert` "No fue posible abrir el detalle del ave." porque ya no depende de `getParent()`); publican `jaula.codigo` para las migas | hook `useContextoPantalla` | hecho |
 | A | `DetalleAveScreen.js` | ninguno | publica `ave.codigo` para las migas | hook `useContextoPantalla` | hecho |
 | A | `GenealogiaAveScreen.js` (512, 982) | ninguno | `push` pasa a `navigate` (con `getId`: sin cadenas ilimitadas de fichas). La ficha NO lee `desdeGenealogia`: la cabecera con migas y la flecha ya vuelven al árbol | ninguno | hecho |
+| A | `DetalleJaulaInactivaScreen.js` (import) | ninguno | ninguna | ninguno | se quita el import de `Alert` sin uso (quedó tras eliminar la rama de `abrirAve`) |
 | A | Resto de pantallas de las pilas | cabecera nativa (con nombres técnicos) sustituida por la cabecera única: ver tabla | ninguna | `PantallaHeader` vía `CabeceraPila` (`testID` `cabecera`, `cabecera-atras`, `cabecera-miga-N`) | hecho |
 
 ### Títulos de cabecera (Bloque A)
@@ -30,7 +31,7 @@ Fecha de inicio: 2026-11-09. Se completa tras cada bloque (un registro por panta
 | `SaludAve` | SaludAve | Salud |
 | `FinalizarTratamiento` | FinalizarTratamiento | Finalizar tratamiento |
 | `BajaAve` | BajaAve | Dar de baja |
-| `RegistrarHuevo` | RegistrarHuevo | Registro de huevo (no "Registrar huevo": ver flujo 70) |
+| `RegistrarHuevo` | RegistrarHuevo | Registrar huevo (mismo texto que el botón que la abre; antes se había puesto "Registro de huevo", corregido: ver flujo 70) |
 | `GenealogiaAve` | Árbol genealógico | Genealogía |
 | `CicloVidaAve`, `NuevaJaula`, `DetalleJaula`, `DetalleJaulaInactiva`, `SeleccionarAveJaula`, `AlimentacionJaula`, `BebidaJaula`, `SanidadJaula`, `HistorialJaula`, `NuevoMovimientoFinanciero`, `EditarMovimientoFinanciero`, `Configuracion`, `Catalogo`, `EditarCatalogoItem`, `ProduccionHuevos`, `Clientes`, `DetalleCliente`, `Reportes`, `Backup`, `Alertas` | (ya en español) | sin cambio de texto; ahora con migas (p. ej. "Más › Configuración › Razas") |
 
@@ -42,7 +43,7 @@ Cada fila: archivo, texto antes -> después, cambio de navegación (origen -> de
 
 - `src/navigation/AppNavigator.js`: eliminar el listener `tabPress`; `backBehavior="history"`; nueva `InicioStack`; insignia de alertas en Más.
 - `InicioScreen.js:780-837`, `AlertasScreen.js:574-664`, `DetalleJaulaScreen.js:216`, `DetalleJaulaInactivaScreen.js:107`: `navigate('Aves'|'Jaulas',{screen})` pasa a navegar dentro de la misma pestaña.
-- `GenealogiaAveScreen.js:512,982`: sin `push` ilimitado; la ficha lee `desdeGenealogia`.
+- `GenealogiaAveScreen.js:512,982`: sin `push` ilimitado; la ficha no lee `desdeGenealogia` (nadie lo lee; la cabecera con migas y la flecha vuelven al árbol).
 - `src/components/*` y `src/theme/*`: nuevos.
 
 ## Textos visibles cambiados que usan flujos Maestro
@@ -55,7 +56,7 @@ Los flujos de `pruebas/movil/flujos/` buscan por texto visible y no se editan en
 | "Ver ave" | `40-aves.yaml:42` (con él, 24 coincidencias en 16 flujos) | "Ver ave" solo navega a la ficha | `40` |
 | Emojis en botones y títulos ("💾 Guardar...", "🥚 Registrar huevo") | selectores con texto o regex | se retiran (iconos Ionicons); los regex `.*Guardar ave.*` siguen valiendo, los de texto exacto con emoji no | por revisar en el Bloque C |
 | Títulos y migas repetidos (p. ej. "Salud") | selectores por texto | coincidencias dobles; usar `testID` | revisado en el Bloque A (filas siguientes) |
-| **Bloque A** Título de `RegistrarHuevo`: "RegistrarHuevo" -> "Registro de huevo" | `70-huevo.yaml:23-27` toca `.*Registrar huevo.*` con `index: 1` (título del cuerpo = 0, botón = 1). Se eligió "Registro de huevo" a propósito para NO añadir una tercera coincidencia | sin impacto si no se cambia | ninguno (verificado por grep) |
+| **Bloque A** Título de `RegistrarHuevo`: "RegistrarHuevo" -> "Registrar huevo" | `70-huevo.yaml:23-27` toca `.*Registrar huevo.*` con `index`: el título y el botón ya tienen el mismo texto, así que el `index` debe actualizarse (lo actualiza validador-ux) | actualizar `index` | `70` |
 | **Bloque A** Título "Árbol genealógico" -> "Genealogía" (`GenealogiaAve`) | ningún flujo busca "Árbol genealógico" (grep). `.*Genealogía` (`80:21-22`, `90:149-150`) se usa en la ficha, no en el árbol | ninguno | ninguno |
 | **Bloque A** Título "BajaAve" -> "Dar de baja" | `.*Dar de baja.*` en `90`, `91`, `96`, `98` se toca en la ficha (botón), no en la pantalla de baja; si algún flujo repitiera el toque estando en la pantalla de baja habría dos coincidencias | solo si se repite | ninguno por ahora |
 | **Bloque A** Títulos "Ficha del ave", "Evolución", "Salud", "Finalizar tratamiento"... (nuevos en cabecera) y migas "Aves", "Jaulas", "Más", "Finanzas", "Inicio", código del ave/jaula | `tapOn: "Jaulas"` (`01-smoke:18`, `30-jaulas:15`), `tapOn: "Más"` (`01`, `10`, `20`, `71`) se hacen desde Inicio/raíz, sin migas: sin cambio. `lib/iniciar-sesion.yaml:17` espera "Jaulas" (barra, Inicio). Los `.*Salud`, `.*Bebida`, `.*Historial`, `.*Sanidad`, `.*Alimentación` (`50`-`53`, `60`) se tocan en la ficha de jaula/ave, donde solo hay migas de pantallas anteriores ("Jaulas", "Aves") y título "Detalle de jaula"/"Ficha del ave": sin coincidencia. En pantallas hijas el código del ave aparece también en la miga (p. ej. `AV-P` en Salud): los `tapOn: ".*AV-..*"` de las listas y los `assertVisible` no se ven afectados; un `tapOn` por código en una pantalla hija tocaría la miga (primera coincidencia) | revisar si se añaden `tapOn` por código dentro de pantallas hijas | ninguno hoy |
@@ -78,3 +79,5 @@ Del usuario, 2026-11-09:
    - El alta rápida en catálogos usa los mismos endpoints y validaciones (incluye "Nombre requerido", código derivado y descripción vacía).
    - Ocultar "Respaldo" solo en modo API, sin tocar el código de respaldo.
 5. **`testID`** permitidos en elementos nuevos o modificados.
+
+- `RegistrarHuevoScreen.js`: añadido `testID="guardar-huevo"` al botón "Registrar huevo"/"Guardando..." (sin otro cambio).

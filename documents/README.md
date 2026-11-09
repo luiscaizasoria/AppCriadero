@@ -32,6 +32,19 @@ Ante una contradicción prevalece, de mayor a menor:
 | `documents/arquitectura/` | `arquitectura-v2.md` (arquitectura online-first, identidad, riesgos), `modelo-datos-v2.md` (estado real de D1 y borrador del modelo futuro) y `roadmap-v2.md` (siete fases) |
 | `documents/referencia-v1/` | `baseline-v1.md` (funciones y restricciones de V1) y `analisis-v1-mapeo-api.md` (análisis de V1 y mapeo repositorio → endpoint; el Anexo B es literal) |
 | `documents/specs/` | Una spec por módulo (`aves`, `catalogos`, `jaulas`, `cuidados-jaula`, `salud`, `huevos`, `genealogia`, `ciclo-vida`, `bajas`, `finanzas`, `clientes`, `reportes`, `alertas` e `inicio`) y `plantilla-spec.md` (plantilla ligera) |
+| `documents/ux/inventario-actual.md` | Fase UX: inventario de pantallas, componentes y estados de la app antes de los cambios |
+| `documents/ux/diagnostico-navegacion.md` | Fase UX: diagnóstico de los problemas de navegación y orientación |
+| `documents/ux/mapa-navegacion.md` | Fase UX: mapa de navegación de la app |
+| `documents/ux/propuesta.md` | Fase UX: propuesta de mejoras (opciones A/B) |
+| `documents/ux/plan-bloques.md` | Fase UX: plan de trabajo por bloques |
+| `documents/ux/toques-antes.md` | Fase UX: conteo de toques por tarea antes de los cambios |
+| `documents/ux/toques-despues-bloque-a.md` | Fase UX: conteo de toques por tarea tras el bloque A |
+| `documents/ux/inventario-cambios.md` | Fase UX: registro de los cambios aplicados por bloque |
+| `documents/ux/validacion-propuesta.md` | Fase UX: validación de la propuesta |
+| `documents/ux/validacion-bloque-c0.md` | Fase UX: validación del bloque C0 (base del tema y componentes comunes) |
+| `documents/ux/validacion-bloque-a.md` | Fase UX: validación del bloque A (navegación y orientación) |
+| `documents/ux/propuesta-visual.md` | Fase UX: propuesta visual (en preparación) |
+| `documents/ux/muestrario-visual.html` | Fase UX: muestrario visual (en preparación) |
 | `documents/historico/` | Documentos antiguos (contexto V1 y V2 previo a online-first, estado de V1) y la copia de las reglas antiguas de la app móvil; no se edita |
 | `pruebas/README.md` | Pruebas automáticas (`/probar datos`, `smoke`, `completo`): capa de datos contra el Worker de pruebas y flujos Maestro en el emulador |
 | `documents/traspaso/` | Handoff, cierre y respuestas del traspaso: solo local, ignorado por Git |

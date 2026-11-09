@@ -18,7 +18,7 @@ const TITULOS = {
     SaludAve: 'Salud',
     FinalizarTratamiento: 'Finalizar tratamiento',
     BajaAve: 'Dar de baja',
-    RegistrarHuevo: 'Registro de huevo',
+    RegistrarHuevo: 'Registrar huevo',
     CicloVidaAve: 'Ciclo de vida',
     GenealogiaAve: 'Genealogía',
     // Finanzas

@@ -21,10 +21,9 @@ tags:
 - tapOn: ".*Registrar huevo"
 - scrollUntilVisible:
     element: ".*Registrar huevo.*"
-# En el formulario el título y el botón comparten texto: el botón es el segundo.
+# El botón de guardar se toca por testID (el título y el botón comparten texto).
 - tapOn:
-    text: ".*Registrar huevo.*"
-    index: 1
+    id: "guardar-huevo"
 - extendedWaitUntil:
     visible: "Huevo registrado"
     timeout: 15000

@@ -10,8 +10,7 @@ import {
     ScrollView,
     TouchableOpacity,
     ActivityIndicator,
-    StyleSheet,
-    Alert
+    StyleSheet
 } from 'react-native';
 
 import {

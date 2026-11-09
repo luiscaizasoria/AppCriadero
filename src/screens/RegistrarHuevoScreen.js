@@ -288,6 +288,8 @@ export default function RegistrarHuevoScreen({
 
             <TouchableOpacity
 
+                testID="guardar-huevo"
+
                 style={
                     styles.button
                 }
