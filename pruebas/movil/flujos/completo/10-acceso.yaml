@@ -11,6 +11,8 @@ tags:
       PUERTO_METRO: ${PUERTO_METRO}
 - tapOn: "correo@ejemplo.com"
 - inputText: ${EMAIL}
+# C2: el formulario queda mas abajo (mascota y lema); se cierra el teclado para que "Contraseña" quede a la vista
+- hideKeyboard
 - tapOn:
     text: "Contraseña"
     index: 1

@@ -6,12 +6,7 @@ import React, {
 import {
     View,
     Text,
-    TextInput,
-    ScrollView,
-    TouchableOpacity,
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform
+    StyleSheet
 } from 'react-native';
 
 import {
@@ -25,12 +20,23 @@ import {
 } from '../../api/sesion';
 
 import {
-    COLORS
-} from '../../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../../theme';
+
+import Boton from '../../components/Boton';
+import CampoTexto from '../../components/CampoTexto';
+import Tarjeta from '../../components/Tarjeta';
+import Icono from '../../components/Icono';
+import IconoCirculo from '../../components/IconoCirculo';
+import EstadoCarga from '../../components/EstadoCarga';
+import FondoPantalla from '../../components/FondoPantalla';
 
 import {
-    estilosAcceso as styles
-} from './estilosAcceso';
+    PantallaAcceso,
+    MensajeError
+} from './componentesAcceso';
 
 
 const FORMULARIO_VACIO = {
@@ -40,6 +46,16 @@ const FORMULARIO_VACIO = {
     ciudad: '',
     telefono: '',
     correoContacto: ''
+};
+
+
+const ICONOS_CAMPO = {
+    nombre: 'home-outline',
+    pais: 'earth-outline',
+    provincia: 'map-outline',
+    ciudad: 'location-outline',
+    telefono: 'call-outline',
+    correoContacto: 'correo'
 };
 
 
@@ -162,14 +178,18 @@ export default function SeleccionCriaderoScreen() {
 
         return (
 
-            <View style={styles.center}>
+            <FondoPantalla>
 
-                <ActivityIndicator
-                    size="large"
-                    color={COLORS.primary}
-                />
+                <View
+                    style={estilos.centro}
+                    testID="seleccion-cargando"
+                >
 
-            </View>
+                    <EstadoCarga mensaje="Cargando tus criaderos..." />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -188,162 +208,202 @@ export default function SeleccionCriaderoScreen() {
 
     return (
 
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={
-                Platform.OS === 'ios'
-                    ? 'padding'
-                    : undefined
+        <PantallaAcceso
+            titulo="Tu criadero"
+            subtitulo={
+                criaderos.length > 0
+                    ? 'Elige el criadero con el que quieres trabajar.'
+                    : 'Crea tu primer criadero para empezar.'
             }
+            compacta
+            testID="pantalla-seleccion-criadero"
         >
 
-            <ScrollView
-                contentContainerStyle={styles.content}
-                keyboardShouldPersistTaps="handled"
-            >
+            {
+                criaderos.map(criadero => (
 
-                <Text style={styles.title}>
-                    Tu criadero
-                </Text>
-
-                <Text style={styles.subtitle}>
-                    {
-                        criaderos.length > 0
-                            ? 'Elige el criadero con el que quieres trabajar.'
-                            : 'Crea tu primer criadero para empezar.'
-                    }
-                </Text>
-
-                {
-                    criaderos.map(criadero => (
-
-                        <TouchableOpacity
-                            key={criadero.id}
-                            style={styles.card}
-                            onPress={() => elegir(criadero.id)}
-                        >
-
-                            <Text style={styles.cardTitle}>
-                                {criadero.nombre}
-                            </Text>
-
-                            <Text style={styles.cardSubtitle}>
-                                Toca para entrar
-                            </Text>
-
-                        </TouchableOpacity>
-
-                    ))
-                }
-
-                {
-                    criaderos.length > 0 && !creando &&
-                    <TouchableOpacity
-                        style={styles.linkButton}
-                        onPress={() => setCreando(true)}
+                    <Tarjeta
+                        key={criadero.id}
+                        onPress={() => elegir(criadero.id)}
+                        testID={`criadero-${criadero.id}`}
+                        style={estilos.criadero}
                     >
 
-                        <Text style={styles.linkText}>
-                            Crear otro criadero
-                        </Text>
+                        <View style={estilos.fila}>
 
-                    </TouchableOpacity>
-                }
+                            <IconoCirculo
+                                icono="home-outline"
+                                indice={1}
+                                tamano={48}
+                            />
 
-                {
-                    creando &&
-                    <View>
+                            <View style={estilos.textos}>
 
-                        <Text style={styles.sectionTitle}>
-                            Nuevo criadero
-                        </Text>
+                                <Text style={estilos.nombre}>
+                                    {criadero.nombre}
+                                </Text>
 
-                        {
-                            campos.map(([campo, etiqueta, teclado]) => (
+                                <Text style={estilos.entrar}>
+                                    Toca para entrar
+                                </Text>
 
-                                <View key={campo}>
+                            </View>
 
-                                    <Text style={styles.label}>
-                                        {etiqueta}
-                                    </Text>
+                            <Icono
+                                nombre="siguiente"
+                                tamano={24}
+                                color={colors.primaryDark}
+                            />
 
-                                    <TextInput
-                                        style={styles.input}
-                                        value={formulario[campo]}
-                                        onChangeText={
-                                            valor => cambiar(campo, valor)
-                                        }
-                                        keyboardType={teclado}
-                                        autoCapitalize={
-                                            campo === 'correoContacto'
-                                                ? 'none'
-                                                : 'sentences'
-                                        }
-                                    />
+                        </View>
 
-                                </View>
+                    </Tarjeta>
 
-                            ))
-                        }
+                ))
+            }
 
-                        <TouchableOpacity
-                            style={[
-                                styles.primaryButton,
-                                procesando && styles.disabledButton
-                            ]}
-                            onPress={crear}
-                            disabled={procesando}
-                        >
+            {
+                criaderos.length > 0 && !creando &&
+                <Boton
+                    titulo="Crear otro criadero"
+                    variante="secundario"
+                    icono="anadir"
+                    onPress={() => setCreando(true)}
+                    testID="seleccion-crear-otro"
+                    style={estilos.separado}
+                />
+            }
 
-                            <Text style={styles.primaryButtonText}>
-                                {procesando ? 'Creando...' : 'Crear criadero'}
-                            </Text>
+            {
+                creando &&
+                <View>
 
-                        </TouchableOpacity>
-
-                    </View>
-                }
-
-                {
-                    error &&
-                    <Text style={styles.errorText}>
-                        {error}
+                    <Text style={estilos.seccion}>
+                        Nuevo criadero
                     </Text>
-                }
 
-                {
-                    error && criaderos.length === 0 && !creando &&
-                    <TouchableOpacity
-                        style={styles.linkButton}
-                        onPress={cargar}
-                    >
+                    {
+                        campos.map(([campo, etiqueta, teclado]) => (
 
-                        <Text style={styles.linkText}>
-                            Reintentar
-                        </Text>
+                            <CampoTexto
+                                key={campo}
+                                etiqueta={etiqueta}
+                                icono={ICONOS_CAMPO[campo]}
+                                value={formulario[campo]}
+                                onChangeText={
+                                    valor => cambiar(campo, valor)
+                                }
+                                keyboardType={teclado}
+                                autoCapitalize={
+                                    campo === 'correoContacto'
+                                        ? 'none'
+                                        : 'sentences'
+                                }
+                                testID={`criadero-campo-${campo}`}
+                            />
 
-                    </TouchableOpacity>
-                }
+                        ))
+                    }
 
-                {
-                    /* Borra token y criadero guardados y vuelve al login. */
-                }
-                <TouchableOpacity
-                    style={styles.linkButton}
+                    <MensajeError mensaje={error} />
+
+                    <Boton
+                        titulo={procesando ? 'Creando...' : 'Crear criadero'}
+                        onPress={crear}
+                        cargando={procesando}
+                        testID="seleccion-crear-criadero"
+                        style={estilos.separado}
+                    />
+
+                </View>
+            }
+
+            {
+                !creando &&
+                <MensajeError mensaje={error} />
+            }
+
+            {
+                error && criaderos.length === 0 && !creando &&
+                <Boton
+                    titulo="Reintentar"
+                    variante="secundario"
+                    icono="reintentar"
+                    onPress={cargar}
+                    testID="seleccion-reintentar"
+                />
+            }
+
+            {
+                /* Borra token y criadero guardados y vuelve al login. */
+            }
+            <View style={estilos.cerrar}>
+
+                <Boton
+                    titulo="Cerrar sesión"
+                    variante="terciario"
+                    icono="cerrarSesion"
                     onPress={cerrarSesion}
                     disabled={procesando}
-                >
+                    testID="seleccion-cerrar-sesion"
+                />
 
-                    <Text style={styles.linkText}>
-                        Cerrar sesión
-                    </Text>
+            </View>
 
-                </TouchableOpacity>
-
-            </ScrollView>
-
-        </KeyboardAvoidingView>
+        </PantallaAcceso>
 
     );
 
 }
+
+
+const estilos = StyleSheet.create({
+
+    centro: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: spacing.xl
+    },
+
+    criadero: {
+        marginBottom: spacing.md
+    },
+
+    fila: {
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+
+    textos: {
+        flex: 1,
+        marginHorizontal: spacing.md
+    },
+
+    nombre: {
+        ...typography.subtitulo,
+        color: colors.text
+    },
+
+    entrar: {
+        ...typography.secundario,
+        color: colors.textSecondary,
+        marginTop: 2
+    },
+
+    seccion: {
+        ...typography.subtitulo,
+        color: colors.text,
+        marginTop: spacing.md,
+        marginBottom: spacing.md
+    },
+
+    separado: {
+        marginTop: spacing.sm
+    },
+
+    cerrar: {
+        marginTop: spacing.lg
+    }
+
+});

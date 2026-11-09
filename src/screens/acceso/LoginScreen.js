@@ -3,12 +3,8 @@ import React, {
 } from 'react';
 
 import {
-    Text,
-    TextInput,
-    ScrollView,
-    TouchableOpacity,
-    KeyboardAvoidingView,
-    Platform
+    View,
+    StyleSheet
 } from 'react-native';
 
 import {
@@ -16,8 +12,17 @@ import {
 } from '../../api/accesoApi';
 
 import {
-    estilosAcceso as styles
-} from './estilosAcceso';
+    spacing
+} from '../../theme';
+
+import Boton from '../../components/Boton';
+import CampoTexto from '../../components/CampoTexto';
+
+import {
+    PantallaAcceso,
+    CampoContrasena,
+    MensajeError
+} from './componentesAcceso';
 
 
 export default function LoginScreen({
@@ -78,92 +83,70 @@ export default function LoginScreen({
 
     return (
 
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={
-                Platform.OS === 'ios'
-                    ? 'padding'
-                    : undefined
-            }
+        <PantallaAcceso
+            titulo="Iniciar sesión"
+            subtitulo="Ingresa con tu cuenta para usar tus datos en la nube."
+            lema="Control de aves, fácil"
+            saltando
+            testID="pantalla-login"
         >
 
-            <ScrollView
-                contentContainerStyle={styles.content}
-                keyboardShouldPersistTaps="handled"
-            >
+            <CampoTexto
+                etiqueta="Correo"
+                icono="correo"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="correo@ejemplo.com"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                testID="login-correo"
+            />
 
-                <Text style={styles.title}>
-                    Iniciar sesión
-                </Text>
+            <CampoContrasena
+                etiqueta="Contraseña"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Contraseña"
+                testID="login-contrasena"
+            />
 
-                <Text style={styles.subtitle}>
-                    Ingresa con tu cuenta para usar tus datos en la nube.
-                </Text>
+            <MensajeError mensaje={error} />
 
-                <Text style={styles.label}>
-                    Correo
-                </Text>
+            <Boton
+                titulo={procesando ? 'Ingresando...' : 'Ingresar'}
+                onPress={entrar}
+                cargando={procesando}
+                testID="login-ingresar"
+                style={estilos.principal}
+            />
 
-                <TextInput
-                    style={styles.input}
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="correo@ejemplo.com"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType="email-address"
-                />
+            <View style={estilos.enlace}>
 
-                <Text style={styles.label}>
-                    Contraseña
-                </Text>
-
-                <TextInput
-                    style={styles.input}
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Contraseña"
-                    secureTextEntry
-                    autoCapitalize="none"
-                />
-
-                {
-                    error &&
-                    <Text style={styles.errorText}>
-                        {error}
-                    </Text>
-                }
-
-                <TouchableOpacity
-                    style={[
-                        styles.primaryButton,
-                        procesando && styles.disabledButton
-                    ]}
-                    onPress={entrar}
-                    disabled={procesando}
-                >
-
-                    <Text style={styles.primaryButtonText}>
-                        {procesando ? 'Ingresando...' : 'Ingresar'}
-                    </Text>
-
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.linkButton}
+                <Boton
+                    titulo="Crear una cuenta"
+                    variante="terciario"
                     onPress={() => navigation.navigate('Registro')}
-                >
+                    testID="login-crear-cuenta"
+                />
 
-                    <Text style={styles.linkText}>
-                        Crear una cuenta
-                    </Text>
+            </View>
 
-                </TouchableOpacity>
-
-            </ScrollView>
-
-        </KeyboardAvoidingView>
+        </PantallaAcceso>
 
     );
 
 }
+
+
+const estilos = StyleSheet.create({
+
+    principal: {
+        marginTop: spacing.sm
+    },
+
+    enlace: {
+        marginTop: spacing.md
+    }
+
+});

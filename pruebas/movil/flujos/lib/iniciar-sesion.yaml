@@ -3,6 +3,8 @@ appId: host.exp.exponent
 ---
 - tapOn: "correo@ejemplo.com"
 - inputText: ${EMAIL}
+# C2: el formulario queda mas abajo (mascota y lema); se cierra el teclado para que "Contraseña" quede a la vista
+- hideKeyboard
 - tapOn:
     text: "Contraseña"
     index: 1

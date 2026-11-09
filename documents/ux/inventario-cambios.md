@@ -100,6 +100,21 @@ Flujos Maestro a revisar tras C1 (no se editan aquí):
 | `lib/iniciar-sesion.yaml:17` y `tapOn: "Jaulas"`/`"Más"` | siguen valiendo: las etiquetas de la barra mantienen el texto |
 | Cualquier flujo que cuente texto numérico en Más | la insignia añade un número (p. ej. «3») en la pestaña Más cuando hay alertas |
 
+## Sub-bloque C2 (Login, Registro, Selección de criadero; 2026-11-09)
+
+Sin pantallas de onboarding en la app: «Onboarding» = selección/creación de criadero. Lógica, validaciones, llamadas a `src/api` y mensajes de error sin cambio. Revertir = revertir el commit de C2 (`componentesAcceso.js` nuevo; `estilosAcceso.js` borrado, ya sin importadores).
+
+| Archivo | Cambio |
+|---|---|
+| `src/screens/acceso/componentesAcceso.js` (nuevo) | `PantallaAcceso` (FondoPantalla con 1 degradado, `StatusBar` oscura, mascota, «Criadero Kikirikis», tarjeta blanca radio 28), `CampoContrasena` (ojo 44x44; «Mostrar/Ocultar contraseña») y `MensajeError` (Aviso de error, mismo texto) |
+| `LoginScreen.js` | Mascota saltando, lema nuevo «Control de aves, fácil», `CampoTexto` con iconos, `Boton` sólido 58 con spinner mientras envía, «Crear una cuenta» terciario. testID: `pantalla-login`, `login-correo`, `login-contrasena`, `login-ingresar`, `login-crear-cuenta` |
+| `RegistroScreen.js` | Igual, mascota compacta. testID `registro-*` |
+| `SeleccionCriaderoScreen.js` | Tarjetas pulsables con `IconoCirculo` y flecha; formulario con `CampoTexto` e iconos; «Reintentar», «Crear otro criadero» y «Cerrar sesión» como `Boton`; carga con `EstadoCarga` |
+
+Textos nuevos (ningún flujo los busca): «Criadero Kikirikis», «Control de aves, fácil», «Cargando tus criaderos...» (antes solo spinner), «Mostrar contraseña»/«Ocultar contraseña» (accesibilidad). Textos existentes sin cambio: «Iniciar sesión», «Ingresar», «Contraseña» (etiqueta y placeholder, `index: 1` de los flujos sigue siendo el campo), «correo@ejemplo.com», «Crear una cuenta», «Cerrar sesión», nombres de criadero.
+
+Riesgo para flujos: «Iniciar sesión» sigue siendo el título (smoke `01:40`, `10-acceso:24,41`). Mientras envía, el botón muestra spinner en lugar del texto «Ingresando...»/«Creando...» (la etiqueta de accesibilidad conserva el texto).
+
 ## Decisiones
 
 Del usuario, 2026-11-09:

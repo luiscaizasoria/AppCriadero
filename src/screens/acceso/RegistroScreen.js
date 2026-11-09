@@ -3,12 +3,8 @@ import React, {
 } from 'react';
 
 import {
-    Text,
-    TextInput,
-    ScrollView,
-    TouchableOpacity,
-    KeyboardAvoidingView,
-    Platform
+    View,
+    StyleSheet
 } from 'react-native';
 
 import {
@@ -16,8 +12,17 @@ import {
 } from '../../api/accesoApi';
 
 import {
-    estilosAcceso as styles
-} from './estilosAcceso';
+    spacing
+} from '../../theme';
+
+import Boton from '../../components/Boton';
+import CampoTexto from '../../components/CampoTexto';
+
+import {
+    PantallaAcceso,
+    CampoContrasena,
+    MensajeError
+} from './componentesAcceso';
 
 
 export default function RegistroScreen({
@@ -82,103 +87,78 @@ export default function RegistroScreen({
 
     return (
 
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={
-                Platform.OS === 'ios'
-                    ? 'padding'
-                    : undefined
-            }
+        <PantallaAcceso
+            titulo="Crear cuenta"
+            subtitulo="Tu información se guarda en la nube, asociada a tu cuenta."
+            compacta
+            testID="pantalla-registro"
         >
 
-            <ScrollView
-                contentContainerStyle={styles.content}
-                keyboardShouldPersistTaps="handled"
-            >
+            <CampoTexto
+                etiqueta="Nombre"
+                icono="clientes"
+                value={nombre}
+                onChangeText={setNombre}
+                placeholder="Tu nombre"
+                testID="registro-nombre"
+            />
 
-                <Text style={styles.title}>
-                    Crear cuenta
-                </Text>
+            <CampoTexto
+                etiqueta="Correo"
+                icono="correo"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="correo@ejemplo.com"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                testID="registro-correo"
+            />
 
-                <Text style={styles.subtitle}>
-                    Tu información se guarda en la nube, asociada a tu cuenta.
-                </Text>
+            <CampoContrasena
+                etiqueta="Contraseña"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Contraseña"
+                testID="registro-contrasena"
+            />
 
-                <Text style={styles.label}>
-                    Nombre
-                </Text>
+            <MensajeError mensaje={error} />
 
-                <TextInput
-                    style={styles.input}
-                    value={nombre}
-                    onChangeText={setNombre}
-                    placeholder="Tu nombre"
-                />
+            <Boton
+                titulo={procesando ? 'Creando...' : 'Crear cuenta'}
+                onPress={registrar}
+                cargando={procesando}
+                testID="registro-crear"
+                style={estilos.principal}
+            />
 
-                <Text style={styles.label}>
-                    Correo
-                </Text>
+            <View style={estilos.enlace}>
 
-                <TextInput
-                    style={styles.input}
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="correo@ejemplo.com"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType="email-address"
-                />
-
-                <Text style={styles.label}>
-                    Contraseña
-                </Text>
-
-                <TextInput
-                    style={styles.input}
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Contraseña"
-                    secureTextEntry
-                    autoCapitalize="none"
-                />
-
-                {
-                    error &&
-                    <Text style={styles.errorText}>
-                        {error}
-                    </Text>
-                }
-
-                <TouchableOpacity
-                    style={[
-                        styles.primaryButton,
-                        procesando && styles.disabledButton
-                    ]}
-                    onPress={registrar}
-                    disabled={procesando}
-                >
-
-                    <Text style={styles.primaryButtonText}>
-                        {procesando ? 'Creando...' : 'Crear cuenta'}
-                    </Text>
-
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.linkButton}
+                <Boton
+                    titulo="Ya tengo una cuenta"
+                    variante="terciario"
                     onPress={() => navigation.navigate('Login')}
-                >
+                    testID="registro-ya-tengo-cuenta"
+                />
 
-                    <Text style={styles.linkText}>
-                        Ya tengo una cuenta
-                    </Text>
+            </View>
 
-                </TouchableOpacity>
-
-            </ScrollView>
-
-        </KeyboardAvoidingView>
+        </PantallaAcceso>
 
     );
 
 }
+
+
+const estilos = StyleSheet.create({
+
+    principal: {
+        marginTop: spacing.sm
+    },
+
+    enlace: {
+        marginTop: spacing.md
+    }
+
+});
