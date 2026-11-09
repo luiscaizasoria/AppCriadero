@@ -13,7 +13,7 @@ Principio rector: que el usuario sepa dónde está, que le guste el diseño y qu
 3. **Pantallas compartidas por pila (grupos de pantallas)**: las fichas y pantallas de Ave y de Jaula se registran también dentro de las pilas desde donde hoy se saltaba de pestaña. Así, tocar una alerta en Inicio o Alertas, o un ave dentro de una jaula, abre la ficha **dentro de la misma pestaña**, "atrás" vuelve al origen y la barra no cambia de pestaña. Implementación prevista: funciones `pantallasAve(Stack)` y `pantallasJaula(Stack)` en `src/navigation/` registradas en las pilas Inicio (nueva `InicioStack`: Inicio como raíz), Jaulas, Aves y Más. Los `navigate('Aves',{screen:'DetalleAve'})` de `InicioScreen`, `AlertasScreen`, `DetalleJaulaScreen` y `DetalleJaulaInactivaScreen` pasan a `navigate('DetalleAve', {aveId})` (solo cambia el destino de navegación, no la lógica). Alternativa descartada: una pila raíz sobre las pestañas (ocultaría la barra en las fichas y la barra deja de servir para salir).
 4. **Genealogía** abre fichas con `navigate` por id (no `push` ilimitado) y la ficha recibe `desdeGenealogia` para mostrar "Volver al árbol" (el parámetro ya viaja, solo falta leerlo).
 5. **Atrás del teléfono**: `backBehavior="history"` en las pestañas, de modo que "atrás" desde una raíz vuelva a la pestaña anterior y no siempre a Inicio. DUDA PARA EL USUARIO: ¿prefiere que "atrás" desde cualquier pestaña vaya a Inicio (hoy) o a la pestaña anterior (propuesto)?
-6. **Tras guardar**: se mantiene el `goBack` actual (vuelve al origen real gracias al punto 3). Se propone sustituir el `Alert` de éxito con único botón "Aceptar" por un aviso no bloqueante (toast/banner) y volver automáticamente: ahorra 1 toque por guardado (hasta 7 flujos). Requiere actualizar los flujos Maestro (buscan "Aceptar"). DUDA PARA EL USUARIO: ¿aprobar? Los `Alert` con decisión (confirmar baja, eliminar, quitar ave) NO se tocan.
+6. **Tras guardar**: se mantiene el `goBack` actual (vuelve al origen real gracias al punto 3). Se propone sustituir el `Alert` de éxito con único botón "Aceptar" por un aviso no bloqueante (toast/banner) y volver automáticamente: ahorra 1 toque por guardado (hasta 7 flujos). Requiere actualizar los flujos Maestro ("Aceptar" aparece 23 veces en 15 flujos YAML, verificado con grep; con "Ver ave" de `40-aves.yaml`, 24 coincidencias en 16 flujos). Riesgo adicional: títulos y migas con el mismo texto (p. ej. "Salud" en miga y en título) darán coincidencias dobles en Maestro; se resuelve con `testID` o selectores más precisos. DUDA PARA EL USUARIO: ¿aprobar? Los `Alert` con decisión (confirmar baja, eliminar, quitar ave) NO se tocan.
 7. Respuesta ante errores de red/carga: estados comunes de carga (esqueleto), vacío (qué hacer) y error con "Reintentar" en las pantallas que hoy solo hacen `console.error` (Inicio, Reportes, Alertas, Clientes, Más). No cambia mensajes de la API.
 
 ### 0.2 Patrón de orientación ("sé dónde estoy")
@@ -34,7 +34,7 @@ Principio rector: que el usuario sepa dónde está, que le guste el diseño y qu
 | Quitar "Aceptar" tras guardar (aviso no bloqueante + volver) | Nueva jaula, Alimentación, Bebida, Sanidad, Huevo, Finalizar tratamiento, Catálogo, Nuevo movimiento, Baja | 1 toque por tarea |
 | Botones de acción de la ficha del ave arriba y fijos (barra de acciones: Salud, Huevo, Evolución, Más ▾), hoy al final de un scroll largo (`DetalleAveScreen.js:804-1052`) | Ficha de ave | 0 toques pero evita scroll largo (hasta 3-4 gestos) |
 | Botón flotante "＋" fijo en listas (hoy "＋ Nueva ave/jaula" va arriba y solo en la pestaña Activas) | Aves, Jaulas, Finanzas | evita volver al tope de la lista |
-| Alta rápida en catálogos: campo "Nuevo elemento" + botón "Añadir" en la propia lista (envía los mismos `crearItemCatalogo`; descripción vacía) | Catálogos | 3 toques menos (sin pantalla Elemento ni Aceptar) |
+| Alta rápida en catálogos: campo "Nuevo elemento" + botón "Añadir" en la propia lista (envía los mismos `crearItemCatalogo`; descripción vacía; replica "Nombre requerido / Ingrese un nombre.", el `codigo` derivado en mayúsculas con `_` y la descripción vacía de `EditarCatalogoItemScreen.js:71-127`) | Catálogos | 2 toques menos (de 7 a 5: sin pantalla Elemento ni Aceptar) |
 | Acceso directo desde Inicio a Producción de huevos, Reportes y Alertas (tarjetas ya con datos: "Ver más ›") | Inicio | de 2 toques (Más > X) a 1 |
 | Miga tocable | todas | volver varios niveles en 1 toque |
 | `returnKeyType="next"`/`"done"`, `autoFocus` en el primer campo, teclado correcto, botón principal fijo sobre el teclado | formularios | sin toques extra para ocultar teclado y desplazarse |
@@ -46,7 +46,7 @@ Lo que NO se hace: preseleccionar raza/sexo/categoría (cambiaría la obligatori
 
 - `src/theme/` con `colors`, `typography`, `spacing`, `radii`, `shadows`, `icons` (mapa nombre lógico > glifo) y `index.js`. `src/config/constants.js` conserva `COLORS` apuntando a los tokens del tema, para que ninguna pantalla se rompa durante la migración por bloques.
 - Componentes: `PantallaHeader`, `Pantalla` (contenedor con scroll, teclado, estados cargando/vacío/error), `Boton` (primario, secundario, peligro, texto; estado cargando), `CampoTexto` (etiqueta, ayuda, error, icono), `Chip`/`ChipGrupo` (reemplaza `SelectorCatalogo` y 8 copias), `Tarjeta`, `Insignia`, `Icono`, `EstadoVacio`, `EstadoError`, `Aviso` (toast), `FilaAccion` (tarjeta de menú), `PestanasInternas` (Activas/Vendidas/Fallecidas, periodos), `MiniMetrica`.
-- Accesibilidad: objetivo táctil mínimo 48 px, `accessibilityRole` y `accessibilityLabel` en botones con solo icono, contraste ≥ 4,5:1 en texto y botones (los valores de abajo ya cumplen), tamaño de texto mínimo 12, `testID` en elementos nuevos.
+- Accesibilidad: objetivo táctil mínimo 48 px, `accessibilityRole` y `accessibilityLabel` en botones con solo icono, contraste ≥ 4,5:1 en texto y botones (los valores de abajo ya cumplen), tamaño de texto mínimo 13 (nada de 12), texto sobre fondo claro siempre en `primaryDark`/`text`/`textSecondary`, `testID` en elementos nuevos.
 
 ## 1. Opción A — Pulir la identidad actual (verde azulado, iconografía coherente)
 
@@ -56,8 +56,8 @@ Lo que NO se hace: preseleccionar raza/sexo/categoría (cambiaría la obligatori
 
 | Token | Valor | Uso |
 |---|---|---|
-| primary | `#3d8b8b` | acentos, iconos activos, enlaces (sin cambio) |
-| primaryDark | `#2c6e6e` | fondo de botones primarios y cabecera (blanco encima ≈ 5,9:1; hoy 4,0:1) |
+| primary | `#3d8b8b` | solo iconos grandes y elementos decorativos (sobre blanco 4,0:1; NO para texto) |
+| primaryDark | `#2c6e6e` | fondo de botones primarios y cabecera (blanco encima ≈ 5,9:1; hoy 4,0:1) y TODO texto o enlace sobre fondo claro (≈ 5,9:1 sobre blanco, ≈ 5,2:1 sobre primarySoft) |
 | primarySoft | `#e7f5f5` | tinte de selección, chips activos, franjas de contexto (ya en uso) |
 | background | `#f5fafb` | fondo (sin cambio) |
 | surface | `#ffffff` | tarjetas |
@@ -65,8 +65,8 @@ Lo que NO se hace: preseleccionar raza/sexo/categoría (cambiaría la obligatori
 | text | `#223344` | texto principal (= `#234` actual) |
 | textSecondary | `#5b6770` | texto secundario (≥ 5,5:1 sobre fondo) |
 | border | `#d9e2e5` | bordes |
-| success / successSoft | `#2a7f5a` / `#e4f4ec` | sano, ingreso, guardado (hoy `#52b788` con blanco = 2,5:1) |
-| danger / dangerSoft | `#c2413d` / `#fde9e7` | baja, eliminar, egreso, alertas críticas (≈ 5,1:1) |
+| success / successSoft | `#1f6b4a` / `#e4f4ec` | sano, ingreso, guardado (hoy `#52b788` con blanco = 2,5:1; `#2a7f5a` sobre el fondo suave da solo ≈ 4,3:1; con `#1f6b4a` ≈ 5,7:1 sobre el suave y mayor sobre blanco) |
+| danger / dangerSoft | `#a8322e` / `#fde9e7` | baja, eliminar, egreso, alertas críticas (`#c2413d` sobre el suave da ≈ 4,4:1; con `#a8322e` ≈ 5,7:1). Valores calculados con la fórmula WCAG; reconfirmar al implementar |
 | warning / warningSoft | `#f4d35e` / `#fff6d6` (texto `#5c4a00`) | advertencias; siempre con texto oscuro |
 | info | `#2873ab` | informativo, enlaces secundarios (≈ 5,1:1) |
 | accent (huevos/producción) | `#f4a261` (texto oscuro) | huevos y producción |
@@ -74,7 +74,7 @@ Lo que NO se hace: preseleccionar raza/sexo/categoría (cambiaría la obligatori
 Consolida los ~190 literales actuales; Ciclo de vida y Genealogía usan estas familias (el morado de genealogía se mantiene solo como color de parentesco en `GenealogiaAveScreen`, definido en el tema como `kinship`).
 
 ### Tipografía
-Fuente del sistema (sin dependencias). Escala fija: display 26/bold, título pantalla 22/bold, título tarjeta 17/semibold, cuerpo 15/regular, secundario 13, micro 12. Cifras grandes 28/bold. Interlineado 1,3.
+Fuente del sistema (sin dependencias). Escala fija: display 26/bold, título pantalla 22/bold, título tarjeta 17/semibold, cuerpo 15/regular, secundario y micro 13 (mínimo). Cifras grandes 28/bold. Interlineado 1,3.
 
 ### Iconografía
 `Ionicons` de `@expo/vector-icons`, **ya instalado y ya usado** (`package.json:6`; fuente `Ionicons.ttf` ≈ 390 KB, ya incluida en el APK). Sin dependencias nuevas. Estilo outline en todo; en la barra, relleno cuando está activa. Mapa propuesto (todos comprobados en el `glyphmap` instalado):
@@ -183,3 +183,18 @@ Misma estructura que A (cabecera de miga, barra de acciones, botones flotantes, 
 6. Guía de primeros pasos en Inicio vacío.
 7. Atajos de Inicio a Producción, Reportes y Alertas.
 8. `BackupScreen` ("Respaldo") en modo API: ¿se mantiene visible o se oculta? (hoy visible en ambos modos; es SQLite local).
+
+## 5. Decisiones
+
+Decisiones del usuario del 2026-11-09 (relayadas por el orquestador). También registradas en `inventario-cambios.md`.
+
+1. **Opción visual: A** (pulir la identidad verde azulada, `Ionicons`, sin dependencias nuevas). B y los iconos de granja no se adoptan.
+2. **"Atrás" del teléfono**: vuelve a la pestaña anterior (`backBehavior="history"`).
+3. **Plan de bloques** (`plan-bloques.md`): aprobado; un bloque por vez, informe corto y visto bueno entre bloques.
+4. **Propuestas que rozan el proceso: APROBADAS con estos límites**:
+   - Aviso no bloqueante en lugar del `Alert` de éxito con "Aceptar": no cambia la validación ni el mensaje; los `Alert` de decisión (baja, eliminar, quitar ave) no se tocan.
+   - "Ver ave" tras registrar: solo navega a la ficha.
+   - Alta rápida en catálogos: mismos endpoints (`crearItemCatalogo`) y mismas validaciones, incluido "Nombre requerido", el código derivado (mayúsculas y `_`) y la descripción vacía.
+   - Ocultar "Respaldo" solo en modo API (`EXPO_PUBLIC_DATA_SOURCE=api`), sin tocar el código de respaldo (`BackupScreen`, `BackupRepository`).
+5. **Autorización**: `testID` permitidos en elementos nuevos o modificados.
+6. Sin decisión expresa (no implementar hasta tenerla): guía de primeros pasos en Inicio vacío y atajos de Inicio a Producción, Reportes y Alertas.
