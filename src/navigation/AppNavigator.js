@@ -4,10 +4,6 @@ import {
     createBottomTabNavigator
 } from '@react-navigation/bottom-tabs';
 
-import {
-    Ionicons
-} from '@expo/vector-icons';
-
 import InicioStackNavigator
 from './InicioStackNavigator';
 
@@ -23,9 +19,8 @@ from './FinanzasStackNavigator';
 import MasStackNavigator
 from './MasStackNavigator';
 
-import {
-    COLORS
-} from '../config/constants';
+import BarraPestanas
+from './BarraPestanas';
 
 
 
@@ -39,6 +34,9 @@ createBottomTabNavigator();
     - Cambiar de pestaña y volver restaura la pila donde estabas.
     - Tocar la pestaña activa vuelve a la raíz de su pila.
     - "Atrás" del teléfono vuelve a la pestaña anterior (backBehavior="history").
+
+    La barra inferior es BarraPestanas (ancho completo, mínimo 64 de alto, cinco pestañas
+    iguales, cápsula en la activa e insignia de alertas pendientes en Más).
 */
 
 export default function AppNavigator(){
@@ -49,127 +47,16 @@ export default function AppNavigator(){
 
             backBehavior="history"
 
-            screenOptions={({
-                route
-            })=>({
+            tabBar={
+                props => <BarraPestanas {...props} />
+            }
+
+            screenOptions={{
 
                 headerShown:
-                    false,
+                    false
 
-
-                tabBarActiveTintColor:
-                    COLORS.primary,
-
-
-                tabBarInactiveTintColor:
-                    COLORS.textSecondary,
-
-
-                tabBarStyle:{
-
-                    height:
-                        64,
-
-                    paddingTop:
-                        5,
-
-                    paddingBottom:
-                        7
-
-                },
-
-
-                tabBarLabelStyle:{
-
-                    fontSize:
-                        11,
-
-                    fontWeight:
-                        '600'
-
-                },
-
-
-                tabBarIcon:({
-                    color,
-                    size
-                })=>{
-
-
-                    let iconName =
-                        'ellipse';
-
-
-                    if(
-                        route.name ===
-                        'Inicio'
-                    ){
-
-                        iconName =
-                            'home';
-
-                    }
-                    else if(
-                        route.name ===
-                        'Jaulas'
-                    ){
-
-                        iconName =
-                            'grid';
-
-                    }
-                    else if(
-                        route.name ===
-                        'Aves'
-                    ){
-
-                        iconName =
-                            'paw';
-
-                    }
-                    else if(
-                        route.name ===
-                        'Finanzas'
-                    ){
-
-                        iconName =
-                            'cash';
-
-                    }
-                    else if(
-                        route.name ===
-                        'Más'
-                    ){
-
-                        iconName =
-                            'settings';
-
-                    }
-
-
-                    return(
-
-                        <Ionicons
-
-                            name={
-                                iconName
-                            }
-
-                            size={
-                                size
-                            }
-
-                            color={
-                                color
-                            }
-
-                        />
-
-                    );
-
-                }
-
-            })}
+            }}
 
         >
 

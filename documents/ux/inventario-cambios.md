@@ -66,6 +66,40 @@ Los flujos de `pruebas/movil/flujos/` buscan por texto visible y no se editan en
 | Pestañas por coordenadas `30%/50%/90%,96%` | todos | se conservan cinco pestañas y altura de barra | todos |
 | Catálogos: "Nuevo elemento" / "Guardar" / "Aceptar" | `20-catalogos.yaml` | alta rápida en la lista | `20` |
 
+## Sub-bloque C1 (variante 1 «Pajarera tropical», 2026-11-09)
+
+Ninguna pantalla de `src/screens/` modificada. Revertir = revertir el commit de C1 (archivos nuevos: borrar).
+
+| Archivo | Cambio |
+|---|---|
+| `src/theme/colors.js` | Tokens de la variante 1 (primario `#6D3BD2`, secundario `#C2188F`, turquesa, coral `#CC312A`, estados con texto/suave, deshabilitado `#5F5B73` sobre `#E6E3EE`, degradados). Se conservan las claves de C0 |
+| `src/theme/typography.js` | `fontFamily` Fredoka (títulos, botón, cifras) y Nunito (cuerpo); escala de la propuesta §2; sin `fontWeight` (cada peso es una familia). Alias C0 `tituloTarjeta` y `micro` |
+| `src/theme/{radii,shadows,spacing}.js` | radios 10/16/22/28/99; sombras con tinte `resumen`, `flotante`, `barra` (se quitan `card` y `raised`: sin sombra por fila); `spacing.pantalla` 16, `touchMin` 44 |
+| `src/theme/fuentes.js` (nuevo), `movimiento.js` (nuevo), `icons.js`, `index.js` | registro de los 5 TTF por import profundo; hook `useReducirMovimiento` (alias `useAnimacionesReducidas`); iconos `masActivo` y `sinConexion` |
+| `src/components/` nuevos | `Pulsable` (44x44, escala 0,97, brillo), `Chip`, `IconoCirculo`, `Avatar`, `FondoPantalla` (1 degradado de 3 paradas), `Mascota` (react-native-svg), `Fab`, `PantallaEspera` |
+| `src/components/` reescritos (misma API de props) | `Boton` (58/52/50, sólido, deshabilitado punteado), `CampoTexto` (54, foco con halo, icono, error con icono), `Tarjeta` (borde 1 px, sin sombra, `franja`), `Insignia` (ahora alias de `Chip`), `Aviso` (franja 6 px; no usado aún), `EstadoVacio`/`EstadoCarga`/`EstadoError` (mascota; «No se pudo conectar» y «Reintentar»), `PantallaHeader` (degradado, esquinas 34, círculos decorativos, contenido con `paddingRight` 110, migas blancas; mismos `testID` `cabecera`, `cabecera-atras`, `cabecera-miga-N`; área táctil 44x44) |
+| `src/navigation/BarraPestanas.js` (nuevo), `AppNavigator.js` | barra inferior propia a ancho completo, mínimo 64 de alto, cinco pestañas al 20 % (toques `30%/50%/70%/90%,96%` siguen cayendo en la misma pestaña), cápsula primaria en la activa, icono de Más pasa de `settings` a `ellipsis-horizontal-circle`; insignia con `obtenerResumenAlertas().total` (se relee al cambiar de pestaña, máx. una vez cada 10 s). `testID` `tab-inicio`, `tab-jaulas`, `tab-aves`, `tab-finanzas`, `tab-mas`, `tab-mas-insignia` |
+| `src/navigation/CabeceraPila.js` | usa `insetSuperior` de `PantallaHeader` (el degradado cubre la barra de estado) |
+| `App.js` | `useFonts` en paralelo con el arranque; pantalla de espera (`PantallaEspera`, sin texto hasta que carguen las fuentes). «Preparando Criadero Kikirikis...» conserva el texto (ningún flujo lo busca); el cargador de sesión pasa a la misma pantalla sin texto. Si las fuentes fallan, sigue con la del sistema |
+
+Textos visibles cambiados: ninguno de los que usan los flujos. Nuevos: el número de alertas pendientes sobre el icono de Más (insignia roja; accesibilidad: `accessibilityHint` «N alertas pendientes») y «No se pudo conectar» (título por defecto de `EstadoError`, sin uso aún).
+
+Correcciones del validador (2026-11-09), sin cambio de texto ni estructura:
+
+- `src/components/Pulsable.js`: la opacidad del `style` (p. ej. `apagado` 0,5 de `Boton`) ya no se pisa; se multiplica por el brillo (`Animated.multiply`). Los botones terciarios y de texto deshabilitados se ven apagados.
+- `App.js`: tope de 4 s a la espera de `useFonts`; pasado ese tiempo se deja `PantallaEspera` y se arranca con la fuente del sistema (el arranque de base de datos, sesión y criadero no cambia).
+- `src/theme/movimiento.js`: un único listener compartido de "reducir movimiento" (antes uno por componente).
+
+Flujos Maestro a revisar tras C1 (no se editan aquí):
+
+| Flujo y línea | Motivo |
+|---|---|
+| `pruebas/movil/flujos/completo/94-inicio.yaml` (`scrollUntilVisible`, líneas 34-111) | la cabecera de las pilas es más alta (la raíz Inicio no usa cabecera, así que su scroll no cambia); revisar al tocar Inicio en C3 |
+| `82:46`, `83:53`, `84:50`, `86:60` (`id: "cabecera-miga-N"`/`"cabecera-atras"`) | los `testID` se conservan; la miga ahora es blanca sobre degradado, mismo texto |
+| `40-aves.yaml:17`, `41:18`, `81:18`, `82:19`, `83:19`, `84:23,29`, `85:19,29,34,47`, `86:38,45`, `90:19`, `94:71` (`point: "30%/50%/70%/90%,96%"`) | sin cambio previsto: barra a ancho completo con cinco pestañas iguales |
+| `lib/iniciar-sesion.yaml:17` y `tapOn: "Jaulas"`/`"Más"` | siguen valiendo: las etiquetas de la barra mantienen el texto |
+| Cualquier flujo que cuente texto numérico en Más | la insignia añade un número (p. ej. «3») en la pestaña Más cuando hay alertas |
+
 ## Decisiones
 
 Del usuario, 2026-11-09:

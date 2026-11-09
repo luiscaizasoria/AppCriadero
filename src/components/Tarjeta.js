@@ -1,25 +1,38 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { colors, radii, shadows, spacing } from '../theme';
+import { StyleSheet, View } from 'react-native';
+import { colors, radii, spacing } from '../theme';
+import Pulsable from './Pulsable';
 
-// Uso: <Tarjeta onPress={fn} testID="tarjeta-x">...</Tarjeta> (sin onPress es estática)
-export default function Tarjeta({ children, onPress, testID, accessibilityLabel, style }) {
+// Tarjeta blanca de radio 22 con borde de 1 px y SIN sombra. `franja` (color) dibuja una franja
+// lateral de 8 px que conserva su significado (jaula: estado sanitario; alerta: nivel).
+// Uso: <Tarjeta onPress={fn} testID="tarjeta-x" franja={color}>...</Tarjeta> (sin onPress es estática)
+export default function Tarjeta({ children, onPress, testID, accessibilityLabel, franja, style }) {
+    const contenido = (
+        <>
+            {franja ? <View pointerEvents="none" style={[estilos.franja, { backgroundColor: franja }]} /> : null}
+            {children}
+        </>
+    );
+    const estiloTarjeta = [estilos.tarjeta, franja ? estilos.conFranja : null, style];
+
     if (onPress) {
         return (
-            <Pressable
+            <Pulsable
                 onPress={onPress}
                 testID={testID}
                 accessibilityRole="button"
                 accessibilityLabel={accessibilityLabel}
-                style={({ pressed }) => [estilos.tarjeta, pressed && estilos.presionada, style]}
+                escala={0.98}
+                sinMinimo
+                style={estiloTarjeta}
             >
-                {children}
-            </Pressable>
+                {contenido}
+            </Pulsable>
         );
     }
     return (
-        <View testID={testID} accessibilityLabel={accessibilityLabel} style={[estilos.tarjeta, style]}>
-            {children}
+        <View testID={testID} accessibilityLabel={accessibilityLabel} style={estiloTarjeta}>
+            {contenido}
         </View>
     );
 }
@@ -28,9 +41,12 @@ const estilos = StyleSheet.create({
     tarjeta: {
         backgroundColor: colors.surface,
         borderRadius: radii.lg,
+        borderWidth: 1,
+        borderColor: colors.borderSoft,
         padding: spacing.lg,
         marginBottom: spacing.md,
-        ...shadows.card
+        overflow: 'hidden'
     },
-    presionada: { opacity: 0.9 }
+    conFranja: { paddingLeft: spacing.lg + 8 },
+    franja: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 8 }
 });

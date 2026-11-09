@@ -7,7 +7,6 @@ import React, {
 import {
     View,
     Text,
-    ActivityIndicator,
     StyleSheet
 } from 'react-native';
 
@@ -38,6 +37,20 @@ import {
 import {
     USAR_API
 } from './src/config/dataSource';
+
+
+import {
+    useFonts
+} from 'expo-font';
+
+
+import {
+    fuentesApp
+} from './src/theme/fuentes';
+
+
+import PantallaEspera
+from './src/components/PantallaEspera';
 
 
 // Modo API (EXPO_PUBLIC_DATA_SOURCE=api): inicio de sesion y seleccion de
@@ -80,7 +93,35 @@ export default function App() {
     const sesion = useSesion();
 
 
+    // Las fuentes se cargan en paralelo con el arranque (base de datos y sesion).
+    // Si fallan, la app sigue con la fuente del sistema: nunca se bloquea.
+    const [
+        fuentesListas,
+        errorFuentes
+    ] = useFonts(
+        fuentesApp
+    );
 
+
+
+
+
+    // Tope de 4 s a la espera de fuentes: si no cargan, arranca con la fuente del sistema.
+    const [
+        esperaFuentesAgotada,
+        setEsperaFuentesAgotada
+    ] = useState(false);
+
+
+    useEffect(()=>{
+
+        const temporizador = setTimeout(()=>{
+            setEsperaFuentesAgotada(true);
+        },4000);
+
+        return ()=>clearTimeout(temporizador);
+
+    },[]);
 
 
     useEffect(()=>{
@@ -209,42 +250,25 @@ export default function App() {
 
 
 
+    // Espera sin texto hasta que carguen las fuentes (sin parpadeo de fuente equivocada).
+    if(!fuentesListas && !errorFuentes && !esperaFuentesAgotada){
+
+        return (
+            <PantallaEspera />
+        );
+
+    }
+
+
+
     if(!databaseReady){
 
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
-
-
-                <ActivityIndicator
-
-                    size="large"
-
-                    color={
-                        COLORS.primary
-                    }
-
-                />
-
-
-
-                <Text
-                    style={
-                        styles.loadingText
-                    }
-                >
-
-                    Preparando Criadero Kikirikis...
-
-                </Text>
-
-
-            </View>
+            <PantallaEspera
+                mensaje="Preparando Criadero Kikirikis..."
+            />
 
         );
 
@@ -263,22 +287,7 @@ export default function App() {
         if(sesion.cargando){
 
             return (
-
-                <View
-                    style={
-                        styles.center
-                    }
-                >
-
-                    <ActivityIndicator
-                        size="large"
-                        color={
-                            COLORS.primary
-                        }
-                    />
-
-                </View>
-
+                <PantallaEspera />
             );
 
         }

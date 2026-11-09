@@ -1,9 +1,7 @@
 import React from 'react';
-import { View } from 'react-native';
 import { StackActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PantallaHeader from '../components/PantallaHeader';
-import { colors } from '../theme';
 import { tituloRuta } from './titulos';
 import { useContextos } from './contextoPantalla';
 
@@ -27,13 +25,12 @@ export default function CabeceraPila({ navigation, route, options, seccion }) {
     const titulo = (options && options.title) || tituloRuta(route.name, route.params);
 
     return (
-        <View style={{ backgroundColor: colors.primarySoft, paddingTop: insets.top }}>
-            <PantallaHeader
-                titulo={titulo}
-                migas={migas}
-                onAtras={indice > 0 ? () => navigation.goBack() : undefined}
-                testID="cabecera"
-            />
-        </View>
+        <PantallaHeader
+            titulo={titulo}
+            migas={migas}
+            onAtras={indice > 0 ? () => navigation.goBack() : undefined}
+            insetSuperior={insets.top}
+            testID="cabecera"
+        />
     );
 }

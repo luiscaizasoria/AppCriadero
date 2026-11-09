@@ -5,6 +5,9 @@ export const spacing = {
     lg: 16,
     xl: 24,
     xxl: 32,
-    // objetivo táctil mínimo
-    touch: 48
+    // margen de pantalla
+    pantalla: 16,
+    // objetivo táctil: 48 (44 en elementos secundarios con hitSlop o minWidth/minHeight)
+    touch: 48,
+    touchMin: 44
 };

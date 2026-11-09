@@ -1,17 +1,19 @@
 import React, { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, shadows, spacing, typography } from '../theme';
+import { StyleSheet, Text, View } from 'react-native';
+import { colors, radii, spacing, typography } from '../theme';
 import Icono from './Icono';
+import Pulsable from './Pulsable';
 
 const TONOS = {
-    exito: { fondo: colors.successSoft, texto: colors.success, icono: 'exito' },
-    error: { fondo: colors.dangerSoft, texto: colors.danger, icono: 'error' },
-    info: { fondo: colors.primarySoft, texto: colors.primaryDark, icono: 'info' },
-    advertencia: { fondo: colors.warningSoft, texto: colors.warningText, icono: 'advertencia' }
+    exito: { fondo: colors.successSoft, texto: colors.successText, franja: colors.success, icono: 'checkmark-circle' },
+    error: { fondo: colors.dangerSoft, texto: colors.dangerText, franja: colors.danger, icono: 'alert-circle' },
+    info: { fondo: colors.infoSoft, texto: colors.infoText, franja: colors.info, icono: 'information-circle' },
+    advertencia: { fondo: colors.warningSoft, texto: colors.warningText, franja: colors.warning, icono: 'warning' }
 };
 
-// Aviso no bloqueante (no usado aún). Uso:
+// Aviso no bloqueante (su uso en pantallas es del bloque D). Uso:
 // {aviso && <Aviso mensaje={aviso} tono="exito" onCerrar={() => setAviso(null)} />}
+// Solo sustituye al Alert de ÉXITO; los Alert de confirmación se conservan.
 // Se cierra solo tras `duracion` ms (0 = no se cierra solo).
 export default function Aviso({ mensaje, tono = 'info', duracion = 4000, onCerrar, testID = 'aviso' }) {
     const t = TONOS[tono] || TONOS.info;
@@ -28,10 +30,11 @@ export default function Aviso({ mensaje, tono = 'info', duracion = 4000, onCerra
             accessibilityLiveRegion="polite"
             style={[estilos.contenedor, { backgroundColor: t.fondo }]}
         >
-            <Icono nombre={t.icono} tamano={22} color={t.texto} />
+            <View style={[estilos.franja, { backgroundColor: t.franja }]} />
+            <Icono nombre={t.icono} tamano={22} color={t.texto} style={estilos.icono} />
             <Text style={[estilos.texto, { color: t.texto }]}>{mensaje}</Text>
             {onCerrar ? (
-                <Pressable
+                <Pulsable
                     onPress={onCerrar}
                     testID={`${testID}-cerrar`}
                     accessibilityRole="button"
@@ -39,7 +42,7 @@ export default function Aviso({ mensaje, tono = 'info', duracion = 4000, onCerra
                     style={estilos.cerrar}
                 >
                     <Icono nombre="cerrar" tamano={20} color={t.texto} />
-                </Pressable>
+                </Pulsable>
             ) : null}
         </View>
     );
@@ -49,11 +52,12 @@ const estilos = StyleSheet.create({
     contenedor: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingLeft: spacing.md,
         borderRadius: radii.md,
         minHeight: spacing.touch,
-        ...shadows.card
+        overflow: 'hidden'
     },
+    franja: { alignSelf: 'stretch', width: 6 },
+    icono: { marginLeft: spacing.md },
     texto: { ...typography.cuerpo, flex: 1, marginLeft: spacing.sm, paddingVertical: spacing.sm },
-    cerrar: { width: spacing.touch, height: spacing.touch, alignItems: 'center', justifyContent: 'center' }
+    cerrar: { width: spacing.touchMin, height: spacing.touchMin, alignItems: 'center', justifyContent: 'center' }
 });

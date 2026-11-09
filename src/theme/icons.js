@@ -10,6 +10,8 @@ export const icons = {
     finanzas: 'cash-outline',
     finanzasActivo: 'cash',
     mas: 'ellipsis-horizontal-circle-outline',
+    masActivo: 'ellipsis-horizontal-circle',
+    sinConexion: 'cloud-offline-outline',
     alertas: 'notifications-outline',
     huevo: 'egg-outline',
     salud: 'medkit-outline',
