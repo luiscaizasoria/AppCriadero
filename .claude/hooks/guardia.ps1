@@ -31,6 +31,10 @@ $PerfilesEscritura = @{
     'api'     = @{ Permitir = @('^api/(src|test)/'); Denegar = @() }
     'pruebas' = @{ Permitir = @('^pruebas/movil/flujos/', '^pruebas/datos/'); Denegar = @('^pruebas/datos/lib/limpiar\.mjs$') }
     'claude'  = @{ Permitir = @('^\.claude/(agents|skills|rules)/'); Denegar = @('^\.claude/agents/mantenimiento-claude\.md$', '^\.claude/hooks/', '^\.claude/settings.*\.json$') }
+    'ux'      = @{
+        Permitir = @('^src/(screens|components|theme|navigation)/', '^App\.js$', '^documents/ux/')
+        Denegar  = @('^src/(api|repositories|database)/', '^api/', '^pruebas/', '^\.claude/', '^package(-lock)?\.json$')
+    }
     'cliente' = @{
         Permitir = @('^src/(repositories|api|config|services)/', '^src/screens/acceso/', '^src/navigation/AccesoNavigator\.js$')
         Denegar  = @('^src/repositories/.*\.sqlite\.js$')
@@ -44,6 +48,7 @@ $PerfilesBash = @{
     'ejecutor'    = @{ Modo = 'permitir'; Permitir = @('^npm\s+(run\s+(typecheck|test:integration)|test)\b', '^npx\s+(tsc|vitest)\b', $LecturaGit) }
     'impl-api'    = @{ Modo = 'permitir'; Permitir = @('^npm\s+(run\s+typecheck|test)\b', '^npx\s+(tsc|vitest)\b', $LecturaGit) }
     'cliente'     = @{ Modo = 'permitir'; Permitir = @('^(npx\s+)?esbuild\b', '^(\./)?api/node_modules/\.bin/esbuild\b', '^git\s+mv\s', $LecturaGit) }
+    'ux'          = @{ Modo = 'permitir'; Permitir = @('^(npx\s+)?esbuild\b', '^(\./)?api/node_modules/\.bin/esbuild\b', $LecturaGit) }
     'movil'       = @{
         Modo     = 'permitir'
         Permitir = @('^adb(\.exe)?\s+(version|devices|get-state|reconnect)\b', '^adb(\.exe)?\s+reverse\b', '^adb(\.exe)?\s+logcat\b', '^adb(\.exe)?\s+exec-out\s+screencap\b',
