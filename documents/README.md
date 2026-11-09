@@ -43,8 +43,8 @@ Ante una contradicción prevalece, de mayor a menor:
 | `documents/ux/validacion-propuesta.md` | Fase UX: validación de la propuesta |
 | `documents/ux/validacion-bloque-c0.md` | Fase UX: validación del bloque C0 (base del tema y componentes comunes) |
 | `documents/ux/validacion-bloque-a.md` | Fase UX: validación del bloque A (navegación y orientación) |
-| `documents/ux/propuesta-visual.md` | Fase UX: propuesta visual (en preparación) |
-| `documents/ux/muestrario-visual.html` | Fase UX: muestrario visual (en preparación) |
+| `documents/ux/propuesta-visual.md` | Fase UX: propuesta visual  |
+| `documents/ux/muestrario-visual.html` | Fase UX: muestrario visual  |
 | `documents/historico/` | Documentos antiguos (contexto V1 y V2 previo a online-first, estado de V1) y la copia de las reglas antiguas de la app móvil; no se edita |
 | `pruebas/README.md` | Pruebas automáticas (`/probar datos`, `smoke`, `completo`): capa de datos contra el Worker de pruebas y flujos Maestro en el emulador |
 | `documents/traspaso/` | Handoff, cierre y respuestas del traspaso: solo local, ignorado por Git |

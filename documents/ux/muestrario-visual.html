@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Muestrario visual - Criadero Kikirikis</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,"Segoe UI",Roboto,Arial,sans-serif;background:#e9e6dd;color:#1E2A22;line-height:1.4}
+.t-A{--p:#2E6B3E;--pd:#1F4D2B;--ps:#E4EFE2;--s2:#B4531F;--ac:#F2B632;--bg:#FAF6EC;--alt:#EFE8D8;--bd:#D9D0BA;--bdf:#8A8F7C;--tx:#1E2A22;--tx2:#556050}
+.t-B{--p:#0F5F63;--pd:#0A3F44;--ps:#E0F0F0;--s2:#B45309;--ac:#E8871E;--bg:#F2F7F7;--alt:#E3ECEC;--bd:#D5E0E2;--bdf:#7F9296;--tx:#13232B;--tx2:#4A5A60}
+.t-A,.t-B{--ok:#17803D;--okt:#0F5A2A;--oks:#E3F3E6;--wn:#F2B632;--wnt:#6B4A00;--wns:#FFF3CF;--er:#B3261E;--ert:#8C1D18;--ers:#FDE8E6;--in:#1D5F8F;--int:#124468;--ins:#E3EFF8}
+
+/* Página */
+.top{position:sticky;top:0;z-index:50;background:#1b241e;color:#fff;padding:12px 24px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.top h1{font-size:18px;margin:0;flex:1 1 300px}
+.top .sel{display:flex;gap:6px;background:#2d3a31;padding:4px;border-radius:12px}
+.top button{border:0;background:transparent;color:#cfd8cf;font-size:15px;font-weight:700;padding:10px 16px;border-radius:9px;cursor:pointer}
+.top button.on{background:#fff;color:#1b241e}
+.wrap{max-width:1500px;margin:0 auto;padding:24px}
+h2{font-size:26px;margin:48px 0 6px;color:#1b241e}
+h2 small{font-size:15px;font-weight:400;color:#555}
+.lead{color:#444;max-width:820px;margin:0 0 18px}
+.panel{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.cols{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.cols>.t-A,.cols>.t-B{flex:1 1 380px;min-width:0}
+.vt{font-weight:800;font-size:15px;margin:0 0 10px;color:#333}
+
+/* Paleta */
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.sw{border-radius:12px;overflow:hidden;border:1px solid rgba(0,0,0,.12);background:#fff;font-size:12px}
+.sw i{display:block;height:54px}
+.sw b{display:block;padding:6px 8px 0;font-size:13px}
+.sw span{display:block;padding:0 8px 7px;color:#555;font-family:Consolas,monospace}
+table.r{width:100%;border-collapse:collapse;font-size:14px;margin-top:12px}
+table.r td,table.r th{padding:6px 8px;border-bottom:1px solid #eee;text-align:left}
+.ok-b{background:#E3F3E6;color:#0F5A2A;border-radius:99px;padding:2px 10px;font-weight:700;font-size:12px}
+.no-b{background:#FDE8E6;color:#8C1D18;border-radius:99px;padding:2px 10px;font-weight:700;font-size:12px}
+.mini{display:inline-block;width:46px;height:24px;border-radius:6px;text-align:center;font-weight:800;font-size:13px;line-height:24px;border:1px solid rgba(0,0,0,.15)}
+
+/* Mockup: fila con nota */
+.mrow{display:flex;flex-wrap:wrap;gap:28px;margin:22px 0 34px;align-items:flex-start}
+.mphones{display:flex;flex-wrap:wrap;gap:24px}
+.note{flex:1 1 280px;max-width:430px;background:#fff;border-left:6px solid #1F4D2B;border-radius:12px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,.08);font-size:15px}
+.note h3{margin:0 0 6px;font-size:17px}
+.note ul{margin:6px 0 0;padding-left:20px}
+.note .hoy{color:#8C1D18;font-weight:700}
+
+/* Teléfono */
+.ph{width:390px;background:var(--bg);color:var(--tx);border-radius:40px;border:10px solid #151515;box-shadow:0 14px 34px rgba(0,0,0,.28);overflow:hidden;font-size:16px;line-height:22px}
+.sb{height:30px;background:var(--pd);color:#fff;display:flex;justify-content:space-between;padding:8px 24px 0;font-size:12px;font-weight:700}
+.body{position:relative}
+.scr{height:690px;overflow-y:auto;scrollbar-width:none;padding-bottom:90px}
+.scr::-webkit-scrollbar{display:none}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tabs{display:flex;height:68px;background:#fff;border-top:1px solid var(--bd)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:600;color:var(--tx2)}
+.tab .pill{width:58px;height:30px;border-radius:15px;display:grid;place-items:center;position:relative}
+.tab.on{color:var(--pd);font-weight:800}.tab.on .pill{background:var(--ps)}
+.tab .ic{width:25px;height:25px}
+.tab.on .ic{stroke-width:2.4}
+.bdg{position:absolute;top:-5px;right:2px;min-width:19px;height:19px;border-radius:10px;background:var(--er);color:#fff;border:2px solid #fff;font-size:11px;font-weight:800;line-height:15px;text-align:center;padding:0 3px}
+.hdr{background:var(--pd);color:#fff;padding:6px 16px 22px;border-radius:0 0 26px 26px;display:flex;gap:10px;align-items:center}
+.hdr .bk{width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.14);display:grid;place-items:center;flex:none}
+.hdr h1{font-size:24px;line-height:30px;margin:0;font-weight:700}
+.hdr p{font-size:14px;line-height:19px;margin:1px 0 0;opacity:.88}
+.hdr.big h1{font-size:28px;line-height:34px;font-weight:800}
+.crumb{padding:12px 16px 0;font-size:14px;color:var(--tx2);display:flex;gap:4px;align-items:center;font-weight:600}
+.crumb .ic{width:15px;height:15px}
+.pad{padding:16px;display:flex;flex-direction:column;gap:12px}
+.card{background:#fff;border:1px solid var(--bd);border-radius:18px;padding:16px;box-shadow:0 2px 6px rgba(30,42,34,.08)}
+.h3{font-size:18px;line-height:24px;font-weight:700;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.h3 .ic{color:var(--p)}
+.sec{font-size:18px;font-weight:700;margin:6px 0 0;display:flex;align-items:center;gap:8px;color:var(--tx)}
+.sec .ic{color:var(--p)}
+.sub{font-size:14px;line-height:20px;color:var(--tx2)}
+.btn{height:56px;border-radius:14px;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;border:0;width:100%;font-family:inherit;cursor:pointer}
+.btn.p{background:var(--p);color:#fff}
+.btn.pr{background:var(--pd);color:#fff}
+.btn.s{background:#fff;border:2px solid var(--p);color:var(--pd);height:52px}
+.btn.t{background:transparent;color:var(--pd);text-decoration:underline;height:48px}
+.btn.d{background:var(--er);color:#fff;height:52px}
+.btn.x{background:var(--alt);color:#7B8077;cursor:not-allowed}
+.btn.sm{height:48px;font-size:15px}
+.fab{position:absolute;right:14px;bottom:14px;height:56px;padding:0 22px 0 16px;border-radius:99px;background:var(--ac);color:var(--tx);font-weight:800;font-size:17px;display:flex;align-items:center;gap:8px;border:2px solid var(--pd);box-shadow:0 6px 12px rgba(30,42,34,.28)}
+.fab .ic{width:26px;height:26px;stroke-width:2.6}
+.dock{position:absolute;left:0;right:0;bottom:0;padding:12px 16px;background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-size:14px;font-weight:600;color:var(--tx)}
+.inp{height:52px;border-radius:12px;border:1.5px solid var(--bdf);background:#fff;display:flex;align-items:center;gap:10px;padding:0 14px;font-size:16px;color:var(--tx)}
+.inp .ph-t{color:var(--tx2);flex:1}
+.inp .ic{color:var(--tx2)}
+.inp .u{color:var(--tx2);font-weight:600;font-size:14px}
+.inp.foc{border:2.5px solid var(--p);box-shadow:0 0 0 4px var(--ps)}
+.inp.err{border:2px solid var(--er);background:#fff}
+.inp.dis{background:var(--alt);border-color:var(--bd);color:#7B8077}
+.msg{font-size:14px;display:flex;gap:6px;align-items:center;color:var(--ert);font-weight:600}
+.msg .ic{width:17px;height:17px}
+.chip{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 11px 0 8px;border-radius:99px;font-size:14px;font-weight:700;white-space:nowrap}
+.chip .ic{width:16px;height:16px;stroke-width:2.3}
+.c-ok{background:var(--oks);color:var(--okt)}.c-wn{background:var(--wns);color:var(--wnt)}.c-er{background:var(--ers);color:var(--ert)}.c-in{background:var(--ins);color:var(--int)}.c-ne{background:var(--alt);color:var(--tx)}.c-pr{background:var(--ps);color:var(--pd)}
+.seg{display:flex;background:var(--alt);border-radius:14px;padding:4px;gap:4px}
+.seg div{flex:1;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:700;color:var(--tx2)}
+.seg div.on{background:#fff;color:var(--pd);box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.av{width:56px;height:56px;border-radius:18px;background:var(--ps);color:var(--p);display:grid;place-items:center;flex:none}
+.av .ic{width:28px;height:28px}
+.li{display:flex;gap:12px;align-items:center;min-height:88px}
+.li .m{flex:1;min-width:0}
+.li .cod{font-size:18px;font-weight:800;line-height:23px}
+.li .l{font-size:14px;line-height:20px;color:var(--tx2);display:flex;align-items:center;gap:5px}
+.li .l .ic{width:15px;height:15px}
+.li>.ic{color:var(--tx2)}
+.met{display:flex;flex-direction:column;gap:6px;flex:1}
+.met .circ{width:40px;height:40px;border-radius:50%;display:grid;place-items:center}
+.met .n{font-size:32px;line-height:38px;font-weight:800;font-variant-numeric:tabular-nums}
+.met .t{font-size:14px;color:var(--tx2);font-weight:600}
+.two{display:flex;gap:12px}
+.aviso{display:flex;gap:10px;align-items:flex-start;border-radius:14px;padding:12px 14px;border-left:5px solid;font-size:15px;line-height:21px;font-weight:600}
+.aviso .ic{margin-top:1px}
+.aviso .x{margin:-12px -14px -12px auto;width:44px;height:44px;display:grid;place-items:center;flex:none}
+.hit{width:44px;height:44px;display:grid;place-items:center;margin-right:-14px;flex:none;color:var(--tx2)}
+.lgd{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:14px;font-weight:700}
+.lgd span{display:flex;gap:5px;align-items:center}
+.a-ok{background:var(--oks);color:var(--okt);border-color:var(--ok)}.a-wn{background:var(--wns);color:var(--wnt);border-color:var(--wn)}.a-er{background:var(--ers);color:var(--ert);border-color:var(--er)}.a-in{background:var(--ins);color:var(--int);border-color:var(--in)}
+.vacio{text-align:center;padding:26px 16px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.vacio .big{width:96px;height:96px;border-radius:50%;background:var(--ps);color:var(--p);display:grid;place-items:center}
+.vacio .big .ic{width:44px;height:44px}
+.vacio h4{margin:6px 0 0;font-size:18px}
+.sk{background:linear-gradient(90deg,var(--alt),#fff,var(--alt));border-radius:10px}
+.fr{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--bd);font-size:16px}
+.fr:last-child{border:0}
+.fr span:first-child{color:var(--tx2)}
+.fr span:last-child{font-weight:700;text-align:right}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.acc{background:#fff;border:1px solid var(--bd);border-radius:16px;min-height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:15px;color:var(--pd);box-shadow:0 2px 6px rgba(30,42,34,.08)}
+.acc .ic{width:28px;height:28px;color:var(--p)}
+.acc.q{flex-direction:row;min-height:56px;justify-content:flex-start;padding:0 14px;gap:10px}
+.acc.q .ic{width:24px;height:24px}
+.alr{border-left:6px solid;display:flex;flex-direction:column;gap:10px}
+.alr .t{display:flex;gap:10px;font-weight:700;font-size:16px}
+.alr .t .ic{margin-top:1px}
+.mv{display:flex;align-items:center;gap:12px;min-height:64px}
+.mv .circ{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none}
+.mv .m{flex:1}
+.mv .a{font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}
+.bars{display:flex;align-items:flex-end;gap:10px;height:110px;padding-top:6px}
+.bars div{flex:1;border-radius:8px 8px 3px 3px}
+.opc{border:2px solid var(--bdf);border-radius:16px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;font-weight:700;font-size:15px;text-align:center;background:#fff}
+.opc.on{border-color:var(--p);background:var(--ps);color:var(--pd)}
+.opc .ic{width:26px;height:26px;color:var(--p)}
+.hero{background:linear-gradient(160deg,var(--pd),var(--p));color:#fff;padding:34px 24px 54px;border-radius:0 0 34px 34px;text-align:center}
+.logo{width:84px;height:84px;border-radius:26px;background:var(--ac);color:var(--tx);display:grid;place-items:center;margin:0 auto 12px;box-shadow:0 6px 14px rgba(0,0,0,.25)}
+.logo .ic{width:46px;height:46px}
+.hero h1{margin:0;font-size:28px;line-height:34px;font-weight:800}
+.hero p{margin:4px 0 0;font-size:16px;opacity:.9}
+.sticky-card{margin:-34px 16px 0;position:relative}
+.foto{width:100%;height:150px;border-radius:18px;background:var(--ps);color:var(--p);display:grid;place-items:center;border:2px dashed var(--bdf)}
+.foto .ic{width:48px;height:48px}
+.ficha{display:flex;gap:14px;align-items:center}
+.ficha .ph1{width:96px;height:96px;border-radius:24px;background:var(--ps);color:var(--p);display:grid;place-items:center;flex:none}
+.ficha .ph1 .ic{width:48px;height:48px}
+.ficha .cod{font-size:24px;font-weight:800;line-height:30px}
+.prog{height:10px;border-radius:99px;background:var(--alt);overflow:hidden}
+.prog i{display:block;height:100%;border-radius:99px;background:var(--p)}
+.tk{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.demo{padding:18px;border-radius:16px;background:var(--bg);display:flex;flex-direction:column;gap:12px}
+.ty div{margin:6px 0;display:flex;gap:14px;align-items:baseline;border-bottom:1px dashed #ddd;padding-bottom:6px}
+.ty code{font-family:Consolas,monospace;font-size:12px;color:#666;min-width:150px}
+.tokrow{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.tokrow div{background:var(--p);height:42px;color:#fff;font-size:12px;display:grid;place-items:center;width:62px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10M10 20v-6h4v6"/></symbol>
+<symbol id="i-paw" viewBox="0 0 24 24"><circle cx="6" cy="10.5" r="2"/><circle cx="10" cy="6" r="2"/><circle cx="14.5" cy="6" r="2"/><circle cx="18.5" cy="10.5" r="2"/><path d="M12 11.5c-3 0-5.8 3.3-5.8 5.8 0 2 2 2.5 3.4 2 1-.4 1.6-.6 2.4-.6s1.4.2 2.4.6c1.4.5 3.4 0 3.4-2 0-2.500-2.800-5.800-5.800-5.800z"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.500"/><rect x="13" y="4" width="7" height="7" rx="1.500"/><rect x="4" y="13" width="7" height="7" rx="1.500"/><rect x="13" y="13" width="7" height="7" rx="1.500"/></symbol>
+<symbol id="i-cash" viewBox="0 0 24 24"><rect x="2.500" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.800"/><path d="M6 9.500v.01M18 14.500v.01"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1112 0v5l1.500 2h-15zM10 20.500a2 2 0 004 0"/></symbol>
+<symbol id="i-egg" viewBox="0 0 24 24"><path d="M12 3c-4 0-7 6-7 11a7 7 0 0014 0c0-5-3-11-7-11z"/></symbol>
+<symbol id="i-med" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2M12 10.500v6M9 13.500h6"/></symbol>
+<symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-9 5-14 15-14 0 10-5 15-14 15M5 19l8-8"/></symbol>
+<symbol id="i-tree" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M12 7v5M12 12H6v4M12 12h6v4"/></symbol>
+<symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l1.500-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.500"/></symbol>
+<symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.500"/><path d="M3 17l6-5 5 4 3-2 4 3"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.500"/><path d="M16 16l5 5"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-chk" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.500l3 3 5-6"/></symbol>
+<symbol id="i-ok" viewBox="0 0 24 24"><path d="M5 12.500l4.500 4.500L19 7"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4l9 16H3zM12 10v4M12 17v.01"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.500v.01"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.500v.01"/></symbol>
+<symbol id="i-male" viewBox="0 0 24 24"><circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/></symbol>
+<symbol id="i-female" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M12 14v8M8.500 18h7"/></symbol>
+<symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h3l2.500 11h10l2-8H7"/><circle cx="10" cy="19" r="1.500"/><circle cx="17" cy="19" r="1.500"/></symbol>
+<symbol id="i-skull" viewBox="0 0 24 24"><path d="M5 11a7 7 0 0114 0c0 2.500-1 3.500-2 4.500V19H7v-3.500C6 14.500 5 13.500 5 11zM9 12.500v.01M15 12.500v.01M10 19v-2M14 19v-2"/></symbol>
+<symbol id="i-archive" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/></symbol>
+<symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-exit"viewBox="0 0 24 24"><path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h11"/></symbol>
+<symbol id="i-water" viewBox="0 0 24 24"><path d="M12 3c-4 5-6 8-6 11a6 6 0 0012 0c0-3-2-6-6-11z"/></symbol>
+<symbol id="i-food" viewBox="0 0 24 24"><path d="M4 12h16a8 8 0 01-16 0zM8 8c0-2 2-2 2-4M13 8c0-2 2-2 2-4"/></symbol>
+<symbol id="i-time" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></symbol>
+<symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.500"/><path d="M2.500 20c.5-4 3.200-6 6.500-6s6 2 6.500 6M16 5a3.500 3.500 0 010 7M18 14c2 .7 3.200 2.700 3.500 6"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 5-7 8-7s7 2 8 7"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.500"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M3 7l6 6 4-4 8 8M15 17h6v-6"/></symbol>
+<symbol id="i-opt" viewBox="0 0 24 24"><path d="M4 8h9M19 8h1M4 16h1M11 16h9"/><circle cx="16" cy="8" r="2.500"/><circle cx="8" cy="16" r="2.500"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-ref" viewBox="0 0 24 24"><path d="M20 12a8 8 0 11-3-6.200M20 4v5h-5"/></symbol>
+<symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a4 4 0 01-.5-8 5.500 5.500 0 0110.500 1A3.500 3.500 0 0117 18zM4 4l16 16"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></symbol>
+<symbol id="i-set" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.600 5.600l2.100 2.100M16.300 16.300l2.100 2.100M18.400 5.600l-2.100 2.100M7.700 16.300l-2.100 2.100"/></symbol>
+</defs>
+</svg>
+
+<div class="top">
+  <h1>Muestrario visual - Criadero Kikirikis <span style="font-weight:400;opacity:.7;font-size:14px">(propuesta, no es la app)</span></h1>
+  <div class="sel" id="sel">
+    <button data-v="A" class="on">A Campo cálido</button>
+    <button data-v="B">B Verde sobrio</button>
+    <button data-v="AB">Ambas lado a lado</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <h2>1. Paleta y contraste <small>(los ratios se calculan aquí mismo con JavaScript)</small></h2>
+  <p class="lead">Fondos cálidos tipo paja para el sol de Machachi, verde pasto para confianza y naturaleza, amarillo maíz como acento de la acción principal, texto casi negro con contraste mayor de 13:1. Estados iguales en ambas variantes.</p>
+  <div class="cols" id="paleta"></div>
+
+  <h2>2. Tipografía</h2>
+  <p class="lead">Fuente del sistema (sin instalar nada). Cuerpo 16 px, cifras de 32 px, nada por debajo de 14 px.</p>
+  <div class="cols" id="tipo"></div>
+
+  <h2>3. Componentes</h2>
+  <div class="cols" id="comp"></div>
+
+  <h2>4. Maquetas con datos de la app <small>(cada una con su nota «qué cambia respecto a hoy»; las pantallas se desplazan dentro del marco)</small></h2>
+  <div id="maquetas"></div>
+</div>
+
+<script>
+/* Colores duplicados de las variables CSS para calcular ratios */
+const T = {
+  A:{nombre:'A Campo cálido',p:'#2E6B3E',pd:'#1F4D2B',ps:'#E4EFE2',s2:'#B4531F',ac:'#F2B632',bg:'#FAF6EC',sf:'#FFFFFF',alt:'#EFE8D8',bd:'#D9D0BA',bdf:'#8A8F7C',tx:'#1E2A22',tx2:'#556050'},
+  B:{nombre:'B Verde sobrio',p:'#0F5F63',pd:'#0A3F44',ps:'#E0F0F0',s2:'#B45309',ac:'#E8871E',bg:'#F2F7F7',sf:'#FFFFFF',alt:'#E3ECEC',bd:'#D5E0E2',bdf:'#7F9296',tx:'#13232B',tx2:'#4A5A60'}
+};
+const E = {ok:'#17803D',okt:'#0F5A2A',oks:'#E3F3E6',wn:'#F2B632',wnt:'#6B4A00',wns:'#FFF3CF',er:'#B3261E',ert:'#8C1D18',ers:'#FDE8E6',in:'#1D5F8F',int:'#124468',ins:'#E3EFF8'};
+const NOMBRES = {p:'Primario',pd:'Primario oscuro',ps:'Primario suave',s2:'Secundario',ac:'Acento',bg:'Fondo',sf:'Superficie',alt:'Superficie alterna',bd:'Borde',bdf:'Borde de campo',tx:'Texto principal',tx2:'Texto secundario'};
+const NE = {ok:'Éxito',okt:'Éxito texto',oks:'Éxito suave',wn:'Advertencia',wnt:'Advertencia texto',wns:'Advertencia suave',er:'Error',ert:'Error texto',ers:'Error suave',in:'Información',int:'Información texto',ins:'Información suave'};
+
+function lum(h){const c=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255).map(v=>v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4));return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+function ratio(a,b){const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+
+function I(n,s,st){return `<svg class="ic" ${s?`style="width:${s}px;height:${s}px;${st||''}"`:(st?`style="${st}"`:'')}><use href="#i-${n}"/></svg>`}
+
+/* --- Piezas reutilizables de maqueta --- */
+function chip(t,tx,ic){return `<span class="chip c-${t}">${ic?I(ic):''}${tx}</span>`}
+function salud(s){return s==='sana'?chip('ok','Sana','chk'):s==='trat'?chip('wn','En tratamiento','med'):chip('er','Enferma','alert')}
+function tabs(act,badge){
+  const t=[['inicio','Inicio','home'],['jaulas','Jaulas','grid'],['aves','Aves','paw'],['fin','Finanzas','cash'],['mas','Más','more']];
+  return `<div class="tabs">${t.map(x=>`<div class="tab ${x[0]===act?'on':''}"><span class="pill">${I(x[2])}${x[0]==='mas'&&badge?`<span class="bdg">${badge}</span>`:''}</span>${x[1]}</div>`).join('')}</div>`;
+}
+function hdr(t,s,back,big){return `<div class="hdr ${big?'big':''}">${back?`<span class="bk">${I('back',24)}</span>`:''}<div><h1>${t}</h1>${s?`<p>${s}</p>`:''}</div></div>`}
+function crumb(a){return `<div class="crumb">${a.map((x,i)=>(i?I('chev'):'')+`<span ${i===a.length-1?'style="color:var(--tx)"':''}>${x}</span>`).join('')}</div>`}
+function phone(inner,tab,opt){opt=opt||{};return `<div class="ph"><div class="sb"><span>10:24</span><span>4G 87%</span></div><div class="body"><div class="scr">${inner}</div>${opt.fab?`<div class="fab">${I('plus')}${opt.fab}</div>`:''}${opt.dock||''}</div>${tab?tabs(tab,opt.badge):''}</div>`}
+function fld(l,v,st,ic,u,ph,tail){
+  const cls=st==='foc'?'foc':st==='err'?'err':st==='dis'?'dis':'';
+  return `<div class="fld"><label>${l}</label><div class="inp ${cls}">${ic?I(ic):''}<span class="${v?'':'ph-t'}" style="${v?'flex:1':''}">${v||ph||''}</span>${u?`<span class="u">${u}</span>`:''}${st==='foc'?'<span style="width:2px;height:22px;background:var(--p)"></span>':''}${tail||''}</div>${st==='err'?`<div class="msg">${I('alert')}Este campo es obligatorio.</div>`:''}</div>`;
+}
+function aveItem(c,sx,rz,j,s){return `<div class="card li"><span class="av">${I('paw')}</span><div class="m"><div class="cod">${c}</div><div class="l">${I(sx==='M'?'male':'female')}${sx==='M'?'Macho':'Hembra'} · ${rz}</div><div class="l">${I('grid')}Jaula ${j}</div><div style="margin-top:6px">${salud(s)}</div></div>${I('chev',22)}</div>`}
+function jauItem(c,ub,ti,n){return `<div class="card" style="display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;gap:12px"><span class="av">${I('grid')}</span><div style="flex:1"><div class="cod" style="font-size:20px;font-weight:800;line-height:25px">Jaula ${c}</div><div class="l sub" style="display:flex;gap:5px;align-items:center">${I('pin',15)}${ub} · ${ti}</div></div>${I('chev',22,'color:var(--tx2)')}</div><div style="display:flex;font-size:14px;font-weight:700"><span style="display:flex;gap:5px;align-items:center">${I('paw',16)}${n} aves</span></div></div>`}
+function nota(t,hoy,lst){return `<div class="note"><h3>${t}</h3><div><span class="hoy">Hoy:</span> ${hoy}</div><ul>${lst.map(x=>`<li>${x}</li>`).join('')}</ul></div>`}
+
+/* --- Maquetas --- */
+const M = [
+ {t:'Login', n:()=>nota('Login',
+   'tarjeta con título y campos planos, botón de 15 px.',
+   ['Banda verde con logotipo y lema, tarjeta que sube sobre ella.','Campos de 52 px con icono y etiqueta visible; ojo para ver la contraseña.','Botón primario de 56 px a todo el ancho; «Crear una cuenta» como botón terciario de 48 px.','Ojo para ver la contraseña con zona pulsable de 44x44 px.','Textos conservados: título «Iniciar sesión», botón «Ingresar», «correo@ejemplo.com», «Contraseña». El lema es texto nuevo (solo decoración).']),
+   h:()=>phone(`<div class="hero"><div class="logo">${I('paw')}</div><h1>Criadero Kikirikis</h1><p>Control de aves, fácil</p></div><div class="sticky-card"><div class="card" style="display:flex;flex-direction:column;gap:14px;padding:20px"><div class="h3" style="margin:0;font-size:22px">Iniciar sesión</div>${fld('Correo','','' ,'mail',null,'correo@ejemplo.com')}${fld('Contraseña','','foc','lock',null,'Contraseña',`<span class="hit">${I('eye')}</span>`)}<div class="btn p">Ingresar</div><div class="btn t">Crear una cuenta</div></div></div>`,null)},
+ {t:'Registro', n:()=>nota('Registro',
+   'mismo bloque plano que el login.',
+   ['Misma banda y tarjeta que el login para que se sienta una sola entrada.','Un campo con error muestra borde rojo, icono y mensaje bajo el campo (el texto lo da la validación existente).','Botón «Crear cuenta» de 56 px; no cambia ningún campo ni validación.']),
+   h:()=>phone(`<div class="hero" style="padding-bottom:50px"><div class="logo" style="width:64px;height:64px;border-radius:20px">${I('paw',34)}</div><h1 style="font-size:24px">Crear cuenta</h1></div><div class="sticky-card"><div class="card" style="display:flex;flex-direction:column;gap:14px;padding:20px">${fld('Nombre','Luis Caiza','', 'user')}${fld('Correo','luis@','err','mail')}${fld('Contraseña','','', 'lock',null,'Contraseña',`<span class="hit">${I('eye')}</span>`)}<div class="btn p">Crear cuenta</div></div></div>`,null)},
+ {t:'Inicio', n:()=>nota('Inicio (tarjetas)',
+   'cabecera con emoji, tarjetas blancas planas con emoji.',
+   ['Cabecera grande con el nombre del criadero.','Aviso de alertas arriba, con acceso directo (ya existe la pantalla).','Tarjetas de métrica con icono en círculo y cifra de 32 px (Activas, Vendidas, Fallecidas, Tratamiento).','Cuatro accesos rápidos (NUEVO, requieren decisión).','Se mantienen los textos «Aves», «Producción», «Alertas», «Finanzas del mes»…']),
+   h:()=>phone(`${hdr('Criadero Kikirikis','Estado general del criadero',false,true)}<div class="pad"><div class="aviso a-er">${I('alert',22)}<div>2 alertas críticas pendientes<div class="sub" style="color:inherit;font-weight:500">Toca para ver cuáles</div></div>${I('chev',20,'margin-left:auto')}</div><div class="sec">${I('paw')}Aves</div><div class="two"><div class="card met"><span class="circ" style="background:var(--oks);color:var(--okt)">${I('paw')}</span><span class="n">24</span><span class="t">Activas</span></div><div class="card met"><span class="circ" style="background:var(--ins);color:var(--int)">${I('cash')}</span><span class="n">6</span><span class="t">Vendidas</span></div></div><div class="two"><div class="card met"><span class="circ" style="background:var(--alt);color:var(--tx)">${I('skull')}</span><span class="n">2</span><span class="t">Fallecidas</span></div><div class="card met"><span class="circ" style="background:var(--wns);color:var(--wnt)">${I('med')}</span><span class="n">3</span><span class="t">Tratamiento</span></div></div><div class="sec">${I('plus')}Accesos rápidos</div><div class="grid2"><div class="acc q">${I('paw')}Nueva ave</div><div class="acc q">${I('egg')}Registrar huevo</div><div class="acc q">${I('cash')}Nuevo movimiento</div><div class="acc q">${I('bell')}Alertas</div></div><div class="sec">${I('egg')}Producción</div><div class="card"><div class="two" style="align-items:center"><div class="met"><span class="n">38</span><span class="t">Huevos hoy</span></div><div class="met"><span class="n">212</span><span class="t">Semana</span></div></div><div class="bars" style="margin-top:12px">${[40,62,55,80,70,92,60].map((h,i)=>`<div style="height:${h}%;background:${i===5?'var(--ac)':'var(--p)'};${i===5?'border:2px solid var(--pd)':''}"></div>`).join('')}</div></div></div>`,'inicio',{badge:2})},
+ {t:'Lista de aves', n:()=>nota('Lista de aves',
+   'pestañas con emoji, botón verde «＋ Nueva ave» entre pestañas y búsqueda; filas con emoji de color.',
+   ['Filtro segmentado de 44 px: Activas, Vendidas, Fallecidas.','Búsqueda de 52 px con lupa y botón «Filtros» con icono.','Filas de 88 px: avatar, código grande, sexo, jaula y chip de salud con icono y texto (no solo color).','«Nueva ave» pasa a acción flotante amarilla (NUEVA, requiere decisión); si no se aprueba, queda el botón de hoy con el estilo nuevo.']),
+   h:()=>phone(`${hdr('Aves','Control y trazabilidad de las aves')}<div class="pad"><div class="seg"><div class="on">${I('paw',18)}Activas</div><div>${I('cash',18)}Vendidas</div><div>${I('skull',18)}Fallecidas</div></div><div style="display:flex;gap:8px"><div class="inp" style="flex:1">${I('search')}<span class="ph-t">Buscar por código...</span></div><div class="btn s sm" style="width:auto;padding:0 14px;height:52px">${I('opt',20)}Filtros</div></div>${aveItem('A-12','H','Rhode Island','J-03','sana')}${aveItem('A-07','M','Sussex','J-01','trat')}${aveItem('A-15','H','Leghorn','J-03','sana')}${aveItem('A-03','H','Plymouth Rock','J-02','enf')}</div>`,'aves',{fab:'Nueva ave',badge:2})},
+ {t:'Ficha del ave', n:()=>nota('Ficha del ave',
+   'pila de tarjetas con emoji y botones del mismo peso, «Dar de baja» entre los demás.',
+   ['Encabezado con foto grande, código y chips (sexo, estado, salud).','Datos en filas etiqueta/valor con separadores finos.','Rejilla de acciones con icono (las mismas seis acciones de hoy).','«Dar de baja» abajo, separado, en rojo suave para evitar toques por error.','Textos conservados: «Información del ave», «Editar», «Evolución», «Salud», «Registrar huevo», «Ciclo de vida», «Genealogía», «Dar de baja».']),
+   h:()=>phone(`${hdr('Ave A-12','',true)}${crumb(['Aves','A-12'])}<div class="pad"><div class="card ficha"><div class="ph1">${I('paw')}</div><div><div class="cod">A-12</div><div class="sub">Rhode Island</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${chip('pr','Hembra','female')}${salud('sana')}</div></div></div><div class="card"><div class="h3">${I('paw')}Información del ave</div><div class="fr"><span>Estado</span><span>Activa</span></div><div class="fr"><span>Peso</span><span>2.450 g</span></div><div class="fr"><span>Altura</span><span>38 cm</span></div><div class="fr"><span>Origen</span><span>Nacida en criadero</span></div><div class="fr"><span>Fecha nacimiento</span><span>2026-03-14</span></div></div><div class="grid2"><div class="acc">${I('edit')}Editar</div><div class="acc">${I('cam')}Evolución</div><div class="acc">${I('med')}Salud</div><div class="acc">${I('egg')}Registrar huevo</div><div class="acc">${I('leaf')}Ciclo de vida</div><div class="acc">${I('tree')}Genealogía</div></div><div style="margin-top:10px;padding-top:14px;border-top:1px solid var(--bd)"><div class="btn d" style="background:var(--ers);color:var(--ert)">${I('exit')}Dar de baja</div></div></div>`,'aves',{badge:2})},
+ {t:'Lista de jaulas', n:()=>nota('Lista de jaulas',
+   'pestañas con emoji y tarjeta con 🏠 📍 🏷️.',
+   ['Pestañas Activas/Inactivas segmentadas.','Tarjeta con código grande, ubicación y tipo con iconos.','Solo el número de aves («N aves»); no hay barra de ocupación porque V1 no tiene capacidad de jaula.','«Nueva jaula» flotante (NUEVA, requiere decisión).']),
+   h:()=>phone(`${hdr('Jaulas','Gestión de jaulas')}<div class="pad"><div class="seg"><div class="on">${I('grid',18)}Activas</div><div>${I('archive',18)}Inactivas</div></div>${jauItem('J-01','Galpón norte','Postura',5)}${jauItem('J-02','Galpón norte','Cría',7)}${jauItem('J-03','Galpón sur','Postura',8)}${jauItem('J-04','Patio','Descanso',2)}</div>`,'jaulas',{fab:'Nueva jaula',badge:2})},
+ {t:'Formulario (nueva ave)', n:()=>nota('Formulario: Nueva ave',
+   'un largo formulario plano con muchos botones iguales y «💾 Guardar ave» al final.',
+   ['Secciones agrupadas en tarjetas con título (Identificación, Origen, Medidas, Notas).','Foto con Cámara/Galería de 52 px.','Origen como dos tarjetas seleccionables («Nacida en criadero» / «Comprada»).','Campos de 52 px con unidad al final (g, cm) y teclado numérico.','Botón «Guardar ave» fijo abajo (NUEVO, requiere decisión): siempre visible.','Etiquetas y placeholders reales conservados («Código *», «Ej. K001», «Peso en gramos», «Altura en centímetros», «Origen del ave»).','Campos, orden y validaciones no cambian.']),
+   h:()=>phone(`${hdr('Nueva ave','',true)}${crumb(['Aves','Nueva ave'])}<div class="pad"><div class="card" style="display:flex;flex-direction:column;gap:12px"><div class="h3" style="margin:0">${I('paw')}Identificación</div><div class="foto">${I('cam')}</div><div class="two"><div class="btn s sm" style="height:52px">${I('cam',20)}Cámara</div><div class="btn s sm" style="height:52px">${I('img',20)}Galería</div></div>${fld('Código *','','foc','paw',null,'Ej. K001')}${fld('Raza','','', null,null,'Seleccionar raza')}</div><div class="card" style="display:flex;flex-direction:column;gap:12px"><div class="h3" style="margin:0">${I('home')}Origen del ave</div><div class="two"><div class="opc on">${I('leaf')}Nacida en criadero</div><div class="opc">${I('cart')}Comprada</div></div></div><div class="card" style="display:flex;flex-direction:column;gap:12px"><div class="h3" style="margin:0">${I('chart')}Medidas</div>${fld('Peso en gramos','','', null,'g','Ej. 850')}${fld('Altura en centímetros','24.5','', null,'cm')}${fld('Largo en centímetros','31','', null,'cm')}</div></div>`,null,{dock:`<div class="dock"><div class="btn p">${I('save')}Guardar ave</div></div>`})},
+ {t:'Alertas', n:()=>nota('Alertas',
+   'resumen con 🔴 🟡 🔔, tarjetas con texto y botón «💧 Registrar bebida →».',
+   ['Tres contadores grandes: Críticas, Advertencias, Total.','Cada alerta: borde izquierdo de color, icono de gravedad y de categoría, texto y botón de acción de 48 px.','El texto de la acción se conserva sin la flecha; la flecha es un icono.','Estado vacío con icono de verificación y «No existen alertas».','Las alertas del ejemplo son ilustrativas.']),
+   h:()=>phone(`${hdr('Alertas','Centro de alertas',true)}<div class="pad"><div class="two"><div class="card met" style="border-top:5px solid var(--er)"><span class="n" style="color:var(--ert)">2</span><span class="t">Críticas</span></div><div class="card met" style="border-top:5px solid var(--wn)"><span class="n" style="color:var(--wnt)">3</span><span class="t">Advertencias</span></div><div class="card met" style="border-top:5px solid var(--p)"><span class="n">5</span><span class="t">Total</span></div></div><div class="card alr" style="border-left-color:var(--er)"><div class="t">${I('alert',24,'color:var(--er)')}<div>Jaula J-03 sin bebida registrada hoy<div class="sub">${I('water',15,'vertical-align:-2px')} Jaulas</div></div></div><div class="btn s sm">${I('water',20)}Registrar bebida${I('chev',18)}</div></div><div class="card alr" style="border-left-color:var(--er)"><div class="t">${I('alert',24,'color:var(--er)')}<div>Ave A-03 enferma sin tratamiento<div class="sub">${I('med',15,'vertical-align:-2px')} Salud</div></div></div><div class="btn s sm">${I('paw',20)}Revisar ave${I('chev',18)}</div></div><div class="card alr" style="border-left-color:var(--wn)"><div class="t">${I('warn',24,'color:var(--wnt)')}<div>Jaula J-01 sin alimentación registrada<div class="sub">${I('grid',15,'vertical-align:-2px')} Jaulas</div></div></div><div class="btn s sm">${I('food',20)}Registrar alimentación${I('chev',18)}</div></div><div class="vacio card" style="padding:14px"><div class="big" style="width:56px;height:56px">${I('chk',28)}</div><div class="sub">Así se vería sin alertas: «No existen alertas.»</div></div></div>`,'mas',{badge:5})},
+ {t:'Finanzas', n:()=>nota('Finanzas',
+   'resumen en bloques planos con 💰 📉 📊.',
+   ['Ingresos, Egresos y Utilidad con cifra grande y signo + / − (no solo color).','Gráfico con colores de éxito y error, etiquetas de 14 px.','Movimientos con icono por tipo, categoría, fecha e importe alineado a la derecha.','«Nuevo movimiento» flotante (NUEVA, requiere decisión).','Importes y cálculos son los de hoy; solo cambia la presentación.']),
+   h:()=>phone(`${hdr('Finanzas','Resumen del mes')}<div class="pad"><div class="seg"><div class="on">Mes</div><div>Año</div><div>Todo</div></div><div class="card" style="display:flex;flex-direction:column;gap:12px"><div class="two"><div class="met"><span class="t" style="display:flex;gap:5px;align-items:center">${I('up',16,'color:var(--ok)')}Ingresos</span><span class="n" style="color:var(--okt);font-size:26px">+$420</span></div><div class="met"><span class="t" style="display:flex;gap:5px;align-items:center">${I('down',16,'color:var(--er)')}Egresos</span><span class="n" style="color:var(--ert);font-size:26px">−$216</span></div></div><div style="background:var(--ps);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;color:var(--pd)">Utilidad</span><span class="n" style="font-size:28px;color:var(--pd)">$204,50</span></div></div><div class="card"><div class="h3">${I('chart')}Últimos meses</div><div class="bars">${[[50,30],[65,45],[40,50],[80,40],[72,52]].map(x=>`<div style="display:flex;gap:3px;align-items:flex-end;background:none"><div style="height:${x[0]}%;background:var(--ok);border-radius:6px 6px 2px 2px"></div><div style="height:${x[1]}%;background:var(--er);border-radius:6px 6px 2px 2px"></div></div>`).join('')}</div><div class="lgd"><span style="color:var(--okt)">${I('up',16)}Ingresos</span><span style="color:var(--ert)">${I('down',16)}Egresos</span></div></div><div class="sec">${I('time')}Movimientos</div><div class="card" style="padding:8px 16px"><div class="mv"><span class="circ" style="background:var(--oks);color:var(--okt)">${I('cart',24)}</span><div class="m"><b>Venta ave A-05</b><div class="sub">Ventas · 06 nov</div></div><span class="a" style="color:var(--okt)">+$35,00</span></div><div class="mv"><span class="circ" style="background:var(--ers);color:var(--ert)">${I('food',24)}</span><div class="m"><b>Alimento balanceado</b><div class="sub">Alimentación · 05 nov</div></div><span class="a" style="color:var(--ert)">−$48,00</span></div><div class="mv"><span class="circ" style="background:var(--ers);color:var(--ert)">${I('med',24)}</span><div class="m"><b>Medicamento</b><div class="sub">Salud · 03 nov</div></div><span class="a" style="color:var(--ert)">−$12,50</span></div></div></div>`,'fin',{fab:'Nuevo movimiento',badge:2})}
+];
+
+/* --- Secciones --- */
+const sel = {v:'A'};
+function themed(fn){
+  const vs = sel.v==='AB'?['A','B']:[sel.v];
+  return vs.map(v=>`<div class="t-${v}">${sel.v==='AB'?`<div class="vt">${T[v].nombre}</div>`:''}${fn(v)}</div>`).join('');
+}
+
+function paleta(){
+  let h='';
+  ['A','B'].forEach(v=>{
+    const c=T[v];
+    const sw=Object.keys(NOMBRES).map(k=>`<div class="sw"><i style="background:${c[k]};${['bg','sf','alt','bd','ps'].includes(k)?'border-bottom:1px solid #0001':''}"></i><b>${NOMBRES[k]}</b><span>${c[k]}</span></div>`).join('')
+     + Object.keys(NE).map(k=>`<div class="sw"><i style="background:${E[k]}"></i><b>${NE[k]}</b><span>${E[k]}</span></div>`).join('');
+    const pares=[
+      ['Texto principal / fondo',c.tx,c.bg,7],['Texto principal / superficie',c.tx,'#FFFFFF',7],
+      ['Texto secundario / fondo',c.tx2,c.bg,4.5],['Texto secundario / alterna',c.tx2,c.alt,4.5],
+      ['Blanco / primario (botón)','#FFFFFF',c.p,4.5],['Blanco / primario oscuro (cabecera)','#FFFFFF',c.pd,4.5],
+      ['Texto oscuro / acento (flotante)',c.tx,c.ac,4.5],['Secundario como texto / blanco',c.s2,'#FFFFFF',4.5],
+      ['Éxito texto / éxito suave',E.okt,E.oks,4.5],['Advertencia texto / suave',E.wnt,E.wns,4.5],
+      ['Error texto / error suave',E.ert,E.ers,4.5],['Info texto / info suave',E.int,E.ins,4.5],
+      ['Blanco / error (peligro)','#FFFFFF',E.er,4.5],
+      ['Borde primario oscuro / blanco (contorno del flotante)',c.pd,'#FFFFFF',3],['Borde primario oscuro / acento (flotante y barra «hoy»)',c.pd,c.ac,3],['Borde de campo / blanco',c.bdf,'#FFFFFF',3]
+    ];
+    const rows=pares.map(p=>{const r=ratio(p[1],p[2]);return `<tr><td><span class="mini" style="background:${p[2]};color:${p[1]}">Aa</span></td><td>${p[0]}</td><td><b>${r.toFixed(1)}:1</b></td><td>${r>=7?'<span class="ok-b">AAA (≥7)</span>':r>=p[3]?'<span class="ok-b">AA</span>':'<span class="no-b">No cumple</span>'}</td></tr>`}).join('');
+    h+=`<div class="panel" style="flex:1 1 560px"><div class="vt" style="font-size:18px">${c.nombre}${v==='A'?' (recomendada)':''}</div><div class="sw-grid">${sw}</div><table class="r"><tr><th></th><th>Par</th><th>Ratio</th><th>Nivel</th></tr>${rows}</table></div>`;
+  });
+  return h;
+}
+
+function tipo(v){
+  const c=T[v];
+  const f=[['display','28/34 · 800','Criadero Kikirikis','font-size:28px;line-height:34px;font-weight:800'],['titulo','24/30 · 700','Ficha del ave','font-size:24px;line-height:30px;font-weight:700'],['subtitulo','18/24 · 700','Información del ave','font-size:18px;line-height:24px;font-weight:700'],['cuerpo','16/22 · 400','Hembra nacida en criadero, jaula J-03.','font-size:16px;line-height:22px'],['cuerpoFuerte','16/22 · 600','2.450 g','font-size:16px;line-height:22px;font-weight:600'],['etiqueta','14/18 · 600','FECHA NACIMIENTO'.toLowerCase(),'font-size:14px;line-height:18px;font-weight:600'],['secundario','14/20 · 400','Control y trazabilidad de las aves','font-size:14px;line-height:20px;color:var(--tx2)'],['cifra','32/38 · 800','128','font-size:32px;line-height:38px;font-weight:800'],['boton','17/22 · 700','Guardar ave','font-size:17px;line-height:22px;font-weight:700']];
+  return `<div class="panel ty" style="background:var(--bg);color:var(--tx)">${f.map(x=>`<div><code>${x[0]} ${x[1]}</code><span style="${x[3]}">${x[2]}</span></div>`).join('')}<div style="margin-top:14px"><b>Tokens de forma</b><div class="tokrow" style="margin-top:8px"><div style="border-radius:8px">sm 8</div><div style="border-radius:12px">md 12</div><div style="border-radius:18px">lg 18</div><div style="border-radius:24px">xl 24</div><div style="border-radius:99px">pill</div></div><div class="sub" style="margin-top:8px">Espaciado: 4 · 8 · 12 · 16 (margen de pantalla) · 24 · 32. Táctil: 52 (campos), 56 (acción principal).</div></div></div>`;
+}
+
+function comp(v){
+  return `<div class="panel" style="background:var(--bg);color:var(--tx);display:flex;flex-direction:column;gap:18px">
+  <div><div class="vt">Botones</div><div class="demo" style="background:#fff">
+   <div class="btn p">${I('save')}Primario con icono</div>
+   <div class="btn s">Secundario</div>
+   <div class="btn t">Terciario (enlace)</div>
+   <div class="btn d">${I('trash')}Peligro</div>
+   <div class="btn x">Deshabilitado</div>
+   <div class="btn pr sm" style="width:auto;align-self:flex-start;padding:0 18px">Pulsado</div>
+   <div style="display:flex;justify-content:flex-start"><div class="fab" style="position:static">${I('plus')}Nueva ave</div></div></div></div>
+  <div><div class="vt">Campos</div><div class="demo" style="background:#fff">${fld('Reposo','', '', 'mail',null,'correo@ejemplo.com')}${fld('Foco','K001','foc')}${fld('Error','','err')}${fld('Con unidad','850','',null,'g')}${fld('Deshabilitado','Código automático','dis')}</div></div>
+  <div><div class="vt">Chips de estado y filtros</div><div class="demo" style="background:#fff"><div class="tk">${salud('sana')}${salud('trat')}${salud('enf')}${chip('in','Información','info')}${chip('pr','Hembra','female')}${chip('ne','Macho','male')}</div><div class="seg"><div class="on">Activas</div><div>Vendidas</div><div>Fallecidas</div></div></div></div>
+  <div><div class="vt">Tarjetas y listas</div><div class="demo">${aveItem('A-12','H','Rhode Island','J-03','sana')}<div class="two"><div class="card met"><span class="circ" style="background:var(--oks);color:var(--okt)">${I('paw')}</span><span class="n">24</span><span class="t">Activas</span></div><div class="card met"><span class="circ" style="background:var(--wns);color:var(--wnt)">${I('med')}</span><span class="n">3</span><span class="t">Tratamiento</span></div></div></div></div>
+  <div><div class="vt">Avisos (no bloqueantes)</div><div class="demo" style="background:#fff"><div class="aviso a-ok">${I('chk',22)}Ave A-12 guardada<span class="x">${I('x',20)}</span></div><div class="aviso a-wn">${I('warn',22)}Revisa el peso: parece muy alto<span class="x">${I('x',20)}</span></div><div class="aviso a-er">${I('alert',22)}No se pudo guardar. Verifica tu conexión.<span class="x">${I('x',20)}</span></div><div class="aviso a-in">${I('info',22)}Los cambios se guardan en la nube<span class="x">${I('x',20)}</span></div></div></div>
+  <div><div class="vt">Barra inferior con insignia de alertas en Más</div><div class="demo" style="padding:0;overflow:hidden">${tabs('aves',3)}</div></div>
+  <div><div class="vt">Cabecera y migas</div><div class="demo" style="padding:0;overflow:hidden">${hdr('Ave A-12','Rhode Island',true)}${crumb(['Aves','A-12','Salud'])}<div style="height:10px"></div></div></div>
+  <div><div class="vt">Vacío, carga y error</div><div class="demo"><div class="card vacio"><div class="big">${I('paw')}</div><h4>Aún no hay aves</h4><div class="sub">Registra la primera para empezar a llevar el control.</div><div class="btn p" style="margin-top:6px">${I('plus')}Nueva ave</div></div><div class="card" style="display:flex;flex-direction:column;gap:10px"><div class="sk" style="height:18px;width:50%"></div><div class="sk" style="height:14px;width:85%"></div><div class="sk" style="height:14px;width:65%"></div></div><div class="card vacio"><div class="big" style="background:var(--ers);color:var(--er)">${I('cloud')}</div><h4>No se pudo cargar</h4><div class="sub">Sin conexión con el servidor.</div><div class="btn s sm" style="width:auto;padding:0 18px">${I('ref',20)}Reintentar</div></div></div></div>
+  </div>`;
+}
+
+function maquetas(){
+  const vs = sel.v==='AB'?['A','B']:[sel.v];
+  return M.map(m=>`<h3 style="margin:30px 0 0;font-size:20px">${m.t}</h3><div class="mrow"><div class="mphones">${vs.map(v=>`<div class="t-${v}">${sel.v==='AB'?`<div class="vt">${T[v].nombre}</div>`:''}${m.h()}</div>`).join('')}</div>${m.n()}</div>`).join('');
+}
+
+function render(){
+  document.getElementById('paleta').innerHTML=paleta();
+  document.getElementById('tipo').innerHTML=themed(tipo);
+  document.getElementById('comp').innerHTML=themed(comp);
+  document.getElementById('maquetas').innerHTML=maquetas();
+  document.querySelectorAll('#sel button').forEach(b=>b.classList.toggle('on',b.dataset.v===sel.v));
+}
+document.getElementById('sel').addEventListener('click',e=>{const b=e.target.closest('button');if(b){sel.v=b.dataset.v;render()}});
+render();
+</script>
+</body>
+</html>
