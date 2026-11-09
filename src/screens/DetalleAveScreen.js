@@ -23,6 +23,10 @@ import {
 import Card
     from '../components/Card';
 
+import {
+    useContextoPantalla
+} from '../navigation/contextoPantalla';
+
 
 
 import {
@@ -78,6 +82,13 @@ export default function DetalleAveScreen({
         huevos,
         setHuevos
     ] = useState([]);
+
+
+    // Migas: las pantallas hijas muestran "Aves › {código}"
+    useContextoPantalla(
+        route.key,
+        ave?.codigo
+    );
 
 
 

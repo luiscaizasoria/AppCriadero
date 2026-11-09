@@ -1,0 +1,64 @@
+# SEMILLA: --jaulas=JX-1
+# NAVEGACION (Bloque A, UX): Mas > Finanzas > Nuevo movimiento > atras vuelve a Finanzas (el formulario no se guarda);
+# la flecha de la cabecera hace lo mismo; "atras" del telefono desde la raiz de Finanzas va a la pestana anterior (Mas)
+# y de nuevo atras a Inicio (backBehavior="history"). No guarda datos.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - navegacion
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- extendedWaitUntil:
+    visible: "Estado general del criadero"
+    timeout: 25000
+# Mas (espera un texto de Mas antes de seguir)
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+# Finanzas
+- tapOn:
+    point: "70%,96%"
+- extendedWaitUntil:
+    visible: "Consolidado por categoría"
+    timeout: 20000
+- tapOn: ".*Nuevo movimiento.*"
+- extendedWaitUntil:
+    visible: ".*Guardar movimiento.*"
+    timeout: 15000
+- takeScreenshot: nav-finanzas-formulario
+# atras del telefono: vuelve a Finanzas
+- back
+- extendedWaitUntil:
+    visible: "Consolidado por categoría"
+    timeout: 15000
+- assertNotVisible: ".*Guardar movimiento.*"
+# La flecha de la cabecera hace lo mismo
+- tapOn: ".*Nuevo movimiento.*"
+- extendedWaitUntil:
+    visible: ".*Guardar movimiento.*"
+    timeout: 15000
+- tapOn:
+    id: "cabecera-atras"
+- extendedWaitUntil:
+    visible: "Consolidado por categoría"
+    timeout: 15000
+- assertNotVisible: ".*Guardar movimiento.*"
+# atras desde la raiz de Finanzas: pestana anterior (Mas), luego Inicio
+- back
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    visible: "Estado general del criadero"
+    timeout: 15000
+- takeScreenshot: nav-finanzas-historia

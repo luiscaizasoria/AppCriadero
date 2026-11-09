@@ -1,0 +1,58 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-N3:MACHO:JX-1
+# NAVEGACION (Bloque A, UX): Jaulas > detalle > Alimentacion > atras vuelve al detalle; desde el detalle, tocar un ave
+# abre su ficha DENTRO de Jaulas y "atras" vuelve a la jaula (antes saltaba a la pestana Aves); la flecha vuelve a la lista.
+# No guarda datos. Usa los testID de la cabecera unica (cabecera-atras).
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - navegacion
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "30%,96%"
+- extendedWaitUntil:
+    visible: ".*JX-1.*"
+    timeout: 20000
+- tapOn: ".*JX-1.*"
+- extendedWaitUntil:
+    visible: "Detalle de jaula"
+    timeout: 20000
+# Cuidados: Alimentacion y atras
+- scrollUntilVisible:
+    element: ".*Alimentación"
+- tapOn: ".*Alimentación"
+- scrollUntilVisible:
+    element: ".*Guardar"
+- takeScreenshot: nav-jaulas-alimentacion
+- back
+- extendedWaitUntil:
+    visible: "Detalle de jaula"
+    timeout: 15000
+# Ave de la jaula: la ficha se abre en la pestana Jaulas y atras vuelve a la jaula
+- scrollUntilVisible:
+    element: ".*AV-N3.*"
+- tapOn: ".*AV-N3.*"
+- extendedWaitUntil:
+    visible: "Ficha del ave"
+    timeout: 20000
+- takeScreenshot: nav-jaulas-ficha-ave
+- back
+- extendedWaitUntil:
+    visible: "Detalle de jaula"
+    timeout: 15000
+- assertNotVisible: "Ficha del ave"
+# La flecha de la cabecera vuelve a la lista de jaulas
+- tapOn:
+    id: "cabecera-atras"
+- extendedWaitUntil:
+    visible: ".*Nueva jaula.*"
+    timeout: 15000
+- assertNotVisible: "Detalle de jaula"
+- takeScreenshot: nav-jaulas-lista

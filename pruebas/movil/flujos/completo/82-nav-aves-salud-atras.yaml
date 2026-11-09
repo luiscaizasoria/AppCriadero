@@ -1,0 +1,59 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-N1:MACHO:JX-1
+# NAVEGACION (Bloque A, UX): Aves > ficha > Salud > atras vuelve a la ficha > flecha vuelve a la lista; la miga con el
+# codigo del ave vuelve a la ficha desde Salud. Solo comprueba adonde llega "atras"; no guarda datos.
+# Usa los testID de la cabecera unica: cabecera-atras (flecha) y cabecera-miga-N (migas).
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - navegacion
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: ".*AV-N1.*"
+    timeout: 20000
+- tapOn: "AV-N1"
+- extendedWaitUntil:
+    visible: "Ficha del ave"
+    timeout: 20000
+- scrollUntilVisible:
+    element: ".*Salud"
+- tapOn: ".*Salud"
+- scrollUntilVisible:
+    element: ".*Guardar diagnóstico.*"
+- takeScreenshot: nav-aves-salud
+# "atras" del telefono: de Salud a la ficha (no a la lista)
+- back
+- extendedWaitUntil:
+    visible: "Ficha del ave"
+    timeout: 15000
+- assertNotVisible: ".*Guardar diagnóstico.*"
+# La miga con el codigo del ave (indice 1: 0 es "Aves") vuelve a la ficha desde Salud
+- scrollUntilVisible:
+    element: ".*Salud"
+- tapOn: ".*Salud"
+- scrollUntilVisible:
+    element: ".*Guardar diagnóstico.*"
+- tapOn:
+    id: "cabecera-miga-1"
+- extendedWaitUntil:
+    visible: "Ficha del ave"
+    timeout: 15000
+- assertNotVisible: ".*Guardar diagnóstico.*"
+# La flecha de la cabecera: de la ficha a la lista de aves
+- tapOn:
+    id: "cabecera-atras"
+- extendedWaitUntil:
+    visible: ".*Nueva ave.*"
+    timeout: 15000
+- assertNotVisible: "Ficha del ave"
+- assertVisible: ".*AV-N1.*"
+- takeScreenshot: nav-aves-lista

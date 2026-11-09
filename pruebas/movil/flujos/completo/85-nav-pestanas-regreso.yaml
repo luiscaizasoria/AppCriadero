@@ -1,0 +1,62 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-N5:MACHO:JX-1
+# NAVEGACION (Bloque A, UX): cambiar de pestana y volver RESTAURA la pantalla donde estabas (Aves > ficha > Finanzas >
+# Aves = la ficha); tocar la pestana activa vuelve a la raiz sin dejar pantallas ocultas debajo (Salud > pestana Aves =
+# lista; atras va a la pestana anterior, no a Salud ni a la ficha). No guarda datos.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - navegacion
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: ".*AV-N5.*"
+    timeout: 20000
+- tapOn: "AV-N5"
+- extendedWaitUntil:
+    visible: "Ficha del ave"
+    timeout: 20000
+# Otra pestana y regreso: la ficha sigue abierta
+- tapOn:
+    point: "70%,96%"
+- extendedWaitUntil:
+    visible: "Consolidado por categoría"
+    timeout: 20000
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: "Ficha del ave"
+    timeout: 15000
+- assertNotVisible: "Consolidado por categoría"
+- takeScreenshot: nav-pestanas-ficha-restaurada
+# Salud y tocar la pestana activa: vuelve a la lista de aves
+- scrollUntilVisible:
+    element: ".*Salud"
+- tapOn: ".*Salud"
+- scrollUntilVisible:
+    element: ".*Guardar diagnóstico.*"
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: ".*Nueva ave.*"
+    timeout: 15000
+- assertNotVisible: ".*Guardar diagnóstico.*"
+- assertNotVisible: "Ficha del ave"
+# atras del telefono: pestana anterior (Finanzas), sin pasar por Salud ni la ficha; luego Inicio
+- back
+- extendedWaitUntil:
+    visible: "Consolidado por categoría"
+    timeout: 15000
+- back
+- extendedWaitUntil:
+    visible: "Estado general del criadero"
+    timeout: 15000
+- takeScreenshot: nav-pestanas-historia

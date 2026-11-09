@@ -509,7 +509,7 @@ export default function GenealogiaAveScreen({
                         relation="Ave seleccionada"
                         central
                         onPress={() =>
-                            navigation.push(
+                            navigation.navigate(
                                 'DetalleAve',
                                 {
                                     aveId:
@@ -979,7 +979,7 @@ function abrirAve(
     }
 
 
-    navigation.push(
+    navigation.navigate(
         'DetalleAve',
         {
             aveId:

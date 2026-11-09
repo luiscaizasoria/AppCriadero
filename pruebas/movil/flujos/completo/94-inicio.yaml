@@ -107,6 +107,9 @@ tags:
 - scrollUntilVisible:
     element: ".*Total: 1.*"
 - assertVisible: ".*Advertencias: 1.*"
+# La alerta queda debajo de los totales: hay que desplazar antes de comprobarla (fallo del 2026-11-07)
+- scrollUntilVisible:
+    element: "Sin producción registrada"
 - assertVisible: "Sin producción registrada"
 - assertNotVisible: "Sin alimentación registrada"
 - assertNotVisible: "Sin bebida registrada"

@@ -8,8 +8,8 @@ import {
     Ionicons
 } from '@expo/vector-icons';
 
-import InicioScreen
-from '../screens/InicioScreen';
+import InicioStackNavigator
+from './InicioStackNavigator';
 
 import JaulasStackNavigator
 from './JaulasStackNavigator';
@@ -34,49 +34,20 @@ createBottomTabNavigator();
 
 
 
-function crearListenerRutaInicial(
-    tabName,
-    screenName
-){
-
-    return ({
-        navigation
-    }) => ({
-
-        tabPress: (
-            event
-        ) => {
-
-            /*
-                Evitamos que React Navigation
-                simplemente reactive el estado anterior
-                del Stack de la pestaña.
-            */
-
-            event.preventDefault();
-
-
-            navigation.navigate(
-                tabName,
-                {
-                    screen:
-                        screenName
-                }
-            );
-
-        }
-
-    });
-
-}
-
-
+/*
+    Comportamiento estándar de las pestañas (sin interceptar tabPress):
+    - Cambiar de pestaña y volver restaura la pila donde estabas.
+    - Tocar la pestaña activa vuelve a la raíz de su pila.
+    - "Atrás" del teléfono vuelve a la pestaña anterior (backBehavior="history").
+*/
 
 export default function AppNavigator(){
 
     return(
 
         <Tab.Navigator
+
+            backBehavior="history"
 
             screenOptions={({
                 route
@@ -208,7 +179,7 @@ export default function AppNavigator(){
                 name="Inicio"
 
                 component={
-                    InicioScreen
+                    InicioStackNavigator
                 }
 
             />
@@ -223,13 +194,6 @@ export default function AppNavigator(){
                     JaulasStackNavigator
                 }
 
-                listeners={
-                    crearListenerRutaInicial(
-                        'Jaulas',
-                        'ListaJaulas'
-                    )
-                }
-
             />
 
 
@@ -240,13 +204,6 @@ export default function AppNavigator(){
 
                 component={
                     AvesStackNavigator
-                }
-
-                listeners={
-                    crearListenerRutaInicial(
-                        'Aves',
-                        'ListaAves'
-                    )
                 }
 
             />
@@ -261,13 +218,6 @@ export default function AppNavigator(){
                     FinanzasStackNavigator
                 }
 
-                listeners={
-                    crearListenerRutaInicial(
-                        'Finanzas',
-                        'FinanzasInicio'
-                    )
-                }
-
             />
 
 
@@ -278,13 +228,6 @@ export default function AppNavigator(){
 
                 component={
                     MasStackNavigator
-                }
-
-                listeners={
-                    crearListenerRutaInicial(
-                        'Más',
-                        'MasMenu'
-                    )
                 }
 
             />

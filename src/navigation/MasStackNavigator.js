@@ -35,10 +35,8 @@ from '../screens/BackupScreen';
 import AlertasScreen
 from '../screens/AlertasScreen';
 
-
-import {
-    COLORS
-} from '../config/constants';
+import { opcionesPila, SIN_CABECERA } from './opcionesPila';
+import { pantallasAve, pantallasJaula } from './pantallasCompartidas';
 
 
 const Stack =
@@ -54,12 +52,7 @@ export default function MasStackNavigator(){
 
             initialRouteName="MasMenu"
 
-            screenOptions={{
-
-                headerTintColor:
-                    COLORS.primary
-
-            }}
+            screenOptions={opcionesPila('Más')}
 
         >
 
@@ -72,177 +65,68 @@ export default function MasStackNavigator(){
                     MasMenuScreen
                 }
 
-                options={{
-
-                    headerShown:false
-
-                }}
+                options={SIN_CABECERA}
 
             />
 
 
             <Stack.Screen
-
                 name="Configuracion"
-
-                component={
-                    ConfiguracionScreen
-                }
-
-                options={{
-
-                    title:
-                        'Configuración'
-
-                }}
-
+                component={ConfiguracionScreen}
             />
 
 
             <Stack.Screen
-
                 name="Catalogo"
-
-                component={
-                    CatalogoScreen
-                }
-
-                options={({route})=>({
-
-                    title:
-                        route.params?.titulo
-                        ||
-                        'Catálogo'
-
-                })}
-
+                component={CatalogoScreen}
             />
 
 
             <Stack.Screen
-
                 name="EditarCatalogoItem"
-
-                component={
-                    EditarCatalogoItemScreen
-                }
-
-                options={{
-
-                    title:
-                        'Elemento'
-
-                }}
-
+                component={EditarCatalogoItemScreen}
             />
 
 
             <Stack.Screen
-
                 name="ProduccionHuevos"
-
-                component={
-                    ProduccionHuevosScreen
-                }
-
-                options={{
-
-                    title:
-                        'Producción de huevos'
-
-                }}
-
+                component={ProduccionHuevosScreen}
             />
 
 
             <Stack.Screen
-
                 name="Clientes"
-
-                component={
-                    ClientesScreen
-                }
-
-                options={{
-
-                    title:
-                        'Clientes'
-
-                }}
-
+                component={ClientesScreen}
             />
 
 
             <Stack.Screen
-
                 name="DetalleCliente"
-
-                component={
-                    DetalleClienteScreen
-                }
-
-                options={{
-
-                    title:
-                        'Detalle del cliente'
-
-                }}
-
+                component={DetalleClienteScreen}
             />
 
 
             <Stack.Screen
-
                 name="Reportes"
-
-                component={
-                    ReportesScreen
-                }
-
-                options={{
-
-                    title:
-                        'Reportes'
-
-                }}
-
+                component={ReportesScreen}
             />
 
 
             <Stack.Screen
-
                 name="Backup"
-
-                component={
-                    BackupScreen
-                }
-
-                options={{
-
-                    title:
-                        'Respaldo'
-
-                }}
-
+                component={BackupScreen}
             />
 
 
             <Stack.Screen
-
                 name="Alertas"
-
-                component={
-                    AlertasScreen
-                }
-
-                options={{
-
-                    title:
-                        'Alertas'
-
-                }}
-
+                component={AlertasScreen}
             />
+
+
+            {pantallasAve(Stack)}
+
+            {pantallasJaula(Stack)}
 
 
         </Stack.Navigator>

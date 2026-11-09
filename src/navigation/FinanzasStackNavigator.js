@@ -13,9 +13,7 @@ import NuevoMovimientoFinancieroScreen
 import EditarMovimientoFinancieroScreen
     from '../screens/EditarMovimientoFinancieroScreen';
 
-import {
-    COLORS
-} from '../config/constants';
+import { opcionesPila, SIN_CABECERA } from './opcionesPila';
 
 
 const Stack =
@@ -27,38 +25,23 @@ export default function FinanzasStackNavigator() {
     return (
         <Stack.Navigator
             initialRouteName="FinanzasInicio"
-            screenOptions={{
-                headerTintColor:
-                    COLORS.primary,
-                headerTitleStyle: {
-                    fontWeight:
-                        'bold'
-                }
-            }}
+            screenOptions={opcionesPila('Finanzas')}
         >
 
             <Stack.Screen
                 name="FinanzasInicio"
                 component={FinanzasScreen}
-                options={{
-                    headerShown:false
-                }}
+                options={SIN_CABECERA}
             />
 
             <Stack.Screen
                 name="NuevoMovimientoFinanciero"
                 component={NuevoMovimientoFinancieroScreen}
-                options={{
-                    title:'Nuevo movimiento'
-                }}
             />
 
             <Stack.Screen
                 name="EditarMovimientoFinanciero"
                 component={EditarMovimientoFinancieroScreen}
-                options={{
-                    title:'Movimiento financiero'
-                }}
             />
 
         </Stack.Navigator>

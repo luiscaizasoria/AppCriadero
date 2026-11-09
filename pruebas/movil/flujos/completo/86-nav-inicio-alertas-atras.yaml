@@ -1,0 +1,65 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-NA:MACHO:JX-1
+# NAVEGACION (Bloque A, UX): una alerta abre su pantalla DENTRO de la pestana de origen y "atras" vuelve al origen.
+# Sin cuidados ni huevos hoy hay alertas de alimentacion, bebida y produccion (como el flujo 99).
+# 1) Inicio > alerta "Registrar alimentacion" > atras = Inicio y la barra sigue en Inicio (antes saltaba a Jaulas).
+# 2) Mas > Alertas > alerta "Registrar bebida" > flecha de la cabecera = Alertas (antes saltaba a Jaulas).
+# La pestana Jaulas queda en su lista (la pantalla no se abrio en su pila). No guarda datos.
+# RIESGO: si ya hay huevos o cuidados de hoy no hay alerta; la semilla no los crea.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - navegacion
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+# 1) Desde Inicio
+- extendedWaitUntil:
+    visible: "Estado general del criadero"
+    timeout: 25000
+- scrollUntilVisible:
+    element: ".*Registrar alimentación.*"
+- tapOn: ".*Registrar alimentación.*"
+- scrollUntilVisible:
+    element: ".*Guardar"
+- takeScreenshot: nav-inicio-alimentacion
+- back
+- extendedWaitUntil:
+    visible: "Estado general del criadero"
+    timeout: 20000
+- assertNotVisible: ".*Guardar"
+# La pestana Jaulas sigue en su lista
+- tapOn:
+    point: "30%,96%"
+- extendedWaitUntil:
+    visible: ".*Nueva jaula.*"
+    timeout: 20000
+- assertNotVisible: "Alimentación"
+# 2) Desde Alertas (Mas)
+- tapOn:
+    point: "90%,96%"
+- extendedWaitUntil:
+    visible: "Compradores e historial de ventas por celular"
+    timeout: 20000
+- tapOn: "Alertas"
+- extendedWaitUntil:
+    visible: "Estado y pendientes del criadero"
+    timeout: 25000
+- scrollUntilVisible:
+    element: ".*Registrar bebida.*"
+- tapOn: ".*Registrar bebida.*"
+- scrollUntilVisible:
+    element: ".*Guardar"
+- takeScreenshot: nav-alertas-bebida
+- tapOn:
+    id: "cabecera-atras"
+- extendedWaitUntil:
+    visible: "Estado y pendientes del criadero"
+    timeout: 20000
+- assertNotVisible: ".*Guardar"
+- takeScreenshot: nav-alertas-vuelta

@@ -778,12 +778,9 @@ export default function InicioScreen({
                                     ){
 
                                         navigation.navigate(
-                                            'Aves',
+                                            'DetalleAve',
                                             {
-                                                screen:'DetalleAve',
-                                                params:{
-                                                    aveId:item.entidadId
-                                                }
+                                                aveId:item.entidadId
                                             }
                                         );
 
@@ -796,12 +793,9 @@ export default function InicioScreen({
                                     ){
 
                                         navigation.navigate(
-                                            'Jaulas',
+                                            'BebidaJaula',
                                             {
-                                                screen:'BebidaJaula',
-                                                params:{
-                                                    jaulaId:item.entidadId
-                                                }
+                                                jaulaId:item.entidadId
                                             }
                                         );
 
@@ -814,12 +808,9 @@ export default function InicioScreen({
                                     ){
 
                                         navigation.navigate(
-                                            'Jaulas',
+                                            'AlimentacionJaula',
                                             {
-                                                screen:'AlimentacionJaula',
-                                                params:{
-                                                    jaulaId:item.entidadId
-                                                }
+                                                jaulaId:item.entidadId
                                             }
                                         );
 
@@ -832,12 +823,9 @@ export default function InicioScreen({
                                     ){
 
                                         navigation.navigate(
-                                            'Jaulas',
+                                            'DetalleJaula',
                                             {
-                                                screen:'DetalleJaula',
-                                                params:{
-                                                    jaulaId:item.entidadId
-                                                }
+                                                jaulaId:item.entidadId
                                             }
                                         );
 

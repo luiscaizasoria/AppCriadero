@@ -2,8 +2,8 @@
 # SEGUNDA-CUENTA
 # ALERTAS: sin cuidados ni huevos hoy, la cuenta con datos tiene 3 alertas MEDIO (alimentacion y bebida de JX-1 y
 # produccion): Criticas 0, Advertencias 3, Total 3, sin "No existen alertas.". La accion de la alerta de
-# alimentacion abre la pantalla de alimentacion (boton "Guardar"); con back se vuelve a Inicio y desde
-# la pestana Mas se recupera Alertas. La insignia de Mas muestra el total. La segunda cuenta (criadero vacio, sin
+# alimentacion abre la pantalla de alimentacion (boton "Guardar") DENTRO de la pila de Mas (Bloque A);
+# con back se vuelve a Alertas (no a Inicio) y tocar la pestana Mas activa lleva a la raiz. La insignia de Mas muestra el total. La segunda cuenta (criadero vacio, sin
 # jaulas ni aves) ve SOLO la alerta de produccion. No se prueba Inicio (sigue en SQLite). Esperas solo por condicion.
 # RIESGO: si ya hay huevos o cuidados de hoy no hay alerta; la semilla no los crea.
 appId: host.exp.exponent
@@ -59,11 +59,14 @@ tags:
 - assertVisible: ".*Alimentación.*"
 - takeScreenshot: alertas-accion-alimentacion
 - back
-# back vuelve a la pestana Inicio (la ultima pestana de la historia), no a Alertas
+# Bloque A: la accion abrio la pantalla dentro de Mas; back vuelve a Alertas y la barra sigue en Mas
 - extendedWaitUntil:
-    visible: "Estado general del criadero"
-    timeout: 20000
-# Mas vuelve a su raiz (la pila de Mas se vacio al navegar a Jaulas); se abre Alertas otra vez
+    visible: ".*Total: 3.*"
+    timeout: 25000
+- assertVisible: "Estado y pendientes del criadero"
+- assertNotVisible: "Estado general del criadero"
+- assertNotVisible: ".*Guardar.*"
+# Tocar la pestana Mas (activa) vuelve a la raiz de su pila; se abre Alertas otra vez
 - tapOn:
     point: "90%,96%"
 - extendedWaitUntil:

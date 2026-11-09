@@ -38,6 +38,10 @@ import {
 import Card
     from '../components/Card';
 
+import {
+    useContextoPantalla
+} from '../navigation/contextoPantalla';
+
 
 export default function DetalleJaulaScreen({
     route,
@@ -53,6 +57,13 @@ export default function DetalleJaulaScreen({
         jaula,
         setJaula
     ] = useState(null);
+
+
+    // Migas: las pantallas hijas muestran "Jaulas › {código}"
+    useContextoPantalla(
+        route.key,
+        jaula?.codigo
+    );
 
 
     const [
@@ -197,31 +208,11 @@ export default function DetalleJaulaScreen({
     const abrirAve =
         aveId => {
 
-            const tabNavigation =
-                navigation.getParent();
-
-
-            if (!tabNavigation) {
-
-                Alert.alert(
-                    'Error',
-                    'No fue posible abrir el detalle del ave.'
-                );
-
-                return;
-
-            }
-
-
-            tabNavigation.navigate(
-                'Aves',
+            // DetalleAve está registrada en esta misma pila: "atrás" vuelve a la jaula.
+            navigation.navigate(
+                'DetalleAve',
                 {
-                    screen:
-                        'DetalleAve',
-
-                    params: {
-                        aveId
-                    }
+                    aveId
                 }
             );
 

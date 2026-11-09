@@ -25,7 +25,9 @@ tags:
 - extendedWaitUntil:
     visible: 'Código *'
     timeout: 20000
-- tapOn: "AV-M"
+# Bloque A: la cabecera tiene la miga "AV-M" (codigo del ave); el campo se alcanza por su etiqueta
+- tapOn:
+    below: 'Código *'
 - eraseText: 10
 - inputText: "AV-P"
 - hideKeyboard
