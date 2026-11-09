@@ -4,7 +4,7 @@ Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesi
 
 ## 2026-11-07 sesión 2
 - Hecho: fase 6, módulo Inicio. Spec `documents/specs/inicio.md`; API `api/src/inicio/` (`GET /dashboard`, 6 llamadas fijas a D1 frente a 12 de V1, sin migración); cliente `DashboardRepository.{js,sqlite.js,api.js}`; caso `17-inicio` y ruta en `05-aislamiento`; flujo `completo/94-inicio.yaml` (sustituye a `esperado-fallar/inicio.yaml`, borrado con `git rm`; el ejecutor omite `esperado-fallar` si no existe). Worker de pruebas desplegado (`--env test`).
-- Commits: código empujado en `b086dfa` (API), `5777404` (cliente) y `eb8a18e` (pruebas); esta entrada sin commit.
+- Commits: código empujado en `b086dfa` (API), `5777404` (cliente) y `eb8a18e` (pruebas); documentación en `ad2a743` (local, sin empujar).
 - Resultado: revisión de arquitectura APROBADO; typecheck OK; 349 unitarias/HTTP y 196 de integración.
 - Resultado: paridad con el código real de V1, 140 comparaciones y 0 diferencias tras ajustar dos desempates: mejor ponedora por menor `codigo` y hora pico por hora MAYOR; las dos hipótesis de la spec eran erróneas.
 - Resultado: datos grandes con 6 llamadas a D1 (respuesta 1007 B; 11 a 43 ms en local).
@@ -15,10 +15,11 @@ Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesi
 - Decisión: módulo por módulo, con push al cerrar cada uno si datos y smoke están en verde, y parar para avisar si una comprobación falla; motivo: decisión del usuario.
 - Pendiente: corregir el scroll del flujo `94`; decidir el tope de 60 min del ejecutor; repetir `/probar completo` una vez (con aprobación) y cerrar la fase 6 en la documentación solo si queda sin regresiones; CLAUDE.md pendiente de actualizar al cerrar la fase; teléfono físico (Bajas, Finanzas, Clientes, Reportes, Alertas, Inicio); R2 y Google Sign-In.
 - Próximo paso exacto: esperar la decisión del usuario sobre el flujo `94` y el tope de tiempo.
+- Cierre del día: pendientes de decisión del usuario: scrollUntilVisible del flujo 94, tope de tiempo del ejecutor (60 → 90 min propuesto), repetir /probar completo una vez, push de ad2a743 y actualizar CLAUDE.md al cerrar la fase 6.
 
 ## 2026-11-07 sesión 1
 - Contexto: Reportes cerrado y empujado en `2317c11`; sesión retomada tras un corte por límite de uso del 2026-11-05.
-- Hecho (sin commit; hashes por confirmar): fase 6, módulo Alertas. Spec `documents/specs/alertas.md`; API `api/src/alertas/` (un GET bajo `/criaderos/:criaderoId/alertas`, 5 llamadas fijas a D1, sin migración); cliente `AlertasRepository.{js,sqlite.js,api.js}` (sqlite = V1 renombrado 100%; en modo API solo `obtenerTodasLasAlertas` y `obtenerResumenAlertas`); caso `16-alertas` y ruta en `05-aislamiento`; flujo `completo/99-alertas.yaml` con segunda cuenta. Worker de pruebas desplegado (`--env test`).
+- Hecho (commits `ca4cd5f` API, `8e48351` cliente, `f417a8d` pruebas y `f6bd9c4` documentación; empujados): fase 6, módulo Alertas. Spec `documents/specs/alertas.md`; API `api/src/alertas/` (un GET bajo `/criaderos/:criaderoId/alertas`, 5 llamadas fijas a D1, sin migración); cliente `AlertasRepository.{js,sqlite.js,api.js}` (sqlite = V1 renombrado 100%; en modo API solo `obtenerTodasLasAlertas` y `obtenerResumenAlertas`); caso `16-alertas` y ruta en `05-aislamiento`; flujo `completo/99-alertas.yaml` con segunda cuenta. Worker de pruebas desplegado (`--env test`).
 - Resultado: revisión de arquitectura APROBADO; typecheck OK; 333 unitarias/HTTP y 167 de integración.
 - Resultado: paridad con el código real de V1: 324 comparaciones, 962 alertas, 0 diferencias; hipótesis de orden rowid ASC confirmada en better-sqlite3.
 - Resultado: datos grandes con 5 llamadas a D1 (152 alertas, 31 KB; 3 llamadas de 62 ms o menos en local).

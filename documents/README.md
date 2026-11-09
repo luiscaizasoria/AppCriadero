@@ -49,7 +49,12 @@ Ante una contradicción prevalece, de mayor a menor:
 - `probador-integracion-api`: levanta el Worker local con una D1 temporal, hace llamadas HTTP reales, comprueba D1 y los errores de la spec, limpia y reporta.
 - `probador-movil`: evalúa y define cómo validar la app contra la API (emulador Android, adb, Maestro) y reduce lo que exige el teléfono físico a una lista corta.
 - `redactor-documentacion`: mantiene `documents/` coherente con el código y con la regla del proyecto.
+- `disenador-ux`: fase UX (aún no ejecutado): propone y aplica por bloques mejoras visuales, de navegación y de estados de carga/vacío/error en `src/screens/`, `src/components/`, `src/theme/`, `src/navigation/` y `App.js`, sin cambiar procesos ni lógica; registra los cambios en `documents/ux/inventario-cambios.md`. Perfil `ux` del guardia.
 - `mantenimiento-claude`: aplica cambios concretos en `.claude/agents/`, `.claude/skills/` y `.claude/rules/` (nunca su propio archivo, `hooks/` ni `settings*.json`; Bash solo lectura de git). Lo invoca el usuario cuando hace falta; el perfil `claude` de `.claude/hooks/guardia.ps1` lo restringe.
+
+### Proceso vigente desde 2026-11-07
+
+El usuario valida en su teléfono con Expo Go (túnel levantado por Claude Code). Emulador, `/probar smoke` y `/probar completo` solo a petición o con cambios extremadamente grandes; se mantienen typecheck, unitarias y `/probar datos` (solo si se toca la API o el dinero). Flujo ligero (un implementador y una revisión; informes de máximo 25 líneas). Orden: (1) pruebas en el teléfono, (2) refinamiento UX (`disenador-ux`), (3) fotos en R2, (4) login con Google, (5) ambientes de pruebas y producción. Durante la fase UX las pantallas V1 sí se pueden modificar; la lógica de negocio, los datos, la paridad y los mensajes de error de las APIs no cambian. Los flujos de `pruebas/movil` buscan por texto y se rompen con cambios de texto o estructura. Lo que sigue describe el flujo por módulo (migración, ya completada salvo R2 y Google).
 
 ### Flujo por módulo y qué le toca al usuario
 

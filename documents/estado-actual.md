@@ -4,7 +4,7 @@ Se carga solo desde `CLAUDE.md` (import). Historial: `documents/bitacora.md`. Ac
 
 ## Rama y reglas de trabajo
 
-- Rama única: `trabajo/migracion-nube` (desde `main`). Último push: `eb8a18e` (código de Inicio, cliente y pruebas); la documentación de Inicio queda sin push hasta que el orquestador lo empuje. Sin PR; fusión a `main` solo si el usuario lo pide. Cloudflare: solo `--env test` / base de pruebas, con aprobación; nunca `criadero-kikirikis-dev`, `controlgastos-*` ni `delete` sin aprobación.
+- Rama única: `trabajo/migracion-nube` (desde `main`). Último push: `eb8a18e`; commit local sin empujar: `ad2a743` (documentación de Inicio). Sin PR; fusión a `main` solo si el usuario lo pide. Cloudflare: solo `--env test` / base de pruebas, con aprobación; nunca `criadero-kikirikis-dev`, `controlgastos-*` ni `delete` sin aprobación.
 
 ## Módulos hechos
 
@@ -53,6 +53,10 @@ Migraciones `0001`–`0011` aplicadas en local, integración y base remota de pr
 
 - API local (desde `api/`, Node 22): `nvm use 22; npm run dev`; leer el puerto en `Ready on http://127.0.0.1:XXXX`. Expo contra el Worker de pruebas: URL solo en variables de la sesión (nunca en archivos ni commits): `NODE_PATH`, `EXPO_NO_TYPESCRIPT_SETUP=1`, `EXPO_PUBLIC_DATA_SOURCE=api`, `EXPO_PUBLIC_API_URL`; luego `npx expo start --tunnel`.
 
+## Proceso vigente (decisión del usuario, 2026-11-07; anula lo anterior sobre /probar completo)
+
+El usuario valida en su teléfono con Expo Go (túnel por Claude Code). Emulador, `/probar smoke` y `/probar completo` solo a petición o con cambios extremadamente grandes (el pendiente del flujo `94` y del tope de 60 min queda en pausa). Se mantienen typecheck, unitarias y `/probar datos` (solo si se toca la API o el dinero). Flujo ligero; informes de máximo 25 líneas. Orden: (1) pruebas en el teléfono, (2) refinamiento UX con `disenador-ux` (creado, sin ejecutar), (3) fotos en R2, (4) login con Google, (5) ambientes de pruebas y producción. En la fase UX las pantallas V1 sí se pueden modificar; lógica, datos, paridad y mensajes de error no cambian. Cambios de texto o estructura rompen los flujos de `pruebas/movil`.
+
 ## Siguiente paso exacto
 
-Corregir el `scrollUntilVisible` del flujo `94-inicio.yaml`, decidir el tope de tiempo y repetir `/probar completo` una vez; si queda sin regresiones, anotar el cierre de la fase 6. Mientras, esperar indicación para: push de la documentación de Inicio, teléfono (Bajas, Finanzas, Clientes, Reportes, Alertas e Inicio), R2 o Google Sign-In.
+Pruebas del usuario en el teléfono (Expo Go, modo nube) y su lista de hallazgos; después, la propuesta de dirección visual de `disenador-ux` (con aprobación) y R2.
