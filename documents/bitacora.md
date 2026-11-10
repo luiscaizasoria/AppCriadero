@@ -2,6 +2,15 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-10 sesión 1
+- Hecho: cierre de la fase UX (variante «Pajarera tropical», Fredoka y Nunito, mascota SVG; dependencias en `9b0799a`). Commits locales `b538d57`, `5165b25`, `a5f8880`, `2082a1d` y el de los flujos 95 y 96; último push `df6b1b8`. Baja vuelve al `Alert` con «Aceptar»; 6 componentes antiguos borrados; Genealogía inactiva con borde discontinuo; `React.memo` en tarjetas de aves.
+- Hecho: corregido `BarraPestanas.js` (`CommonActions.navigate(route.name, undefined, {merge:true})`); la forma de objeto era obsoleta, abría el LogBox en Expo Go y explicaba la mayoría de las regresiones del completo.
+- Resultado: `/probar completo` NO quedó en verde. Primero ROJO (`2026-11-10-080951-completo`: 14 PASO, 14 REGRESION). Final ROJO literal (`2026-11-10-105816-completo`: 23 PASO, 5 REGRESION en 69,9 min): `95` por aviso efímero (fallo del flujo) y `96`-`99` por caída del emulador. `95`-`99` pasaron repetidos aparte; ninguna regresión real de la app.
+- Incidencia: sin snapshot el emulador perdió el DNS; se arranca con `-dns-server 8.8.8.8,1.1.1.1`. Base de pruebas limpia (recuento final igual al inicial).
+- Decisión: dar la fase por cerrada pese a no tener un completo verde; motivo: los fallos finales fueron de flujo o de entorno, no de la app.
+- Sin medir: rendimiento en gama baja, lista de aves con cientos de registros y fotos, coste de degradados, arranque en frío con fuentes, desaparición del aviso de `navigate` en logcat.
+- Próximo paso exacto: prueba final del usuario en el teléfono; luego R2, Google, ambientes y retiro de SQLite con respaldo.
+
 ## 2026-11-07 sesión 2
 - Hecho: fase 6, módulo Inicio. Spec `documents/specs/inicio.md`; API `api/src/inicio/` (`GET /dashboard`, 6 llamadas fijas a D1 frente a 12 de V1, sin migración); cliente `DashboardRepository.{js,sqlite.js,api.js}`; caso `17-inicio` y ruta en `05-aislamiento`; flujo `completo/94-inicio.yaml` (sustituye a `esperado-fallar/inicio.yaml`, borrado con `git rm`; el ejecutor omite `esperado-fallar` si no existe). Worker de pruebas desplegado (`--env test`).
 - Commits: código empujado en `b086dfa` (API), `5777404` (cliente) y `eb8a18e` (pruebas); documentación en `ad2a743` (local, sin empujar).

@@ -405,3 +405,18 @@ Sin cambios de lógica, repositorios, importes, periodos (UTC), exportación CSV
 - Corregido (nuestro): «Passing an object as the argument to 'navigate' is deprecated» (28 veces en `logcat-continuo.txt`, una por arranque; origen `BarraPestanas.js`).
 - Dejados (V1/sistema): `E/ReactNativeJS 'Error guardando catálogo:' UNIQUE constraint failed` (el flujo 20 repite un código; `console.error` de V1/API) y `VNDK is deprecated with product` (Android). Sin «VirtualizedLists», `unique "key"` ni «Possible Unhandled Promise» en logcat ni en `metro.txt`. Por código: sin `FlatList` anidada en `ScrollView` vertical y todos los `map` con JSX llevan `key`.
 - Sin ejecutar la app tras estos cambios: el aviso `navigate` debería desaparecer en el siguiente logcat.
+
+### Cierre de la fase UX (2026-11-10): FASE CERRADA, pendiente la prueba final del usuario
+
+- Resultado: variante «Pajarera tropical»; fuentes Fredoka (títulos, botones, números) y Nunito (cuerpo) con respaldo del sistema; mascota con `react-native-svg` (3 saltos y se detiene; respeta «reducir movimiento»). Dependencias añadidas: `expo-font`, `expo-linear-gradient`, `react-native-svg` y `@expo-google-fonts/*` (commit `9b0799a`).
+- Reglas del tema que quedan vigentes: tokens en `src/theme/`; componentes comunes en `src/components/`; máximo 2 degradados por pantalla; toques >= 44; contraste AA; sin verde ni amarillo como marca (verde solo para éxito y alertas); avisos de éxito no bloqueantes (`Aviso`/`useAvisoExito`); los `Alert` de error y de confirmación se mantienen.
+- Causa de la mayoría de regresiones del completo: `BarraPestanas.js` usaba `CommonActions.navigate({name, merge})` (obsoleto en React Navigation 7.4.1); el aviso abría el LogBox en Expo Go y tapaba pantallas. Ahora `CommonActions.navigate(route.name, undefined, {merge:true})`, misma acción `NAVIGATE` (verificado en `node_modules`).
+- Commits locales de la jornada: `b538d57`, `5165b25`, `a5f8880`, `2082a1d` y el de los flujos 95 y 96. Último push: `df6b1b8`.
+- `/probar completo` del 2026-11-10 (NO hubo ejecución completa en verde):
+  - `2026-11-10-080951-completo`: ROJO, 14 PASO y 14 REGRESION (78,0 min); causas: aviso de `navigate`/LogBox, contenido bajo el pliegue y avisos efímeros de 4 s.
+  - `2026-11-10-105816-completo` (final): ROJO literal, 23 PASO y 5 REGRESION en 69,9 min. Fallos: `95` (aviso efímero «Movimiento actualizado»; fallo del flujo) y `96`-`99` por la caída del emulador (`device not found`; FALLO DE ENTORNO real).
+  - `95` y `96` se corrigieron (esperar la condición, no el aviso) y pasaron aparte; `97`, `98` y `99` pasaron aparte tras restaurar el DNS del emulador con `-dns-server 8.8.8.8,1.1.1.1`. Ninguna regresión real de la app en los fallos finales.
+- Limpieza: recuento final de la base de pruebas igual al inicial (0 desechables, 3 cuentas, 3 criaderos, 2 aves).
+- Incidencia nueva: tras recuperar el emulador sin snapshot el DNS falló (FALLO DE RED en `97`-`99`); arrancarlo con `-dns-server 8.8.8.8,1.1.1.1`.
+- Sin medir: rendimiento en gama baja; fluidez de la lista de aves con cientos de registros y fotos; coste de los degradados; arranque en frío con fuentes; que el aviso de `navigate` haya desaparecido del logcat (falta un arranque real); `90-baja-venta` tardó 328 s.
+- Próximos pasos, en este orden: (1) prueba final del usuario en el teléfono, (2) fotos en R2, (3) login con Google, (4) ambientes de pruebas y producción, (5) retiro de SQLite con respaldo.
