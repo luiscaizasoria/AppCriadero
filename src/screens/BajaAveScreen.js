@@ -44,12 +44,6 @@ import Boton
 import BarraAccion
     from '../components/BarraAccion';
 
-import Aviso
-    from '../components/Aviso';
-
-import useAvisoExito
-    from '../components/useAvisoExito';
-
 import {
     colors,
     spacing,
@@ -137,17 +131,6 @@ export default function BajaAveScreen({
         guardando,
         setGuardando
     ] = useState(false);
-
-
-
-    const {
-        aviso,
-        mostrar: mostrarAviso,
-        cerrar: cerrarAviso,
-        saliendo
-    } = useAvisoExito();
-
-
 
 
 
@@ -287,9 +270,8 @@ export default function BajaAveScreen({
 
 
 
-                // Antes: Alert con «Aceptar» que hacía popToTop. Ahora: aviso de éxito (mismo
-                // título y mensaje) y, al cabo de 1,8 s, el mismo popToTop.
-                mostrarAviso(
+                // Acción irreversible: diálogo con «Aceptar» (como en V1).
+                Alert.alert(
 
                     'Proceso completado',
 
@@ -299,8 +281,13 @@ export default function BajaAveScreen({
                     :
                     'El ave fue registrada como fallecida.',
 
-                    () =>
-                        navigation.popToTop()
+                    [
+                        {
+                            text: 'Aceptar',
+                            onPress: () =>
+                                navigation.popToTop()
+                        }
+                    ]
 
                 );
 
@@ -653,8 +640,6 @@ export default function BajaAveScreen({
                 }
                 atenuado={
                     guardando
-                    ||
-                    saliendo
                 }
                 testID="confirmar-baja"
             />
@@ -663,17 +648,6 @@ export default function BajaAveScreen({
 
         </KeyboardAvoidingView>
 
-
-        {aviso ? (
-            <Aviso
-                flotante
-                tono="exito"
-                duracion={0}
-                titulo={aviso.titulo}
-                mensaje={aviso.mensaje}
-                onCerrar={cerrarAviso}
-            />
-        ) : null}
 
         </FondoPantalla>
 

@@ -46,10 +46,7 @@ tags:
 - extendedWaitUntil:
     visible: "Proceso completado"
     timeout: 20000
-# C5: «Proceso completado» es un aviso (sin «Aceptar»); a los 1,8 s hace popToTop.
-- extendedWaitUntil:
-    notVisible: "Proceso completado"
-    timeout: 15000
+- tapOn: "Aceptar"
 # La app vuelve a la raiz (pestaña Aves): esperar su pantalla antes de tocar la barra de pestañas
 - extendedWaitUntil:
     visible: ".*Vendidas.*"
