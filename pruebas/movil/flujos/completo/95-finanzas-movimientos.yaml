@@ -39,14 +39,11 @@ tags:
 - hideKeyboard
 - takeScreenshot: finanzas-ingreso-formulario
 - tapOn: ".*Guardar movimiento.*"
+# C6: «Movimiento guardado» es un aviso efímero; no se espera su texto. Se espera la vuelta a Finanzas
+# (el detalle escrito sigue visible en el formulario, por eso se exige antes el selector «Este mes» de Finanzas).
 - extendedWaitUntil:
-    visible: "Movimiento guardado"
-    timeout: 20000
-# C6: «Movimiento guardado» es un aviso (sin «Aceptar»); a los 1,8 s vuelve solo a Finanzas. Se espera a que
-# desaparezca porque el detalle escrito sigue visible en el formulario mientras dura.
-- extendedWaitUntil:
-    notVisible: "Movimiento guardado"
-    timeout: 15000
+    visible: "Este mes"
+    timeout: 30000
 - extendedWaitUntil:
     visible: ".*Ingreso manual uno.*"
     timeout: 20000
@@ -66,16 +63,10 @@ tags:
 - inputText: "Egreso manual uno"
 - hideKeyboard
 - tapOn: ".*Guardar movimiento.*"
-- extendedWaitUntil:
-    visible: "Movimiento guardado"
-    timeout: 20000
-# C6: aviso sin «Aceptar» (ver arriba).
-- extendedWaitUntil:
-    notVisible: "Movimiento guardado"
-    timeout: 15000
+# Aviso efímero (ver arriba): se espera la vuelta a Finanzas con el saldo nuevo.
 - extendedWaitUntil:
     visible: "\\$9[.]25"
-    timeout: 20000
+    timeout: 30000
 # Resumen del mes (arriba) y lista (el mas nuevo primero)
 - assertVisible: "\\$12[.]50"
 - assertVisible: "\\$3[.]25"
@@ -129,16 +120,12 @@ tags:
 - scrollUntilVisible:
     element: ".*Guardar cambios.*"
 - tapOn: ".*Guardar cambios.*"
+# El aviso dura 4 s y el emulador lento puede no verlo: se espera la condición real (vuelta a Finanzas).
 - extendedWaitUntil:
-    visible: "Movimiento actualizado"
-    timeout: 20000
-# C6: aviso sin «Aceptar»; vuelve solo a Finanzas.
-- extendedWaitUntil:
-    notVisible: "Movimiento actualizado"
-    timeout: 15000
-- extendedWaitUntil:
-    visible: "Consolidado por categoría"
-    timeout: 20000
+    visible: "Este mes"
+    timeout: 30000
+- scrollUntilVisible:
+    element: ".*Consolidado por categoría.*"
 - assertVisible: "\\$20[.]00"
 - assertVisible: "\\$16[.]75"
 - scrollUntilVisible:

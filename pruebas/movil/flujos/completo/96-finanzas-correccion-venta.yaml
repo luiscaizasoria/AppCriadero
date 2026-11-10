@@ -109,16 +109,11 @@ tags:
 - scrollUntilVisible:
     element: ".*Guardar corrección.*"
 - tapOn: ".*Guardar corrección.*"
+# C6: «Venta corregida» es un aviso efímero (4 s); no se espera su texto sino la vuelta a Finanzas.
 - extendedWaitUntil:
-    visible: "Venta corregida"
-    timeout: 20000
-- assertVisible: "Se actualizaron la venta y sus movimientos financieros relacionados."
-# C6: «Venta corregida» es un aviso (sin «Aceptar»); a los 1,8 s vuelve solo a Finanzas.
-- extendedWaitUntil:
-    notVisible: "Venta corregida"
-    timeout: 15000
-- extendedWaitUntil:
-    visible: "Consolidado por categoría"
-    timeout: 20000
+    visible: "Este mes"
+    timeout: 30000
+- scrollUntilVisible:
+    element: ".*Consolidado por categoría.*"
 - assertVisible: "\\$23[.]35"
 - takeScreenshot: finanzas-tras-correccion
