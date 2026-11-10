@@ -104,6 +104,37 @@ export default function AvesScreen({
     const [edadDesde, setEdadDesde] = useState('');
     const [edadHasta, setEdadHasta] = useState('');
 
+    // Estables para que las tarjetas memoizadas no se redibujen al teclear en el buscador.
+    const abrirAve =
+        useCallback(
+            ave =>
+                navigation.navigate(
+                    'DetalleAve',
+                    {
+                        aveId:ave.id
+                    }
+                ),
+            [navigation]
+        );
+
+    const renderAve =
+        useCallback(
+            ({item}) => (
+                <AveCard
+                    ave={item}
+                    onAbrir={abrirAve}
+                />
+            ),
+            [abrirAve]
+        );
+
+    const keyAve =
+        useCallback(
+            ave =>
+                String(ave.id),
+            []
+        );
+
 
     const cargarAves =
         async () => {
@@ -625,22 +656,8 @@ export default function AvesScreen({
                         ? listaFiltrada
                         : []
                 }
-                keyExtractor={ave =>
-                    String(ave.id)
-                }
-                renderItem={({item}) => (
-                    <AveCard
-                        ave={item}
-                        onPress={() =>
-                            navigation.navigate(
-                                'DetalleAve',
-                                {
-                                    aveId:item.id
-                                }
-                            )
-                        }
-                    />
-                )}
+                keyExtractor={keyAve}
+                renderItem={renderAve}
                 ListHeaderComponent={encabezado}
                 ListEmptyComponent={estado}
                 contentContainerStyle={styles.content}

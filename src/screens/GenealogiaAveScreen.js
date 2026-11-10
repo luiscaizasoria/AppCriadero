@@ -2040,9 +2040,11 @@ StyleSheet.create({
     },
 
 
+    // Fallecida: borde discontinuo en lugar de opacidad (la opacidad 0,8 bajaba el texto
+    // secundario a ~4,5:1; sin ella queda en >= 6,0:1 sobre los tintes del nodo).
     nodeCardInactive:{
 
-        opacity:0.8
+        borderStyle:'dashed'
 
     },
 

@@ -39,7 +39,7 @@ Acceso (Login, Registro, Selección de criadero) no se toca: es el Bloque B. Las
 
 Cada fila: archivo, texto antes -> después, cambio de navegación (origen -> destino), componentes del tema usados, `testID` añadidos.
 
-## Cambios de navegación previstos (aún no hechos; detalle en `mapa-navegacion.md`)
+## Cambios de navegación (previstos y hechos en el Bloque A; detalle en `mapa-navegacion.md`)
 
 - `src/navigation/AppNavigator.js`: eliminar el listener `tabPress`; `backBehavior="history"`; nueva `InicioStack`; insignia de alertas en Más.
 - `InicioScreen.js:780-837`, `AlertasScreen.js:574-664`, `DetalleJaulaScreen.js:216`, `DetalleJaulaInactivaScreen.js:107`: `navigate('Aves'|'Jaulas',{screen})` pasa a navegar dentro de la misma pestaña.
@@ -265,7 +265,7 @@ Sin cambios de texto, testID, tiempos (1,5 s Aves; 1,8 s y 4 s Jaulas) ni lógic
 - `components/BarraAccion.js` (nuevo): el antiguo `JaulaBarraAccion`, idéntico.
 - Jaulas (`AlimentacionJaulaScreen`, `BebidaJaulaScreen`, `SanidadJaulaScreen`, `NuevaJaulaScreen`, `DetalleJaulaScreen`): imports y uso de `<Aviso flotante titulo mensaje tono="exito" duracion={0}>` y `<BarraAccion>`.
 - `NuevaAveScreen.js`: `avisarYNavegar(titulo, mensaje, destino)`; títulos «Ave registrada» y «Ave actualizada» (mensajes iguales); la barra inferior usa `BarraAccion` (añade la sombra de la barra de Jaulas; `styles.barraGuardar` queda sin uso).
-- `components/JaulaAviso.js` y `components/JaulaBarraAccion.js`: SIN USO y pendientes de borrar (el agente no puede borrar archivos).
+- `components/JaulaAviso.js` y `components/JaulaBarraAccion.js`: BORRADOS en el commit `66a9bd4`/cierre (ya no existen).
 
 ## Sub-bloque C5 (Salud, Huevos, Genealogía, Ciclo de vida, Evolución, Bajas y Agregar ave a jaula; 2026-11-09)
 
@@ -365,4 +365,43 @@ Sin cambios de lógica, repositorios, importes, periodos (UTC), exportación CSV
 - `BajaAveScreen`: «Proceso completado» vuelve a ser `Alert` con botón «Aceptar» (`popToTop`), mismos mensajes («El ave fue registrada como vendida.»/«…fallecida.»). Se quitan `useAvisoExito`, `Aviso` y `saliendo`; el botón «Confirmar baja» sigue atenuado con `guardando`. Confirma que el texto «Aceptar» reaparece, por lo que revierte lo de C5.
 - Flujos que `validador-ux` debe revertir a `tapOn: "Aceptar"` en lugar de `notVisible: "Proceso completado"` (más el comentario `# C5` previo): `90-baja-venta.yaml:69-71` y `:128-131`; `91-baja-muerte.yaml:41-43`; `96-finanzas-correccion-venta.yaml:49-51`; `98-clientes.yaml:58-60` y `:104-107` (comprobar cada bloque tras revertir; el resto de líneas `visible: "Proceso completado"` valen).
 - Limpieza: sin imports ni requires dinámicos de `Card`, `Header`, `SectionTitle`, `StatusBadge`, `RankingCard` ni `SelectorCatalogo` en `src/` ni `App.js` (grep). El guardia no deja borrar: el orquestador debe ejecutar `git rm src/components/{Card,Header,SectionTitle,StatusBadge,RankingCard,SelectorCatalogo}.js`.
-- `JaulaEstado.js`: ya no importa `getJaulaSanitaryStatusStyle`; los textos (Normal, Limpieza, Fumigación, Quemadura, Cuarentena) y el caso por defecto (vacío o desconocido -> Normal) son los de `constants.js`. Colores/tonos sin cambio (los chips usan los pares `*Text`/`*Soft` del tema, >= 4,5:1; Quemadura sigue en familia error). `constants.js` conserva la función (otros usos fuera de UX).
+- `JaulaEstado.js` (cierre): ya no importa `getJaulaSanitaryStatusStyle`; los textos (Normal, Limpieza, Fumigación, Quemadura, Cuarentena) y el caso por defecto (vacío o desconocido -> Normal) son los de `constants.js`. Colores/tonos sin cambio (los chips usan los pares `*Text`/`*Soft` del tema, >= 4,5:1; Quemadura sigue en familia error). `constants.js` conserva la función (otros usos fuera de UX).
+
+## Cierre total (2026-11-10)
+
+### Cambios (para revertir)
+- `src/navigation/BarraPestanas.js`: `CommonActions.navigate({ name, merge: true })` pasa a `CommonActions.navigate(route.name, undefined, { merge: true })` (forma de objeto obsoleta en `@react-navigation/native` 7.4.1). Equivalencia: `routers/src/CommonActions.tsx:104-137` produce la misma acción `NAVIGATE` con `name`, `params` (undefined) y `merge: true` (`pop` undefined); el router de pestañas (`SwitchRouter.tsx:355-419`) solo lee `name`, `params`, `merge` y `path`, igual en ambas formas. Misma pestaña destino, mismo `merge` de parámetros, `target: state.key` intacto; el historial de pestañas (atrás del teléfono) y la pila restaurada dependen del router, no de la forma del argumento. En el resto de `src/` no hay otros `navigate({...})` ni `CommonActions` (solo `StackActions.pop` en `CabeceraPila`, no obsoleto).
+- `src/navigation/titulos.js`: `BajaAve` «Dar de baja» -> «Baja del ave» (cabecera = título del cuerpo; los flujos esperan «Baja del ave»). El botón de la ficha sigue diciendo «Dar de baja».
+- `SaludAveScreen.js`: título del cuerpo «Salud {código}» -> «Salud» (igual que la cabecera; el código sigue en las migas «Aves › A-12»). Ningún flujo busca «Salud AV-».
+- `GenealogiaAveScreen.js` `nodeCardInactive`: `opacity 0.8` -> `borderStyle 'dashed'`. El texto secundario del nodo «Fallecida» pasa de ~4,5:1 a >= 6,0:1 (sin opacidad, valor del tema sobre los tintes del nodo). Lógica intacta.
+- Rendimiento (ver `rendimiento.md`): `AveCard`, `Chip`, `IconoCirculo` con `React.memo`; `AveCard` con prop opcional `onAbrir`; `AvesScreen` con `renderItem`/`keyExtractor`/manejador en `useCallback`. Mismos `testID` y comportamiento.
+- `titulos.js` revalidado: todas las rutas tienen título; `NuevaAve`, `EditarCatalogoItem` y `Catalogo` son dinámicos y correctos; «Editar movimiento» y «Editar elemento» ya coinciden con el cuerpo.
+- Doc: encabezado de «Cambios de navegación» (ya hechos) y nota de `JaulaAviso`/`JaulaBarraAccion` (ya borrados).
+
+### Observaciones de `documents/ux/` y su cierre
+1. C0 miga con `minHeight` 32: cerrada (la miga es un `Pulsable`, que aplica el mínimo táctil; `migaToque` ya no fija 32).
+2. C0 `accessibilityRole="header"` duplicado en migas: cerrada (solo en el título, `PantallaHeader.js:74`).
+3. C0 `Chip` tono `info` roza 4,5:1: cerrada (`infoText` sobre `infoSoft` 8,8:1 según C6).
+4. Bloque A: `Alert` sin uso en `DetalleJaulaInactivaScreen`: cerrada (ya no existe).
+5. Bloque A: doc «Cambios previstos» desalineado: cerrada.
+6. Bloque A: «atrás» en Genealogía no deshace en orden exacto con la misma ave: aceptada (consecuencia de `getId`, con migas).
+7. Bloque A: baja desde Alertas deja en Más (`popToTop`): lógica, no se toca.
+8. Bloque A/C5: títulos «Baja del ave» y «Salud AV-X»: cerrada. «Registro de huevo»: ya es «Registrar huevo».
+9. C1: mascota en bucle infinito: cerrada (3 saltos finitos, `Mascota.js`).
+10. C1: `98-clientes.yaml` `assertVisible "2"` podría coincidir con la insignia de Más: flujo en `pruebas/movil`, fuera de mi alcance (falso positivo, no fallo).
+11. C1: botón terciario deshabilitado < 4,5:1: exento (estado deshabilitado).
+12. C3: textos nuevos («Accesos rápidos», «Nueva ave», «Alertas», chips) y error con «Reintentar» en Inicio/Alertas frente a «ceros como V1»: DECISIÓN DEL USUARIO.
+13. C4: textos nuevos de vacíos/ayudas/historial, error técnico crudo en la ficha del ave, pérdida de títulos «Ave registrada/actualizada»: DECISIÓN DEL USUARIO.
+14. C5: textos nuevos; «Registrar huevo» con fallo de carga deja el formulario (V1); `SaludScreen` huérfano sin ruta: DECISIÓN DEL USUARIO (no se toca).
+15. C6 obs. 1: doble Enter en alta rápida: cerrada (`anadiendoRef`, `CatalogoScreen.js:97,294`); error de `cargar()` tras crear: aceptado (Reintentar).
+16. C6 obs. 2 y DUDA 4 (cabeceras «Movimiento financiero»/«Elemento»): cerrada (`titulos.js`).
+17. C6 obs. 3 (`BackupScreen`): cerrada, vale «restilizada».
+18. C6 obs. 4 (aviso de 1,8 s en flujos): informativa para `pruebas/movil`.
+19. C6 DUDAS 1-3 («Respaldo» oculto en API, errores con «Reintentar» en Finanzas, textos nuevos): DECISIÓN DEL USUARIO.
+20. `JaulaAviso`/`JaulaBarraAccion` pendientes de borrar: cerrada (borrados). Seis componentes sin uso: borrados en el cierre previo.
+21. `NuevaAveScreen` usa `Number(item.id)` en filtros de padres: lógica, no se toca (observación al orquestador).
+
+### Avisos (logcat de `2026-11-10-080951-completo`)
+- Corregido (nuestro): «Passing an object as the argument to 'navigate' is deprecated» (28 veces en `logcat-continuo.txt`, una por arranque; origen `BarraPestanas.js`).
+- Dejados (V1/sistema): `E/ReactNativeJS 'Error guardando catálogo:' UNIQUE constraint failed` (el flujo 20 repite un código; `console.error` de V1/API) y `VNDK is deprecated with product` (Android). Sin «VirtualizedLists», `unique "key"` ni «Possible Unhandled Promise» en logcat ni en `metro.txt`. Por código: sin `FlatList` anidada en `ScrollView` vertical y todos los `map` con JSX llevan `key`.
+- Sin ejecutar la app tras estos cambios: el aviso `navigate` debería desaparecer en el siguiente logcat.

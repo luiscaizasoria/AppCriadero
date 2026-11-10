@@ -16,7 +16,7 @@ const TONOS = {
 // Chip de estado: pill de 28 px con icono (16) + texto (13/700). El color nunca es el único canal:
 // pasar `icono` (p. ej. "exito", "advertencia", "error", "info" o un glifo de Ionicons).
 // Uso: <Chip texto="Sana" tono="exito" icono="checkmark-circle" testID="chip-estado" />
-export default function Chip({ texto, tono = 'neutro', icono, testID, style }) {
+function Chip({ texto, tono = 'neutro', icono, testID, style }) {
     const t = TONOS[tono] || TONOS.neutro;
     return (
         <View testID={testID} style={[estilos.chip, { backgroundColor: t.fondo }, style]}>
@@ -25,6 +25,9 @@ export default function Chip({ texto, tono = 'neutro', icono, testID, style }) {
         </View>
     );
 }
+
+// Memoizado: componente puro (props primitivas y estilos constantes), se usa decenas de veces por lista.
+export default React.memo(Chip);
 
 const estilos = StyleSheet.create({
     chip: {

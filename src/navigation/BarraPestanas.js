@@ -74,7 +74,7 @@ export default function BarraPestanas({ state, descriptors, navigation }) {
                     });
                     if (!enfocada && !evento.defaultPrevented) {
                         navigation.dispatch({
-                            ...CommonActions.navigate({ name: route.name, merge: true }),
+                            ...CommonActions.navigate(route.name, undefined, { merge: true }),
                             target: state.key
                         });
                     }

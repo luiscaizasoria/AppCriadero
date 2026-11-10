@@ -35,10 +35,18 @@ import {
 
 // Tarjeta de una ave en la lista: avatar (foto o icono en círculo de color por sexo/estado),
 // código y raza, chips de sexo / estado / salud (icono + texto), edad, jaula y padres.
-export default function AveCard({
+// Memoizada: al escribir en el buscador de la lista solo se vuelven a dibujar las tarjetas cuyo `ave`
+// cambió. `onAbrir(ave)` (estable) evita crear un `onPress` nuevo por tarjeta; `onPress` sigue admitido.
+function AveCard({
     ave,
-    onPress
+    onPress,
+    onAbrir
 }) {
+
+    const alPulsar =
+        onAbrir
+            ? () => onAbrir(ave)
+            : onPress;
 
     const edad =
         obtenerEdad(
@@ -64,7 +72,7 @@ export default function AveCard({
     return (
 
         <Tarjeta
-            onPress={onPress}
+            onPress={alPulsar}
             testID={`lista-ave-${ave.codigo}`}
             accessibilityLabel={
                 `${ave.codigo}, ${ave.raza || 'Sin raza'}`
@@ -242,6 +250,9 @@ export default function AveCard({
     );
 
 }
+
+
+export default React.memo(AveCard);
 
 
 function obtenerEdad(

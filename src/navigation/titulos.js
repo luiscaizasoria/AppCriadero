@@ -17,7 +17,7 @@ const TITULOS = {
     EvolucionAve: 'Evolución',
     SaludAve: 'Salud',
     FinalizarTratamiento: 'Finalizar tratamiento',
-    BajaAve: 'Dar de baja',
+    BajaAve: 'Baja del ave',
     RegistrarHuevo: 'Registrar huevo',
     CicloVidaAve: 'Ciclo de vida',
     GenealogiaAve: 'Genealogía',

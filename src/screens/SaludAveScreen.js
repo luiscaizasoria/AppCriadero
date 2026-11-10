@@ -533,7 +533,7 @@ export default function SaludAveScreen({
                                 accessibilityRole="header"
                             >
 
-                                Salud {ave.codigo}
+                                Salud
 
                             </Text>
 

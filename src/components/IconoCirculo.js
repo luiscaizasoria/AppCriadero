@@ -7,7 +7,7 @@ import Icono from './Icono';
 // (con su color de icono que cumple contraste); o pasar `color` y `colorIcono`.
 // Decorativo: oculto a lectores de pantalla.
 // Uso: <IconoCirculo icono="huevo" indice={1} tamano={44} />
-export default function IconoCirculo({ icono, indice = 0, color, colorIcono, tamano = 44, borde = false, style }) {
+function IconoCirculo({ icono, indice = 0, color, colorIcono, tamano = 44, borde = false, style }) {
     const acento = acentos[Math.abs(indice) % acentos.length];
     const fondo = color || acento.fondo;
     const glifo = colorIcono || (color ? colors.white : acento.icono);
@@ -31,6 +31,9 @@ export default function IconoCirculo({ icono, indice = 0, color, colorIcono, tam
         </View>
     );
 }
+
+// Memoizado: componente puro; las tarjetas de lista lo repiten por cada fila.
+export default React.memo(IconoCirculo);
 
 const estilos = StyleSheet.create({
     circulo: { alignItems: 'center', justifyContent: 'center' },
