@@ -6,11 +6,11 @@ import React, {
 import {
     View,
     Text,
-    TextInput,
-    TouchableOpacity,
     StyleSheet,
     Alert,
-    ScrollView
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 
 
@@ -20,9 +20,41 @@ import {
 } from '../repositories/BajaAveRepository';
 
 
+import FondoPantalla
+    from '../components/FondoPantalla';
+
+import Tarjeta
+    from '../components/Tarjeta';
+
+import TituloSeccion
+    from '../components/TituloSeccion';
+
+import IconoCirculo
+    from '../components/IconoCirculo';
+
+import AveOpcion
+    from '../components/AveOpcion';
+
+import CampoTexto
+    from '../components/CampoTexto';
+
+import Boton
+    from '../components/Boton';
+
+import BarraAccion
+    from '../components/BarraAccion';
+
+import Aviso
+    from '../components/Aviso';
+
+import useAvisoExito
+    from '../components/useAvisoExito';
+
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -105,6 +137,15 @@ export default function BajaAveScreen({
         guardando,
         setGuardando
     ] = useState(false);
+
+
+
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso,
+        saliendo
+    } = useAvisoExito();
 
 
 
@@ -246,7 +287,9 @@ export default function BajaAveScreen({
 
 
 
-                Alert.alert(
+                // Antes: Alert con «Aceptar» que hacía popToTop. Ahora: aviso de éxito (mismo
+                // título y mensaje) y, al cabo de 1,8 s, el mismo popToTop.
+                mostrarAviso(
 
                     'Proceso completado',
 
@@ -256,16 +299,8 @@ export default function BajaAveScreen({
                     :
                     'El ave fue registrada como fallecida.',
 
-                    [
-                        {
-                            text:
-                                'Aceptar',
-
-                            onPress:
-                                () =>
-                                navigation.popToTop()
-                        }
-                    ]
+                    () =>
+                        navigation.popToTop()
 
                 );
 
@@ -304,6 +339,22 @@ export default function BajaAveScreen({
 
     return (
 
+        <FondoPantalla>
+
+        <KeyboardAvoidingView
+
+            style={
+                styles.container
+            }
+
+            behavior={
+                Platform.OS === 'ios'
+                    ? 'padding'
+                    : undefined
+            }
+
+        >
+
         <ScrollView
 
             style={
@@ -314,114 +365,91 @@ export default function BajaAveScreen({
                 styles.content
             }
 
+            keyboardShouldPersistTaps="handled"
+
         >
 
 
+            <Tarjeta>
 
-            <Text
-                style={
-                    styles.title
-                }
-            >
-                ⚫ Baja del ave
-            </Text>
-
-
-
-            <Text
-                style={
-                    styles.subtitle
-                }
-            >
-                Selecciona el motivo de salida del ave.
-            </Text>
-
-
-
-
-            <View
-                style={
-                    styles.options
-                }
-            >
-
-
-                <TouchableOpacity
-
-                    style={[
-                        styles.option,
-
-                        tipo === 'MUERTE'
-                        &&
-                        styles.selected
-
-                    ]}
-
-                    onPress={() =>
-                        setTipo(
-                            'MUERTE'
-                        )
+                <View
+                    style={
+                        styles.cabecera
                     }
-
                 >
 
-                    <Text
-                        style={[
-                            styles.optionText,
+                    <IconoCirculo
+                        icono="baja"
+                        indice={3}
+                        tamano={52}
+                    />
 
+                    <View
+                        style={
+                            styles.cabeceraTextos
+                        }
+                    >
+
+                        <Text
+                            style={
+                                styles.title
+                            }
+                            accessibilityRole="header"
+                        >
+                            Baja del ave
+                        </Text>
+
+                        <Text
+                            style={
+                                styles.subtitle
+                            }
+                        >
+                            Selecciona el motivo de salida del ave.
+                        </Text>
+
+                    </View>
+
+                </View>
+
+
+                <View
+                    style={
+                        styles.options
+                    }
+                >
+
+                    <AveOpcion
+                        texto="Fallecimiento"
+                        icono="skull-outline"
+                        seleccionado={
                             tipo === 'MUERTE'
-                            &&
-                            styles.selectedText
-
-                        ]}
-                    >
-                        ⚰ Fallecimiento
-                    </Text>
-
-
-                </TouchableOpacity>
+                        }
+                        onPress={() =>
+                            setTipo(
+                                'MUERTE'
+                            )
+                        }
+                        testID="baja-fallecimiento"
+                    />
 
 
-
-
-
-                <TouchableOpacity
-
-                    style={[
-                        styles.option,
-
-                        tipo === 'VENTA'
-                        &&
-                        styles.selected
-
-                    ]}
-
-                    onPress={() =>
-                        setTipo(
-                            'VENTA'
-                        )
-                    }
-
-                >
-
-                    <Text
-                        style={[
-                            styles.optionText,
-
+                    <AveOpcion
+                        texto="Venta"
+                        icono="cart-outline"
+                        seleccionado={
                             tipo === 'VENTA'
-                            &&
-                            styles.selectedText
+                        }
+                        onPress={() =>
+                            setTipo(
+                                'VENTA'
+                            )
+                        }
+                        testID="baja-venta"
+                    />
 
-                        ]}
-                    >
-                        💰 Venta
-                    </Text>
+                </View>
 
-
-                </TouchableOpacity>
-
-
-            </View>
+            </Tarjeta>
 
 
 
@@ -434,37 +462,24 @@ export default function BajaAveScreen({
 
                 (
 
-                    <>
+                    <Tarjeta>
 
-                        <Text
-                            style={
-                                styles.label
-                            }
-                        >
-                            Causa
-                        </Text>
-
-
-                        <TextInput
-
-                            style={
-                                styles.input
-                            }
-
+                        <CampoTexto
+                            etiqueta="Causa"
+                            icono="skull-outline"
                             value={
                                 causa
                             }
-
                             onChangeText={
                                 setCausa
                             }
-
                             placeholder="Ej. Enfermedad"
-
+                            style={
+                                styles.campo
+                            }
                         />
 
-
-                    </>
+                    </Tarjeta>
 
                 )
 
@@ -486,184 +501,98 @@ export default function BajaAveScreen({
 
                 (
 
-                    <>
+                    <Tarjeta>
 
-                        <Text
-                            style={
-                                styles.label
-                            }
+                        <TituloSeccion
+                            icono="cart-outline"
+                            indice={2}
                         >
-                            Celular *
-                        </Text>
+                            Datos del comprador
+                        </TituloSeccion>
 
 
-                        <TextInput
-
-                            style={
-                                styles.input
-                            }
-
+                        <CampoTexto
+                            etiqueta="Celular *"
+                            icono="call-outline"
                             keyboardType="phone-pad"
-
                             value={
                                 celular
                             }
-
                             onChangeText={
                                 setCelular
                             }
-
                             placeholder="Ej. 0991234567"
-
                         />
 
 
-
-                        <Text
-                            style={
-                                styles.label
-                            }
-                        >
-                            Nombre
-                        </Text>
-
-
-                        <TextInput
-
-                            style={
-                                styles.input
-                            }
-
+                        <CampoTexto
+                            etiqueta="Nombre"
+                            icono="person-circle-outline"
                             value={
                                 comprador
                             }
-
                             onChangeText={
                                 setComprador
                             }
-
                             placeholder="Nombre del comprador"
-
                         />
 
 
-
-                        <Text
-                            style={
-                                styles.label
-                            }
-                        >
-                            Ciudad destino
-                        </Text>
-
-
-                        <TextInput
-
-                            style={
-                                styles.input
-                            }
-
+                        <CampoTexto
+                            etiqueta="Ciudad destino"
+                            icono="location-outline"
                             value={
                                 ciudadDestino
                             }
-
                             onChangeText={
                                 setCiudadDestino
                             }
-
                         />
 
 
-
-                        <Text
-                            style={
-                                styles.label
-                            }
-                        >
-                            Cooperativa de envío
-                        </Text>
-
-
-                        <TextInput
-
-                            style={
-                                styles.input
-                            }
-
+                        <CampoTexto
+                            etiqueta="Cooperativa de envío"
+                            icono="exit-outline"
                             value={
                                 cooperativaEnvio
                             }
-
                             onChangeText={
                                 setCooperativaEnvio
                             }
-
                         />
 
 
-
-                        <Text
-                            style={
-                                styles.label
-                            }
-                        >
-                            Valor venta
-                        </Text>
-
-
-                        <TextInput
-
-                            style={
-                                styles.input
-                            }
-
+                        <CampoTexto
+                            etiqueta="Valor venta"
+                            icono="cash-outline"
                             keyboardType="decimal-pad"
-
                             value={
                                 valorVenta
                             }
-
                             onChangeText={
                                 setValorVenta
                             }
-
                             placeholder="Opcional"
-
                         />
 
 
-
-                        <Text
-                            style={
-                                styles.label
-                            }
-                        >
-                            Valor de envío
-                        </Text>
-
-
-                        <TextInput
-
-                            style={
-                                styles.input
-                            }
-
+                        <CampoTexto
+                            etiqueta="Valor de envío"
+                            icono="cash-outline"
                             keyboardType="decimal-pad"
-
                             value={
                                 valorEnvio
                             }
-
                             onChangeText={
                                 setValorEnvio
                             }
-
                             placeholder="Opcional"
-
+                            style={
+                                styles.campo
+                            }
                         />
 
-
-                    </>
+                    </Tarjeta>
 
                 )
 
@@ -678,79 +607,75 @@ export default function BajaAveScreen({
 
 
 
-            <Text
-                style={
-                    styles.label
-                }
-            >
-                Detalle
-            </Text>
+            <Tarjeta>
 
-
-            <TextInput
-
-                style={[
-                    styles.input,
-
-                    styles.textArea
-
-                ]}
-
-                multiline
-
-                value={
-                    detalle
-                }
-
-                onChangeText={
-                    setDetalle
-                }
-
-                placeholder="Información adicional..."
-
-            />
-
-
-
-
-
-
-            <TouchableOpacity
-
-                style={
-                    styles.button
-                }
-
-                onPress={
-                    guardar
-                }
-
-                disabled={
-                    guardando
-                }
-
-            >
-
-                <Text
+                <CampoTexto
+                    etiqueta="Detalle"
+                    icono="create-outline"
+                    multiline
+                    value={
+                        detalle
+                    }
+                    onChangeText={
+                        setDetalle
+                    }
+                    placeholder="Información adicional..."
                     style={
-                        styles.buttonText
+                        styles.campo
                     }
-                >
-                    {
-                        guardando
-                        ?
-                        'Guardando...'
-                        :
-                        '💾 Confirmar baja'
-                    }
-                </Text>
+                />
 
-
-            </TouchableOpacity>
-
+            </Tarjeta>
 
 
         </ScrollView>
+
+
+
+        <BarraAccion>
+
+            <Boton
+                titulo={
+                    guardando
+                    ?
+                    'Guardando...'
+                    :
+                    'Confirmar baja'
+                }
+                icono={
+                    guardando
+                        ? undefined
+                        : 'baja'
+                }
+                variante="peligro"
+                onPress={
+                    guardar
+                }
+                atenuado={
+                    guardando
+                    ||
+                    saliendo
+                }
+                testID="confirmar-baja"
+            />
+
+        </BarraAccion>
+
+        </KeyboardAvoidingView>
+
+
+        {aviso ? (
+            <Aviso
+                flotante
+                tono="exito"
+                duracion={0}
+                titulo={aviso.titulo}
+                mensaje={aviso.mensaje}
+                onCerrar={cerrarAviso}
+            />
+        ) : null}
+
+        </FondoPantalla>
 
     );
 
@@ -816,101 +741,51 @@ const styles =
 StyleSheet.create({
 
     container:{
-        flex:1,
-        backgroundColor:
-            COLORS.background
+        flex:1
     },
 
 
     content:{
-        padding:20
+        padding:spacing.pantalla,
+        paddingBottom:spacing.xl
+    },
+
+
+    cabecera:{
+        flexDirection:'row',
+        alignItems:'center'
+    },
+
+
+    cabeceraTextos:{
+        flex:1,
+        marginLeft:spacing.md
     },
 
 
     title:{
-        fontSize:26,
-        fontWeight:'bold',
+        ...typography.titulo,
         color:
-            COLORS.primary
+            colors.primaryDark
     },
 
 
     subtitle:{
-        marginTop:8,
+        ...typography.secundario,
         color:
-            COLORS.textSecondary
+            colors.textSecondary
     },
 
 
     options:{
         flexDirection:'row',
-        marginTop:25
+        flexWrap:'wrap',
+        marginTop:spacing.lg
     },
 
 
-    option:{
-        backgroundColor:'#e8eeee',
-        padding:14,
-        borderRadius:20,
-        marginRight:10
-    },
-
-
-    selected:{
-        backgroundColor:
-            COLORS.primary
-    },
-
-
-    optionText:{
-        color:
-            COLORS.text
-    },
-
-
-    selectedText:{
-        color:'#fff',
-        fontWeight:'bold'
-    },
-
-
-    label:{
-        marginTop:20,
-        marginBottom:6,
-        fontWeight:'600'
-    },
-
-
-    input:{
-        backgroundColor:
-            COLORS.card,
-        borderWidth:1,
-        borderColor:
-            COLORS.border,
-        borderRadius:12,
-        padding:13
-    },
-
-
-    textArea:{
-        minHeight:100,
-        textAlignVertical:'top'
-    },
-
-
-    button:{
-        marginTop:30,
-        backgroundColor:
-            COLORS.primary,
-        padding:16,
-        borderRadius:14,
-        alignItems:'center'
-    },
-
-
-    buttonText:{
-        color:'#fff',
-        fontWeight:'bold'
+    campo:{
+        marginBottom:0
     }
 
 });

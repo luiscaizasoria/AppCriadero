@@ -9,7 +9,6 @@ import {
     Text,
     ScrollView,
     StyleSheet,
-    ActivityIndicator,
     Alert
 } from 'react-native';
 
@@ -35,16 +34,36 @@ import {
 
 
 
-import Header
-    from '../components/Header';
+import FondoPantalla
+    from '../components/FondoPantalla';
 
 
-import Card
-    from '../components/Card';
+import Tarjeta
+    from '../components/Tarjeta';
 
 
-import SectionTitle
-    from '../components/SectionTitle';
+import TituloSeccion
+    from '../components/TituloSeccion';
+
+
+import IconoCirculo
+    from '../components/IconoCirculo';
+
+
+import Icono
+    from '../components/Icono';
+
+
+import EstadoCarga
+    from '../components/EstadoCarga';
+
+
+import EstadoError
+    from '../components/EstadoError';
+
+
+import HuevoRanking
+    from '../components/HuevoRanking';
 
 
 import ProduccionBarChart
@@ -55,14 +74,12 @@ import ProduccionJaulaBarChart
     from '../components/charts/ProduccionJaulaBarChart';
 
 
-import RankingCard
-    from '../components/RankingCard';
-
-
 
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -113,6 +130,13 @@ export default function ProduccionHuevosScreen(){
 
 
 
+    const [
+        errorCarga,
+        setErrorCarga
+    ] = useState(false);
+
+
+
 
 
 
@@ -124,6 +148,8 @@ export default function ProduccionHuevosScreen(){
 
 
                 setLoading(true);
+
+                setErrorCarga(false);
 
 
 
@@ -199,6 +225,8 @@ export default function ProduccionHuevosScreen(){
                     error
                 );
 
+                setErrorCarga(true);
+
                 Alert.alert(
                     'Error',
                     'No fue posible cargar la producción de huevos.'
@@ -239,22 +267,46 @@ export default function ProduccionHuevosScreen(){
 
         return(
 
-            <View
-                style={styles.center}
-            >
+            <FondoPantalla>
 
-                <ActivityIndicator
+                <View
+                    style={styles.center}
+                >
 
-                    size="large"
+                    <EstadoCarga
+                        mensaje="Cargando producción..."
+                    />
 
-                    color={
-                        COLORS.primary
-                    }
+                </View>
 
-                />
+            </FondoPantalla>
+
+        );
+
+    }
 
 
-            </View>
+
+    if(errorCarga){
+
+        return(
+
+            <FondoPantalla>
+
+                <View
+                    style={styles.center}
+                >
+
+                    <EstadoError
+                        titulo="No fue posible cargar la producción de huevos."
+                        onReintentar={
+                            cargar
+                        }
+                    />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -268,6 +320,8 @@ export default function ProduccionHuevosScreen(){
 
     return(
 
+        <FondoPantalla>
+
         <ScrollView
 
             style={styles.container}
@@ -279,98 +333,59 @@ export default function ProduccionHuevosScreen(){
         >
 
 
-
-            <Header
-
-                title="Producción"
-
-                subtitle="Análisis avanzado de postura de huevos"
-
-            />
+            <TituloSeccion
+                icono="huevo"
+                indice={1}
+            >
+                Resumen
+            </TituloSeccion>
 
 
+            <Tarjeta>
 
-
-
-
-
-
-
-            <SectionTitle>
-                🥚 Resumen
-            </SectionTitle>
-
-
-
-
-            <Card>
-
-
-                <Text>
-                    🥚 Hoy
-                </Text>
-
-
-                <Text style={styles.big}>
-
-                    {
+                <Metrica
+                    icono="huevo"
+                    indice={3}
+                    etiqueta="Hoy"
+                    valor={
                         resumen?.hoy || 0
                     }
-
-                </Text>
-
+                />
 
 
-
-                <Text>
-                    📅 Semana
-                </Text>
-
-
-                <Text style={styles.big}>
-
-                    {
+                <Metrica
+                    icono="calendar-outline"
+                    indice={0}
+                    etiqueta="Semana"
+                    valor={
                         resumen?.semana || 0
                     }
-
-                </Text>
-
+                />
 
 
-
-                <Text>
-                    🥚 Mes
-                </Text>
-
-
-                <Text style={styles.big}>
-
-                    {
+                <Metrica
+                    icono="huevo"
+                    indice={2}
+                    etiqueta="Mes"
+                    valor={
                         resumen?.mes || 0
                     }
+                    ultima
+                />
 
-                </Text>
-
-
-            </Card>
-
+            </Tarjeta>
 
 
 
+            <TituloSeccion
+                icono="bar-chart-outline"
+                indice={0}
+            >
+                Producción últimos días
+            </TituloSeccion>
 
 
-
-
-
-            <SectionTitle>
-                📊 Producción últimos días
-            </SectionTitle>
-
-
-
-
-            <Card>
-
+            <Tarjeta>
 
                 <ProduccionBarChart
 
@@ -380,141 +395,152 @@ export default function ProduccionHuevosScreen(){
 
                 />
 
-
-            </Card>
-
+            </Tarjeta>
 
 
 
+            <TituloSeccion
+                icono="trophy-outline"
+                indice={3}
+            >
+                Mejores ponedoras
+            </TituloSeccion>
 
 
+            <Tarjeta>
 
-
-
-            <SectionTitle>
-                🏆 Mejores ponedoras
-            </SectionTitle>
-
-
-
-
-            <Card>
-
+                {
+                    ponedoras.length === 0
+                    &&
+                    (
+                        <Text
+                            style={styles.vacio}
+                        >
+                            Aún no hay huevos registrados.
+                        </Text>
+                    )
+                }
 
                 {
                     ponedoras.map(
 
                         (item,index)=>(
 
-
-                            <RankingCard
+                            <HuevoRanking
 
                                 key={
                                     item.id
                                 }
 
-
                                 posicion={
                                     index + 1
                                 }
-
 
                                 codigo={
                                     item.codigo
                                 }
 
-
                                 cantidad={
                                     item.cantidad
                                 }
 
-
                             />
-
 
                         )
 
                     )
                 }
 
-
-            </Card>
-
+            </Tarjeta>
 
 
 
+            <TituloSeccion
+                icono="time-outline"
+                indice={1}
+            >
+                Horario de postura
+            </TituloSeccion>
 
 
+            <Tarjeta>
 
-
-
-            <SectionTitle>
-                ⏰ Horario de postura
-            </SectionTitle>
-
-
-
-
-            <Card>
-
+                {
+                    horas.length === 0
+                    &&
+                    (
+                        <Text
+                            style={styles.vacio}
+                        >
+                            Aún no hay huevos registrados.
+                        </Text>
+                    )
+                }
 
                 {
                     horas.map(
 
                         item=>(
 
-                            <Text
-
+                            <View
                                 key={
                                     item.hora
                                 }
-
                                 style={
-                                    styles.item
+                                    styles.horaFila
                                 }
-
                             >
 
-                                {
-                                    item.hora
-                                }
-                                :00
+                                <Icono
+                                    nombre="time-outline"
+                                    tamano={20}
+                                    color={colors.textSecondary}
+                                    style={
+                                        styles.horaIcono
+                                    }
+                                />
 
-                                {' - '}
+                                <Text
+                                    style={
+                                        styles.item
+                                    }
+                                >
 
-                                {
-                                    item.cantidad
-                                }
+                                    {
+                                        item.hora
+                                    }
+                                    :00
 
-                                {' huevos'}
+                                    {' - '}
 
-                            </Text>
+                                    {
+                                        item.cantidad
+                                    }
+
+                                    {' huevos'}
+
+                                </Text>
+
+                            </View>
 
                         )
 
                     )
                 }
 
-
-            </Card>
-
+            </Tarjeta>
 
 
 
+            <TituloSeccion
+                icono="grid-outline"
+                indice={2}
+            >
+                Producción por jaula
+            </TituloSeccion>
 
 
-
-
-
-            <SectionTitle>
-                🏠 Producción por jaula
-            </SectionTitle>
-
-
-
-
-            <Card>
-
+            <Tarjeta>
 
                 <ProduccionJaulaBarChart
 
@@ -524,14 +550,66 @@ export default function ProduccionHuevosScreen(){
 
                 />
 
-
-            </Card>
-
-
-
+            </Tarjeta>
 
 
         </ScrollView>
+
+        </FondoPantalla>
+
+    );
+
+}
+
+
+
+// Cifra del resumen: etiqueta y número apilados (los flujos buscan el número debajo de la etiqueta)
+function Metrica({
+    icono,
+    indice,
+    etiqueta,
+    valor,
+    ultima = false
+}){
+
+    return(
+
+        <View
+            style={[
+                styles.metrica,
+                ultima
+                &&
+                styles.metricaUltima
+            ]}
+        >
+
+            <IconoCirculo
+                icono={icono}
+                indice={indice}
+                tamano={48}
+            />
+
+            <View
+                style={styles.metricaTextos}
+            >
+
+                <Text
+                    style={styles.metricaEtiqueta}
+                >
+                    {etiqueta}
+                </Text>
+
+
+                <Text
+                    style={styles.big}
+                    maxFontSizeMultiplier={1.3}
+                >
+                    {valor}
+                </Text>
+
+            </View>
+
+        </View>
 
     );
 
@@ -549,10 +627,7 @@ StyleSheet.create({
 
     container:{
 
-        flex:1,
-
-        backgroundColor:
-            COLORS.background
+        flex:1
 
     },
 
@@ -560,7 +635,7 @@ StyleSheet.create({
 
     content:{
 
-        padding:16,
+        padding:spacing.pantalla,
 
         paddingBottom:40
 
@@ -580,16 +655,84 @@ StyleSheet.create({
 
 
 
-    big:{
+    metrica:{
 
-        fontSize:35,
+        flexDirection:'row',
 
-        fontWeight:'bold',
+        alignItems:'center',
+
+        paddingBottom:spacing.md,
+
+        marginBottom:spacing.md,
+
+        borderBottomWidth:1,
+
+        borderBottomColor:
+            colors.borderSoft
+
+    },
+
+
+
+    metricaUltima:{
+
+        paddingBottom:0,
+
+        marginBottom:0,
+
+        borderBottomWidth:0
+
+    },
+
+
+
+    metricaTextos:{
+
+        flex:1,
+
+        marginLeft:spacing.md
+
+    },
+
+
+
+    metricaEtiqueta:{
+
+        ...typography.etiqueta,
 
         color:
-            COLORS.primary,
+            colors.textSecondary
 
-        marginBottom:15
+    },
+
+
+
+    big:{
+
+        ...typography.cifra,
+
+        color:
+            colors.primaryDark
+
+    },
+
+
+
+    horaFila:{
+
+        flexDirection:'row',
+
+        alignItems:'center',
+
+        marginBottom:spacing.sm
+
+    },
+
+
+
+    horaIcono:{
+
+        marginRight:spacing.sm
 
     },
 
@@ -597,9 +740,21 @@ StyleSheet.create({
 
     item:{
 
-        fontSize:16,
+        ...typography.cuerpo,
 
-        marginBottom:10
+        color:
+            colors.text
+
+    },
+
+
+
+    vacio:{
+
+        ...typography.cuerpo,
+
+        color:
+            colors.textSecondary
 
     }
 

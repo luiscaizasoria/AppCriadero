@@ -8,8 +8,6 @@ import {
     Text,
     Image,
     ScrollView,
-    TouchableOpacity,
-    ActivityIndicator,
     StyleSheet
 } from 'react-native';
 
@@ -21,9 +19,38 @@ import {
     obtenerGenealogiaAve
 } from '../repositories/GenealogiaRepository';
 
+import FondoPantalla
+    from '../components/FondoPantalla';
+
+import Chip
+    from '../components/Chip';
+
+import Icono
+    from '../components/Icono';
+
+import IconoCirculo
+    from '../components/IconoCirculo';
+
+import Pulsable
+    from '../components/Pulsable';
+
+import EstadoCarga
+    from '../components/EstadoCarga';
+
+import EstadoError
+    from '../components/EstadoError';
+
 import {
-    COLORS
-} from '../config/constants';
+    visualSexo,
+    propsAvatar
+} from '../components/aveVisual';
+
+import {
+    colors,
+    radii,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -119,28 +146,21 @@ export default function GenealogiaAveScreen({
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <ActivityIndicator
-                    size="large"
-                    color={
-                        COLORS.primary
-                    }
-                />
-
-                <Text
+                <View
                     style={
-                        styles.loadingText
+                        styles.center
                     }
                 >
-                    {'Construyendo \u00e1rbol geneal\u00f3gico...'}
-                </Text>
 
-            </View>
+                    <EstadoCarga
+                        mensaje={'Construyendo \u00e1rbol geneal\u00f3gico...'}
+                    />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -151,23 +171,27 @@ export default function GenealogiaAveScreen({
         !data
     ){
 
+        // Sin Alert (excepci\u00f3n aprobada): estado de error con \u00abReintentar\u00bb en lugar del texto suelto.
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <Text
+                <View
                     style={
-                        styles.emptyText
+                        styles.center
                     }
                 >
-                    No fue posible encontrar el ave.
-                </Text>
 
-            </View>
+                    <EstadoError
+                        titulo={'No fue posible cargar el \u00e1rbol geneal\u00f3gico.'}
+                        onReintentar={
+                            cargar
+                        }
+                    />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -194,6 +218,8 @@ export default function GenealogiaAveScreen({
 
     return (
 
+        <FondoPantalla>
+
         <ScrollView
             style={
                 styles.container
@@ -207,8 +233,9 @@ export default function GenealogiaAveScreen({
                 style={
                     styles.title
                 }
+                accessibilityRole="header"
             >
-                {'\uD83C\uDF33 \u00c1rbol geneal\u00f3gico'}
+                {'\u00c1rbol geneal\u00f3gico'}
             </Text>
 
 
@@ -229,15 +256,35 @@ export default function GenealogiaAveScreen({
                         style={
                             styles.warningCard
                         }
+                        accessibilityRole="alert"
                     >
+
+                        <View
+                            style={
+                                styles.cardTitleRow
+                            }
+                        >
+
+                            <Icono
+                                nombre="warning"
+                                tamano={22}
+                                color={
+                                    colors.warningText
+                                }
+                                style={
+                                    styles.cardTitleIcon
+                                }
+                            />
 
                         <Text
                             style={
                                 styles.warningTitle
                             }
                         >
-                            {'\u26A0\uFE0F Relaci\u00f3n geneal\u00f3gica inv\u00e1lida'}
+                            {'Relaci\u00f3n geneal\u00f3gica inv\u00e1lida'}
                         </Text>
+
+                        </View>
 
 
                         <Text
@@ -283,13 +330,32 @@ export default function GenealogiaAveScreen({
                         }
                     >
 
+                        <View
+                            style={
+                                styles.cardTitleRow
+                            }
+                        >
+
+                            <Icono
+                                nombre="link-outline"
+                                tamano={22}
+                                color={
+                                    colors.primaryDark
+                                }
+                                style={
+                                    styles.cardTitleIcon
+                                }
+                            />
+
                         <Text
                             style={
                                 styles.consanguinityTitle
                             }
                         >
-                            {'\uD83E\uDDEC Consanguinidad detectada'}
+                            {'Consanguinidad detectada'}
                         </Text>
+
+                        </View>
 
                         <Text
                             style={
@@ -368,10 +434,21 @@ export default function GenealogiaAveScreen({
                         ].map(
                             item => (
 
-                                <TouchableOpacity
+                                <Pulsable
                                     key={
                                         item
                                     }
+                                    testID={
+                                        `generaciones-${item}`
+                                    }
+                                    accessibilityRole="button"
+                                    accessibilityLabel={
+                                        `${item} generaciones`
+                                    }
+                                    accessibilityState={{
+                                        selected:
+                                            generaciones === item
+                                    }}
                                     style={[
                                         styles.generationButton,
 
@@ -398,7 +475,7 @@ export default function GenealogiaAveScreen({
                                         {item}
                                     </Text>
 
-                                </TouchableOpacity>
+                                </Pulsable>
 
                             )
                         )
@@ -423,13 +500,32 @@ export default function GenealogiaAveScreen({
                     }
                 >
 
-                    <Text
+                    <View
                         style={
-                            styles.directionTitle
+                            styles.directionRow
                         }
                     >
-                        {'\u2191 Ancestros'}
-                    </Text>
+
+                        <Icono
+                            nombre="arrow-up-circle-outline"
+                            tamano={22}
+                            color={
+                                colors.primaryDark
+                            }
+                            style={
+                                styles.cardTitleIcon
+                            }
+                        />
+
+                        <Text
+                            style={
+                                styles.directionTitle
+                            }
+                        >
+                            Ancestros
+                        </Text>
+
+                    </View>
 
 
                     {
@@ -529,13 +625,32 @@ export default function GenealogiaAveScreen({
                     />
 
 
-                    <Text
+                    <View
                         style={
-                            styles.directionTitle
+                            styles.directionRow
                         }
                     >
-                        {'\u2193 Descendientes'}
-                    </Text>
+
+                        <Icono
+                            nombre="arrow-down-circle-outline"
+                            tamano={22}
+                            color={
+                                colors.primaryDark
+                            }
+                            style={
+                                styles.cardTitleIcon
+                            }
+                        />
+
+                        <Text
+                            style={
+                                styles.directionTitle
+                            }
+                        >
+                            Descendientes
+                        </Text>
+
+                    </View>
 
 
                     {
@@ -598,6 +713,8 @@ export default function GenealogiaAveScreen({
             </ScrollView>
 
         </ScrollView>
+
+        </FondoPantalla>
 
     );
 
@@ -830,13 +947,38 @@ function NodeCard({
             ]}
         >
 
-            <Text
+            <View
                 style={
-                    styles.relation
+                    styles.relationRow
                 }
             >
-                {relation}
-            </Text>
+
+                {
+                    highlight
+                    &&
+                    (
+                        <Icono
+                            nombre="link-outline"
+                            tamano={14}
+                            color={
+                                colors.primaryDark
+                            }
+                            style={
+                                styles.relationIcon
+                            }
+                        />
+                    )
+                }
+
+                <Text
+                    style={
+                        styles.relation
+                    }
+                >
+                    {relation}
+                </Text>
+
+            </View>
 
 
             {
@@ -855,25 +997,12 @@ function NodeCard({
                 )
                 :
                 (
-                    <View
-                        style={
-                            styles.nodePhotoEmpty
-                        }
-                    >
-
-                        <Text
-                            style={
-                                styles.nodePhotoIcon
-                            }
-                        >
-                            {
-                                node.sexo === 'MACHO'
-                                    ? '\uD83D\uDC13'
-                                    : '\uD83D\uDC14'
-                            }
-                        </Text>
-
-                    </View>
+                    <IconoCirculo
+                        icono="paw-outline"
+                        tamano={58}
+                        borde
+                        {...propsAvatar(node)}
+                    />
                 )
             }
 
@@ -900,34 +1029,66 @@ function NodeCard({
             </Text>
 
 
-            <Text
+            <View
                 style={
-                    styles.nodeSex
+                    styles.nodeSexRow
                 }
             >
-                {
-                    textoSexo(
-                        node.sexo
-                    )
-                }
-            </Text>
+
+                <Icono
+                    nombre={
+                        visualSexo(
+                            node.sexo
+                        ).icono
+                    }
+                    tamano={14}
+                    color={
+                        colors.textSecondary
+                    }
+                    style={
+                        styles.relationIcon
+                    }
+                />
+
+                <Text
+                    style={
+                        styles.nodeSex
+                    }
+                >
+                    {
+                        textoSexo(
+                            node.sexo
+                        )
+                    }
+                </Text>
+
+            </View>
 
 
             {
                 node.estado !== 'ACTIVA'
                 &&
                 (
-                    <Text
+                    <Chip
+                        texto={
+                            node.estado === 'VENDIDA'
+                                ? 'Vendida'
+                                : 'Fallecida'
+                        }
+                        tono={
+                            node.estado === 'VENDIDA'
+                                ? 'info'
+                                : 'neutro'
+                        }
+                        icono={
+                            node.estado === 'VENDIDA'
+                                ? 'cart-outline'
+                                : 'skull-outline'
+                        }
                         style={
                             styles.nodeStatus
                         }
-                    >
-                        {
-                            node.estado === 'VENDIDA'
-                                ? '\uD83D\uDCB0 Vendida'
-                                : '\u26B0\uFE0F Fallecida'
-                        }
-                    </Text>
+                    />
                 )
             }
 
@@ -947,14 +1108,19 @@ function NodeCard({
 
     return (
 
-        <TouchableOpacity
-            activeOpacity={0.8}
+        <Pulsable
+            sinMinimo
+            escala={0.98}
+            accessibilityRole="button"
+            accessibilityLabel={
+                `${node.codigo}, ${relation}`
+            }
             onPress={
                 onPress
             }
         >
             {contenido}
-        </TouchableOpacity>
+        </Pulsable>
 
     );
 
@@ -1374,7 +1540,7 @@ function textoSexo(
         sexo === 'MACHO'
     ){
 
-        return '\uD83D\uDC13 Macho';
+        return 'Macho';
 
     }
 
@@ -1383,7 +1549,7 @@ function textoSexo(
         sexo === 'HEMBRA'
     ){
 
-        return '\uD83D\uDC14 Hembra';
+        return 'Hembra';
 
     }
 
@@ -1399,17 +1565,14 @@ StyleSheet.create({
 
     container:{
 
-        flex:1,
-
-        backgroundColor:
-            COLORS.background
+        flex:1
 
     },
 
 
     content:{
 
-        padding:16,
+        padding:spacing.pantalla,
 
         paddingBottom:40
 
@@ -1424,192 +1587,203 @@ StyleSheet.create({
 
         alignItems:'center',
 
-        backgroundColor:
-            COLORS.background,
-
-        padding:20
-
-    },
-
-
-    loadingText:{
-
-        marginTop:10,
-
-        color:
-            COLORS.textSecondary
-
-    },
-
-
-    emptyText:{
-
-        color:
-            COLORS.textSecondary
+        padding:spacing.xl
 
     },
 
 
     title:{
 
-        fontSize:27,
-
-        fontWeight:'bold',
+        ...typography.titulo,
 
         color:
-            COLORS.primary
+            colors.primaryDark
 
     },
 
 
     subtitle:{
 
-        marginTop:6,
+        ...typography.cuerpo,
+
+        marginTop:spacing.xs,
 
         color:
-            COLORS.textSecondary,
-
-        lineHeight:20
+            colors.textSecondary
 
     },
 
 
+    cardTitleRow:{
+
+        flexDirection:'row',
+
+        alignItems:'center'
+
+    },
+
+
+    cardTitleIcon:{
+
+        marginRight:spacing.sm
+
+    },
+
+
+    // Aviso de consanguinidad: mismo contenido y lógica; colores del tema (morado de parentesco).
+    // primaryDark sobre primarySoft >= 9,8:1; texto principal sobre primarySoft >= 14:1.
     consanguinityCard:{
 
-        backgroundColor:'#f4edff',
+        backgroundColor:
+            colors.primarySoft,
 
-        borderWidth:1,
+        borderWidth:2,
 
-        borderColor:'#9b72cf',
+        borderColor:
+            colors.kinship,
 
-        borderRadius:14,
+        borderRadius:radii.md,
 
-        padding:14,
+        padding:spacing.md,
 
-        marginTop:16
+        marginTop:spacing.lg
 
     },
 
 
     consanguinityTitle:{
 
-        fontSize:16,
+        ...typography.subtitulo,
 
-        fontWeight:'bold',
+        flex:1,
 
-        color:'#6d45a2'
+        color:
+            colors.primaryDark
 
     },
 
 
     consanguinityType:{
 
+        ...typography.cuerpoFuerte,
+
         marginTop:6,
 
-        fontWeight:'bold',
-
-        color:'#4d2d73'
+        color:
+            colors.primaryDark
 
     },
 
 
     consanguinityText:{
 
+        ...typography.cuerpo,
+
         marginTop:5,
 
-        color:COLORS.text,
-
-        lineHeight:19
+        color:
+            colors.text
 
     },
 
 
     consanguinityCommon:{
 
+        ...typography.etiqueta,
+
         marginTop:7,
 
-        color:'#6d45a2',
-
-        fontWeight:'600'
+        color:
+            colors.primaryDark
 
     },
 
 
     consanguinityNote:{
 
+        ...typography.secundario,
+
         marginTop:8,
 
-        color:COLORS.textSecondary,
-
-        fontSize:12,
-
-        lineHeight:17
+        color:
+            colors.textSecondary
 
     },
 
 
+    // Aviso de relación inválida: warningText sobre warningSoft 6,7:1
     warningCard:{
 
-        backgroundColor:'#fff4d6',
+        backgroundColor:
+            colors.warningSoft,
 
-        borderWidth:1,
+        borderWidth:2,
 
-        borderColor:'#e4b84c',
+        borderColor:
+            colors.warning,
 
-        borderRadius:14,
+        borderRadius:radii.md,
 
-        padding:14,
+        padding:spacing.md,
 
-        marginTop:16
+        marginTop:spacing.lg
 
     },
 
 
     warningTitle:{
 
-        fontSize:16,
+        ...typography.subtitulo,
 
-        fontWeight:'bold',
+        flex:1,
 
-        color:'#6d5200'
+        color:
+            colors.warningText
 
     },
 
 
     warningText:{
 
+        ...typography.cuerpo,
+
         marginTop:6,
 
-        color:'#6d5200',
-
-        lineHeight:19
+        color:
+            colors.warningText
 
     },
 
 
     warningDetail:{
 
+        ...typography.cuerpo,
+
         marginTop:7,
 
-        color:'#6d5200',
-
-        lineHeight:18
+        color:
+            colors.warningText
 
     },
 
 
     generationSelector:{
 
-        marginTop:18,
+        marginTop:spacing.lg,
 
-        marginBottom:14,
+        marginBottom:spacing.md,
 
         backgroundColor:
-            COLORS.card,
+            colors.surface,
 
-        borderRadius:14,
+        borderWidth:1,
 
-        padding:12,
+        borderColor:
+            colors.borderSoft,
+
+        borderRadius:radii.lg,
+
+        padding:spacing.md,
 
         flexDirection:'row',
 
@@ -1622,10 +1796,10 @@ StyleSheet.create({
 
     selectorLabel:{
 
-        fontWeight:'600',
+        ...typography.etiqueta,
 
         color:
-            COLORS.text
+            colors.text
 
     },
 
@@ -1639,19 +1813,25 @@ StyleSheet.create({
 
     generationButton:{
 
-        width:38,
+        width:48,
 
-        height:34,
+        height:44,
 
-        borderRadius:10,
+        borderRadius:radii.sm,
+
+        borderWidth:2,
+
+        borderColor:
+            colors.border,
 
         alignItems:'center',
 
         justifyContent:'center',
 
-        marginLeft:7,
+        marginLeft:spacing.sm,
 
-        backgroundColor:'#edf1f1'
+        backgroundColor:
+            colors.surfaceAlt
 
     },
 
@@ -1659,17 +1839,20 @@ StyleSheet.create({
     generationButtonActive:{
 
         backgroundColor:
-            COLORS.primary
+            colors.primary,
+
+        borderColor:
+            colors.primary
 
     },
 
 
     generationText:{
 
-        color:
-            COLORS.text,
+        ...typography.cuerpoFuerte,
 
-        fontWeight:'bold'
+        color:
+            colors.text
 
     },
 
@@ -1677,7 +1860,7 @@ StyleSheet.create({
     generationTextActive:{
 
         color:
-            COLORS.white
+            colors.white
 
     },
 
@@ -1704,15 +1887,23 @@ StyleSheet.create({
     },
 
 
+    directionRow:{
+
+        flexDirection:'row',
+
+        alignItems:'center',
+
+        marginVertical:spacing.sm
+
+    },
+
+
     directionTitle:{
 
-        fontSize:16,
+        ...typography.subtitulo,
 
-        fontWeight:'bold',
-
-        color:'#4f7f69',
-
-        marginVertical:8
+        color:
+            colors.primaryDark
 
     },
 
@@ -1757,7 +1948,8 @@ StyleSheet.create({
 
         height:28,
 
-        backgroundColor:'#8ec9b8',
+        backgroundColor:
+            colors.border,
 
         borderRadius:2
 
@@ -1766,8 +1958,10 @@ StyleSheet.create({
 
     noRelations:{
 
+        ...typography.secundario,
+
         color:
-            COLORS.textSecondary,
+            colors.textSecondary,
 
         fontStyle:'italic',
 
@@ -1776,85 +1970,109 @@ StyleSheet.create({
     },
 
 
+    // Nodo: sin sombra (borde de 1 px); tintes suaves por sexo. Texto principal y
+    // textSecondary sobre infoSoft/#FFE3EC/primarySoft >= 6,0:1.
     nodeCard:{
 
-        width:142,
+        width:148,
 
-        minHeight:178,
+        minHeight:184,
 
         backgroundColor:
-            COLORS.card,
+            colors.surface,
 
         borderWidth:1,
 
-        borderColor:'#b8d8ce',
+        borderColor:
+            colors.borderSoft,
 
-        borderRadius:16,
+        borderRadius:radii.lg,
 
         padding:10,
 
         alignItems:'center',
 
-        marginVertical:4,
-
-        elevation:2
+        marginVertical:4
 
     },
 
 
     nodeMale:{
 
-        backgroundColor:'#eef6ff'
+        backgroundColor:
+            colors.infoSoft
 
     },
 
 
     nodeFemale:{
 
-        backgroundColor:'#fff1f6'
+        backgroundColor:
+            colors.fondoA
 
     },
 
 
     nodeCardCentral:{
 
-        width:158,
+        width:164,
 
-        borderWidth:2,
+        borderWidth:3,
 
         borderColor:
-            COLORS.primary
+            colors.primary
 
     },
 
 
+    // Ancestro común (consanguinidad): se conserva el resaltado en morado, con borde grueso,
+    // fondo suave e icono de enlace en la etiqueta.
     nodeCardConsanguineous:{
 
-        borderWidth:3,
+        borderWidth:4,
 
-        borderColor:'#8b5fc0',
+        borderColor:
+            colors.kinship,
 
-        backgroundColor:'#f3ebff'
+        backgroundColor:
+            colors.primarySoft
 
     },
 
 
     nodeCardInactive:{
 
-        opacity:0.72
+        opacity:0.8
+
+    },
+
+
+    relationRow:{
+
+        flexDirection:'row',
+
+        alignItems:'center',
+
+        justifyContent:'center',
+
+        marginBottom:6
+
+    },
+
+
+    relationIcon:{
+
+        marginRight:4
 
     },
 
 
     relation:{
 
-        fontSize:11,
+        ...typography.chip,
 
-        fontWeight:'bold',
-
-        color:'#4f7f69',
-
-        marginBottom:6,
+        color:
+            colors.primaryDark,
 
         textAlign:'center'
 
@@ -1867,83 +2085,68 @@ StyleSheet.create({
 
         height:58,
 
-        borderRadius:29
-
-    },
-
-
-    nodePhotoEmpty:{
-
-        width:58,
-
-        height:58,
-
         borderRadius:29,
 
-        backgroundColor:'#e7f5f5',
+        borderWidth:3,
 
-        alignItems:'center',
-
-        justifyContent:'center'
-
-    },
-
-
-    nodePhotoIcon:{
-
-        fontSize:27
+        borderColor:
+            colors.white
 
     },
 
 
     nodeCode:{
 
+        ...typography.subtitulo,
+
         marginTop:7,
 
-        fontSize:16,
-
-        fontWeight:'bold',
-
         color:
-            COLORS.text
+            colors.text
 
     },
 
 
     nodeRaza:{
 
+        ...typography.secundario,
+
         marginTop:2,
 
-        maxWidth:120,
+        maxWidth:124,
 
         color:
-            COLORS.textSecondary,
+            colors.textSecondary
 
-        fontSize:12
+    },
+
+
+    nodeSexRow:{
+
+        flexDirection:'row',
+
+        alignItems:'center',
+
+        marginTop:4
 
     },
 
 
     nodeSex:{
 
-        marginTop:4,
+        ...typography.secundario,
 
         color:
-            COLORS.text,
-
-        fontSize:12
+            colors.text
 
     },
 
 
     nodeStatus:{
 
-        marginTop:4,
+        alignSelf:'center',
 
-        fontSize:11,
-
-        color:
-            COLORS.textSecondary
+        marginTop:6
 
     }
 

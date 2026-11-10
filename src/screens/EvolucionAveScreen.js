@@ -8,11 +8,10 @@ import {
     Text,
     Image,
     ScrollView,
-    TextInput,
-    TouchableOpacity,
     StyleSheet,
-    ActivityIndicator,
-    Alert
+    Alert,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 
 import {
@@ -33,9 +32,48 @@ import {
     guardarFotoAve
 } from '../services/ImageService';
 
+import FondoPantalla
+    from '../components/FondoPantalla';
+
+import Tarjeta
+    from '../components/Tarjeta';
+
+import TituloSeccion
+    from '../components/TituloSeccion';
+
+import IconoCirculo
+    from '../components/IconoCirculo';
+
+import CampoTexto
+    from '../components/CampoTexto';
+
+import Boton
+    from '../components/Boton';
+
+import BarraAccion
+    from '../components/BarraAccion';
+
+import Aviso
+    from '../components/Aviso';
+
+import useAvisoExito
+    from '../components/useAvisoExito';
+
+import EstadoCarga
+    from '../components/EstadoCarga';
+
+import EstadoError
+    from '../components/EstadoError';
+
+import EstadoVacio
+    from '../components/EstadoVacio';
+
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    radii,
+    spacing,
+    typography
+} from '../theme';
 
 
 export default function EvolucionAveScreen({
@@ -97,9 +135,23 @@ export default function EvolucionAveScreen({
 
 
     const [
+        errorCarga,
+        setErrorCarga
+    ] = useState(false);
+
+
+    const [
         guardando,
         setGuardando
     ] = useState(false);
+
+
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso,
+        saliendo
+    } = useAvisoExito();
 
 
     const cargar =
@@ -109,6 +161,10 @@ export default function EvolucionAveScreen({
 
                 setLoading(
                     true
+                );
+
+                setErrorCarga(
+                    false
                 );
 
 
@@ -147,6 +203,11 @@ export default function EvolucionAveScreen({
                 console.error(
                     'Error cargando ave para evolución:',
                     error
+                );
+
+
+                setErrorCarga(
+                    true
                 );
 
 
@@ -425,21 +486,15 @@ export default function EvolucionAveScreen({
                 });
 
 
-                Alert.alert(
+                // Antes: Alert con «Aceptar» que hacía goBack. Ahora: aviso y vuelve solo.
+                mostrarAviso(
 
                     'Evolución registrada',
 
                     'La nueva información fue guardada y el estado anterior permanecerá en el historial.',
 
-                    [
-                        {
-                            text:
-                                'Aceptar',
-
-                            onPress: () =>
-                                navigation.goBack()
-                        }
-                    ]
+                    () =>
+                        navigation.goBack()
 
                 );
 
@@ -473,29 +528,21 @@ export default function EvolucionAveScreen({
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <ActivityIndicator
-                    size="large"
-                    color={
-                        COLORS.primary
-                    }
-                />
-
-
-                <Text
+                <View
                     style={
-                        styles.loadingText
+                        styles.center
                     }
                 >
-                    Cargando ave...
-                </Text>
 
-            </View>
+                    <EstadoCarga
+                        mensaje="Cargando ave..."
+                    />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -506,17 +553,38 @@ export default function EvolucionAveScreen({
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <Text>
-                    Ave no encontrada.
-                </Text>
+                <View
+                    style={
+                        styles.center
+                    }
+                >
 
-            </View>
+                    {
+                        errorCarga
+                            ? (
+
+                                <EstadoError
+                                    titulo="No fue posible cargar el ave."
+                                    onReintentar={
+                                        cargar
+                                    }
+                                />
+
+                            )
+                            : (
+
+                                <EstadoVacio
+                                    titulo="Ave no encontrada."
+                                />
+
+                            )
+                    }
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -524,6 +592,19 @@ export default function EvolucionAveScreen({
 
 
     return (
+
+        <FondoPantalla>
+
+        <KeyboardAvoidingView
+            style={
+                styles.container
+            }
+            behavior={
+                Platform.OS === 'ios'
+                    ? 'padding'
+                    : undefined
+            }
+        >
 
         <ScrollView
             style={
@@ -539,8 +620,9 @@ export default function EvolucionAveScreen({
                 style={
                     styles.title
                 }
+                accessibilityRole="header"
             >
-                📸 Evolución de {ave.codigo}
+                Evolución de {ave.codigo}
             </Text>
 
 
@@ -553,122 +635,107 @@ export default function EvolucionAveScreen({
             </Text>
 
 
-            <View
-                style={
-                    styles.photoContainer
-                }
-            >
+            <Tarjeta>
 
-                {
-                    fotoTemporal
-                        ? (
+                <View
+                    style={
+                        styles.photoContainer
+                    }
+                >
 
-                            <Image
-                                source={{
-                                    uri:
-                                        fotoTemporal
-                                }}
-                                style={
-                                    styles.photo
-                                }
-                                resizeMode="cover"
-                            />
+                    {
+                        fotoTemporal
+                            ? (
 
-                        )
-                        : (
-
-                            <View
-                                style={
-                                    styles.photoPlaceholder
-                                }
-                            >
-
-                                <Text
+                                <Image
+                                    source={{
+                                        uri:
+                                            fotoTemporal
+                                    }}
                                     style={
-                                        styles.photoPlaceholderIcon
+                                        styles.photo
+                                    }
+                                    resizeMode="cover"
+                                />
+
+                            )
+                            : (
+
+                                <View
+                                    style={
+                                        styles.photoPlaceholder
                                     }
                                 >
-                                    🐔
-                                </Text>
+
+                                    <IconoCirculo
+                                        icono="paw-outline"
+                                        indice={1}
+                                        tamano={72}
+                                    />
 
 
-                                <Text
-                                    style={
-                                        styles.photoPlaceholderText
-                                    }
-                                >
-                                    Sin fotografía
-                                </Text>
+                                    <Text
+                                        style={
+                                            styles.photoPlaceholderText
+                                        }
+                                    >
+                                        Sin fotografía
+                                    </Text>
 
-                            </View>
+                                </View>
 
-                        )
-                }
-
-            </View>
-
-
-            <View
-                style={
-                    styles.photoActions
-                }
-            >
-
-                <TouchableOpacity
-                    style={
-                        styles.photoButton
+                            )
                     }
-                    onPress={
-                        tomarFoto
+
+                </View>
+
+
+                <View
+                    style={
+                        styles.photoActions
                     }
                 >
 
-                    <Text
-                        style={
-                            styles.photoButtonText
+                    <Boton
+                        titulo="Cámara"
+                        icono="camera-outline"
+                        variante="secundario"
+                        onPress={
+                            tomarFoto
                         }
-                    >
-                        📷 Cámara
-                    </Text>
-
-                </TouchableOpacity>
-
-
-                <TouchableOpacity
-                    style={
-                        styles.photoButton
-                    }
-                    onPress={
-                        seleccionarGaleria
-                    }
-                >
-
-                    <Text
+                        testID="evolucion-camara"
                         style={
-                            styles.photoButtonText
+                            styles.photoButton
                         }
-                    >
-                        🖼️ Galería
-                    </Text>
-
-                </TouchableOpacity>
-
-            </View>
+                    />
 
 
-            <View
-                style={
-                    styles.measurementsCard
-                }
-            >
+                    <Boton
+                        titulo="Galería"
+                        icono="galeria"
+                        variante="secundario"
+                        onPress={
+                            seleccionarGaleria
+                        }
+                        testID="evolucion-galeria"
+                        style={
+                            styles.photoButton
+                        }
+                    />
 
-                <Text
-                    style={
-                        styles.measurementsTitle
-                    }
+                </View>
+
+            </Tarjeta>
+
+
+            <Tarjeta>
+
+                <TituloSeccion
+                    icono="resize-outline"
+                    indice={2}
                 >
-                    📏 Medidas actuales
-                </Text>
+                    Medidas actuales
+                </TituloSeccion>
 
 
                 <View
@@ -709,162 +776,136 @@ export default function EvolucionAveScreen({
 
                 </View>
 
-            </View>
+            </Tarjeta>
 
 
-            <Text
-                style={
-                    styles.label
-                }
-            >
-                Nuevo peso en gramos (opcional)
-            </Text>
+            <Tarjeta>
+
+                <CampoTexto
+                    etiqueta="Nuevo peso en gramos (opcional)"
+                    value={
+                        pesoGramos
+                    }
+                    onChangeText={
+                        setPesoGramos
+                    }
+                    keyboardType="decimal-pad"
+                    placeholder="Ej. 850"
+                    testID="evolucion-peso"
+                />
 
 
-            <TextInput
-                style={
-                    styles.input
-                }
-                value={
-                    pesoGramos
-                }
-                onChangeText={
-                    setPesoGramos
-                }
-                keyboardType="decimal-pad"
-                placeholder="Ej. 850"
-            />
+                <CampoTexto
+                    etiqueta="Nueva altura en cm (opcional)"
+                    value={
+                        alturaCm
+                    }
+                    onChangeText={
+                        setAlturaCm
+                    }
+                    keyboardType="decimal-pad"
+                    placeholder="Ej. 24.5"
+                    testID="evolucion-altura"
+                />
 
 
-            <Text
-                style={
-                    styles.label
-                }
-            >
-                Nueva altura en cm (opcional)
-            </Text>
+                <CampoTexto
+                    etiqueta="Nuevo largo en cm (opcional)"
+                    value={
+                        largoCm
+                    }
+                    onChangeText={
+                        setLargoCm
+                    }
+                    keyboardType="decimal-pad"
+                    placeholder="Ej. 31"
+                    testID="evolucion-largo"
+                    style={
+                        styles.ultimoCampo
+                    }
+                />
+
+            </Tarjeta>
 
 
-            <TextInput
-                style={
-                    styles.input
-                }
-                value={
-                    alturaCm
-                }
-                onChangeText={
-                    setAlturaCm
-                }
-                keyboardType="decimal-pad"
-                placeholder="Ej. 24.5"
-            />
+            <Tarjeta>
+
+                <CampoTexto
+                    etiqueta="Características actuales"
+                    value={
+                        caracteristicas
+                    }
+                    onChangeText={
+                        setCaracteristicas
+                    }
+                    multiline
+                    placeholder="Plumaje, tamaño, color, comportamiento, condición física..."
+                    testID="evolucion-caracteristicas"
+                />
 
 
-            <Text
-                style={
-                    styles.label
-                }
-            >
-                Nuevo largo en cm (opcional)
-            </Text>
+                <CampoTexto
+                    etiqueta="Observación de esta actualización"
+                    value={
+                        observacion
+                    }
+                    onChangeText={
+                        setObservacion
+                    }
+                    multiline
+                    placeholder="Ej. Cambio notable de plumaje y desarrollo..."
+                    testID="evolucion-observacion"
+                    style={
+                        styles.ultimoCampo
+                    }
+                />
+
+            </Tarjeta>
+
+        </ScrollView>
 
 
-            <TextInput
-                style={
-                    styles.input
-                }
-                value={
-                    largoCm
-                }
-                onChangeText={
-                    setLargoCm
-                }
-                keyboardType="decimal-pad"
-                placeholder="Ej. 31"
-            />
+        <BarraAccion>
 
-
-            <Text
-                style={
-                    styles.label
-                }
-            >
-                Características actuales
-            </Text>
-
-
-            <TextInput
-                style={[
-                    styles.input,
-                    styles.textArea
-                ]}
-                value={
-                    caracteristicas
-                }
-                onChangeText={
-                    setCaracteristicas
-                }
-                multiline
-                placeholder="Plumaje, tamaño, color, comportamiento, condición física..."
-            />
-
-
-            <Text
-                style={
-                    styles.label
-                }
-            >
-                Observación de esta actualización
-            </Text>
-
-
-            <TextInput
-                style={[
-                    styles.input,
-                    styles.textArea
-                ]}
-                value={
-                    observacion
-                }
-                onChangeText={
-                    setObservacion
-                }
-                multiline
-                placeholder="Ej. Cambio notable de plumaje y desarrollo..."
-            />
-
-
-            <TouchableOpacity
-                style={[
-                    styles.saveButton,
-
+            <Boton
+                titulo={
                     guardando
-                    &&
-                    styles.disabledButton
-                ]}
+                        ? 'Guardando...'
+                        : 'Guardar evolución'
+                }
+                icono={
+                    guardando
+                        ? undefined
+                        : 'guardar'
+                }
                 onPress={
                     guardar
                 }
-                disabled={
+                atenuado={
                     guardando
+                    ||
+                    saliendo
                 }
-            >
+                testID="guardar-evolucion"
+            />
 
-                <Text
-                    style={
-                        styles.saveButtonText
-                    }
-                >
-                    {
-                        guardando
-                            ? 'Guardando...'
-                            : '💾 Guardar evolución'
-                    }
-                </Text>
+        </BarraAccion>
 
-            </TouchableOpacity>
+        </KeyboardAvoidingView>
 
-        </ScrollView>
+
+        {aviso ? (
+            <Aviso
+                flotante
+                tono="exito"
+                duracion={0}
+                titulo={aviso.titulo}
+                mensaje={aviso.mensaje}
+                onCerrar={cerrarAviso}
+            />
+        ) : null}
+
+        </FondoPantalla>
 
     );
 
@@ -1077,19 +1118,16 @@ const styles =
 
         container: {
 
-            flex: 1,
-
-            backgroundColor:
-                COLORS.background
+            flex: 1
 
         },
 
 
         content: {
 
-            padding: 20,
+            padding: spacing.pantalla,
 
-            paddingBottom: 50
+            paddingBottom: spacing.xl
 
         },
 
@@ -1102,47 +1140,31 @@ const styles =
                 'center',
 
             justifyContent:
-                'center',
-
-            backgroundColor:
-                COLORS.background
-
-        },
-
-
-        loadingText: {
-
-            marginTop: 10,
-
-            color:
-                COLORS.textSecondary
+                'center'
 
         },
 
 
         title: {
 
-            fontSize: 26,
-
-            fontWeight:
-                'bold',
+            ...typography.titulo,
 
             color:
-                COLORS.primary
+                colors.primaryDark
 
         },
 
 
         subtitle: {
 
-            marginTop: 6,
+            ...typography.cuerpo,
 
-            marginBottom: 22,
+            marginTop: spacing.xs,
+
+            marginBottom: spacing.lg,
 
             color:
-                COLORS.textSecondary,
-
-            lineHeight: 20
+                colors.textSecondary
 
         },
 
@@ -1152,7 +1174,7 @@ const styles =
             alignItems:
                 'center',
 
-            marginBottom: 15
+            marginBottom: spacing.md
 
         },
 
@@ -1163,10 +1185,10 @@ const styles =
 
             height: 220,
 
-            borderRadius: 22,
+            borderRadius: radii.lg,
 
             backgroundColor:
-                COLORS.card
+                colors.surfaceAlt
 
         },
 
@@ -1177,10 +1199,10 @@ const styles =
 
             height: 220,
 
-            borderRadius: 22,
+            borderRadius: radii.lg,
 
             backgroundColor:
-                '#e7f5f5',
+                colors.surfaceAlt,
 
             alignItems:
                 'center',
@@ -1191,19 +1213,14 @@ const styles =
         },
 
 
-        photoPlaceholderIcon: {
-
-            fontSize: 65
-
-        },
-
-
         photoPlaceholderText: {
 
-            color:
-                COLORS.textSecondary,
+            ...typography.secundario,
 
-            marginTop: 8
+            marginTop: spacing.sm,
+
+            color:
+                colors.textSecondary
 
         },
 
@@ -1211,209 +1228,72 @@ const styles =
         photoActions: {
 
             flexDirection:
-                'row',
-
-            justifyContent:
-                'space-between',
-
-            marginBottom: 15
+                'row'
 
         },
 
 
         photoButton: {
 
-            width:
-                '48%',
+            flex: 1,
 
-            backgroundColor:
-                COLORS.primary,
-
-            paddingVertical: 13,
-
-            borderRadius: 12,
-
-            alignItems:
-                'center'
-
-        },
-
-
-        photoButtonText: {
-
-            color:
-                COLORS.white,
-
-            fontWeight:
-                'bold'
-
-        },
-
-
-        measurementsCard: {
-
-            backgroundColor:
-                COLORS.card,
-
-            borderWidth:1,
-
-            borderColor:
-                COLORS.border,
-
-            borderRadius:14,
-
-            padding:14,
-
-            marginBottom:4
-
-        },
-
-
-        measurementsTitle: {
-
-            fontSize:16,
-
-            fontWeight:'bold',
-
-            color:
-                COLORS.text,
-
-            marginBottom:12
+            marginHorizontal: spacing.xs
 
         },
 
 
         measurementsRow: {
 
-            flexDirection:'row',
-
-            justifyContent:'space-between'
+            flexDirection:
+                'row'
 
         },
 
 
         measurementItem: {
 
-            width:'31%',
+            flex: 1,
 
-            alignItems:'center',
+            alignItems:
+                'center',
 
-            backgroundColor:'#f6f9f9',
+            backgroundColor:
+                colors.surfaceAlt,
 
-            borderRadius:10,
+            borderRadius: radii.md,
 
-            paddingVertical:10,
+            paddingVertical: spacing.md,
 
-            paddingHorizontal:5
+            marginHorizontal: spacing.xs
 
         },
 
 
         measurementLabel: {
 
-            fontSize:12,
+            ...typography.chip,
 
             color:
-                COLORS.textSecondary
+                colors.textSecondary
 
         },
 
 
         measurementValue: {
 
-            marginTop:4,
+            ...typography.cuerpoFuerte,
 
-            fontSize:14,
-
-            fontWeight:'bold',
+            marginTop: spacing.xs,
 
             color:
-                COLORS.text
+                colors.text
 
         },
 
 
-        label: {
+        ultimoCampo: {
 
-            fontSize: 15,
-
-            fontWeight:
-                '600',
-
-            color:
-                COLORS.text,
-
-            marginTop: 16,
-
-            marginBottom: 6
-
-        },
-
-
-        input: {
-
-            backgroundColor:
-                COLORS.card,
-
-            borderWidth: 1,
-
-            borderColor:
-                COLORS.border,
-
-            borderRadius: 12,
-
-            paddingHorizontal: 14,
-
-            paddingVertical: 13,
-
-            fontSize: 16
-
-        },
-
-
-        textArea: {
-
-            minHeight: 105,
-
-            textAlignVertical:
-                'top'
-
-        },
-
-
-        saveButton: {
-
-            backgroundColor:
-                COLORS.primary,
-
-            borderRadius: 14,
-
-            paddingVertical: 16,
-
-            alignItems:
-                'center',
-
-            marginTop: 30
-
-        },
-
-
-        disabledButton: {
-
-            opacity: 0.6
-
-        },
-
-
-        saveButtonText: {
-
-            color:
-                COLORS.white,
-
-            fontWeight:
-                'bold',
-
-            fontSize: 17
+            marginBottom: 0
 
         }
 

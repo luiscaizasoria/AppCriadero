@@ -277,9 +277,7 @@ export default function DetalleAveScreen({
                     >
 
                         <EstadoError
-                            mensaje={
-                                error?.message
-                            }
+                            titulo="No fue posible cargar el ave."
                             onReintentar={
                                 cargar
                             }

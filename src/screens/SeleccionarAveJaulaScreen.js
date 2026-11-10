@@ -8,7 +8,6 @@ import {
     Text,
     Image,
     ScrollView,
-    TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
     Alert
@@ -23,9 +22,45 @@ import {
     cambiarJaulaAve
 } from '../repositories/AveRepository';
 
+import FondoPantalla
+    from '../components/FondoPantalla';
+
+import Tarjeta
+    from '../components/Tarjeta';
+
+import Avatar
+    from '../components/Avatar';
+
+import Chip
+    from '../components/Chip';
+
+import Icono
+    from '../components/Icono';
+
+import Aviso
+    from '../components/Aviso';
+
+import useAvisoExito
+    from '../components/useAvisoExito';
+
+import EstadoCarga
+    from '../components/EstadoCarga';
+
+import EstadoError
+    from '../components/EstadoError';
+
+import EstadoVacio
+    from '../components/EstadoVacio';
+
 import {
-    COLORS
-} from '../config/constants';
+    propsAvatar
+} from '../components/aveVisual';
+
+import {
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 export default function SeleccionarAveJaulaScreen({
@@ -52,9 +87,23 @@ export default function SeleccionarAveJaulaScreen({
 
 
     const [
+        errorCarga,
+        setErrorCarga
+    ] = useState(false);
+
+
+    const [
         procesandoId,
         setProcesandoId
     ] = useState(null);
+
+
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso,
+        saliendo
+    } = useAvisoExito();
 
 
     const cargar =
@@ -64,6 +113,10 @@ export default function SeleccionarAveJaulaScreen({
 
                 setLoading(
                     true
+                );
+
+                setErrorCarga(
+                    false
                 );
 
 
@@ -83,6 +136,11 @@ export default function SeleccionarAveJaulaScreen({
                 console.error(
                     'Error cargando aves disponibles:',
                     error
+                );
+
+
+                setErrorCarga(
+                    true
                 );
 
 
@@ -119,6 +177,17 @@ export default function SeleccionarAveJaulaScreen({
 
     const confirmarAsignacion =
         ave => {
+
+            if (
+                procesandoId !== null
+                ||
+                saliendo
+            ) {
+
+                return;
+
+            }
+
 
             const mensaje =
                 ave.jaula_actual_id
@@ -188,21 +257,15 @@ export default function SeleccionarAveJaulaScreen({
                 });
 
 
-                Alert.alert(
+                // Antes: Alert con «Aceptar» que hacía goBack. Ahora: aviso y vuelve solo.
+                mostrarAviso(
 
                     'Ave asignada',
 
                     `El ave ${ave.codigo} ahora pertenece a la jaula ${jaulaCodigo}.`,
 
-                    [
-                        {
-                            text:
-                                'Aceptar',
-
-                            onPress: () =>
-                                navigation.goBack()
-                        }
-                    ]
+                    () =>
+                        navigation.goBack()
 
                 );
 
@@ -232,33 +295,71 @@ export default function SeleccionarAveJaulaScreen({
         };
 
 
+    const avisoExito = aviso
+        ? (
+            <Aviso
+                flotante
+                tono="exito"
+                duracion={0}
+                titulo={aviso.titulo}
+                mensaje={aviso.mensaje}
+                onCerrar={cerrarAviso}
+            />
+        )
+        : null;
+
+
     if (loading) {
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <ActivityIndicator
-                    size="large"
-                    color={
-                        COLORS.primary
-                    }
-                />
-
-
-                <Text
+                <View
                     style={
-                        styles.loadingText
+                        styles.center
                     }
                 >
-                    Buscando aves...
-                </Text>
 
-            </View>
+                    <EstadoCarga
+                        mensaje="Buscando aves..."
+                    />
+
+                </View>
+
+                {avisoExito}
+
+            </FondoPantalla>
+
+        );
+
+    }
+
+
+    if (errorCarga) {
+
+        return (
+
+            <FondoPantalla>
+
+                <View
+                    style={
+                        styles.center
+                    }
+                >
+
+                    <EstadoError
+                        titulo="No fue posible cargar las aves disponibles."
+                        onReintentar={
+                            cargar
+                        }
+                    />
+
+                </View>
+
+                {avisoExito}
+
+            </FondoPantalla>
 
         );
 
@@ -266,6 +367,8 @@ export default function SeleccionarAveJaulaScreen({
 
 
     return (
+
+        <FondoPantalla>
 
         <ScrollView
             style={
@@ -275,15 +378,6 @@ export default function SeleccionarAveJaulaScreen({
                 styles.content
             }
         >
-
-            <Text
-                style={
-                    styles.title
-                }
-            >
-                🐔 Agregar ave
-            </Text>
-
 
             <Text
                 style={
@@ -298,57 +392,25 @@ export default function SeleccionarAveJaulaScreen({
                 aves.length === 0
                     ? (
 
-                        <View
-                            style={
-                                styles.emptyCard
-                            }
-                        >
+                        <Tarjeta>
 
-                            <Text
-                                style={
-                                    styles.emptyIcon
-                                }
-                            >
-                                ✅
-                            </Text>
+                            <EstadoVacio
+                                titulo="No hay aves disponibles"
+                                mensaje="Todas las aves activas ya pertenecen a esta jaula o no existen más aves registradas."
+                            />
 
-
-                            <Text
-                                style={
-                                    styles.emptyTitle
-                                }
-                            >
-                                No hay aves disponibles
-                            </Text>
-
-
-                            <Text
-                                style={
-                                    styles.emptyText
-                                }
-                            >
-                                Todas las aves activas ya pertenecen a esta jaula o no existen más aves registradas.
-                            </Text>
-
-                        </View>
+                        </Tarjeta>
 
                     )
                     : aves.map(
                         ave => (
 
-                            <TouchableOpacity
+                            <Tarjeta
                                 key={
                                     ave.id
                                 }
-                                style={
-                                    styles.birdCard
-                                }
-                                activeOpacity={
-                                    0.8
-                                }
-                                disabled={
-                                    procesandoId !==
-                                    null
+                                testID={
+                                    `asignar-ave-${ave.codigo}`
                                 }
                                 onPress={() =>
                                     confirmarAsignacion(
@@ -357,118 +419,127 @@ export default function SeleccionarAveJaulaScreen({
                                 }
                             >
 
-                                {
-                                    ave.foto_uri
-                                        ? (
-
-                                            <Image
-                                                source={{
-                                                    uri:
-                                                        ave.foto_uri
-                                                }}
-                                                style={
-                                                    styles.avatarPhoto
-                                                }
-                                            />
-
-                                        )
-                                        : (
-
-                                            <View
-                                                style={
-                                                    styles.avatar
-                                                }
-                                            >
-
-                                                <Text
-                                                    style={
-                                                        styles.avatarText
-                                                    }
-                                                >
-                                                    🐔
-                                                </Text>
-
-                                            </View>
-
-                                        )
-                                }
-
-
                                 <View
                                     style={
-                                        styles.info
+                                        styles.fila
                                     }
                                 >
 
-                                    <Text
+                                    {
+                                        ave.foto_uri
+                                            ? (
+
+                                                <Image
+                                                    source={{
+                                                        uri:
+                                                            ave.foto_uri
+                                                    }}
+                                                    style={
+                                                        styles.avatarPhoto
+                                                    }
+                                                />
+
+                                            )
+                                            : (
+
+                                                <Avatar
+                                                    icono="paw-outline"
+                                                    tamano={56}
+                                                    {...propsAvatar(ave)}
+                                                />
+
+                                            )
+                                    }
+
+
+                                    <View
                                         style={
-                                            styles.codigo
+                                            styles.info
                                         }
                                     >
-                                        {ave.codigo}
-                                    </Text>
+
+                                        <Text
+                                            style={
+                                                styles.codigo
+                                            }
+                                            numberOfLines={1}
+                                        >
+                                            {ave.codigo}
+                                        </Text>
 
 
-                                    <Text
-                                        style={
-                                            styles.raza
-                                        }
-                                    >
-                                        {
-                                            ave.raza
-                                            ||
-                                            'Raza no especificada'
-                                        }
-                                    </Text>
+                                        <Text
+                                            style={
+                                                styles.raza
+                                            }
+                                            numberOfLines={1}
+                                        >
+                                            {
+                                                ave.raza
+                                                ||
+                                                'Raza no especificada'
+                                            }
+                                        </Text>
 
 
-                                    <Text
-                                        style={
-                                            styles.location
-                                        }
-                                    >
-                                        {
-                                            ave.jaula_codigo
-                                                ? `Actualmente: Jaula ${ave.jaula_codigo}`
-                                                : 'Actualmente: Sin jaula'
-                                        }
-                                    </Text>
+                                        <Chip
+                                            texto={
+                                                ave.jaula_codigo
+                                                    ? `Actualmente: Jaula ${ave.jaula_codigo}`
+                                                    : 'Actualmente: Sin jaula'
+                                            }
+                                            tono={
+                                                ave.jaula_codigo
+                                                    ? 'primario'
+                                                    : 'neutro'
+                                            }
+                                            icono="grid-outline"
+                                            style={
+                                                styles.chip
+                                            }
+                                        />
+
+                                    </View>
+
+
+                                    {
+                                        procesandoId ===
+                                        ave.id
+                                            ? (
+
+                                                <ActivityIndicator
+                                                    color={
+                                                        colors.primary
+                                                    }
+                                                />
+
+                                            )
+                                            : (
+
+                                                <Icono
+                                                    nombre="siguiente"
+                                                    tamano={22}
+                                                    color={
+                                                        colors.textSecondary
+                                                    }
+                                                />
+
+                                            )
+                                    }
 
                                 </View>
 
-
-                                {
-                                    procesandoId ===
-                                    ave.id
-                                        ? (
-
-                                            <ActivityIndicator
-                                                color={
-                                                    COLORS.primary
-                                                }
-                                            />
-
-                                        )
-                                        : (
-
-                                            <Text
-                                                style={
-                                                    styles.arrow
-                                                }
-                                            >
-                                                ›
-                                            </Text>
-
-                                        )
-                                }
-
-                            </TouchableOpacity>
+                            </Tarjeta>
 
                         )
                     )
             }
 
         </ScrollView>
+
+        {avisoExito}
+
+        </FondoPantalla>
 
     );
 
@@ -480,17 +551,14 @@ const styles =
 
         container: {
 
-            flex: 1,
-
-            backgroundColor:
-                COLORS.background
+            flex: 1
 
         },
 
 
         content: {
 
-            padding: 18,
+            padding: spacing.pantalla,
 
             paddingBottom: 40
 
@@ -505,88 +573,29 @@ const styles =
                 'center',
 
             alignItems:
-                'center',
-
-            backgroundColor:
-                COLORS.background
-
-        },
-
-
-        loadingText: {
-
-            marginTop: 10,
-
-            color:
-                COLORS.textSecondary
-
-        },
-
-
-        title: {
-
-            fontSize: 27,
-
-            fontWeight:
-                'bold',
-
-            color:
-                COLORS.primary
+                'center'
 
         },
 
 
         subtitle: {
 
+            ...typography.cuerpo,
+
             color:
-                COLORS.textSecondary,
+                colors.textSecondary,
 
-            marginTop: 5,
-
-            marginBottom: 20,
-
-            lineHeight: 20
+            marginBottom: spacing.lg
 
         },
 
 
-        birdCard: {
-
-            backgroundColor:
-                COLORS.card,
-
-            borderRadius: 15,
-
-            padding: 14,
-
-            marginBottom: 11,
+        fila: {
 
             flexDirection:
                 'row',
 
             alignItems:
-                'center',
-
-            elevation: 2
-
-        },
-
-
-        avatar: {
-
-            width: 54,
-
-            height: 54,
-
-            borderRadius: 27,
-
-            backgroundColor:
-                '#e7f5f5',
-
-            alignItems:
-                'center',
-
-            justifyContent:
                 'center'
 
         },
@@ -594,21 +603,19 @@ const styles =
 
         avatarPhoto: {
 
-            width: 54,
+            width: 56,
 
-            height: 54,
+            height: 56,
 
-            borderRadius: 27,
+            borderRadius: 28,
+
+            borderWidth: 3,
+
+            borderColor:
+                colors.white,
 
             backgroundColor:
-                '#e7f5f5'
-
-        },
-
-
-        avatarText: {
-
-            fontSize: 28
+                colors.primarySoft
 
         },
 
@@ -617,109 +624,36 @@ const styles =
 
             flex: 1,
 
-            marginLeft: 12
+            marginHorizontal: spacing.md
 
         },
 
 
         codigo: {
 
-            fontSize: 18,
-
-            fontWeight:
-                'bold',
+            ...typography.subtitulo,
 
             color:
-                COLORS.text
+                colors.text
 
         },
 
 
         raza: {
 
+            ...typography.secundario,
+
             color:
-                COLORS.textSecondary,
+                colors.textSecondary,
 
             marginTop: 2
 
         },
 
 
-        location: {
+        chip: {
 
-            color:
-                COLORS.primary,
-
-            fontSize: 12,
-
-            fontWeight:
-                '600',
-
-            marginTop: 6
-
-        },
-
-
-        arrow: {
-
-            fontSize: 30,
-
-            color:
-                COLORS.primary
-
-        },
-
-
-        emptyCard: {
-
-            backgroundColor:
-                COLORS.card,
-
-            borderRadius: 16,
-
-            padding: 25,
-
-            alignItems:
-                'center',
-
-            elevation: 2
-
-        },
-
-
-        emptyIcon: {
-
-            fontSize: 38
-
-        },
-
-
-        emptyTitle: {
-
-            fontSize: 18,
-
-            fontWeight:
-                'bold',
-
-            color:
-                COLORS.text,
-
-            marginTop: 9
-
-        },
-
-
-        emptyText: {
-
-            textAlign:
-                'center',
-
-            color:
-                COLORS.textSecondary,
-
-            lineHeight: 20,
-
-            marginTop: 7
+            marginTop: spacing.sm
 
         }
 

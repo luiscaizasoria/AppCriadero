@@ -7,10 +7,11 @@ import React, {
 import {
     View,
     Text,
-    TextInput,
-    TouchableOpacity,
+    ScrollView,
     StyleSheet,
-    Alert
+    Alert,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 
 
@@ -27,9 +28,38 @@ import {
 
 
 
+import FondoPantalla
+    from '../components/FondoPantalla';
+
+import Tarjeta
+    from '../components/Tarjeta';
+
+import IconoCirculo
+    from '../components/IconoCirculo';
+
+import CampoTexto
+    from '../components/CampoTexto';
+
+import Boton
+    from '../components/Boton';
+
+import BarraAccion
+    from '../components/BarraAccion';
+
+import Aviso
+    from '../components/Aviso';
+
+import useAvisoExito
+    from '../components/useAvisoExito';
+
+import EstadoError
+    from '../components/EstadoError';
+
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -54,6 +84,13 @@ export default function RegistrarHuevoScreen({
 
 
     const [
+        errorCarga,
+        setErrorCarga
+    ] = useState(false);
+
+
+
+    const [
         observacion,
         setObservacion
     ] = useState('');
@@ -64,6 +101,15 @@ export default function RegistrarHuevoScreen({
         guardando,
         setGuardando
     ] = useState(false);
+
+
+
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso,
+        saliendo
+    } = useAvisoExito();
 
 
 
@@ -83,20 +129,40 @@ export default function RegistrarHuevoScreen({
 
 
 
+    // Mismo repositorio y misma lectura; solo se añade un estado de error con «Reintentar»
+    // (antes un fallo de red era una promesa sin capturar).
     const cargarAve =
         async () => {
 
+            try {
 
-            const data =
-                await obtenerAvePorId(
-                    aveId
+                setErrorCarga(
+                    false
                 );
 
 
-            setAve(
-                data
-            );
+                const data =
+                    await obtenerAvePorId(
+                        aveId
+                    );
 
+
+                setAve(
+                    data
+                );
+
+            }
+            catch(error){
+
+                console.error(
+                    error
+                );
+
+                setErrorCarga(
+                    true
+                );
+
+            }
 
         };
 
@@ -136,28 +202,15 @@ export default function RegistrarHuevoScreen({
 
 
 
-
-
-                Alert.alert(
+                // Antes: Alert con «Aceptar» que hacía goBack. Ahora: aviso y vuelve solo.
+                mostrarAviso(
 
                     'Huevo registrado',
 
                     `Se generó el código ${codigo}`,
 
-                    [
-
-                        {
-
-                            text:
-                                'Aceptar',
-
-                            onPress:
-                                () =>
-                                navigation.goBack()
-
-                        }
-
-                    ]
+                    () =>
+                        navigation.goBack()
 
                 );
 
@@ -196,136 +249,179 @@ export default function RegistrarHuevoScreen({
 
     return (
 
-        <View
-            style={
-                styles.container
-            }
-        >
+        <FondoPantalla>
 
-
-            <Text
+            <KeyboardAvoidingView
                 style={
-                    styles.title
+                    styles.container
+                }
+                behavior={
+                    Platform.OS === 'ios'
+                        ? 'padding'
+                        : undefined
                 }
             >
-                🥚 Registrar huevo
-            </Text>
 
-
-
-            {
-                ave
-                &&
-                (
-
-                    <View
-                        style={
-                            styles.card
-                        }
-                    >
-
-                        <Text>
-                            Ave:
-                            {' '}
-                            {ave.codigo}
-                        </Text>
-
-
-                        <Text>
-                            Jaula:
-                            {' '}
-                            {
-                                ave.jaula_codigo
-                                ||
-                                'Sin jaula'
-                            }
-                        </Text>
-
-
-                    </View>
-
-                )
-
-            }
-
-
-
-
-
-            <Text
-                style={
-                    styles.label
-                }
-            >
-                Observación
-            </Text>
-
-
-
-            <TextInput
-
-                style={
-                    styles.input
-                }
-
-                multiline
-
-                value={
-                    observacion
-                }
-
-                onChangeText={
-                    setObservacion
-                }
-
-                placeholder="Ej. Huevo normal, tamaño grande..."
-
-            />
-
-
-
-
-
-            <TouchableOpacity
-
-                testID="guardar-huevo"
-
-                style={
-                    styles.button
-                }
-
-                onPress={
-                    guardar
-                }
-
-                disabled={
-                    guardando
-                }
-
-            >
-
-                <Text
-                    style={
-                        styles.buttonText
+                <ScrollView
+                    contentContainerStyle={
+                        styles.content
                     }
+                    keyboardShouldPersistTaps="handled"
                 >
 
+
                     {
-                        guardando
-                        ?
-                        'Guardando...'
-                        :
-                        '🥚 Registrar huevo'
+                        errorCarga
+                        &&
+                        (
+
+                            <Tarjeta>
+
+                                <EstadoError
+                                    titulo="No fue posible cargar el ave."
+                                    onReintentar={
+                                        cargarAve
+                                    }
+                                />
+
+                            </Tarjeta>
+
+                        )
                     }
 
-                </Text>
+
+                    {
+                        ave
+                        &&
+                        (
+
+                            <Tarjeta
+                                testID="huevo-ave"
+                            >
+
+                                <View
+                                    style={
+                                        styles.fila
+                                    }
+                                >
+
+                                    <IconoCirculo
+                                        icono="huevo"
+                                        indice={1}
+                                        tamano={52}
+                                    />
+
+                                    <View
+                                        style={
+                                            styles.textos
+                                        }
+                                    >
+
+                                        <Text
+                                            style={
+                                                styles.dato
+                                            }
+                                        >
+                                            Ave:
+                                            {' '}
+                                            {ave.codigo}
+                                        </Text>
 
 
-            </TouchableOpacity>
+                                        <Text
+                                            style={
+                                                styles.datoSecundario
+                                            }
+                                        >
+                                            Jaula:
+                                            {' '}
+                                            {
+                                                ave.jaula_codigo
+                                                ||
+                                                'Sin jaula'
+                                            }
+                                        </Text>
+
+                                    </View>
+
+                                </View>
+
+                            </Tarjeta>
+
+                        )
+
+                    }
 
 
 
-        </View>
+                    <Tarjeta>
+
+                        <CampoTexto
+                            etiqueta="Observación"
+                            multiline
+                            value={
+                                observacion
+                            }
+                            onChangeText={
+                                setObservacion
+                            }
+                            placeholder="Ej. Huevo normal, tamaño grande..."
+                            testID="observacion-huevo"
+                            style={
+                                styles.campo
+                            }
+                        />
+
+                    </Tarjeta>
+
+
+                </ScrollView>
+
+
+
+                <BarraAccion>
+
+                    <Boton
+                        testID="guardar-huevo"
+                        titulo={
+                            guardando
+                            ?
+                            'Guardando...'
+                            :
+                            'Registrar huevo'
+                        }
+                        icono={
+                            guardando
+                                ? undefined
+                                : 'huevo'
+                        }
+                        onPress={
+                            guardar
+                        }
+                        atenuado={
+                            guardando
+                            ||
+                            saliendo
+                        }
+                    />
+
+                </BarraAccion>
+
+            </KeyboardAvoidingView>
+
+
+            {aviso ? (
+                <Aviso
+                    flotante
+                    tono="exito"
+                    duracion={0}
+                    titulo={aviso.titulo}
+                    mensaje={aviso.mensaje}
+                    onCerrar={cerrarAviso}
+                />
+            ) : null}
+
+        </FondoPantalla>
 
     );
 
@@ -338,63 +434,44 @@ const styles =
 StyleSheet.create({
 
     container:{
-        flex:1,
-        backgroundColor:
-            COLORS.background,
-        padding:20
+        flex:1
     },
 
 
-    title:{
-        fontSize:26,
-        fontWeight:'bold',
-        color:
-            COLORS.primary
+    content:{
+        padding:spacing.pantalla,
+        paddingBottom:spacing.xl
     },
 
 
-    card:{
-        backgroundColor:
-            COLORS.card,
-        padding:15,
-        borderRadius:14,
-        marginTop:20
-    },
-
-
-    label:{
-        marginTop:25,
-        marginBottom:8,
-        fontWeight:'bold'
-    },
-
-
-    input:{
-        backgroundColor:
-            COLORS.card,
-        borderWidth:1,
-        borderColor:
-            COLORS.border,
-        borderRadius:12,
-        padding:15,
-        minHeight:100,
-        textAlignVertical:'top'
-    },
-
-
-    button:{
-        backgroundColor:
-            COLORS.primary,
-        marginTop:30,
-        padding:16,
-        borderRadius:14,
+    fila:{
+        flexDirection:'row',
         alignItems:'center'
     },
 
 
-    buttonText:{
-        color:'#fff',
-        fontWeight:'bold'
+    textos:{
+        flex:1,
+        marginLeft:spacing.md
+    },
+
+
+    dato:{
+        ...typography.subtitulo,
+        color:
+            colors.text
+    },
+
+
+    datoSecundario:{
+        ...typography.cuerpo,
+        color:
+            colors.textSecondary
+    },
+
+
+    campo:{
+        marginBottom:0
     }
 
 });

@@ -5,10 +5,11 @@ import React,{
 import {
     View,
     Text,
-    TextInput,
-    TouchableOpacity,
+    ScrollView,
     StyleSheet,
-    Alert
+    Alert,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 
 import {
@@ -19,9 +20,35 @@ import {
     registrarEventoCicloVida
 } from '../repositories/CicloVidaRepository';
 
+import FondoPantalla
+    from '../components/FondoPantalla';
+
+import Tarjeta
+    from '../components/Tarjeta';
+
+import IconoCirculo
+    from '../components/IconoCirculo';
+
+import CampoTexto
+    from '../components/CampoTexto';
+
+import Boton
+    from '../components/Boton';
+
+import BarraAccion
+    from '../components/BarraAccion';
+
+import Aviso
+    from '../components/Aviso';
+
+import useAvisoExito
+    from '../components/useAvisoExito';
+
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 export default function FinalizarTratamientoScreen({
@@ -44,6 +71,14 @@ export default function FinalizarTratamientoScreen({
         guardando,
         setGuardando
     ] = useState(false);
+
+
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso,
+        saliendo
+    } = useAvisoExito();
 
 
     const guardar =
@@ -93,22 +128,15 @@ export default function FinalizarTratamientoScreen({
                 });
 
 
-                Alert.alert(
+                // Antes: Alert con «Aceptar» que hacía goBack. Ahora: aviso y vuelve solo.
+                mostrarAviso(
 
                     'Tratamiento finalizado',
 
                     'El ave volvió al estado sana.',
 
-                    [
-                        {
-                            text:
-                                'Aceptar',
-
-                            onPress:
-                                () =>
-                                navigation.goBack()
-                        }
-                    ]
+                    () =>
+                        navigation.goBack()
 
                 );
 
@@ -139,86 +167,115 @@ export default function FinalizarTratamientoScreen({
 
     return (
 
-        <View
-            style={
-                styles.container
-            }
-        >
+        <FondoPantalla>
 
-            <Text
+            <KeyboardAvoidingView
                 style={
-                    styles.title
+                    styles.container
+                }
+                behavior={
+                    Platform.OS === 'ios'
+                        ? 'padding'
+                        : undefined
                 }
             >
-                🩺 Finalizar tratamiento
-            </Text>
 
-
-            <Text
-                style={
-                    styles.label
-                }
-            >
-                Observación
-            </Text>
-
-
-            <TextInput
-
-                style={
-                    styles.input
-                }
-
-                multiline
-
-                value={
-                    observacion
-                }
-
-                onChangeText={
-                    setObservacion
-                }
-
-                placeholder="Ej. Ave recuperada correctamente..."
-
-            />
-
-
-            <TouchableOpacity
-
-                style={
-                    styles.button
-                }
-
-                onPress={
-                    guardar
-                }
-
-                disabled={
-                    guardando
-                }
-
-            >
-
-                <Text
-                    style={
-                        styles.buttonText
+                <ScrollView
+                    contentContainerStyle={
+                        styles.content
                     }
+                    keyboardShouldPersistTaps="handled"
                 >
 
-                    {
-                        guardando
-                        ?
-                        'Guardando...'
-                        :
-                        '✅ Confirmar recuperación'
-                    }
+                    <Tarjeta>
 
-                </Text>
+                        <View
+                            style={
+                                styles.intro
+                            }
+                        >
 
-            </TouchableOpacity>
+                            <IconoCirculo
+                                icono="checkmark-circle-outline"
+                                color={colors.success}
+                                tamano={48}
+                            />
 
-        </View>
+                            <Text
+                                style={
+                                    styles.introTexto
+                                }
+                            >
+                                El ave volverá al estado sana.
+                            </Text>
+
+                        </View>
+
+
+                        <CampoTexto
+                            etiqueta="Observación"
+                            multiline
+                            value={
+                                observacion
+                            }
+                            onChangeText={
+                                setObservacion
+                            }
+                            placeholder="Ej. Ave recuperada correctamente..."
+                            testID="observacion-recuperacion"
+                            style={
+                                styles.campo
+                            }
+                        />
+
+                    </Tarjeta>
+
+                </ScrollView>
+
+
+                <BarraAccion>
+
+                    <Boton
+                        titulo={
+                            guardando
+                                ?
+                                'Guardando...'
+                                :
+                                'Confirmar recuperación'
+                        }
+                        icono={
+                            guardando
+                                ? undefined
+                                : 'checkmark-circle-outline'
+                        }
+                        onPress={
+                            guardar
+                        }
+                        atenuado={
+                            guardando
+                            ||
+                            saliendo
+                        }
+                        testID="confirmar-recuperacion"
+                    />
+
+                </BarraAccion>
+
+            </KeyboardAvoidingView>
+
+
+            {aviso ? (
+                <Aviso
+                    flotante
+                    tono="exito"
+                    duracion={0}
+                    titulo={aviso.titulo}
+                    mensaje={aviso.mensaje}
+                    onCerrar={cerrarAviso}
+                />
+            ) : null}
+
+        </FondoPantalla>
 
     );
 
@@ -229,83 +286,34 @@ const styles =
 StyleSheet.create({
 
     container:{
-
-        flex:1,
-
-        backgroundColor:
-            COLORS.background,
-
-        padding:20
-
+        flex:1
     },
 
 
-    title:{
+    content:{
+        padding:spacing.pantalla,
+        paddingBottom:spacing.xl
+    },
 
-        fontSize:25,
 
-        fontWeight:'bold',
+    intro:{
+        flexDirection:'row',
+        alignItems:'center',
+        marginBottom:spacing.lg
+    },
 
+
+    introTexto:{
+        ...typography.cuerpoFuerte,
         color:
-            COLORS.primary
-
+            colors.text,
+        flex:1,
+        marginLeft:spacing.md
     },
 
 
-    label:{
-
-        marginTop:25,
-
-        fontWeight:'bold'
-
-    },
-
-
-    input:{
-
-        backgroundColor:
-            COLORS.card,
-
-        borderWidth:1,
-
-        borderColor:
-            COLORS.border,
-
-        borderRadius:12,
-
-        padding:15,
-
-        marginTop:10,
-
-        minHeight:120,
-
-        textAlignVertical:'top'
-
-    },
-
-
-    button:{
-
-        backgroundColor:
-            COLORS.primary,
-
-        marginTop:30,
-
-        padding:16,
-
-        borderRadius:14,
-
-        alignItems:'center'
-
-    },
-
-
-    buttonText:{
-
-        color:'#fff',
-
-        fontWeight:'bold'
-
+    campo:{
+        marginBottom:0
     }
 
 });

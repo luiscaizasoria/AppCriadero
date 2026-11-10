@@ -8,8 +8,7 @@ import {
     Text,
     Image,
     ScrollView,
-    StyleSheet,
-    ActivityIndicator
+    StyleSheet
 } from 'react-native';
 
 import {
@@ -24,9 +23,48 @@ import {
     obtenerCicloVidaAve
 } from '../repositories/CicloVidaRepository';
 
+import FondoPantalla
+    from '../components/FondoPantalla';
+
+import Tarjeta
+    from '../components/Tarjeta';
+
+import TituloSeccion
+    from '../components/TituloSeccion';
+
+import IconoCirculo
+    from '../components/IconoCirculo';
+
+import Avatar
+    from '../components/Avatar';
+
+import Chip
+    from '../components/Chip';
+
+import Icono
+    from '../components/Icono';
+
+import EstadoCarga
+    from '../components/EstadoCarga';
+
+import EstadoError
+    from '../components/EstadoError';
+
+import EstadoVacio
+    from '../components/EstadoVacio';
+
 import {
-    COLORS
-} from '../config/constants';
+    visualEstadoAve,
+    visualSexo,
+    propsAvatar
+} from '../components/aveVisual';
+
+import {
+    colors,
+    radii,
+    spacing,
+    typography
+} from '../theme';
 
 
 export default function CicloVidaAveScreen({
@@ -146,29 +184,21 @@ export default function CicloVidaAveScreen({
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <ActivityIndicator
-                    size="large"
-                    color={
-                        COLORS.primary
-                    }
-                />
-
-
-                <Text
+                <View
                     style={
-                        styles.loadingText
+                        styles.center
                     }
                 >
-                    Cargando ciclo de vida...
-                </Text>
 
-            </View>
+                    <EstadoCarga
+                        mensaje="Cargando ciclo de vida..."
+                    />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -183,31 +213,61 @@ export default function CicloVidaAveScreen({
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <Text
+                <View
                     style={
-                        styles.errorText
+                        styles.center
                     }
                 >
-                    {
-                        error ||
-                        'Ave no encontrada.'
-                    }
-                </Text>
 
-            </View>
+                    {
+                        error
+                            ? (
+
+                                <EstadoError
+                                    titulo={
+                                        error
+                                    }
+                                    onReintentar={
+                                        cargar
+                                    }
+                                />
+
+                            )
+                            : (
+
+                                <EstadoVacio
+                                    titulo="Ave no encontrada."
+                                />
+
+                            )
+                    }
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
     }
 
 
+    const sexo =
+        visualSexo(
+            ave.sexo
+        );
+
+
+    const estado =
+        visualEstadoAve(
+            ave.estado
+        );
+
+
     return (
+
+        <FondoPantalla>
 
         <ScrollView
             style={
@@ -220,15 +280,6 @@ export default function CicloVidaAveScreen({
 
             <Text
                 style={
-                    styles.title
-                }
-            >
-                🌿 Ciclo de vida
-            </Text>
-
-
-            <Text
-                style={
                     styles.subtitle
                 }
             >
@@ -236,145 +287,134 @@ export default function CicloVidaAveScreen({
             </Text>
 
 
-            <View
-                style={
-                    styles.birdCard
-                }
+            <Tarjeta
+                testID="ciclo-ave"
             >
 
-                {
-                    ave.foto_uri
-                        ? (
+                <View
+                    style={
+                        styles.birdRow
+                    }
+                >
 
-                            <Image
-                                source={{
-                                    uri:
-                                        ave.foto_uri
-                                }}
-                                style={
-                                    styles.birdPhoto
-                                }
-                            />
+                    {
+                        ave.foto_uri
+                            ? (
 
-                        )
-                        : (
-
-                            <View
-                                style={
-                                    styles.birdPhotoEmpty
-                                }
-                            >
-
-                                <Text
+                                <Image
+                                    source={{
+                                        uri:
+                                            ave.foto_uri
+                                    }}
                                     style={
-                                        styles.birdPhotoIcon
+                                        styles.birdPhoto
                                     }
-                                >
-                                    🐔
-                                </Text>
+                                />
 
-                            </View>
+                            )
+                            : (
 
-                        )
-                }
+                                <Avatar
+                                    icono="paw-outline"
+                                    tamano={68}
+                                    {...propsAvatar(ave)}
+                                />
+
+                            )
+                    }
+
+
+                    <View
+                        style={
+                            styles.birdInfo
+                        }
+                    >
+
+                        <Text
+                            style={
+                                styles.birdCode
+                            }
+                        >
+                            {ave.codigo}
+                        </Text>
+
+
+                        <Text
+                            style={
+                                styles.birdRaza
+                            }
+                        >
+                            {
+                                ave.raza ||
+                                'Sin raza'
+                            }
+                        </Text>
+
+                    </View>
+
+                </View>
 
 
                 <View
                     style={
-                        styles.birdInfo
+                        styles.chips
                     }
                 >
 
-                    <Text
+                    <Chip
+                        texto={
+                            ave.sexo === 'MACHO' || ave.sexo === 'HEMBRA'
+                                ? sexo.texto
+                                : 'Sexo no registrado'
+                        }
+                        icono={
+                            sexo.icono
+                        }
                         style={
-                            styles.birdCode
+                            styles.chip
                         }
-                    >
-                        {ave.codigo}
-                    </Text>
+                    />
 
-
-                    <Text
+                    <Chip
+                        texto={
+                            estado.texto
+                        }
+                        tono={
+                            estado.tono
+                        }
+                        icono={
+                            estado.icono
+                        }
                         style={
-                            styles.birdRaza
+                            styles.chip
                         }
-                    >
-                        {
-                            ave.raza ||
-                            'Sin raza'
-                        }
-                    </Text>
-
-
-                    <Text
-                        style={
-                            styles.birdMeta
-                        }
-                    >
-                        {
-                            obtenerTextoSexo(
-                                ave.sexo
-                            )
-                        }
-                        {' · '}
-                        {
-                            obtenerTextoEstado(
-                                ave.estado
-                            )
-                        }
-                    </Text>
+                    />
 
                 </View>
 
-            </View>
+            </Tarjeta>
 
 
-            <Text
-                style={
-                    styles.sectionTitle
-                }
+            <TituloSeccion
+                icono="cicloVida"
+                indice={1}
             >
                 Línea de tiempo
-            </Text>
+            </TituloSeccion>
 
 
             {
                 eventos.length === 0
                     ? (
 
-                        <View
-                            style={
-                                styles.emptyCard
-                            }
-                        >
+                        <Tarjeta>
 
-                            <Text
-                                style={
-                                    styles.emptyIcon
-                                }
-                            >
-                                🌱
-                            </Text>
+                            <EstadoVacio
+                                titulo="Sin eventos todavía"
+                                mensaje="Los cambios del ave aparecerán aquí a medida que se registren."
+                            />
 
-
-                            <Text
-                                style={
-                                    styles.emptyTitle
-                                }
-                            >
-                                Sin eventos todavía
-                            </Text>
-
-
-                            <Text
-                                style={
-                                    styles.emptyText
-                                }
-                            >
-                                Los cambios del ave aparecerán aquí a medida que se registren.
-                            </Text>
-
-                        </View>
+                        </Tarjeta>
 
                     )
                     : eventos.map(
@@ -411,25 +451,21 @@ export default function CicloVidaAveScreen({
                                         }
                                     >
 
-                                        <View
-                                            style={[
-                                                styles.timelineDot,
-                                                {
-                                                    backgroundColor:
-                                                        visual.color
-                                                }
-                                            ]}
-                                        >
-
-                                            <Text
-                                                style={
-                                                    styles.timelineIcon
-                                                }
-                                            >
-                                                {visual.icono}
-                                            </Text>
-
-                                        </View>
+                                        <IconoCirculo
+                                            icono={
+                                                visual.icono
+                                            }
+                                            color={
+                                                visual.color
+                                            }
+                                            colorIcono={
+                                                visual.colorIcono
+                                            }
+                                            tamano={40}
+                                            style={
+                                                styles.timelineDot
+                                            }
+                                        />
 
 
                                         {
@@ -437,13 +473,9 @@ export default function CicloVidaAveScreen({
                                                 ? (
 
                                                     <View
-                                                        style={[
-                                                            styles.timelineLine,
-                                                            {
-                                                                backgroundColor:
-                                                                    visual.lineColor
-                                                            }
-                                                        ]}
+                                                        style={
+                                                            styles.timelineLine
+                                                        }
                                                     />
 
                                                 )
@@ -453,7 +485,7 @@ export default function CicloVidaAveScreen({
                                     </View>
 
 
-                                    <View
+                                    <Tarjeta
                                         style={
                                             styles.eventCard
                                         }
@@ -502,13 +534,32 @@ export default function CicloVidaAveScreen({
                                             evento.jaulaCodigo
                                                 ? (
 
-                                                    <Text
+                                                    <View
                                                         style={
-                                                            styles.eventMeta
+                                                            styles.eventMetaRow
                                                         }
                                                     >
-                                                        🏠 Jaula {evento.jaulaCodigo}
-                                                    </Text>
+
+                                                        <Icono
+                                                            nombre="grid-outline"
+                                                            tamano={16}
+                                                            color={
+                                                                colors.textSecondary
+                                                            }
+                                                            style={
+                                                                styles.eventMetaIcono
+                                                            }
+                                                        />
+
+                                                        <Text
+                                                            style={
+                                                                styles.eventMeta
+                                                            }
+                                                        >
+                                                            Jaula {evento.jaulaCodigo}
+                                                        </Text>
+
+                                                    </View>
 
                                                 )
                                                 : null
@@ -567,7 +618,7 @@ export default function CicloVidaAveScreen({
                                                 : null
                                         }
 
-                                    </View>
+                                    </Tarjeta>
 
                                 </View>
 
@@ -579,65 +630,15 @@ export default function CicloVidaAveScreen({
 
         </ScrollView>
 
+        </FondoPantalla>
+
     );
 
 }
 
 
-function obtenerTextoSexo(
-    sexo
-) {
-
-    if (
-        sexo === 'MACHO'
-    ) {
-
-        return '🐓 Macho';
-
-    }
-
-
-    if (
-        sexo === 'HEMBRA'
-    ) {
-
-        return '🐔 Hembra';
-
-    }
-
-
-    return 'Sexo no registrado';
-
-}
-
-
-function obtenerTextoEstado(
-    estado
-) {
-
-    if (
-        estado === 'VENDIDA'
-    ) {
-
-        return 'Vendida';
-
-    }
-
-
-    if (
-        estado === 'FALLECIDA'
-    ) {
-
-        return 'Fallecida';
-
-    }
-
-
-    return 'Activa';
-
-}
-
-
+// Presentación del evento: icono de Ionicons y color del círculo (icono blanco, o texto oscuro
+// sobre turquesa claro). Solo cambia el aspecto; el título y el detalle vienen del repositorio.
 function obtenerVisualEvento(
     tipo
 ) {
@@ -652,108 +653,97 @@ function obtenerVisualEvento(
         case 'NACIMIENTO':
 
             return {
-                icono: '🐣',
-                color: '#8acb78',
-                lineColor: '#cfe7c8'
+                icono: 'sparkles-outline',
+                color: colors.turquesa,
+                colorIcono: colors.text
             };
 
 
         case 'LLEGADA':
 
             return {
-                icono: '🏡',
-                color: '#58c7b4',
-                lineColor: '#bfe8df'
+                icono: 'home-outline',
+                color: colors.primary
             };
 
 
         case 'ALTA':
 
             return {
-                icono: '📝',
-                color: '#4ea8de',
-                lineColor: '#c5e2f2'
+                icono: 'document-text-outline',
+                color: colors.info
             };
 
 
         case 'DATOS_ACTUALIZADOS':
 
             return {
-                icono: '✏️',
-                color: '#7f8c8d',
-                lineColor: '#d7dddd'
+                icono: 'create-outline',
+                color: colors.textSecondary
             };
 
 
         case 'EVOLUCION':
 
             return {
-                icono: '📸',
-                color: '#8e7cc3',
-                lineColor: '#ded7ee'
+                icono: 'camera-outline',
+                color: colors.secondary
             };
 
 
         case 'CAMBIO_JAULA':
 
             return {
-                icono: '🏠',
-                color: '#5b8def',
-                lineColor: '#cfddfa'
+                icono: 'grid-outline',
+                color: colors.primaryDark
             };
 
 
         case 'SALUD':
 
             return {
-                icono: '🩺',
-                color: '#e76f51',
-                lineColor: '#f3cec5'
+                icono: 'medkit-outline',
+                color: colors.danger
             };
 
 
         case 'RECUPERACION':
 
             return {
-                icono: '✅',
-                color: '#52b788',
-                lineColor: '#c9ead9'
+                icono: 'checkmark-circle-outline',
+                color: colors.success
             };
 
 
         case 'POSTURA_HUEVO':
 
             return {
-                icono: '🥚',
-                color: '#e9c46a',
-                lineColor: '#f4e3b9'
+                icono: 'egg-outline',
+                color: colors.warningSolid
             };
 
 
         case 'VENTA':
 
             return {
-                icono: '💰',
-                color: '#2a9d8f',
-                lineColor: '#bfe1dc'
+                icono: 'cart-outline',
+                color: colors.turquesaProfundo
             };
 
 
         case 'MUERTE':
 
             return {
-                icono: '⚰',
-                color: '#6c757d',
-                lineColor: '#d5d7d9'
+                icono: 'skull-outline',
+                color: colors.text
             };
 
 
         default:
 
             return {
-                icono: '•',
-                color: COLORS.primary,
-                lineColor: '#cfe1e1'
+                icono: 'ellipse',
+                color: colors.primary
             };
 
     }
@@ -855,17 +845,14 @@ const styles =
 
         container: {
 
-            flex: 1,
-
-            backgroundColor:
-                COLORS.background
+            flex: 1
 
         },
 
 
         content: {
 
-            padding: 18,
+            padding: spacing.pantalla,
 
             paddingBottom: 50
 
@@ -880,74 +867,28 @@ const styles =
 
             alignItems: 'center',
 
-            padding: 24,
-
-            backgroundColor:
-                COLORS.background
-
-        },
-
-
-        loadingText: {
-
-            marginTop: 10,
-
-            color:
-                COLORS.textSecondary
-
-        },
-
-
-        errorText: {
-
-            color:
-                COLORS.danger,
-
-            textAlign: 'center'
-
-        },
-
-
-        title: {
-
-            fontSize: 27,
-
-            fontWeight: 'bold',
-
-            color:
-                COLORS.primary
+            padding: spacing.xl
 
         },
 
 
         subtitle: {
 
-            marginTop: 5,
+            ...typography.cuerpo,
 
             color:
-                COLORS.textSecondary,
+                colors.textSecondary,
 
-            lineHeight: 20
+            marginBottom: spacing.lg
 
         },
 
 
-        birdCard: {
-
-            marginTop: 18,
-
-            backgroundColor:
-                COLORS.card,
-
-            borderRadius: 18,
-
-            padding: 14,
+        birdRow: {
 
             flexDirection: 'row',
 
-            alignItems: 'center',
-
-            elevation: 2
+            alignItems: 'center'
 
         },
 
@@ -958,31 +899,15 @@ const styles =
 
             height: 68,
 
-            borderRadius: 34
-
-        },
-
-
-        birdPhotoEmpty: {
-
-            width: 68,
-
-            height: 68,
-
             borderRadius: 34,
 
-            backgroundColor: '#e7f5f5',
+            borderWidth: 3,
 
-            alignItems: 'center',
+            borderColor:
+                colors.white,
 
-            justifyContent: 'center'
-
-        },
-
-
-        birdPhotoIcon: {
-
-            fontSize: 30
+            backgroundColor:
+                colors.primarySoft
 
         },
 
@@ -991,57 +916,47 @@ const styles =
 
             flex: 1,
 
-            marginLeft: 13
+            marginLeft: spacing.md
 
         },
 
 
         birdCode: {
 
-            fontSize: 22,
-
-            fontWeight: 'bold',
+            ...typography.titulo,
 
             color:
-                COLORS.text
+                colors.text
 
         },
 
 
         birdRaza: {
 
-            marginTop: 2,
+            ...typography.secundario,
 
             color:
-                COLORS.textSecondary
+                colors.textSecondary
 
         },
 
 
-        birdMeta: {
+        chips: {
 
-            marginTop: 7,
+            flexDirection: 'row',
 
-            fontSize: 12,
+            flexWrap: 'wrap',
 
-            color:
-                COLORS.text
+            marginTop: spacing.md
 
         },
 
 
-        sectionTitle: {
+        chip: {
 
-            marginTop: 25,
+            marginRight: spacing.sm,
 
-            marginBottom: 14,
-
-            fontSize: 20,
-
-            fontWeight: 'bold',
-
-            color:
-                COLORS.text
+            marginBottom: spacing.xs
 
         },
 
@@ -1066,26 +981,7 @@ const styles =
 
         timelineDot: {
 
-            width: 36,
-
-            height: 36,
-
-            borderRadius: 18,
-
-            alignItems: 'center',
-
-            justifyContent: 'center',
-
-            zIndex: 2,
-
-            elevation: 1
-
-        },
-
-
-        timelineIcon: {
-
-            fontSize: 16
+            zIndex: 2
 
         },
 
@@ -1096,13 +992,16 @@ const styles =
 
             flex: 1,
 
-            minHeight: 48,
+            minHeight: 24,
 
             marginTop: 2,
 
             marginBottom: 2,
 
-            borderRadius: 2
+            borderRadius: 2,
+
+            backgroundColor:
+                colors.borderSoft
 
         },
 
@@ -1111,28 +1010,19 @@ const styles =
 
             flex: 1,
 
-            backgroundColor:
-                COLORS.card,
+            marginLeft: spacing.xs,
 
-            borderRadius: 16,
-
-            padding: 14,
-
-            marginLeft: 7,
-
-            marginBottom: 14,
-
-            elevation: 2
+            padding: spacing.md
 
         },
 
 
         eventDate: {
 
-            fontSize: 11,
+            ...typography.chip,
 
             color:
-                COLORS.textSecondary,
+                colors.textSecondary,
 
             marginBottom: 4
 
@@ -1141,141 +1031,102 @@ const styles =
 
         eventTitle: {
 
-            fontSize: 16,
-
-            fontWeight: 'bold',
+            ...typography.subtitulo,
 
             color:
-                COLORS.text
+                colors.text
 
         },
 
 
         eventDetail: {
 
+            ...typography.cuerpo,
+
             marginTop: 6,
 
             color:
-                COLORS.textSecondary,
+                colors.textSecondary
 
-            lineHeight: 20
+        },
+
+
+        eventMetaRow: {
+
+            flexDirection: 'row',
+
+            alignItems: 'center',
+
+            marginTop: spacing.sm
+
+        },
+
+
+        eventMetaIcono: {
+
+            marginRight: spacing.xs
 
         },
 
 
         eventMeta: {
 
-            marginTop: 8,
+            ...typography.etiqueta,
 
             color:
-                COLORS.text,
-
-            fontSize: 12,
-
-            fontWeight: '600'
+                colors.text
 
         },
 
 
         characteristicsBox: {
 
-            marginTop: 9,
+            marginTop: spacing.sm,
 
-            padding: 10,
+            padding: spacing.sm,
 
-            borderRadius: 11,
+            borderRadius: radii.sm,
 
-            backgroundColor: '#f4f7f7'
+            backgroundColor:
+                colors.surfaceAlt
 
         },
 
 
         characteristicsLabel: {
 
-            fontSize: 11,
+            ...typography.chip,
 
             color:
-                COLORS.textSecondary,
-
-            fontWeight: '700'
+                colors.textSecondary
 
         },
 
 
         characteristicsText: {
 
+            ...typography.cuerpo,
+
             marginTop: 3,
 
             color:
-                COLORS.text,
-
-            lineHeight: 18
+                colors.text
 
         },
 
 
         eventPhoto: {
 
-            marginTop: 10,
+            marginTop: spacing.sm,
 
             width: 125,
 
             height: 125,
 
-            borderRadius: 13,
-
-            backgroundColor: '#eeeeee'
-
-        },
-
-
-        emptyCard: {
+            borderRadius: radii.sm,
 
             backgroundColor:
-                COLORS.card,
-
-            borderRadius: 18,
-
-            padding: 24,
-
-            alignItems: 'center',
-
-            elevation: 2
-
-        },
-
-
-        emptyIcon: {
-
-            fontSize: 38
-
-        },
-
-
-        emptyTitle: {
-
-            marginTop: 8,
-
-            fontSize: 18,
-
-            fontWeight: 'bold',
-
-            color:
-                COLORS.text
-
-        },
-
-
-        emptyText: {
-
-            marginTop: 6,
-
-            color:
-                COLORS.textSecondary,
-
-            textAlign: 'center',
-
-            lineHeight: 20
+                colors.surfaceAlt
 
         }
 
