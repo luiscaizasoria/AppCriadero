@@ -7,14 +7,16 @@ import {
     View,
     Text,
     ScrollView,
-    TouchableOpacity,
-    StyleSheet,
-    ActivityIndicator
+    StyleSheet
 } from 'react-native';
 
 import {
     useFocusEffect
 } from '@react-navigation/native';
+
+import {
+    useSafeAreaInsets
+} from 'react-native-safe-area-context';
 
 import {
     obtenerResumenFinanciero,
@@ -23,14 +25,66 @@ import {
     obtenerConsolidadoMensual
 } from '../repositories/FinanzasRepository';
 
+import FondoPantalla from '../components/FondoPantalla';
+import PantallaHeader from '../components/PantallaHeader';
+import BarraEstado from '../components/BarraEstado';
+import Tarjeta from '../components/Tarjeta';
+import TituloSeccion from '../components/TituloSeccion';
+import Chip from '../components/Chip';
+import Icono from '../components/Icono';
+import Pulsable from '../components/Pulsable';
+import Fab from '../components/Fab';
+import EstadoCarga from '../components/EstadoCarga';
+import EstadoError from '../components/EstadoError';
+import EstadoVacio from '../components/EstadoVacio';
+
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    radii,
+    spacing,
+    typography
+} from '../theme';
+
+
+const PERIODOS = [
+    {
+        id:'MES',
+        label:'Este mes'
+    },
+    {
+        id:'ANIO',
+        label:'Este año'
+    },
+    {
+        id:'TODO',
+        label:'Todo'
+    }
+];
+
+
+const FILTROS = [
+    {
+        id:'TODOS',
+        text:'Todos'
+    },
+    {
+        id:'INGRESO',
+        text:'Ingresos'
+    },
+    {
+        id:'EGRESO',
+        text:'Egresos'
+    }
+];
 
 
 export default function FinanzasScreen({
     navigation
 }) {
+
+    const insets =
+        useSafeAreaInsets();
+
 
     const [
         resumen,
@@ -78,6 +132,12 @@ export default function FinanzasScreen({
     ] = useState(true);
 
 
+    const [
+        errorCarga,
+        setErrorCarga
+    ] = useState(false);
+
+
 
     const cargar =
         async () => {
@@ -86,6 +146,10 @@ export default function FinanzasScreen({
 
                 setLoading(
                     true
+                );
+
+                setErrorCarga(
+                    false
                 );
 
 
@@ -141,6 +205,10 @@ export default function FinanzasScreen({
                     error
                 );
 
+                setErrorCarga(
+                    true
+                );
+
             }
             finally{
 
@@ -171,45 +239,6 @@ export default function FinanzasScreen({
 
 
 
-    if(
-        loading
-    ){
-
-        return (
-
-            <View
-                style={
-                    styles.center
-                }
-            >
-
-                <ActivityIndicator
-
-                    size="large"
-
-                    color={
-                        COLORS.primary
-                    }
-
-                />
-
-
-                <Text
-                    style={
-                        styles.loadingText
-                    }
-                >
-                    Cargando finanzas...
-                </Text>
-
-            </View>
-
-        );
-
-    }
-
-
-
     const lista =
         filtro === 'TODOS'
             ?
@@ -235,692 +264,896 @@ export default function FinanzasScreen({
         );
 
 
+    const contenido = () => {
 
-    return (
+        if(
+            loading
+        ){
 
-        <ScrollView
+            return (
 
-            style={
-                styles.container
-            }
+                <EstadoCarga
+                    mensaje="Cargando finanzas..."
+                />
 
-            contentContainerStyle={
-                styles.content
-            }
+            );
 
-        >
-
-            <Text
-                style={
-                    styles.title
-                }
-            >
-                💰 Finanzas
-            </Text>
+        }
 
 
+        if(
+            errorCarga
+        ){
 
-            <View
-                style={
-                    styles.periodTabs
-                }
-            >
+            return (
 
-                {
-                    [
-                        {
-                            id:'MES',
-                            label:'Este mes'
-                        },
-                        {
-                            id:'ANIO',
-                            label:'Este año'
-                        },
-                        {
-                            id:'TODO',
-                            label:'Todo'
+                <EstadoError
+                    titulo="No fue posible cargar las finanzas."
+                    mensaje="Revisa tu conexión e inténtalo de nuevo."
+                    onReintentar={
+                        cargar
+                    }
+                />
+
+            );
+
+        }
+
+
+        return (
+
+            <>
+
+                <View
+                    style={
+                        styles.summaryRow
+                    }
+                >
+
+                    <SummaryCard
+
+                        label="Ingresos"
+
+                        icono="trending-up-outline"
+
+                        fondo={
+                            colors.success
                         }
-                    ]
-                    .map(
-                        item => (
 
-                            <TouchableOpacity
+                        value={
+                            resumen.ingresos
+                        }
 
-                                key={
-                                    item.id
-                                }
+                        testID="finanzas-ingresos"
 
-                                style={[
-                                    styles.periodTab,
+                    />
 
-                                    periodo === item.id &&
-                                    styles.periodTabActive
-                                ]}
 
-                                onPress={() =>
-                                    setPeriodo(
-                                        item.id
-                                    )
-                                }
+                    <SummaryCard
 
-                            >
+                        label="Egresos"
 
-                                <Text
-                                    style={[
-                                        styles.periodTabText,
+                        icono="trending-down-outline"
 
-                                        periodo === item.id &&
-                                        styles.periodTabTextActive
-                                    ]}
-                                >
+                        fondo={
+                            colors.danger
+                        }
 
-                                    {item.label}
+                        value={
+                            resumen.egresos
+                        }
 
-                                </Text>
+                        testID="finanzas-egresos"
 
-                            </TouchableOpacity>
+                    />
 
-                        )
-                    )
-                }
-
-            </View>
+                </View>
 
 
 
-            <View
-                style={
-                    styles.summaryRow
-                }
-            >
-
-                <SummaryCard
-
-                    label="Ingresos"
-
-                    value={
-                        resumen.ingresos
-                    }
-
-                    valueStyle={
-                        styles.income
-                    }
-
-                />
-
-
-                <SummaryCard
-
-                    label="Egresos"
-
-                    value={
-                        resumen.egresos
-                    }
-
-                    valueStyle={
-                        styles.expense
-                    }
-
-                />
-
-            </View>
-
-
-
-            <View
-                style={
-                    styles.card
-                }
-            >
-
-                <Text
+                <View
                     style={
-                        styles.cardLabel
+                        styles.balanceCard
                     }
-                >
-                    Balance
-                </Text>
-
-
-                <Text
-                    style={
-                        styles.utility
-                    }
+                    testID="finanzas-balance"
                 >
 
-                    $
+                    <View
+                        style={
+                            styles.balanceEtiqueta
+                        }
+                    >
+
+                        <Icono
+                            nombre="wallet-outline"
+                            tamano={22}
+                            color={colors.white}
+                            style={
+                                styles.iconoEtiqueta
+                            }
+                        />
+
+                        <Text
+                            style={
+                                styles.cardLabel
+                            }
+                        >
+                            Balance
+                        </Text>
+
+                    </View>
+
+
+                    <Text
+                        style={
+                            styles.balanceValor
+                        }
+                        maxFontSizeMultiplier={1.3}
+                    >
+                        {
+                            `$${
+                                Number(
+                                    resumen.utilidad || 0
+                                )
+                                .toFixed(
+                                    2
+                                )
+                            }`
+                        }
+                    </Text>
+
+                </View>
+
+
+
+                <TituloSeccion
+                    icono="bar-chart-outline"
+                    indice={0}
+                >
+                    Consolidado por categoría
+                </TituloSeccion>
+
+
+                <Tarjeta>
+
+                    <View
+                        style={
+                            styles.grupoTitulo
+                        }
+                    >
+
+                        <Icono
+                            nombre="trending-up-outline"
+                            tamano={20}
+                            color={colors.successText}
+                            style={
+                                styles.iconoEtiqueta
+                            }
+                        />
+
+                        <Text
+                            style={[
+                                styles.consolidatedHeading,
+                                {
+                                    color:
+                                        colors.successText
+                                }
+                            ]}
+                        >
+                            Ingresos
+                        </Text>
+
+                    </View>
+
+
                     {
-                        Number(
-                            resumen.utilidad || 0
-                        )
-                        .toFixed(
-                            2
-                        )
-                    }
-
-                </Text>
-
-            </View>
-
-
-
-            <Text
-                style={
-                    styles.sectionTitle
-                }
-            >
-                Consolidado por categoría
-            </Text>
-
-
-
-            <View
-                style={
-                    styles.consolidatedCard
-                }
-            >
-
-                <Text
-                    style={
-                        styles.consolidatedHeading
-                    }
-                >
-                    Ingresos
-                </Text>
-
-
-                {
-                    ingresosCategorias.length === 0
-                        ?
-                        (
-                            <Text
-                                style={
-                                    styles.emptyLine
-                                }
-                            >
-                                Sin ingresos en el período.
-                            </Text>
-                        )
-                        :
-                        ingresosCategorias.map(
-                            item => (
-
-                                <ConsolidatedRow
-
-                                    key={
-                                        `I-${item.categoria}`
+                        ingresosCategorias.length === 0
+                            ?
+                            (
+                                <Text
+                                    style={
+                                        styles.emptyLine
                                     }
-
-                                    label={
-                                        nombreCategoria(
-                                            item.categoria
-                                        )
-                                    }
-
-                                    value={
-                                        item.total
-                                    }
-
-                                />
-
+                                >
+                                    Sin ingresos en el período.
+                                </Text>
                             )
-                        )
-                }
+                            :
+                            ingresosCategorias.map(
+                                item => (
 
+                                    <ConsolidatedRow
 
+                                        key={
+                                            `I-${item.categoria}`
+                                        }
 
-                <Text
-                    style={[
-                        styles.consolidatedHeading,
-                        styles.egressHeading
-                    ]}
-                >
-                    Egresos
-                </Text>
+                                        label={
+                                            nombreCategoria(
+                                                item.categoria
+                                            )
+                                        }
 
+                                        value={
+                                            item.total
+                                        }
 
-                {
-                    egresosCategorias.length === 0
-                        ?
-                        (
-                            <Text
-                                style={
-                                    styles.emptyLine
-                                }
-                            >
-                                Sin egresos en el período.
-                            </Text>
-                        )
-                        :
-                        egresosCategorias.map(
-                            item => (
+                                        maximo={
+                                            maximoGrupo(
+                                                ingresosCategorias
+                                            )
+                                        }
 
-                                <ConsolidatedRow
+                                        color={
+                                            colors.success
+                                        }
 
-                                    key={
-                                        `E-${item.categoria}`
-                                    }
+                                    />
 
-                                    label={
-                                        nombreCategoria(
-                                            item.categoria
-                                        )
-                                    }
-
-                                    value={
-                                        item.total
-                                    }
-
-                                />
-
+                                )
                             )
-                        )
-                }
-
-            </View>
-
-
-
-            <TouchableOpacity
-
-                style={
-                    styles.button
-                }
-
-                onPress={() =>
-                    navigation.navigate(
-                        'NuevoMovimientoFinanciero'
-                    )
-                }
-
-            >
-
-                <Text
-                    style={
-                        styles.buttonText
                     }
-                >
-                    ＋ Nuevo movimiento
-                </Text>
-
-            </TouchableOpacity>
 
 
 
-            <Text
-                style={
-                    styles.sectionTitle
-                }
-            >
-                Últimos meses
-            </Text>
+                    <View
+                        style={[
+                            styles.grupoTitulo,
+                            styles.egressHeading
+                        ]}
+                    >
 
+                        <Icono
+                            nombre="trending-down-outline"
+                            tamano={20}
+                            color={colors.dangerText}
+                            style={
+                                styles.iconoEtiqueta
+                            }
+                        />
 
-
-            <View
-                style={
-                    styles.consolidatedCard
-                }
-            >
-
-                {
-                    mensual.length === 0
-                        ?
-                        (
-                            <Text
-                                style={
-                                    styles.emptyLine
+                        <Text
+                            style={[
+                                styles.consolidatedHeading,
+                                {
+                                    color:
+                                        colors.dangerText
                                 }
-                            >
-                                Sin datos mensuales.
-                            </Text>
-                        )
-                        :
-                        mensual.map(
-                            item => {
+                            ]}
+                        >
+                            Egresos
+                        </Text>
 
-                                const balance =
-                                    Number(
-                                        item.ingresos || 0
-                                    )
-                                    -
-                                    Number(
-                                        item.egresos || 0
+                    </View>
+
+
+                    {
+                        egresosCategorias.length === 0
+                            ?
+                            (
+                                <Text
+                                    style={
+                                        styles.emptyLine
+                                    }
+                                >
+                                    Sin egresos en el período.
+                                </Text>
+                            )
+                            :
+                            egresosCategorias.map(
+                                item => (
+
+                                    <ConsolidatedRow
+
+                                        key={
+                                            `E-${item.categoria}`
+                                        }
+
+                                        label={
+                                            nombreCategoria(
+                                                item.categoria
+                                            )
+                                        }
+
+                                        value={
+                                            item.total
+                                        }
+
+                                        maximo={
+                                            maximoGrupo(
+                                                egresosCategorias
+                                            )
+                                        }
+
+                                        color={
+                                            colors.danger
+                                        }
+
+                                    />
+
+                                )
+                            )
+                    }
+
+                </Tarjeta>
+
+
+
+                <TituloSeccion
+                    icono="calendar-outline"
+                    indice={1}
+                >
+                    Últimos meses
+                </TituloSeccion>
+
+
+                <Tarjeta>
+
+                    {
+                        mensual.length === 0
+                            ?
+                            (
+                                <Text
+                                    style={
+                                        styles.emptyLine
+                                    }
+                                >
+                                    Sin datos mensuales.
+                                </Text>
+                            )
+                            :
+                            mensual.map(
+                                item => {
+
+                                    const balance =
+                                        Number(
+                                            item.ingresos || 0
+                                        )
+                                        -
+                                        Number(
+                                            item.egresos || 0
+                                        );
+
+
+                                    return (
+
+                                        <View
+
+                                            key={
+                                                item.periodo
+                                            }
+
+                                            style={
+                                                styles.monthRow
+                                            }
+
+                                        >
+
+                                            <Text
+                                                style={
+                                                    styles.monthLabel
+                                                }
+                                            >
+                                                {item.periodo}
+                                            </Text>
+
+
+                                            <View
+                                                style={
+                                                    styles.monthValor
+                                                }
+                                            >
+
+                                                <Icono
+                                                    nombre={
+                                                        balance >= 0
+                                                            ?
+                                                            'trending-up-outline'
+                                                            :
+                                                            'trending-down-outline'
+                                                    }
+                                                    tamano={18}
+                                                    color={
+                                                        balance >= 0
+                                                            ?
+                                                            colors.successText
+                                                            :
+                                                            colors.dangerText
+                                                    }
+                                                    style={
+                                                        styles.iconoEtiqueta
+                                                    }
+                                                />
+
+                                                <Text
+                                                    style={
+                                                        balance >= 0
+                                                            ?
+                                                            styles.monthPositive
+                                                            :
+                                                            styles.monthNegative
+                                                    }
+                                                >
+                                                    {
+                                                        `${
+                                                            balance >= 0
+                                                                ?
+                                                                '+'
+                                                                :
+                                                                '-'
+                                                        }$${
+                                                            Math.abs(
+                                                                balance
+                                                            )
+                                                            .toFixed(
+                                                                2
+                                                            )
+                                                        }`
+                                                    }
+                                                </Text>
+
+                                            </View>
+
+                                        </View>
+
                                     );
 
+                                }
+                            )
+                    }
+
+                </Tarjeta>
+
+
+
+                <View
+                    style={
+                        styles.tabs
+                    }
+                    accessibilityRole="tablist"
+                >
+
+                    {
+                        FILTROS.map(
+                            item => {
+
+                                const activo =
+                                    filtro === item.id;
 
                                 return (
 
-                                    <View
+                                    <Pulsable
 
                                         key={
-                                            item.periodo
+                                            item.id
                                         }
 
-                                        style={
-                                            styles.monthRow
+                                        testID={
+                                            `finanzas-filtro-${item.id.toLowerCase()}`
+                                        }
+
+                                        accessibilityRole="tab"
+
+                                        accessibilityState={{
+                                            selected: activo
+                                        }}
+
+                                        sinMinimo
+
+                                        style={[
+                                            styles.tab,
+
+                                            activo &&
+                                            styles.tabActive
+                                        ]}
+
+                                        onPress={() =>
+                                            setFiltro(
+                                                item.id
+                                            )
                                         }
 
                                     >
 
                                         <Text
-                                            style={
-                                                styles.monthLabel
-                                            }
-                                        >
-                                            {item.periodo}
-                                        </Text>
+                                            style={[
+                                                styles.tabText,
 
-
-                                        <Text
-                                            style={
-                                                balance >= 0
-                                                    ?
-                                                    styles.monthPositive
-                                                    :
-                                                    styles.monthNegative
-                                            }
+                                                activo &&
+                                                styles.tabTextActive
+                                            ]}
                                         >
 
-                                            {
-                                                balance >= 0
-                                                    ?
-                                                    '+'
-                                                    :
-                                                    '-'
-                                            }
-
-                                            $
-
-                                            {
-                                                Math.abs(
-                                                    balance
-                                                )
-                                                .toFixed(
-                                                    2
-                                                )
-                                            }
+                                            {item.text}
 
                                         </Text>
 
-                                    </View>
+                                    </Pulsable>
 
                                 );
 
                             }
                         )
-                }
+                    }
 
-            </View>
+                </View>
 
 
-
-            <View
-                style={
-                    styles.tabs
-                }
-            >
 
                 {
-                    [
-                        {
-                            id:'TODOS',
-                            text:'Todos'
-                        },
-                        {
-                            id:'INGRESO',
-                            text:'Ingresos'
-                        },
-                        {
-                            id:'EGRESO',
-                            text:'Egresos'
-                        }
-                    ]
-                    .map(
+                    lista.length === 0
+                        ?
+                        (
+                            <EstadoVacio
+                                icono="receipt-outline"
+                                titulo={
+                                    movimientos.length === 0
+                                        ?
+                                        'Aún no hay movimientos'
+                                        :
+                                        'Sin movimientos de este tipo'
+                                }
+                                mensaje={
+                                    movimientos.length === 0
+                                        ?
+                                        'Registra tu primer ingreso o egreso con el botón de abajo.'
+                                        :
+                                        'Prueba con otro filtro.'
+                                }
+                                testID="finanzas-vacio"
+                            />
+                        )
+                        :
+                        null
+                }
+
+
+                {
+                    lista.map(
                         item => (
 
-                            <TouchableOpacity
+                            <Tarjeta
 
                                 key={
                                     item.id
                                 }
 
-                                style={[
-                                    styles.tab,
+                                testID={
+                                    `movimiento-${item.id}`
+                                }
 
-                                    filtro === item.id &&
-                                    styles.tabActive
-                                ]}
+                                franja={
+                                    item.tipo === 'INGRESO'
+                                        ?
+                                        colors.success
+                                        :
+                                        colors.danger
+                                }
 
                                 onPress={() =>
-                                    setFiltro(
-                                        item.id
+                                    navigation.navigate(
+                                        'EditarMovimientoFinanciero',
+                                        {
+                                            movimientoId:
+                                                item.id
+                                        }
                                     )
                                 }
 
                             >
 
-                                <Text
-                                    style={[
-                                        styles.tabText,
-
-                                        filtro === item.id &&
-                                        styles.tabTextActive
-                                    ]}
-                                >
-
-                                    {item.text}
-
-                                </Text>
-
-                            </TouchableOpacity>
-
-                        )
-                    )
-                }
-
-            </View>
-
-
-
-            {
-                lista.map(
-                    item => (
-
-                        <TouchableOpacity
-
-                            key={
-                                item.id
-                            }
-
-                            style={
-                                styles.movement
-                            }
-
-                            activeOpacity={
-                                0.8
-                            }
-
-                            onPress={() =>
-                                navigation.navigate(
-                                    'EditarMovimientoFinanciero',
-                                    {
-                                        movimientoId:
-                                            item.id
-                                    }
-                                )
-                            }
-
-                        >
-
-                            <View
-                                style={
-                                    styles.movementHeader
-                                }
-                            >
-
-                                <Text
+                                <View
                                     style={
-                                        styles.date
+                                        styles.movementHeader
                                     }
                                 >
 
+                                    <Text
+                                        style={
+                                            styles.date
+                                        }
+                                    >
+
+                                        {
+                                            new Date(
+                                                item.fecha
+                                            )
+                                            .toLocaleString()
+                                        }
+
+                                    </Text>
+
+
                                     {
-                                        new Date(
-                                            item.fecha
-                                        )
-                                        .toLocaleString()
+                                        item.origen_tipo ===
+                                        'VENTA_AVE'
+                                            ?
+                                            (
+                                                <Chip
+                                                    texto="Venta"
+                                                    tono="info"
+                                                    icono="link-outline"
+                                                />
+                                            )
+                                            :
+                                            null
                                     }
 
-                                </Text>
+                                </View>
+
+
+
+                                <View
+                                    style={
+                                        styles.categoryRow
+                                    }
+                                >
+
+                                    <Icono
+                                        nombre={
+                                            item.tipo === 'INGRESO'
+                                                ?
+                                                'trending-up-outline'
+                                                :
+                                                'trending-down-outline'
+                                        }
+                                        tamano={20}
+                                        color={
+                                            item.tipo === 'INGRESO'
+                                                ?
+                                                colors.successText
+                                                :
+                                                colors.dangerText
+                                        }
+                                        style={
+                                            styles.iconoEtiqueta
+                                        }
+                                    />
+
+                                    <Text
+                                        style={
+                                            styles.category
+                                        }
+                                    >
+
+                                        {
+                                            nombreCategoria(
+                                                item.categoria
+                                            )
+                                        }
+
+                                    </Text>
+
+                                </View>
+
 
 
                                 {
-                                    item.origen_tipo ===
-                                    'VENTA_AVE'
+                                    item.ave_codigo
                                         ?
                                         (
-                                            <View
+                                            <Text
                                                 style={
-                                                    styles.linkedBadge
+                                                    styles.aveLinkText
                                                 }
                                             >
 
-                                                <Text
-                                                    style={
-                                                        styles.linkedBadgeText
-                                                    }
-                                                >
-                                                    🔗 Venta
-                                                </Text>
+                                                {`Ave: ${item.ave_codigo}`}
 
-                                            </View>
+                                            </Text>
                                         )
                                         :
                                         null
                                 }
 
-                            </View>
+
+
+                                <Text
+                                    style={
+                                        styles.detail
+                                    }
+                                >
+
+                                    {
+                                        item.detalle
+                                        ||
+                                        'Sin detalle'
+                                    }
+
+                                </Text>
 
 
 
-                            <Text
-                                style={
-                                    styles.category
-                                }
-                            >
+                                <View
+                                    style={
+                                        styles.movementBottom
+                                    }
+                                >
 
-                                {
-                                    item.tipo === 'INGRESO'
-                                        ?
-                                        '💰 '
-                                        :
-                                        '💸 '
-                                }
+                                    <Text
 
-                                {
-                                    nombreCategoria(
-                                        item.categoria
-                                    )
-                                }
+                                        style={
+                                            item.tipo === 'INGRESO'
+                                                ?
+                                                styles.movementIncome
+                                                :
+                                                styles.movementExpense
+                                        }
 
-                            </Text>
+                                        maxFontSizeMultiplier={1.3}
+
+                                    >
+
+                                        {
+                                            `${
+                                                item.tipo === 'INGRESO'
+                                                    ?
+                                                    '+'
+                                                    :
+                                                    '-'
+                                            }$${
+                                                Number(
+                                                    item.valor
+                                                )
+                                                .toFixed(
+                                                    2
+                                                )
+                                            }`
+                                        }
+
+                                    </Text>
 
 
+                                    <View
+                                        style={
+                                            styles.editHintRow
+                                        }
+                                    >
 
-                            {
-                                item.ave_codigo
-                                    ?
-                                    (
                                         <Text
                                             style={
-                                                styles.aveLinkText
+                                                styles.editHint
                                             }
                                         >
+                                            Ver / corregir
+                                        </Text>
 
-                                            Ave: {item.ave_codigo}
+                                        <Icono
+                                            nombre="siguiente"
+                                            tamano={16}
+                                            color={colors.textSecondary}
+                                        />
+
+                                    </View>
+
+                                </View>
+
+                            </Tarjeta>
+
+                        )
+                    )
+                }
+
+            </>
+
+        );
+
+    };
+
+
+
+    return (
+
+        <FondoPantalla>
+
+            <BarraEstado
+                estilo="light"
+                navigation={navigation}
+            />
+
+            <PantallaHeader
+                titulo="Finanzas"
+                insetSuperior={insets.top}
+                testID="finanzas-cabecera"
+            />
+
+            <ScrollView
+                contentContainerStyle={
+                    styles.content
+                }
+            >
+
+                <View
+                    style={
+                        styles.periodTabs
+                    }
+                    accessibilityRole="tablist"
+                >
+
+                    {
+                        PERIODOS
+                        .map(
+                            item => {
+
+                                const activo =
+                                    periodo === item.id;
+
+                                return (
+
+                                    <Pulsable
+
+                                        key={
+                                            item.id
+                                        }
+
+                                        testID={
+                                            `finanzas-periodo-${item.id.toLowerCase()}`
+                                        }
+
+                                        accessibilityRole="tab"
+
+                                        accessibilityState={{
+                                            selected: activo
+                                        }}
+
+                                        sinMinimo
+
+                                        style={[
+                                            styles.periodTab,
+
+                                            activo &&
+                                            styles.periodTabActive
+                                        ]}
+
+                                        onPress={() =>
+                                            setPeriodo(
+                                                item.id
+                                            )
+                                        }
+
+                                    >
+
+                                        <Text
+                                            style={[
+                                                styles.periodTabText,
+
+                                                activo &&
+                                                styles.periodTabTextActive
+                                            ]}
+                                        >
+
+                                            {item.label}
 
                                         </Text>
-                                    )
-                                    :
-                                    null
+
+                                    </Pulsable>
+
+                                );
+
                             }
+                        )
+                    }
+
+                </View>
 
 
+                {contenido()}
 
-                            <Text
-                                style={
-                                    styles.detail
-                                }
-                            >
-
-                                {
-                                    item.detalle
-                                    ||
-                                    'Sin detalle'
-                                }
-
-                            </Text>
+            </ScrollView>
 
 
-
-                            <View
-                                style={
-                                    styles.movementBottom
-                                }
-                            >
-
-                                <Text
-
-                                    style={
-                                        item.tipo === 'INGRESO'
-                                            ?
-                                            styles.movementIncome
-                                            :
-                                            styles.movementExpense
-                                    }
-
-                                >
-
-                                    {
-                                        item.tipo === 'INGRESO'
-                                            ?
-                                            '+'
-                                            :
-                                            '-'
-                                    }
-
-                                    $
-
-                                    {
-                                        Number(
-                                            item.valor
-                                        )
-                                        .toFixed(
-                                            2
-                                        )
-                                    }
-
-                                </Text>
-
-
-                                <Text
-                                    style={
-                                        styles.editHint
-                                    }
-                                >
-                                    Ver / corregir ›
-                                </Text>
-
-                            </View>
-
-                        </TouchableOpacity>
-
+            <Fab
+                titulo="Nuevo movimiento"
+                icono="add"
+                testID="fab-nuevo-movimiento"
+                onPress={() =>
+                    navigation.navigate(
+                        'NuevoMovimientoFinanciero'
                     )
-                )
-            }
+                }
+            />
 
-        </ScrollView>
+        </FondoPantalla>
 
     );
 
@@ -930,42 +1163,69 @@ export default function FinanzasScreen({
 
 function SummaryCard({
     label,
+    icono,
+    fondo,
     value,
-    valueStyle
+    testID
 }){
 
     return (
 
         <View
-            style={
-                styles.summaryCard
-            }
+            style={[
+                styles.summaryCard,
+                {
+                    backgroundColor:
+                        fondo
+                }
+            ]}
+            testID={testID}
         >
 
-            <Text
+            <View
                 style={
-                    styles.cardLabel
-                }
-            >
-                {label}
-            </Text>
-
-
-            <Text
-                style={
-                    valueStyle
+                    styles.balanceEtiqueta
                 }
             >
 
-                $
+                <Icono
+                    nombre={icono}
+                    tamano={20}
+                    color={colors.white}
+                    style={
+                        styles.iconoEtiqueta
+                    }
+                />
+
+                <Text
+                    style={
+                        styles.cardLabel
+                    }
+                >
+                    {label}
+                </Text>
+
+            </View>
+
+
+            <Text
+                style={
+                    styles.summaryValue
+                }
+                maxFontSizeMultiplier={1.3}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+            >
 
                 {
-                    Number(
-                        value || 0
-                    )
-                    .toFixed(
-                        2
-                    )
+                    `$${
+                        Number(
+                            value || 0
+                        )
+                        .toFixed(
+                            2
+                        )
+                    }`
                 }
 
             </Text>
@@ -978,10 +1238,44 @@ function SummaryCard({
 
 
 
+function maximoGrupo(
+    grupo
+){
+
+    return Math.max(
+        1,
+        ...grupo.map(
+            item =>
+                Number(
+                    item.total || 0
+                )
+        )
+    );
+
+}
+
+
+
 function ConsolidatedRow({
     label,
-    value
+    value,
+    maximo,
+    color
 }){
+
+    const proporcion =
+        Math.min(
+            1,
+            Math.max(
+                0,
+                Number(
+                    value || 0
+                )
+                /
+                maximo
+            )
+        );
+
 
     return (
 
@@ -991,33 +1285,62 @@ function ConsolidatedRow({
             }
         >
 
-            <Text
+            <View
                 style={
-                    styles.consolidatedLabel
-                }
-            >
-                {label}
-            </Text>
-
-
-            <Text
-                style={
-                    styles.consolidatedValue
+                    styles.consolidatedTexto
                 }
             >
 
-                $
+                <Text
+                    style={
+                        styles.consolidatedLabel
+                    }
+                >
+                    {label}
+                </Text>
 
-                {
-                    Number(
-                        value || 0
-                    )
-                    .toFixed(
-                        2
-                    )
+
+                <Text
+                    style={
+                        styles.consolidatedValue
+                    }
+                >
+
+                    {
+                        `$${
+                            Number(
+                                value || 0
+                            )
+                            .toFixed(
+                                2
+                            )
+                        }`
+                    }
+
+                </Text>
+
+            </View>
+
+
+            <View
+                style={
+                    styles.barraFondo
                 }
+            >
 
-            </Text>
+                <View
+                    style={[
+                        styles.barra,
+                        {
+                            width:
+                                `${(proporcion * 100).toFixed(2)}%`,
+                            backgroundColor:
+                                color
+                        }
+                    ]}
+                />
+
+            </View>
 
         </View>
 
@@ -1075,59 +1398,11 @@ function nombreCategoria(
 const styles =
 StyleSheet.create({
 
-    container:{
-
-        flex:1,
-
-        backgroundColor:
-            COLORS.background
-
-    },
-
-
     content:{
 
-        padding:16,
+        padding:spacing.pantalla,
 
-        paddingBottom:40
-
-    },
-
-
-    center:{
-
-        flex:1,
-
-        justifyContent:'center',
-
-        alignItems:'center',
-
-        backgroundColor:
-            COLORS.background
-
-    },
-
-
-    loadingText:{
-
-        marginTop:10,
-
-        color:
-            COLORS.textSecondary
-
-    },
-
-
-    title:{
-
-        fontSize:28,
-
-        fontWeight:'bold',
-
-        color:
-            COLORS.primary,
-
-        marginBottom:14
+        paddingBottom:112
 
     },
 
@@ -1137,13 +1412,18 @@ StyleSheet.create({
         flexDirection:'row',
 
         backgroundColor:
-            COLORS.card,
+            colors.surface,
 
-        borderRadius:13,
+        borderRadius:radii.md,
+
+        borderWidth:1,
+
+        borderColor:
+            colors.borderSoft,
 
         padding:4,
 
-        marginBottom:14
+        marginBottom:spacing.lg
 
     },
 
@@ -1152,11 +1432,13 @@ StyleSheet.create({
 
         flex:1,
 
+        minHeight:spacing.touchMin,
+
         alignItems:'center',
 
-        paddingVertical:9,
+        justifyContent:'center',
 
-        borderRadius:10
+        borderRadius:radii.sm
 
     },
 
@@ -1164,26 +1446,25 @@ StyleSheet.create({
     periodTabActive:{
 
         backgroundColor:
-            COLORS.primary
+            colors.primary
 
     },
 
 
     periodTabText:{
 
-        color:
-            COLORS.textSecondary,
+        ...typography.etiqueta,
 
-        fontSize:12
+        color:
+            colors.primaryDark
 
     },
 
 
     periodTabTextActive:{
 
-        color:'#fff',
-
-        fontWeight:'bold'
+        color:
+            colors.white
 
     },
 
@@ -1192,7 +1473,9 @@ StyleSheet.create({
 
         flexDirection:'row',
 
-        justifyContent:'space-between'
+        justifyContent:'space-between',
+
+        marginBottom:spacing.md
 
     },
 
@@ -1201,168 +1484,179 @@ StyleSheet.create({
 
         width:'48.5%',
 
-        backgroundColor:
-            COLORS.card,
+        padding:spacing.lg,
 
-        padding:16,
-
-        borderRadius:16,
-
-        marginBottom:12
+        borderRadius:radii.lg
 
     },
 
 
-    card:{
+    summaryValue:{
+
+        ...typography.cifra,
+
+        fontSize:28,
+
+        lineHeight:34,
+
+        color:
+            colors.white,
+
+        marginTop:spacing.xs
+
+    },
+
+
+    balanceCard:{
 
         backgroundColor:
-            COLORS.card,
+            colors.primary,
 
-        padding:18,
+        padding:spacing.lg,
 
-        borderRadius:16,
+        borderRadius:radii.lg,
 
-        marginBottom:12
+        marginBottom:spacing.sm
+
+    },
+
+
+    balanceEtiqueta:{
+
+        flexDirection:'row',
+
+        alignItems:'center'
+
+    },
+
+
+    balanceValor:{
+
+        ...typography.cifra,
+
+        color:
+            colors.white,
+
+        marginTop:spacing.xs
+
+    },
+
+
+    iconoEtiqueta:{
+
+        marginRight:spacing.xs
 
     },
 
 
     cardLabel:{
 
-        color:
-            COLORS.textSecondary
-
-    },
-
-
-    income:{
-
-        color:'#2a9d8f',
-
-        fontSize:21,
-
-        fontWeight:'bold',
-
-        marginTop:4
-
-    },
-
-
-    expense:{
-
-        color:'#d9534f',
-
-        fontSize:21,
-
-        fontWeight:'bold',
-
-        marginTop:4
-
-    },
-
-
-    utility:{
+        ...typography.etiqueta,
 
         color:
-            COLORS.primary,
-
-        fontSize:24,
-
-        fontWeight:'bold',
-
-        marginTop:4
+            colors.white
 
     },
 
 
-    sectionTitle:{
+    grupoTitulo:{
 
-        fontSize:18,
+        flexDirection:'row',
 
-        fontWeight:'bold',
+        alignItems:'center',
 
-        color:
-            COLORS.text,
-
-        marginTop:12,
-
-        marginBottom:8
-
-    },
-
-
-    consolidatedCard:{
-
-        backgroundColor:
-            COLORS.card,
-
-        borderRadius:14,
-
-        padding:14
+        marginBottom:spacing.xs
 
     },
 
 
     consolidatedHeading:{
 
-        fontWeight:'bold',
-
-        color:'#2a9d8f',
-
-        marginBottom:5
+        ...typography.subtitulo
 
     },
 
 
     egressHeading:{
 
-        color:'#d9534f',
-
-        marginTop:13
+        marginTop:spacing.lg
 
     },
 
 
     consolidatedRow:{
 
+        paddingVertical:spacing.sm
+
+    },
+
+
+    consolidatedTexto:{
+
         flexDirection:'row',
 
         justifyContent:'space-between',
 
-        paddingVertical:6,
-
-        borderBottomWidth:1,
-
-        borderBottomColor:
-            COLORS.border
+        alignItems:'center'
 
     },
 
 
     consolidatedLabel:{
 
+        ...typography.cuerpo,
+
         color:
-            COLORS.text
+            colors.text,
+
+        flex:1
 
     },
 
 
     consolidatedValue:{
 
-        color:
-            COLORS.text,
+        ...typography.cuerpoFuerte,
 
-        fontWeight:'600'
+        color:
+            colors.text
+
+    },
+
+
+    barraFondo:{
+
+        height:8,
+
+        borderRadius:4,
+
+        backgroundColor:
+            colors.primarySoft,
+
+        marginTop:spacing.xs,
+
+        overflow:'hidden'
+
+    },
+
+
+    barra:{
+
+        height:'100%',
+
+        borderRadius:4
 
     },
 
 
     emptyLine:{
 
-        color:
-            COLORS.textSecondary,
+        ...typography.cuerpo,
 
-        paddingVertical:5
+        color:
+            colors.textSecondary,
+
+        paddingVertical:spacing.xs
 
     },
 
@@ -1373,38 +1667,53 @@ StyleSheet.create({
 
         justifyContent:'space-between',
 
-        paddingVertical:7,
+        alignItems:'center',
+
+        minHeight:spacing.touchMin,
 
         borderBottomWidth:1,
 
         borderBottomColor:
-            COLORS.border
+            colors.borderSoft
+
+    },
+
+
+    monthValor:{
+
+        flexDirection:'row',
+
+        alignItems:'center'
 
     },
 
 
     monthLabel:{
 
+        ...typography.cuerpo,
+
         color:
-            COLORS.text
+            colors.text
 
     },
 
 
     monthPositive:{
 
-        color:'#2a9d8f',
+        ...typography.cuerpoFuerte,
 
-        fontWeight:'bold'
+        color:
+            colors.successText
 
     },
 
 
     monthNegative:{
 
-        color:'#d9534f',
+        ...typography.cuerpoFuerte,
 
-        fontWeight:'bold'
+        color:
+            colors.dangerText
 
     },
 
@@ -1414,13 +1723,18 @@ StyleSheet.create({
         flexDirection:'row',
 
         backgroundColor:
-            COLORS.card,
+            colors.surface,
 
-        borderRadius:14,
+        borderRadius:radii.md,
+
+        borderWidth:1,
+
+        borderColor:
+            colors.borderSoft,
 
         padding:4,
 
-        marginVertical:15
+        marginVertical:spacing.lg
 
     },
 
@@ -1429,11 +1743,13 @@ StyleSheet.create({
 
         flex:1,
 
-        padding:12,
+        minHeight:spacing.touchMin,
 
         alignItems:'center',
 
-        borderRadius:12
+        justifyContent:'center',
+
+        borderRadius:radii.sm
 
     },
 
@@ -1441,38 +1757,25 @@ StyleSheet.create({
     tabActive:{
 
         backgroundColor:
-            COLORS.primary
+            colors.primary
 
     },
 
 
     tabText:{
 
+        ...typography.etiqueta,
+
         color:
-            COLORS.textSecondary
+            colors.primaryDark
 
     },
 
 
     tabTextActive:{
 
-        color:'#fff',
-
-        fontWeight:'bold'
-
-    },
-
-
-    movement:{
-
-        backgroundColor:
-            COLORS.card,
-
-        padding:15,
-
-        borderRadius:14,
-
-        marginBottom:12
+        color:
+            colors.white
 
     },
 
@@ -1490,72 +1793,57 @@ StyleSheet.create({
 
     date:{
 
+        ...typography.secundario,
+
         color:
-            COLORS.textSecondary,
-
-        fontSize:12
+            colors.textSecondary
 
     },
 
 
-    linkedBadge:{
+    categoryRow:{
 
-        backgroundColor:'#e1f3ef',
+        flexDirection:'row',
 
-        paddingHorizontal:8,
+        alignItems:'center',
 
-        paddingVertical:3,
-
-        borderRadius:10
-
-    },
-
-
-    linkedBadgeText:{
-
-        color:'#347d70',
-
-        fontSize:11,
-
-        fontWeight:'bold'
+        marginTop:spacing.xs
 
     },
 
 
     category:{
 
-        fontWeight:'bold',
-
-        fontSize:16,
-
-        marginTop:5,
+        ...typography.subtitulo,
 
         color:
-            COLORS.text
+            colors.text,
+
+        flex:1
 
     },
 
 
     aveLinkText:{
 
+        ...typography.etiqueta,
+
         color:
-            COLORS.primary,
+            colors.primaryDark,
 
-        fontSize:12,
-
-        marginTop:3,
-
-        fontWeight:'600'
+        marginTop:spacing.xs
 
     },
 
 
     detail:{
 
-        color:
-            COLORS.text,
+        ...typography.cuerpo,
 
-        marginTop:5
+        color:
+            colors.text,
+
+        marginTop:spacing.xs
 
     },
 
@@ -1568,66 +1856,50 @@ StyleSheet.create({
 
         alignItems:'flex-end',
 
-        marginTop:8
+        marginTop:spacing.sm
 
     },
 
 
     movementIncome:{
 
-        color:'#2a9d8f',
+        ...typography.subtitulo,
 
-        fontSize:20,
+        fontSize:22,
 
-        fontWeight:'bold'
+        color:
+            colors.successText
 
     },
 
 
     movementExpense:{
 
-        color:'#d9534f',
+        ...typography.subtitulo,
 
-        fontSize:20,
+        fontSize:22,
 
-        fontWeight:'bold'
+        color:
+            colors.dangerText
+
+    },
+
+
+    editHintRow:{
+
+        flexDirection:'row',
+
+        alignItems:'center'
 
     },
 
 
     editHint:{
 
+        ...typography.secundario,
+
         color:
-            COLORS.textSecondary,
-
-        fontSize:12
-
-    },
-
-
-    button:{
-
-        backgroundColor:
-            COLORS.primary,
-
-        padding:16,
-
-        borderRadius:14,
-
-        alignItems:'center',
-
-        marginTop:15,
-
-        marginBottom:4
-
-    },
-
-
-    buttonText:{
-
-        color:'#fff',
-
-        fontWeight:'bold'
+            colors.textSecondary
 
     }
 

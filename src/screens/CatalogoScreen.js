@@ -1,15 +1,17 @@
 import React, {
     useCallback,
+    useRef,
     useState
 } from 'react';
 
 import {
     View,
     Text,
-    TouchableOpacity,
     StyleSheet,
     ScrollView,
-    Alert
+    Alert,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 
 import {
@@ -17,18 +19,31 @@ import {
 } from '@react-navigation/native';
 
 import {
-    Ionicons
-} from '@expo/vector-icons';
-
-import {
     obtenerCatalogoPorCodigo,
     obtenerItemsCatalogo,
-    eliminarItemCatalogo
+    eliminarItemCatalogo,
+    crearItemCatalogo
 } from '../repositories/ConfiguracionRepository';
 
+import FondoPantalla from '../components/FondoPantalla';
+import Tarjeta from '../components/Tarjeta';
+import TituloSeccion from '../components/TituloSeccion';
+import CampoTexto from '../components/CampoTexto';
+import Boton from '../components/Boton';
+import Pulsable from '../components/Pulsable';
+import Icono from '../components/Icono';
+import Aviso from '../components/Aviso';
+import useAvisoExito from '../components/useAvisoExito';
+import EstadoCarga from '../components/EstadoCarga';
+import EstadoError from '../components/EstadoError';
+import EstadoVacio from '../components/EstadoVacio';
+
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    radii,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -38,8 +53,7 @@ export default function CatalogoScreen({
 }) {
 
     const {
-        codigo,
-        titulo
+        codigo
     } = route.params;
 
 
@@ -57,12 +71,49 @@ export default function CatalogoScreen({
     ] = useState(null);
 
 
+    const [
+        cargando,
+        setCargando
+    ] = useState(true);
+
+
+    const [
+        errorCarga,
+        setErrorCarga
+    ] = useState(false);
+
+
+    const [
+        nombreNuevo,
+        setNombreNuevo
+    ] = useState('');
+
+
+    const [
+        anadiendo,
+        setAnadiendo
+    ] = useState(false);
+
+    const anadiendoRef = useRef(false);
+
+
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso
+    } = useAvisoExito();
+
+
 
     const cargar =
         async () => {
 
 
             try {
+
+                setErrorCarga(
+                    false
+                );
 
 
                 const catalogoData =
@@ -119,6 +170,18 @@ export default function CatalogoScreen({
                     []
                 );
 
+
+                setErrorCarga(
+                    true
+                );
+
+
+            }
+            finally{
+
+                setCargando(
+                    false
+                );
 
             }
 
@@ -220,298 +283,438 @@ export default function CatalogoScreen({
 
 
 
+    // Alta rápida: mismas validaciones, mismo código derivado y mismo repositorio que
+    // EditarCatalogoItemScreen (descripción vacía).
+    const altaRapida =
+        async () => {
+
+
+            // Evita doble envío (doble Enter) mientras se guarda.
+            if(
+                anadiendoRef.current
+            ){
+                return;
+            }
+
+            if(
+                !nombreNuevo.trim()
+            ){
+
+                Alert.alert(
+                    'Nombre requerido',
+                    'Ingrese un nombre.'
+                );
+
+                return;
+
+            }
+
+
+
+            try{
+
+
+                anadiendoRef.current = true;
+
+                setAnadiendo(
+                    true
+                );
+
+
+                await crearItemCatalogo({
+
+                    catalogoId:
+                        catalogo?.id,
+
+                    codigo:
+                        nombreNuevo
+                        .trim()
+                        .toUpperCase()
+                        .replace(
+                            /\s+/g,
+                            '_'
+                        ),
+
+                    nombre:
+                        nombreNuevo.trim(),
+
+                    descripcion:
+                        ''
+
+                });
+
+
+                setNombreNuevo(
+                    ''
+                );
+
+
+                mostrarAviso(
+                    'Guardado',
+                    'El elemento fue guardado correctamente.'
+                );
+
+
+                await cargar();
+
+
+            }
+            catch(error){
+
+
+                console.error(
+                    'Error guardando catálogo:',
+                    error
+                );
+
+
+                Alert.alert(
+                    'Error',
+                    'No fue posible guardar el elemento.'
+                );
+
+
+            }
+            finally{
+
+                anadiendoRef.current = false;
+
+                setAnadiendo(
+                    false
+                );
+
+            }
+
+
+        };
+
+
+
     return (
 
-        <ScrollView
-
+        <KeyboardAvoidingView
             style={
                 styles.container
             }
-
-            contentContainerStyle={
-                styles.content
+            behavior={
+                Platform.OS === 'ios'
+                    ? 'padding'
+                    : undefined
             }
-
         >
 
+            <FondoPantalla>
 
-            <Text
-                style={
-                    styles.title
-                }
-            >
-
-                {titulo}
-
-            </Text>
-
-
-
-            {
-                items.length === 0
-
-                ?
-
-                <View
-                    style={
-                        styles.empty
+                <ScrollView
+                    contentContainerStyle={
+                        styles.content
                     }
+                    keyboardShouldPersistTaps="handled"
                 >
 
-                    <Text
-                        style={
-                            styles.emptyText
-                        }
-                    >
-                        No existen registros.
-                    </Text>
-
-                </View>
-
-
-                :
-
-                items.map(
-                    item => (
-
-                        <View
-
-                            key={
-                                item.id
-                            }
-
-                            style={
-                                styles.card
-                            }
-
-                        >
+                    {
+                        cargando
+                            ? (
+                                <EstadoCarga
+                                    mensaje="Cargando elementos..."
+                                />
+                            )
+                            : null
+                    }
 
 
-                            <Text
-                                style={
-                                    styles.name
-                                }
-                            >
-
-                                {item.nombre}
-
-                            </Text>
-
-
-
-                            {
-                                item.descripcion
-                                &&
-                                <Text
-                                    style={
-                                        styles.description
+                    {
+                        !cargando && errorCarga
+                            ? (
+                                <EstadoError
+                                    titulo="No fue posible cargar el catálogo."
+                                    mensaje="Revisa tu conexión e inténtalo de nuevo."
+                                    onReintentar={
+                                        () => {
+                                            setCargando(
+                                                true
+                                            );
+                                            cargar();
+                                        }
                                     }
-                                >
-
-                                    {item.descripcion}
-
-                                </Text>
-                            }
+                                />
+                            )
+                            : null
+                    }
 
 
+                    {
+                        !cargando && !errorCarga
+                            ? (
+                                <>
 
-                            <View
-                                style={
-                                    styles.actions
-                                }
-                            >
+                                    <Tarjeta>
 
+                                        <TituloSeccion
+                                            icono="add"
+                                        >
+                                            Alta rápida
+                                        </TituloSeccion>
 
-                                <TouchableOpacity
-
-                                    style={[
-                                        styles.actionButton,
-                                        styles.edit
-                                    ]}
-
-                                    activeOpacity={
-                                        0.8
-                                    }
-
-                                    onPress={() =>
-
-                                        navigation.navigate(
-
-                                            'EditarCatalogoItem',
-
-                                            {
-
-                                                catalogoId:
-                                                    catalogo.id,
-
-                                                item
-
+                                        <View
+                                            style={
+                                                styles.altaFila
                                             }
+                                        >
 
+                                            <CampoTexto
+                                                accessibilityLabel="Nombre del nuevo elemento"
+                                                placeholder="Escribe un nombre"
+                                                value={
+                                                    nombreNuevo
+                                                }
+                                                onChangeText={
+                                                    setNombreNuevo
+                                                }
+                                                editable={
+                                                    !!catalogo
+                                                }
+                                                returnKeyType="done"
+                                                onSubmitEditing={
+                                                    altaRapida
+                                                }
+                                                style={
+                                                    styles.altaCampo
+                                                }
+                                                testID="catalogo-alta-rapida"
+                                            />
+
+                                            <Boton
+                                                titulo="Añadir"
+                                                icono="add"
+                                                onPress={
+                                                    altaRapida
+                                                }
+                                                disabled={
+                                                    !catalogo
+                                                }
+                                                atenuado={
+                                                    anadiendo
+                                                }
+                                                style={
+                                                    styles.altaBoton
+                                                }
+                                                testID="catalogo-alta-rapida-anadir"
+                                            />
+
+                                        </View>
+
+                                    </Tarjeta>
+
+
+                                    {
+                                        items.length === 0
+                                        ?
+                                        <EstadoVacio
+                                            icono="list-outline"
+                                            titulo="No existen registros."
+                                            mensaje="Añade el primer elemento con el campo de arriba."
+                                            testID="catalogo-vacio"
+                                        />
+                                        :
+                                        items.map(
+                                            item => (
+
+                                                <Tarjeta
+
+                                                    key={
+                                                        item.id
+                                                    }
+
+                                                >
+
+                                                    <Text
+                                                        style={
+                                                            styles.name
+                                                        }
+                                                    >
+
+                                                        {item.nombre}
+
+                                                    </Text>
+
+
+                                                    {
+                                                        item.descripcion
+                                                        &&
+                                                        <Text
+                                                            style={
+                                                                styles.description
+                                                            }
+                                                        >
+
+                                                            {item.descripcion}
+
+                                                        </Text>
+                                                    }
+
+
+                                                    <View
+                                                        style={
+                                                            styles.actions
+                                                        }
+                                                    >
+
+                                                        <Pulsable
+
+                                                            testID={
+                                                                `catalogo-editar-${item.id}`
+                                                            }
+
+                                                            accessibilityRole="button"
+
+                                                            sinMinimo
+
+                                                            style={[
+                                                                styles.actionButton,
+                                                                styles.edit
+                                                            ]}
+
+                                                            onPress={() =>
+
+                                                                navigation.navigate(
+
+                                                                    'EditarCatalogoItem',
+
+                                                                    {
+
+                                                                        catalogoId:
+                                                                            catalogo.id,
+
+                                                                        item
+
+                                                                    }
+
+                                                                )
+
+                                                            }
+
+                                                        >
+
+                                                            <Icono
+                                                                nombre="create-outline"
+                                                                tamano={18}
+                                                                color={colors.primaryDark}
+                                                            />
+
+                                                            <Text
+                                                                style={[
+                                                                    styles.actionText,
+                                                                    styles.editText
+                                                                ]}
+                                                            >
+                                                                Editar
+                                                            </Text>
+
+                                                        </Pulsable>
+
+
+                                                        <Pulsable
+
+                                                            testID={
+                                                                `catalogo-eliminar-${item.id}`
+                                                            }
+
+                                                            accessibilityRole="button"
+
+                                                            sinMinimo
+
+                                                            style={[
+                                                                styles.actionButton,
+                                                                styles.delete
+                                                            ]}
+
+                                                            onPress={() =>
+                                                                eliminar(
+                                                                    item
+                                                                )
+                                                            }
+
+                                                        >
+
+                                                            <Icono
+                                                                nombre="trash-outline"
+                                                                tamano={18}
+                                                                color={colors.white}
+                                                            />
+
+                                                            <Text
+                                                                style={[
+                                                                    styles.actionText,
+                                                                    styles.deleteText
+                                                                ]}
+                                                            >
+                                                                Eliminar
+                                                            </Text>
+
+                                                        </Pulsable>
+
+                                                    </View>
+
+                                                </Tarjeta>
+
+                                            )
                                         )
 
                                     }
 
-                                >
 
-
-                                    <Ionicons
-
-                                        name="create-outline"
-
-                                        size={
-                                            18
+                                    <Boton
+                                        titulo="Nuevo elemento"
+                                        icono="add"
+                                        variante="secundario"
+                                        disabled={
+                                            !catalogo
                                         }
+                                        onPress={() =>
 
-                                        color="#FFFFFF"
+                                            navigation.navigate(
 
+                                                'EditarCatalogoItem',
+
+                                                {
+
+                                                    catalogoId:
+                                                        catalogo?.id,
+
+                                                    item:
+                                                        null
+
+                                                }
+
+                                            )
+
+                                        }
+                                        testID="catalogo-nuevo-elemento"
                                     />
 
-
-                                    <Text
-                                        style={
-                                            styles.actionText
-                                        }
-                                    >
-
-                                        Editar
-
-                                    </Text>
-
-
-                                </TouchableOpacity>
-
-
-
-                                <TouchableOpacity
-
-                                    style={[
-                                        styles.actionButton,
-                                        styles.delete
-                                    ]}
-
-                                    activeOpacity={
-                                        0.8
-                                    }
-
-                                    onPress={() =>
-                                        eliminar(
-                                            item
-                                        )
-                                    }
-
-                                >
-
-
-                                    <Ionicons
-
-                                        name="trash-outline"
-
-                                        size={
-                                            18
-                                        }
-
-                                        color="#FFFFFF"
-
-                                    />
-
-
-                                    <Text
-                                        style={
-                                            styles.actionText
-                                        }
-                                    >
-
-                                        Eliminar
-
-                                    </Text>
-
-
-                                </TouchableOpacity>
-
-
-                            </View>
-
-
-                        </View>
-
-                    )
-                )
-
-            }
-
-
-
-            <TouchableOpacity
-
-                style={[
-                    styles.button,
-
-                    !catalogo
-                    &&
-                    styles.buttonDisabled
-                ]}
-
-                disabled={
-                    !catalogo
-                }
-
-                activeOpacity={
-                    0.8
-                }
-
-                onPress={() =>
-
-
-                    navigation.navigate(
-
-                        'EditarCatalogoItem',
-
-                        {
-
-                            catalogoId:
-                                catalogo?.id,
-
-                            item:
-                                null
-
-                        }
-
-                    )
-
-                }
-
-            >
-
-
-                <Ionicons
-
-                    name="add"
-
-                    size={
-                        20
+                                </>
+                            )
+                            : null
                     }
 
-                    color="#FFFFFF"
-
-                />
+                </ScrollView>
 
 
-                <Text
-                    style={
-                        styles.buttonText
-                    }
-                >
+                {aviso ? (
+                    <Aviso
+                        flotante
+                        tono="exito"
+                        duracion={0}
+                        titulo={aviso.titulo}
+                        mensaje={aviso.mensaje}
+                        onCerrar={cerrarAviso}
+                    />
+                ) : null}
 
-                    Nuevo elemento
+            </FondoPantalla>
 
-                </Text>
-
-
-            </TouchableOpacity>
-
-
-        </ScrollView>
+        </KeyboardAvoidingView>
 
     );
 
@@ -524,69 +727,67 @@ StyleSheet.create({
 
     container:{
 
-        flex:1,
-
-        backgroundColor:
-            COLORS.background
+        flex:1
 
     },
 
 
     content:{
 
-        padding:16,
+        padding:spacing.pantalla,
 
-        paddingBottom:40
-
-    },
-
-
-    title:{
-
-        fontSize:26,
-
-        fontWeight:'bold',
-
-        color:
-            COLORS.primary,
-
-        marginBottom:20
+        paddingBottom:spacing.xl
 
     },
 
 
-    card:{
+    altaFila:{
 
-        backgroundColor:
-            COLORS.card,
+        flexDirection:'row',
 
-        padding:16,
+        alignItems:'flex-start'
 
-        borderRadius:14,
+    },
 
-        marginBottom:12
+
+    altaCampo:{
+
+        flex:1,
+
+        marginBottom:0,
+
+        marginRight:spacing.sm
+
+    },
+
+
+    altaBoton:{
+
+        minHeight:54,
+
+        paddingHorizontal:spacing.md
 
     },
 
 
     name:{
 
-        fontSize:17,
-
-        fontWeight:'bold',
+        ...typography.subtitulo,
 
         color:
-            COLORS.text
+            colors.text
 
     },
 
 
     description:{
 
-        marginTop:5,
+        ...typography.cuerpo,
+
+        marginTop:spacing.xs,
 
         color:
-            COLORS.textSecondary
+            colors.textSecondary
 
     },
 
@@ -595,12 +796,14 @@ StyleSheet.create({
 
         flexDirection:'row',
 
-        marginTop:15
+        marginTop:spacing.md
 
     },
 
 
     actionButton:{
+
+        minHeight:spacing.touchMin,
 
         flexDirection:'row',
 
@@ -608,11 +811,11 @@ StyleSheet.create({
 
         justifyContent:'center',
 
-        paddingHorizontal:14,
+        paddingHorizontal:spacing.lg,
 
-        paddingVertical:10,
+        borderRadius:radii.pill,
 
-        borderRadius:10
+        borderWidth:2
 
     },
 
@@ -620,9 +823,12 @@ StyleSheet.create({
     edit:{
 
         backgroundColor:
-            '#4ea8de',
+            colors.surface,
 
-        marginRight:10
+        borderColor:
+            colors.primary,
+
+        marginRight:spacing.sm
 
     },
 
@@ -630,78 +836,35 @@ StyleSheet.create({
     delete:{
 
         backgroundColor:
-            '#d9534f'
+            colors.danger,
+
+        borderColor:
+            colors.danger
 
     },
 
 
     actionText:{
 
-        color:'#FFFFFF',
+        ...typography.etiqueta,
 
-        fontWeight:'bold',
-
-        marginLeft:6
+        marginLeft:spacing.xs
 
     },
 
 
-    empty:{
-
-        padding:30,
-
-        alignItems:'center',
-
-        backgroundColor:
-            COLORS.card,
-
-        borderRadius:14,
-
-        marginBottom:15
-
-    },
-
-
-    emptyText:{
+    editText:{
 
         color:
-            COLORS.textSecondary
+            colors.primaryDark
 
     },
 
 
-    button:{
+    deleteText:{
 
-        flexDirection:'row',
-
-        justifyContent:'center',
-
-        alignItems:'center',
-
-        backgroundColor:
-            COLORS.primary,
-
-        padding:16,
-
-        borderRadius:14
-
-    },
-
-
-    buttonDisabled:{
-
-        opacity:0.5
-
-    },
-
-
-    buttonText:{
-
-        color:'#FFFFFF',
-
-        fontWeight:'bold',
-
-        marginLeft:6
+        color:
+            colors.white
 
     }
 

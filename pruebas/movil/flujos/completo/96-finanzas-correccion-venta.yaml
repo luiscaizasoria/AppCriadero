@@ -46,7 +46,10 @@ tags:
 - extendedWaitUntil:
     visible: "Proceso completado"
     timeout: 20000
-- tapOn: "Aceptar"
+# C5: «Proceso completado» es un aviso (sin «Aceptar»); a los 1,8 s hace popToTop.
+- extendedWaitUntil:
+    notVisible: "Proceso completado"
+    timeout: 15000
 # La app vuelve a la raiz (pestaña Aves): esperar su pantalla antes de tocar la barra de pestañas
 - extendedWaitUntil:
     visible: ".*Vendidas.*"
@@ -111,7 +114,10 @@ tags:
     visible: "Venta corregida"
     timeout: 20000
 - assertVisible: "Se actualizaron la venta y sus movimientos financieros relacionados."
-- tapOn: "Aceptar"
+# C6: «Venta corregida» es un aviso (sin «Aceptar»); a los 1,8 s vuelve solo a Finanzas.
+- extendedWaitUntil:
+    notVisible: "Venta corregida"
+    timeout: 15000
 - extendedWaitUntil:
     visible: "Consolidado por categoría"
     timeout: 20000

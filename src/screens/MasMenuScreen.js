@@ -4,11 +4,8 @@ import React, {
 } from 'react';
 
 import {
-    View,
-    Text,
-    TouchableOpacity,
-    StyleSheet,
     ScrollView,
+    StyleSheet,
     Alert
 } from 'react-native';
 
@@ -16,10 +13,9 @@ import {
     useFocusEffect
 } from '@react-navigation/native';
 
-
 import {
-    COLORS
-} from '../config/constants';
+    useSafeAreaInsets
+} from 'react-native-safe-area-context';
 
 
 import {
@@ -32,14 +28,25 @@ import {
 } from '../repositories/AlertasRepository';
 
 
-import AlertBadge
-from '../components/AlertBadge';
+import FondoPantalla from '../components/FondoPantalla';
+import PantallaHeader from '../components/PantallaHeader';
+import BarraEstado from '../components/BarraEstado';
+import MasFila from '../components/MasFila';
+import AlertBadge from '../components/AlertBadge';
+
+import {
+    colors,
+    spacing
+} from '../theme';
 
 
 
 export default function MasMenuScreen({
     navigation
 }) {
+
+    const insets =
+        useSafeAreaInsets();
 
 
     const [
@@ -112,161 +119,139 @@ export default function MasMenuScreen({
 
     return (
 
+        <FondoPantalla>
 
-        <ScrollView
-            style={
-                styles.container
-            }
-            contentContainerStyle={
-                styles.content
-            }
-        >
-
-
-            <Text style={styles.title}>
-                Más
-            </Text>
-
-
-            <Text style={styles.subtitle}>
-                Administración y análisis del criadero
-            </Text>
-
-
-
-            <MenuCard
-                icon="⚙️"
-                title="Configuración"
-                description="Catálogos y parámetros del criadero"
-                onPress={() =>
-                    navigation.navigate(
-                        'Configuracion'
-                    )
-                }
+            <BarraEstado
+                estilo="light"
+                navigation={navigation}
             />
 
-
-            <MenuCard
-                icon="🥚"
-                title="Producción de huevos"
-                description="Estadísticas de postura y producción"
-                onPress={() =>
-                    navigation.navigate(
-                        'ProduccionHuevos'
-                    )
-                }
+            <PantallaHeader
+                titulo="Más"
+                subtitulo="Administración y análisis del criadero"
+                insetSuperior={insets.top}
+                testID="mas-cabecera"
             />
 
-
-            <MenuCard
-                icon="👥"
-                title="Clientes"
-                description="Compradores e historial de ventas por celular"
-                onPress={() =>
-                    navigation.navigate(
-                        'Clientes'
-                    )
+            <ScrollView
+                contentContainerStyle={
+                    styles.content
                 }
-            />
-
-
-            <MenuCard
-                icon="📊"
-                title="Reportes"
-                description="Indicadores y estadísticas del criadero"
-                onPress={() =>
-                    navigation.navigate(
-                        'Reportes'
-                    )
-                }
-            />
-
-
-            <MenuCard
-                icon="💾"
-                title="Respaldo"
-                description="Crear y compartir copia de seguridad"
-                onPress={() =>
-                    navigation.navigate(
-                        'Backup'
-                    )
-                }
-            />
-
-
-            <TouchableOpacity
-
-                style={styles.card}
-
-                onPress={() =>
-
-                    navigation.navigate(
-
-                        'Alertas'
-
-                    )
-
-                }
-
             >
 
-
-                <Text style={styles.icon}>
-                    🔔
-                </Text>
-
-
-                <View style={styles.alertContent}>
-
-
-                    <View style={styles.cardText}>
-
-
-                        <Text style={styles.cardTitle}>
-                            Alertas
-                        </Text>
-
-
-                        <Text style={styles.description}>
-                            Estado y pendientes del criadero
-                        </Text>
-
-
-                    </View>
-
-
-                    <AlertBadge
-
-                        cantidad={
-
-                            resumenAlertas.total
-
-                        }
-
-                    />
-
-
-                </View>
-
-
-            </TouchableOpacity>
-
-
-            {
-                /* Solo en modo API (excepcion aprobada a la regla de no tocar V1). */
-                USAR_API &&
-                <MenuCard
-                    icon="🚪"
-                    title="Cerrar sesión"
-                    description="Salir de la cuenta en este teléfono"
-                    onPress={
-                        confirmarCerrarSesion
+                <MasFila
+                    icono="settings-outline"
+                    indice={0}
+                    titulo="Configuración"
+                    descripcion="Catálogos y parámetros del criadero"
+                    testID="mas-configuracion"
+                    onPress={() =>
+                        navigation.navigate(
+                            'Configuracion'
+                        )
                     }
                 />
-            }
 
-        </ScrollView>
 
+                <MasFila
+                    icono="egg-outline"
+                    indice={1}
+                    titulo="Producción de huevos"
+                    descripcion="Estadísticas de postura y producción"
+                    testID="mas-produccion"
+                    onPress={() =>
+                        navigation.navigate(
+                            'ProduccionHuevos'
+                        )
+                    }
+                />
+
+
+                <MasFila
+                    icono="people-outline"
+                    indice={2}
+                    titulo="Clientes"
+                    descripcion="Compradores e historial de ventas por celular"
+                    testID="mas-clientes"
+                    onPress={() =>
+                        navigation.navigate(
+                            'Clientes'
+                        )
+                    }
+                />
+
+
+                <MasFila
+                    icono="bar-chart-outline"
+                    indice={4}
+                    titulo="Reportes"
+                    descripcion="Indicadores y estadísticas del criadero"
+                    testID="mas-reportes"
+                    onPress={() =>
+                        navigation.navigate(
+                            'Reportes'
+                        )
+                    }
+                />
+
+
+                {
+                    /* Respaldo (SQLite local): solo en modo SQLite; en modo API no aplica (aprobado por el usuario). */
+                    !USAR_API &&
+                    <MasFila
+                        icono="archive-outline"
+                        indice={0}
+                        titulo="Respaldo"
+                        descripcion="Crear y compartir copia de seguridad"
+                        testID="mas-respaldo"
+                        onPress={() =>
+                            navigation.navigate(
+                                'Backup'
+                            )
+                        }
+                    />
+                }
+
+
+                <MasFila
+                    icono="notifications-outline"
+                    indice={3}
+                    titulo="Alertas"
+                    descripcion="Estado y pendientes del criadero"
+                    testID="mas-alertas"
+                    onPress={() =>
+                        navigation.navigate(
+                            'Alertas'
+                        )
+                    }
+                    derecha={
+                        <AlertBadge
+                            cantidad={
+                                resumenAlertas.total
+                            }
+                        />
+                    }
+                />
+
+
+                {
+                    /* Solo en modo API (excepcion aprobada a la regla de no tocar V1). */
+                    USAR_API &&
+                    <MasFila
+                        icono="log-out-outline"
+                        color={colors.danger}
+                        titulo="Cerrar sesión"
+                        descripcion="Salir de la cuenta en este teléfono"
+                        testID="mas-cerrar-sesion"
+                        onPress={
+                            confirmarCerrarSesion
+                        }
+                    />
+                }
+
+            </ScrollView>
+
+        </FondoPantalla>
 
     );
 
@@ -301,178 +286,15 @@ function confirmarCerrarSesion(){
 }
 
 
-function MenuCard({
-    icon,
-    title,
-    description,
-    onPress
-}) {
-
-    return (
-
-        <TouchableOpacity
-            style={
-                styles.card
-            }
-            onPress={
-                onPress
-            }
-        >
-
-            <Text
-                style={
-                    styles.icon
-                }
-            >
-                {icon}
-            </Text>
-
-
-            <View
-                style={
-                    styles.cardText
-                }
-            >
-
-                <Text
-                    style={
-                        styles.cardTitle
-                    }
-                >
-                    {title}
-                </Text>
-
-
-                <Text
-                    style={
-                        styles.description
-                    }
-                >
-                    {description}
-                </Text>
-
-            </View>
-
-        </TouchableOpacity>
-
-    );
-
-}
-
-
 
 const styles =
 StyleSheet.create({
 
-
-    container:{
-
-        flex:1,
-
-        backgroundColor:
-            COLORS.background
-
-    },
-
-
     content:{
 
-        padding:16,
+        padding:spacing.pantalla,
 
-        paddingBottom:40
-
-    },
-
-
-    title:{
-
-        fontSize:28,
-
-        fontWeight:'bold',
-
-        color:
-            COLORS.primary
-
-    },
-
-
-    subtitle:{
-
-        marginTop:5,
-
-        color:
-            COLORS.textSecondary,
-
-        marginBottom:25
-
-    },
-
-
-    card:{
-
-        backgroundColor:
-            COLORS.card,
-
-        padding:18,
-
-        borderRadius:16,
-
-        flexDirection:'row',
-
-        alignItems:'center',
-
-        marginBottom:15
-
-    },
-
-
-    icon:{
-
-        fontSize:35,
-
-        marginRight:15
-
-    },
-
-
-    cardText:{
-
-        flex:1
-
-    },
-
-
-    alertContent:{
-
-        flex:1,
-
-        flexDirection:'row',
-
-        alignItems:'center',
-
-        justifyContent:'space-between'
-
-    },
-
-
-    cardTitle:{
-
-        fontSize:18,
-
-        fontWeight:'bold',
-
-        color:
-            COLORS.text
-
-    },
-
-
-    description:{
-
-        marginTop:5,
-
-        color:
-            COLORS.textSecondary
+        paddingBottom:spacing.xl
 
     }
 

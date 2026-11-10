@@ -7,10 +7,7 @@ import React, {
 import {
     View,
     Text,
-    TextInput,
     ScrollView,
-    TouchableOpacity,
-    ActivityIndicator,
     StyleSheet
 } from 'react-native';
 
@@ -22,9 +19,20 @@ import {
     obtenerClientes
 } from '../repositories/ClientesRepository';
 
+import FondoPantalla from '../components/FondoPantalla';
+import Tarjeta from '../components/Tarjeta';
+import CampoTexto from '../components/CampoTexto';
+import Avatar from '../components/Avatar';
+import Icono from '../components/Icono';
+import EstadoCarga from '../components/EstadoCarga';
+import EstadoError from '../components/EstadoError';
+import EstadoVacio from '../components/EstadoVacio';
+
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -187,315 +195,258 @@ export default function ClientesScreen({
 
     return (
 
-        <ScrollView
-            style={
-                styles.container
-            }
-            contentContainerStyle={
-                styles.content
-            }
-            keyboardShouldPersistTaps="handled"
-        >
+        <FondoPantalla>
 
-            <Text
-                style={
-                    styles.title
+            <ScrollView
+                contentContainerStyle={
+                    styles.content
                 }
+                keyboardShouldPersistTaps="handled"
             >
-                👥 Clientes
-            </Text>
+
+                <Text
+                    style={
+                        styles.subtitle
+                    }
+                >
+                    Compradores agrupados por número celular
+                </Text>
 
 
-            <Text
-                style={
-                    styles.subtitle
-                }
-            >
-                Compradores agrupados por número celular
-            </Text>
+                <CampoTexto
+                    icono="buscar"
+                    accessibilityLabel="Buscar clientes"
+                    value={
+                        busqueda
+                    }
+                    onChangeText={
+                        setBusqueda
+                    }
+                    placeholder="Buscar por nombre, celular o ciudad..."
+                    testID="clientes-busqueda"
+                />
 
 
-            <TextInput
-                style={
-                    styles.search
-                }
-                value={
-                    busqueda
-                }
-                onChangeText={
-                    setBusqueda
-                }
-                placeholder="Buscar por nombre, celular o ciudad..."
-            />
-
-
-            {
-                loading
-                &&
-                (
-                    <View
-                        style={
-                            styles.center
-                        }
-                    >
-
-                        <ActivityIndicator
-                            size="large"
-                            color={
-                                COLORS.primary
-                            }
+                {
+                    loading
+                    &&
+                    (
+                        <EstadoCarga
+                            mensaje="Cargando clientes..."
                         />
+                    )
+                }
 
-                        <Text
-                            style={
-                                styles.loadingText
+
+                {
+                    !loading
+                    &&
+                    error
+                    &&
+                    (
+                        <EstadoError
+                            titulo={
+                                error
                             }
-                        >
-                            Cargando clientes...
-                        </Text>
-
-                    </View>
-                )
-            }
-
-
-            {
-                !loading
-                &&
-                error
-                &&
-                (
-                    <View
-                        style={
-                            styles.messageCard
-                        }
-                    >
-
-                        <Text
-                            style={
-                                styles.errorText
-                            }
-                        >
-                            {error}
-                        </Text>
-
-                        <TouchableOpacity
-                            style={
-                                styles.retryButton
-                            }
-                            onPress={
+                            mensaje="Revisa tu conexión e inténtalo de nuevo."
+                            onReintentar={
                                 cargar
                             }
-                        >
+                        />
+                    )
+                }
 
-                            <Text
-                                style={
-                                    styles.retryText
+
+                {
+                    !loading
+                    &&
+                    !error
+                    &&
+                    filtrados.length === 0
+                    &&
+                    (
+                        <EstadoVacio
+                            icono="people-outline"
+                            titulo="No hay clientes para mostrar"
+                            mensaje="Los clientes aparecerán aquí cuando registres ventas con número celular."
+                            testID="clientes-vacio"
+                        />
+                    )
+                }
+
+
+                {
+                    !loading
+                    &&
+                    !error
+                    &&
+                    filtrados.map(
+                        (item, indice) => (
+
+                            <Tarjeta
+                                key={
+                                    item.celular
                                 }
-                            >
-                                Reintentar
-                            </Text>
-
-                        </TouchableOpacity>
-
-                    </View>
-                )
-            }
-
-
-            {
-                !loading
-                &&
-                !error
-                &&
-                filtrados.length === 0
-                &&
-                (
-                    <View
-                        style={
-                            styles.emptyCard
-                        }
-                    >
-
-                        <Text
-                            style={
-                                styles.emptyIcon
-                            }
-                        >
-                            👤
-                        </Text>
-
-                        <Text
-                            style={
-                                styles.emptyTitle
-                            }
-                        >
-                            No hay clientes para mostrar
-                        </Text>
-
-                        <Text
-                            style={
-                                styles.emptyText
-                            }
-                        >
-                            Los clientes aparecerán aquí cuando registres ventas con número celular.
-                        </Text>
-
-                    </View>
-                )
-            }
-
-
-            {
-                !loading
-                &&
-                !error
-                &&
-                filtrados.map(
-                    item => (
-
-                        <TouchableOpacity
-                            key={
-                                item.celular
-                            }
-                            style={
-                                styles.card
-                            }
-                            activeOpacity={0.8}
-                            onPress={() =>
-                                navigation.navigate(
-                                    'DetalleCliente',
-                                    {
-                                        celular:
-                                            item.celular
-                                    }
-                                )
-                            }
-                        >
-
-                            <View
-                                style={
-                                    styles.cardTop
+                                testID={
+                                    `cliente-${item.celular}`
                                 }
-                            >
-
-                                <View
-                                    style={
-                                        styles.avatar
-                                    }
-                                >
-
-                                    <Text
-                                        style={
-                                            styles.avatarText
-                                        }
-                                    >
-                                        👤
-                                    </Text>
-
-                                </View>
-
-
-                                <View
-                                    style={
-                                        styles.cardMain
-                                    }
-                                >
-
-                                    <Text
-                                        style={
-                                            styles.name
-                                        }
-                                    >
+                                onPress={() =>
+                                    navigation.navigate(
+                                        'DetalleCliente',
                                         {
-                                            item.nombre
-                                            ||
-                                            'Sin nombre'
+                                            celular:
+                                                item.celular
                                         }
-                                    </Text>
+                                    )
+                                }
+                            >
 
-                                    <Text
+                                <View
+                                    style={
+                                        styles.cardTop
+                                    }
+                                >
+
+                                    <Avatar
+                                        icono="person-circle-outline"
+                                        indice={indice}
+                                    />
+
+
+                                    <View
                                         style={
-                                            styles.phone
+                                            styles.cardMain
                                         }
                                     >
-                                        📱 {item.celular}
-                                    </Text>
 
-                                    {
-                                        item.ciudad
-                                        ?
-                                        (
+                                        <Text
+                                            style={
+                                                styles.name
+                                            }
+                                        >
+                                            {
+                                                item.nombre
+                                                ||
+                                                'Sin nombre'
+                                            }
+                                        </Text>
+
+                                        <View
+                                            style={
+                                                styles.dato
+                                            }
+                                        >
+
+                                            <Icono
+                                                nombre="call-outline"
+                                                tamano={16}
+                                                color={colors.textSecondary}
+                                                style={
+                                                    styles.datoIcono
+                                                }
+                                            />
+
                                             <Text
                                                 style={
-                                                    styles.city
+                                                    styles.phone
                                                 }
                                             >
-                                                📍 {item.ciudad}
+                                                {item.celular}
                                             </Text>
-                                        )
-                                        :
-                                        null
-                                    }
+
+                                        </View>
+
+                                        {
+                                            item.ciudad
+                                            ?
+                                            (
+                                                <View
+                                                    style={
+                                                        styles.dato
+                                                    }
+                                                >
+
+                                                    <Icono
+                                                        nombre="location-outline"
+                                                        tamano={16}
+                                                        color={colors.textSecondary}
+                                                        style={
+                                                            styles.datoIcono
+                                                        }
+                                                    />
+
+                                                    <Text
+                                                        style={
+                                                            styles.city
+                                                        }
+                                                    >
+                                                        {item.ciudad}
+                                                    </Text>
+
+                                                </View>
+                                            )
+                                            :
+                                            null
+                                        }
+
+                                    </View>
+
+
+                                    <Icono
+                                        nombre="siguiente"
+                                        tamano={22}
+                                        color={colors.textSecondary}
+                                    />
 
                                 </View>
 
 
-                                <Text
+                                <View
                                     style={
-                                        styles.arrow
+                                        styles.metrics
                                     }
                                 >
-                                    ›
-                                </Text>
 
-                            </View>
-
-
-                            <View
-                                style={
-                                    styles.metrics
-                                }
-                            >
-
-                                <Metric
-                                    label="Compras"
-                                    value={
-                                        String(
-                                            Number(
-                                                item.total_compras || 0
+                                    <Metric
+                                        label="Compras"
+                                        value={
+                                            String(
+                                                Number(
+                                                    item.total_compras || 0
+                                                )
                                             )
-                                        )
-                                    }
-                                />
+                                        }
+                                    />
 
-                                <Metric
-                                    label="Ventas"
-                                    value={
-                                        formatearDinero(
-                                            item.total_ventas
-                                        )
-                                    }
-                                />
+                                    <Metric
+                                        label="Ventas"
+                                        value={
+                                            formatearDinero(
+                                                item.total_ventas
+                                            )
+                                        }
+                                    />
 
-                                <Metric
-                                    label="Última"
-                                    value={
-                                        formatearFechaCorta(
-                                            item.ultima_compra
-                                        )
-                                    }
-                                />
+                                    <Metric
+                                        label="Última"
+                                        value={
+                                            formatearFechaCorta(
+                                                item.ultima_compra
+                                            )
+                                        }
+                                    />
 
-                            </View>
+                                </View>
 
-                        </TouchableOpacity>
+                            </Tarjeta>
 
+                        )
                     )
-                )
-            }
+                }
 
-        </ScrollView>
+            </ScrollView>
+
+        </FondoPantalla>
 
     );
 
@@ -601,103 +552,23 @@ function formatearFechaCorta(
 const styles =
 StyleSheet.create({
 
-    container:{
-
-        flex:1,
-
-        backgroundColor:
-            COLORS.background
-
-    },
-
-
     content:{
 
-        padding:16,
+        padding:spacing.pantalla,
 
-        paddingBottom:40
-
-    },
-
-
-    title:{
-
-        fontSize:28,
-
-        fontWeight:'bold',
-
-        color:
-            COLORS.primary
+        paddingBottom:spacing.xl
 
     },
 
 
     subtitle:{
 
-        marginTop:5,
+        ...typography.cuerpo,
 
-        marginBottom:18,
-
-        color:
-            COLORS.textSecondary
-
-    },
-
-
-    search:{
-
-        backgroundColor:
-            COLORS.card,
-
-        borderWidth:1,
-
-        borderColor:
-            COLORS.border,
-
-        borderRadius:14,
-
-        paddingHorizontal:14,
-
-        paddingVertical:12,
-
-        fontSize:15,
-
-        marginBottom:16
-
-    },
-
-
-    center:{
-
-        alignItems:'center',
-
-        paddingVertical:35
-
-    },
-
-
-    loadingText:{
-
-        marginTop:10,
+        marginBottom:spacing.lg,
 
         color:
-            COLORS.textSecondary
-
-    },
-
-
-    card:{
-
-        backgroundColor:
-            COLORS.card,
-
-        borderRadius:16,
-
-        padding:15,
-
-        marginBottom:12,
-
-        elevation:2
+            colors.textSecondary
 
     },
 
@@ -711,79 +582,59 @@ StyleSheet.create({
     },
 
 
-    avatar:{
-
-        width:48,
-
-        height:48,
-
-        borderRadius:24,
-
-        backgroundColor:'#e7f5f5',
-
-        justifyContent:'center',
-
-        alignItems:'center'
-
-    },
-
-
-    avatarText:{
-
-        fontSize:24
-
-    },
-
-
     cardMain:{
 
         flex:1,
 
-        marginLeft:12
+        marginLeft:spacing.md
 
     },
 
 
     name:{
 
-        fontSize:17,
-
-        fontWeight:'bold',
+        ...typography.subtitulo,
 
         color:
-            COLORS.text
+            colors.text
+
+    },
+
+
+    dato:{
+
+        flexDirection:'row',
+
+        alignItems:'center',
+
+        marginTop:2
+
+    },
+
+
+    datoIcono:{
+
+        marginRight:spacing.xs
 
     },
 
 
     phone:{
 
-        marginTop:3,
+        ...typography.secundario,
 
         color:
-            COLORS.textSecondary
+            colors.textSecondary
 
     },
 
 
     city:{
 
-        marginTop:2,
+        ...typography.secundario,
 
         color:
-            COLORS.textSecondary,
-
-        fontSize:13
-
-    },
-
-
-    arrow:{
-
-        fontSize:30,
-
-        color:
-            COLORS.primary
+            colors.textSecondary
 
     },
 
@@ -792,14 +643,14 @@ StyleSheet.create({
 
         flexDirection:'row',
 
-        marginTop:14,
+        marginTop:spacing.md,
 
-        paddingTop:12,
+        paddingTop:spacing.md,
 
         borderTopWidth:1,
 
         borderTopColor:
-            COLORS.border
+            colors.borderSoft
 
     },
 
@@ -815,123 +666,22 @@ StyleSheet.create({
 
     metricLabel:{
 
-        fontSize:11,
+        ...typography.secundario,
 
         color:
-            COLORS.textSecondary
+            colors.textSecondary
 
     },
 
 
     metricValue:{
 
-        marginTop:3,
+        ...typography.cuerpoFuerte,
 
-        fontSize:14,
-
-        fontWeight:'bold',
+        marginTop:2,
 
         color:
-            COLORS.text
-
-    },
-
-
-    messageCard:{
-
-        backgroundColor:
-            COLORS.card,
-
-        padding:18,
-
-        borderRadius:14
-
-    },
-
-
-    errorText:{
-
-        color:
-            COLORS.danger,
-
-        textAlign:'center'
-
-    },
-
-
-    retryButton:{
-
-        alignSelf:'center',
-
-        marginTop:12,
-
-        backgroundColor:
-            COLORS.primary,
-
-        paddingHorizontal:18,
-
-        paddingVertical:9,
-
-        borderRadius:10
-
-    },
-
-
-    retryText:{
-
-        color:
-            COLORS.white,
-
-        fontWeight:'bold'
-
-    },
-
-
-    emptyCard:{
-
-        backgroundColor:
-            COLORS.card,
-
-        borderRadius:16,
-
-        padding:24,
-
-        alignItems:'center'
-
-    },
-
-
-    emptyIcon:{
-
-        fontSize:38
-
-    },
-
-
-    emptyTitle:{
-
-        marginTop:8,
-
-        fontSize:17,
-
-        fontWeight:'bold',
-
-        color:
-            COLORS.text
-
-    },
-
-
-    emptyText:{
-
-        marginTop:5,
-
-        color:
-            COLORS.textSecondary,
-
-        textAlign:'center',
-
-        lineHeight:20
+            colors.text
 
     }
 

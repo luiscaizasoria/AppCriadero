@@ -33,7 +33,10 @@ tags:
 - extendedWaitUntil:
     visible: "Ave asignada"
     timeout: 20000
-- tapOn: "Aceptar"
+# C5: «Ave asignada» es un aviso (sin «Aceptar»); a los 1,8 s vuelve solo a la ficha de la jaula.
+- extendedWaitUntil:
+    notVisible: "Ave asignada"
+    timeout: 15000
 - tapOn: ".*Agregar"
 - tapOn: ".*AV-P.*"
 - extendedWaitUntil:
@@ -44,7 +47,9 @@ tags:
 - extendedWaitUntil:
     visible: "Ave asignada"
     timeout: 20000
-- tapOn: "Aceptar"
+- extendedWaitUntil:
+    notVisible: "Ave asignada"
+    timeout: 15000
 - pressKey: back
 - extendedWaitUntil:
     visible: "Ocupada"

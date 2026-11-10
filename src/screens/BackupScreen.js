@@ -5,11 +5,21 @@ import React, {
 import {
     View,
     Text,
-    TouchableOpacity,
+    ScrollView,
     StyleSheet,
     Alert,
     ActivityIndicator
 } from 'react-native';
+
+import FondoPantalla from '../components/FondoPantalla';
+import Tarjeta from '../components/Tarjeta';
+import Boton from '../components/Boton';
+
+import {
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 import {
     crearBackup,
@@ -17,10 +27,6 @@ import {
     seleccionarBackup,
     restaurarBackup
 } from '../repositories/BackupRepository';
-
-import {
-    COLORS
-} from '../config/constants';
 
 
 
@@ -435,20 +441,13 @@ export default function BackupScreen(){
 
     return(
 
-        <View
-            style={
+        <FondoPantalla>
+
+        <ScrollView
+            contentContainerStyle={
                 styles.container
             }
         >
-
-
-            <Text
-                style={
-                    styles.title
-                }
-            >
-                💾 Respaldo
-            </Text>
 
 
             <Text
@@ -461,7 +460,7 @@ export default function BackupScreen(){
 
 
 
-            <View
+            <Tarjeta
                 style={
                     styles.card
                 }
@@ -508,7 +507,7 @@ export default function BackupScreen(){
                 </Text>
 
 
-            </View>
+            </Tarjeta>
 
 
 
@@ -528,7 +527,7 @@ export default function BackupScreen(){
                             size="small"
 
                             color={
-                                COLORS.primary
+                                colors.primary
                             }
 
                         />
@@ -551,99 +550,38 @@ export default function BackupScreen(){
 
 
 
-            <TouchableOpacity
-
-                style={[
-                    styles.button,
-
-                    procesando &&
-                    styles.disabled
-                ]}
-
-                onPress={
-                    generar
-                }
-
-                disabled={
-                    procesando
-                }
-
-            >
-
-                <Text
-                    style={
-                        styles.buttonText
-                    }
-                >
-                    💾 Crear y guardar respaldo
-                </Text>
-
-            </TouchableOpacity>
+            <Boton
+                titulo="Crear y guardar respaldo"
+                icono="guardar"
+                onPress={generar}
+                atenuado={procesando}
+                style={styles.boton}
+            />
 
 
-
-            <TouchableOpacity
-
-                style={[
-                    styles.shareButton,
-
-                    procesando &&
-                    styles.disabled
-                ]}
-
-                onPress={
-                    compartir
-                }
-
-                disabled={
-                    procesando
-                }
-
-            >
-
-                <Text
-                    style={
-                        styles.buttonText
-                    }
-                >
-                    📤 Compartir respaldo
-                </Text>
-
-            </TouchableOpacity>
+            <Boton
+                titulo="Compartir respaldo"
+                variante="secundario"
+                icono="exportar"
+                onPress={compartir}
+                atenuado={procesando}
+                style={styles.boton}
+            />
 
 
-
-            <TouchableOpacity
-
-                style={[
-                    styles.restore,
-
-                    procesando &&
-                    styles.disabled
-                ]}
-
-                onPress={
-                    restaurar
-                }
-
-                disabled={
-                    procesando
-                }
-
-            >
-
-                <Text
-                    style={
-                        styles.buttonText
-                    }
-                >
-                    ♻️ Restaurar respaldo
-                </Text>
-
-            </TouchableOpacity>
+            <Boton
+                titulo="Restaurar respaldo"
+                variante="peligro"
+                icono="refresh-outline"
+                onPress={restaurar}
+                atenuado={procesando}
+                style={styles.boton}
+            />
 
 
-        </View>
+        </ScrollView>
+
+        </FondoPantalla>
 
     );
 
@@ -656,98 +594,72 @@ StyleSheet.create({
 
     container:{
 
-        flex:1,
+        padding:spacing.pantalla,
 
-        backgroundColor:
-            COLORS.background,
-
-        padding:20
-
-    },
-
-
-    title:{
-
-        fontSize:28,
-
-        fontWeight:'bold',
-
-        color:
-            COLORS.primary
+        paddingBottom:spacing.xl
 
     },
 
 
     subtitle:{
 
-        marginTop:8,
+        ...typography.cuerpo,
 
         color:
-            COLORS.textSecondary,
-
-        lineHeight:20
+            colors.textSecondary
 
     },
 
 
     card:{
 
-        backgroundColor:
-            COLORS.card,
-
-        padding:18,
-
-        borderRadius:16,
-
-        marginTop:20
+        marginTop:spacing.lg
 
     },
 
 
     cardTitle:{
 
-        fontSize:17,
-
-        fontWeight:'bold',
+        ...typography.tituloTarjeta,
 
         color:
-            COLORS.text
+            colors.text
 
     },
 
 
     cardDescription:{
 
-        marginTop:8,
+        ...typography.cuerpo,
+
+        marginTop:spacing.sm,
 
         color:
-            COLORS.textSecondary,
-
-        lineHeight:19
+            colors.textSecondary
 
     },
 
 
     label:{
 
-        marginTop:15,
+        ...typography.etiqueta,
 
-        fontWeight:'bold',
+        marginTop:spacing.md,
 
         color:
-            COLORS.text
+            colors.text
 
     },
 
 
     path:{
 
-        marginTop:5,
+        ...typography.secundario,
+
+        marginTop:spacing.xs,
 
         color:
-            COLORS.textSecondary,
-
-        fontSize:12
+            colors.textSecondary
 
     },
 
@@ -760,81 +672,26 @@ StyleSheet.create({
 
         alignItems:'center',
 
-        marginTop:20
+        marginBottom:spacing.sm
 
     },
 
 
     processingText:{
 
-        marginLeft:10,
+        ...typography.secundario,
+
+        marginLeft:spacing.sm,
 
         color:
-            COLORS.textSecondary
+            colors.textSecondary
 
     },
 
 
-    button:{
+    boton:{
 
-        backgroundColor:
-            COLORS.primary,
-
-        padding:16,
-
-        borderRadius:14,
-
-        marginTop:20,
-
-        alignItems:'center'
-
-    },
-
-
-    shareButton:{
-
-        backgroundColor:
-            '#4ea8de',
-
-        padding:16,
-
-        borderRadius:14,
-
-        marginTop:12,
-
-        alignItems:'center'
-
-    },
-
-
-    restore:{
-
-        backgroundColor:
-            '#d9534f',
-
-        padding:16,
-
-        borderRadius:14,
-
-        marginTop:12,
-
-        alignItems:'center'
-
-    },
-
-
-    disabled:{
-
-        opacity:0.45
-
-    },
-
-
-    buttonText:{
-
-        color:'#fff',
-
-        fontWeight:'bold'
+        marginTop:spacing.md
 
     }
 

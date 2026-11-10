@@ -55,7 +55,10 @@ tags:
 - extendedWaitUntil:
     visible: "Proceso completado"
     timeout: 20000
-- tapOn: "Aceptar"
+# C5: «Proceso completado» es un aviso (sin «Aceptar»); a los 1,8 s hace popToTop.
+- extendedWaitUntil:
+    notVisible: "Proceso completado"
+    timeout: 15000
 - extendedWaitUntil:
     visible: ".*Vendidas.*"
     timeout: 20000
@@ -100,7 +103,9 @@ tags:
 - extendedWaitUntil:
     visible: "Proceso completado"
     timeout: 20000
-- tapOn: "Aceptar"
+- extendedWaitUntil:
+    notVisible: "Proceso completado"
+    timeout: 15000
 - extendedWaitUntil:
     visible: ".*Vendidas.*"
     timeout: 20000

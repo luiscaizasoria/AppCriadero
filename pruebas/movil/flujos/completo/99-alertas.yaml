@@ -26,7 +26,10 @@ tags:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000
 - extendedWaitUntil:
-    visible: ".*🔔 3.*"
+    # C6: la insignia ya no es un Text «🔔 3»: campana (icono) + Text «3» con id y accessibilityLabel «3 alertas pendientes»
+    visible:
+      id: "alertas-insignia-texto"
+      text: "3"
     timeout: 25000
 - takeScreenshot: alertas-insignia
 - tapOn: "Alertas"

@@ -20,30 +20,51 @@ tags:
     timeout: 20000
 - takeScreenshot: catalogo-razas-cargado
 - scrollUntilVisible:
-    element: ".*Nuevo elemento.*"
+    element:
+      id: "catalogo-nuevo-elemento"
     timeout: 30000
-- tapOn: ".*Nuevo elemento.*"
-- tapOn: "Nombre"
+- tapOn:
+    id: "catalogo-nuevo-elemento"
+- extendedWaitUntil:
+    visible:
+      id: "catalogo-nombre"
+    timeout: 15000
+- tapOn:
+    id: "catalogo-nombre"
 - inputText: "Raza movil"
 - hideKeyboard
-- tapOn: ".*Guardar.*"
+- tapOn:
+    id: "guardar-catalogo-item"
 - extendedWaitUntil:
     visible: "Guardado"
     timeout: 20000
-- tapOn: "Aceptar"
+# C6: «Guardado» es un aviso (sin «Aceptar»); a los 1,8 s vuelve solo a la lista («Alta rápida» solo existe en ella).
+- extendedWaitUntil:
+    notVisible: "Guardado"
+    timeout: 15000
+# El ítem nuevo tiene orden 0 (catalogs.service.ts) y la lista ordena por COALESCE(orden,0), nombre (catalogs.repository.ts:82): queda PRIMERO, encima de «Kikiris» (orden 1), lejos del botón del final. La lista conserva el scroll abajo: se sube hasta verlo.
 - scrollUntilVisible:
     element: ".*Raza movil.*"
     direction: UP
     timeout: 30000
+# Se vuelve al botón del final para la segunda alta.
 - scrollUntilVisible:
-    element: ".*Nuevo elemento.*"
+    element:
+      id: "catalogo-nuevo-elemento"
     timeout: 30000
 - takeScreenshot: catalogo-alta
-- tapOn: ".*Nuevo elemento.*"
-- tapOn: "Nombre"
+- tapOn:
+    id: "catalogo-nuevo-elemento"
+- extendedWaitUntil:
+    visible:
+      id: "catalogo-nombre"
+    timeout: 15000
+- tapOn:
+    id: "catalogo-nombre"
 - inputText: "Raza movil"
 - hideKeyboard
-- tapOn: ".*Guardar.*"
+- tapOn:
+    id: "guardar-catalogo-item"
 - extendedWaitUntil:
     visible: "No fue posible guardar el elemento."
     timeout: 20000

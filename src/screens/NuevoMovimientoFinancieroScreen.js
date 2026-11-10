@@ -6,11 +6,11 @@ import React, {
 import {
     View,
     Text,
-    TextInput,
-    TouchableOpacity,
     StyleSheet,
     Alert,
-    ScrollView
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 
 
@@ -26,9 +26,21 @@ import {
 } from '../repositories/ConfiguracionRepository';
 
 
+import FondoPantalla from '../components/FondoPantalla';
+import Tarjeta from '../components/Tarjeta';
+import CampoTexto from '../components/CampoTexto';
+import OpcionPildora from '../components/OpcionPildora';
+import Boton from '../components/Boton';
+import BarraAccion from '../components/BarraAccion';
+import Aviso from '../components/Aviso';
+import useAvisoExito from '../components/useAvisoExito';
+
+
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -54,6 +66,13 @@ export default function NuevoMovimientoFinancieroScreen({
 
     const [guardando,setGuardando] =
         useState(false);
+
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso,
+        saliendo
+    } = useAvisoExito();
 
 
 
@@ -167,16 +186,11 @@ export default function NuevoMovimientoFinancieroScreen({
                 }
 
 
-                Alert.alert(
+                // Antes: Alert con «Aceptar» que hacía goBack. Ahora: aviso y vuelve solo.
+                mostrarAviso(
                     'Movimiento guardado',
                     'El movimiento financiero fue registrado correctamente.',
-                    [
-                        {
-                            text:'Aceptar',
-                            onPress:
-                                ()=>navigation.goBack()
-                        }
-                    ]
+                    ()=>navigation.goBack()
                 );
 
 
@@ -231,152 +245,149 @@ export default function NuevoMovimientoFinancieroScreen({
 
     return (
 
-        <ScrollView
+        <KeyboardAvoidingView
             style={styles.container}
-            contentContainerStyle={styles.content}
+            behavior={
+                Platform.OS === 'ios'
+                    ? 'padding'
+                    : undefined
+            }
         >
 
-            <Text style={styles.title}>
-                💰 Nuevo movimiento
-            </Text>
+            <FondoPantalla>
+
+                <ScrollView
+                    contentContainerStyle={styles.content}
+                    keyboardShouldPersistTaps="handled"
+                >
+
+                    <Tarjeta>
+
+                        <Text style={styles.label}>
+                            Tipo
+                        </Text>
 
 
-            <Text style={styles.label}>
-                Tipo
-            </Text>
-
-
-            <View style={styles.row}>
-
-                {
-                    ['INGRESO','EGRESO']
-                    .map(item=>(
-
-                        <TouchableOpacity
-                            key={item}
-                            style={[
-                                styles.option,
-                                tipo===item &&
-                                styles.selected
-                            ]}
-                            onPress={()=>setTipo(item)}
+                        <View
+                            style={styles.row}
+                            accessibilityRole="radiogroup"
                         >
 
-                            <Text
-                                style={[
-                                    styles.optionText,
-                                    tipo===item &&
-                                    styles.selectedText
-                                ]}
-                            >
-                                {
-                                    item==='INGRESO'
-                                    ?
-                                    '🟢 Ingreso'
-                                    :
-                                    '🔴 Egreso'
-                                }
-                            </Text>
+                            {
+                                ['INGRESO','EGRESO']
+                                .map(item=>(
 
-                        </TouchableOpacity>
+                                    <OpcionPildora
+                                        key={item}
+                                        testID={`movimiento-tipo-${item.toLowerCase()}`}
+                                        texto={
+                                            item==='INGRESO'
+                                            ?
+                                            'Ingreso'
+                                            :
+                                            'Egreso'
+                                        }
+                                        icono={
+                                            item==='INGRESO'
+                                            ?
+                                            'trending-up-outline'
+                                            :
+                                            'trending-down-outline'
+                                        }
+                                        activo={tipo===item}
+                                        onPress={()=>setTipo(item)}
+                                    />
 
-                    ))
-                }
-
-            </View>
-
-
-
-            <Text style={styles.label}>
-                Categoría
-            </Text>
-
-
-            <View style={styles.row}>
-
-                {
-                    categoriasFiltradas.map(item=>(
-
-                        <TouchableOpacity
-
-                            key={item.id}
-
-                            style={[
-                                styles.option,
-                                categoria?.id===item.id &&
-                                styles.selected
-                            ]}
-
-                            onPress={()=>
-                                setCategoria(item)
+                                ))
                             }
 
+                        </View>
+
+
+                        <Text style={styles.label}>
+                            Categoría
+                        </Text>
+
+
+                        <View
+                            style={styles.row}
+                            accessibilityRole="radiogroup"
                         >
 
-                            <Text
-                                style={[
-                                    styles.optionText,
-                                    categoria?.id===item.id &&
-                                    styles.selectedText
-                                ]}
-                            >
-                                {item.nombre}
-                            </Text>
+                            {
+                                categoriasFiltradas.map(item=>(
 
-                        </TouchableOpacity>
+                                    <OpcionPildora
+                                        key={item.id}
+                                        testID={`movimiento-categoria-${item.codigo}`}
+                                        texto={item.nombre}
+                                        activo={categoria?.id===item.id}
+                                        onPress={()=>
+                                            setCategoria(item)
+                                        }
+                                    />
 
-                    ))
-                }
+                                ))
+                            }
 
-            </View>
-
-
-
-            <Text style={styles.label}>
-                Valor
-            </Text>
+                        </View>
 
 
-            <TextInput
-                style={styles.input}
-                value={valor}
-                onChangeText={setValor}
-                keyboardType="numeric"
-            />
+                        <CampoTexto
+                            etiqueta="Valor"
+                            accessibilityLabel="Valor del movimiento"
+                            icono="cash-outline"
+                            value={valor}
+                            onChangeText={setValor}
+                            keyboardType="numeric"
+                            testID="movimiento-valor"
+                        />
 
 
+                        <CampoTexto
+                            etiqueta="Detalle"
+                            accessibilityLabel="Detalle del movimiento"
+                            icono="create-outline"
+                            value={detalle}
+                            onChangeText={setDetalle}
+                            multiline
+                            testID="movimiento-detalle"
+                        />
 
-            <Text style={styles.label}>
-                Detalle
-            </Text>
+                    </Tarjeta>
 
-
-            <TextInput
-                style={[
-                    styles.input,
-                    styles.area
-                ]}
-                value={detalle}
-                onChangeText={setDetalle}
-                multiline
-            />
+                </ScrollView>
 
 
+                <BarraAccion>
 
-            <TouchableOpacity
-                style={styles.button}
-                onPress={guardar}
-                disabled={guardando}
-            >
+                    <Boton
+                        titulo="Guardar movimiento"
+                        icono="guardar"
+                        onPress={guardar}
+                        atenuado={
+                            guardando || saliendo
+                        }
+                        testID="guardar-movimiento"
+                    />
 
-                <Text style={styles.buttonText}>
-                    💾 Guardar movimiento
-                </Text>
-
-            </TouchableOpacity>
+                </BarraAccion>
 
 
-        </ScrollView>
+                {aviso ? (
+                    <Aviso
+                        flotante
+                        tono="exito"
+                        duracion={0}
+                        titulo={aviso.titulo}
+                        mensaje={aviso.mensaje}
+                        onCerrar={cerrarAviso}
+                    />
+                ) : null}
+
+            </FondoPantalla>
+
+        </KeyboardAvoidingView>
 
     );
 
@@ -387,76 +398,24 @@ export default function NuevoMovimientoFinancieroScreen({
 const styles=StyleSheet.create({
 
 container:{
-    flex:1,
-    backgroundColor:COLORS.background
+    flex:1
 },
 
 content:{
-    padding:20
-},
-
-title:{
-    fontSize:26,
-    fontWeight:'bold',
-    color:COLORS.primary
+    padding:spacing.pantalla,
+    paddingBottom:spacing.xl
 },
 
 label:{
-    marginTop:20,
-    marginBottom:8,
-    fontWeight:'600'
+    ...typography.etiqueta,
+    color:colors.text,
+    marginBottom:spacing.xs
 },
 
 row:{
     flexDirection:'row',
-    flexWrap:'wrap'
-},
-
-option:{
-    backgroundColor:'#e8eeee',
-    padding:12,
-    borderRadius:20,
-    marginRight:8,
-    marginBottom:8
-},
-
-selected:{
-    backgroundColor:COLORS.primary
-},
-
-optionText:{
-    color:COLORS.text
-},
-
-selectedText:{
-    color:'#fff',
-    fontWeight:'bold'
-},
-
-input:{
-    backgroundColor:COLORS.card,
-    borderWidth:1,
-    borderColor:COLORS.border,
-    borderRadius:12,
-    padding:13
-},
-
-area:{
-    minHeight:100,
-    textAlignVertical:'top'
-},
-
-button:{
-    backgroundColor:COLORS.primary,
-    padding:16,
-    borderRadius:14,
-    marginTop:30,
-    alignItems:'center'
-},
-
-buttonText:{
-    color:'#fff',
-    fontWeight:'bold'
+    flexWrap:'wrap',
+    marginBottom:spacing.sm
 }
 
 });

@@ -26,13 +26,13 @@ tags:
 - extendedWaitUntil:
     visible: "Registro guardado"
     timeout: 15000
-- tapOn: "Aceptar"
+# C5: «Registro guardado» ya es un aviso no bloqueante (sin «Aceptar»); los datos se recargan solos.
 - extendedWaitUntil:
     visible: ".*En tratamiento.*"
     timeout: 20000
 - scrollUntilVisible:
     element: ".*Historial sanitario.*"
 - scrollUntilVisible:
-    element: ".*🔴 Coriza.*"
+    element: ".*Sin medicamento.*"
 - assertVisible: ".*Coriza.*"
 - takeScreenshot: salud-resultado

@@ -4,12 +4,11 @@ import React, {
 
 
 import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
+    ScrollView,
     StyleSheet,
-    Alert
+    Alert,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 
 
@@ -19,9 +18,19 @@ import {
 } from '../repositories/ConfiguracionRepository';
 
 
+import FondoPantalla from '../components/FondoPantalla';
+import Tarjeta from '../components/Tarjeta';
+import TituloSeccion from '../components/TituloSeccion';
+import CampoTexto from '../components/CampoTexto';
+import Boton from '../components/Boton';
+import BarraAccion from '../components/BarraAccion';
+import Aviso from '../components/Aviso';
+import useAvisoExito from '../components/useAvisoExito';
+
+
 import {
-    COLORS
-} from '../config/constants';
+    spacing
+} from '../theme';
 
 
 
@@ -60,6 +69,14 @@ export default function EditarCatalogoItemScreen({
         guardando,
         setGuardando
     ] = useState(false);
+
+
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso,
+        saliendo
+    } = useAvisoExito();
 
 
 
@@ -139,21 +156,15 @@ export default function EditarCatalogoItemScreen({
 
 
 
-                Alert.alert(
+                // Antes: Alert «Guardado» con «Aceptar» que hacía goBack. Ahora: aviso y vuelve solo.
+                mostrarAviso(
 
                     'Guardado',
 
                     'El elemento fue guardado correctamente.',
 
-                    [
-                        {
-                            text:'Aceptar',
-
-                            onPress:
-                                () =>
-                                navigation.goBack()
-                        }
-                    ]
+                    () =>
+                        navigation.goBack()
 
                 );
 
@@ -192,132 +203,117 @@ export default function EditarCatalogoItemScreen({
 
     return (
 
-        <View
+        <KeyboardAvoidingView
             style={
                 styles.container
             }
+            behavior={
+                Platform.OS === 'ios'
+                    ? 'padding'
+                    : undefined
+            }
         >
 
+            <FondoPantalla>
 
-            <Text
-                style={
-                    styles.title
-                }
-            >
-                {
-                    item
-                    ?
-                    'Editar elemento'
-                    :
-                    'Nuevo elemento'
-                }
-            </Text>
-
-
-
-
-            <Text
-                style={
-                    styles.label
-                }
-            >
-                Nombre
-            </Text>
-
-
-            <TextInput
-
-                style={
-                    styles.input
-                }
-
-                value={
-                    nombre
-                }
-
-                onChangeText={
-                    setNombre
-                }
-
-                placeholder="Nombre"
-
-            />
-
-
-
-
-            <Text
-                style={
-                    styles.label
-                }
-            >
-                Descripción
-            </Text>
-
-
-
-            <TextInput
-
-                style={[
-                    styles.input,
-                    styles.area
-                ]}
-
-                value={
-                    descripcion
-                }
-
-                onChangeText={
-                    setDescripcion
-                }
-
-                multiline
-
-                placeholder="Descripción"
-
-            />
-
-
-
-
-
-            <TouchableOpacity
-
-                style={
-                    styles.button
-                }
-
-                onPress={
-                    guardar
-                }
-
-                disabled={
-                    guardando
-                }
-
-            >
-
-                <Text
-                    style={
-                        styles.buttonText
+                <ScrollView
+                    contentContainerStyle={
+                        styles.content
                     }
+                    keyboardShouldPersistTaps="handled"
                 >
 
-                    {
-                        guardando
-                        ?
-                        'Guardando...'
-                        :
-                        '💾 Guardar'
-                    }
+                    <Tarjeta>
 
-                </Text>
+                        <TituloSeccion
+                            icono={
+                                item
+                                    ? 'create-outline'
+                                    : 'add'
+                            }
+                        >
+                            {
+                                item
+                                ?
+                                'Editar elemento'
+                                :
+                                'Nuevo elemento'
+                            }
+                        </TituloSeccion>
 
 
-            </TouchableOpacity>
+                        <CampoTexto
+                            etiqueta="Nombre"
+                            accessibilityLabel="Nombre del elemento"
+                            placeholder="Nombre"
+                            value={
+                                nombre
+                            }
+                            onChangeText={
+                                setNombre
+                            }
+                            testID="catalogo-nombre"
+                        />
 
 
-        </View>
+                        <CampoTexto
+                            etiqueta="Descripción"
+                            accessibilityLabel="Descripción del elemento"
+                            placeholder="Descripción"
+                            value={
+                                descripcion
+                            }
+                            onChangeText={
+                                setDescripcion
+                            }
+                            multiline
+                            testID="catalogo-descripcion"
+                        />
+
+                    </Tarjeta>
+
+                </ScrollView>
+
+
+                <BarraAccion>
+
+                    <Boton
+                        titulo={
+                            guardando
+                                ? 'Guardando...'
+                                : 'Guardar'
+                        }
+                        icono={
+                            guardando
+                                ? undefined
+                                : 'guardar'
+                        }
+                        onPress={
+                            guardar
+                        }
+                        atenuado={
+                            guardando || saliendo
+                        }
+                        testID="guardar-catalogo-item"
+                    />
+
+                </BarraAccion>
+
+
+                {aviso ? (
+                    <Aviso
+                        flotante
+                        tono="exito"
+                        duracion={0}
+                        titulo={aviso.titulo}
+                        mensaje={aviso.mensaje}
+                        onCerrar={cerrarAviso}
+                    />
+                ) : null}
+
+            </FondoPantalla>
+
+        </KeyboardAvoidingView>
 
     );
 
@@ -332,87 +328,16 @@ StyleSheet.create({
 
     container:{
 
-        flex:1,
-
-        backgroundColor:
-            COLORS.background,
-
-        padding:20
+        flex:1
 
     },
 
 
-    title:{
+    content:{
 
-        fontSize:26,
+        padding:spacing.pantalla,
 
-        fontWeight:'bold',
-
-        color:
-            COLORS.primary
-
-    },
-
-
-    label:{
-
-        marginTop:20,
-
-        marginBottom:8,
-
-        fontWeight:'600'
-
-    },
-
-
-    input:{
-
-        backgroundColor:
-            COLORS.card,
-
-        borderRadius:12,
-
-        padding:14,
-
-        borderWidth:1,
-
-        borderColor:
-            COLORS.border
-
-    },
-
-
-    area:{
-
-        minHeight:100,
-
-        textAlignVertical:
-            'top'
-
-    },
-
-
-    button:{
-
-        marginTop:30,
-
-        backgroundColor:
-            COLORS.primary,
-
-        padding:16,
-
-        borderRadius:14,
-
-        alignItems:'center'
-
-    },
-
-
-    buttonText:{
-
-        color:'#fff',
-
-        fontWeight:'bold'
+        paddingBottom:spacing.xl
 
     }
 

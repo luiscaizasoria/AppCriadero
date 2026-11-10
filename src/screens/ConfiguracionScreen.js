@@ -2,16 +2,21 @@ import React from 'react';
 
 
 import {
-    View,
+    ScrollView,
     Text,
-    TouchableOpacity,
     StyleSheet
 } from 'react-native';
 
 
+import FondoPantalla from '../components/FondoPantalla';
+import MasFila from '../components/MasFila';
+
+
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -20,36 +25,43 @@ export default function ConfiguracionScreen({
 }) {
 
 
+    // Los emojis de los títulos pasan a iconos (el `titulo` que recibe Catálogo ya no lleva emoji).
     const opciones = [
 
         {
-            titulo:'🐔 Razas',
-            codigo:'RAZAS'
+            titulo:'Razas',
+            codigo:'RAZAS',
+            icono:'paw-outline'
         },
 
         {
-            titulo:'🩺 Enfermedades',
-            codigo:'ENFERMEDADES'
+            titulo:'Enfermedades',
+            codigo:'ENFERMEDADES',
+            icono:'medkit-outline'
         },
 
         {
-            titulo:'💊 Medicamentos',
-            codigo:'MEDICAMENTOS'
+            titulo:'Medicamentos',
+            codigo:'MEDICAMENTOS',
+            icono:'medical-outline'
         },
 
         {
-            titulo:'🍚 Alimentos',
-            codigo:'ALIMENTOS'
+            titulo:'Alimentos',
+            codigo:'ALIMENTOS',
+            icono:'nutrition-outline'
         },
 
         {
-            titulo:'💧 Bebidas',
-            codigo:'BEBIDAS'
+            titulo:'Bebidas',
+            codigo:'BEBIDAS',
+            icono:'water-outline'
         },
 
         {
-            titulo:'💰 Categorías financieras',
-            codigo:'CATEGORIAS_FINANCIERAS'
+            titulo:'Categorías financieras',
+            codigo:'CATEGORIAS_FINANCIERAS',
+            icono:'cash-outline'
         }
 
     ];
@@ -58,83 +70,71 @@ export default function ConfiguracionScreen({
 
     return (
 
-        <View
-            style={
-                styles.container
-            }
-        >
+        <FondoPantalla>
 
-
-            <Text
-                style={
-                    styles.title
+            <ScrollView
+                contentContainerStyle={
+                    styles.content
                 }
             >
-                ⚙️ Configuración
-            </Text>
+
+                <Text
+                    style={
+                        styles.subtitle
+                    }
+                >
+                    Administración de catálogos del criadero
+                </Text>
 
 
+                {
+                    opciones.map(
+                        (item, indice) => (
 
-            <Text
-                style={
-                    styles.subtitle
-                }
-            >
-                Administración de catálogos del criadero
-            </Text>
+                            <MasFila
 
-
-
-
-            {
-                opciones.map(
-                    item => (
-
-                        <TouchableOpacity
-
-                            key={
-                                item.codigo
-                            }
-
-                            style={
-                                styles.card
-                            }
-
-                            onPress={() =>
-                                navigation.navigate(
-                                    'Catalogo',
-                                    {
-                                        codigo:
-                                            item.codigo,
-
-                                        titulo:
-                                            item.titulo
-                                    }
-                                )
-                            }
-
-                        >
-
-                            <Text
-                                style={
-                                    styles.cardText
+                                key={
+                                    item.codigo
                                 }
-                            >
-                                {
+
+                                icono={
+                                    item.icono
+                                }
+
+                                indice={
+                                    indice
+                                }
+
+                                titulo={
                                     item.titulo
                                 }
-                            </Text>
 
+                                testID={
+                                    `config-${item.codigo.toLowerCase()}`
+                                }
 
-                        </TouchableOpacity>
+                                onPress={() =>
+                                    navigation.navigate(
+                                        'Catalogo',
+                                        {
+                                            codigo:
+                                                item.codigo,
 
+                                            titulo:
+                                                item.titulo
+                                        }
+                                    )
+                                }
+
+                            />
+
+                        )
                     )
-                )
-            }
+                }
 
+            </ScrollView>
 
-
-        </View>
+        </FondoPantalla>
 
     );
 
@@ -142,68 +142,26 @@ export default function ConfiguracionScreen({
 
 
 
-
 const styles =
 StyleSheet.create({
 
-    container:{
+    content:{
 
-        flex:1,
+        padding:spacing.pantalla,
 
-        backgroundColor:
-            COLORS.background,
-
-        padding:16
-
-    },
-
-
-    title:{
-
-        fontSize:28,
-
-        fontWeight:'bold',
-
-        color:
-            COLORS.primary
+        paddingBottom:spacing.xl
 
     },
 
 
     subtitle:{
 
-        marginTop:8,
-
-        marginBottom:25,
+        ...typography.cuerpo,
 
         color:
-            COLORS.textSecondary
+            colors.textSecondary,
 
-    },
-
-
-    card:{
-
-        backgroundColor:
-            COLORS.card,
-
-        padding:18,
-
-        borderRadius:16,
-
-        marginBottom:12
-
-    },
-
-
-    cardText:{
-
-        fontSize:18,
-
-        fontWeight:'600',
-
-        color:
-            COLORS.text
+        marginBottom:spacing.lg
 
     }
 

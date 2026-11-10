@@ -42,7 +42,11 @@ tags:
 - extendedWaitUntil:
     visible: "Movimiento guardado"
     timeout: 20000
-- tapOn: "Aceptar"
+# C6: «Movimiento guardado» es un aviso (sin «Aceptar»); a los 1,8 s vuelve solo a Finanzas. Se espera a que
+# desaparezca porque el detalle escrito sigue visible en el formulario mientras dura.
+- extendedWaitUntil:
+    notVisible: "Movimiento guardado"
+    timeout: 15000
 - extendedWaitUntil:
     visible: ".*Ingreso manual uno.*"
     timeout: 20000
@@ -65,7 +69,10 @@ tags:
 - extendedWaitUntil:
     visible: "Movimiento guardado"
     timeout: 20000
-- tapOn: "Aceptar"
+# C6: aviso sin «Aceptar» (ver arriba).
+- extendedWaitUntil:
+    notVisible: "Movimiento guardado"
+    timeout: 15000
 - extendedWaitUntil:
     visible: ".*Egreso manual uno.*"
     timeout: 20000
@@ -125,7 +132,10 @@ tags:
 - extendedWaitUntil:
     visible: "Movimiento actualizado"
     timeout: 20000
-- tapOn: "Aceptar"
+# C6: aviso sin «Aceptar»; vuelve solo a Finanzas.
+- extendedWaitUntil:
+    notVisible: "Movimiento actualizado"
+    timeout: 15000
 - extendedWaitUntil:
     visible: "Consolidado por categoría"
     timeout: 20000

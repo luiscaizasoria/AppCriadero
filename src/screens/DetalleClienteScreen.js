@@ -8,7 +8,6 @@ import {
     Text,
     Image,
     ScrollView,
-    ActivityIndicator,
     StyleSheet
 } from 'react-native';
 
@@ -21,9 +20,20 @@ import {
     obtenerComprasCliente
 } from '../repositories/ClientesRepository';
 
+import FondoPantalla from '../components/FondoPantalla';
+import Tarjeta from '../components/Tarjeta';
+import TituloSeccion from '../components/TituloSeccion';
+import Avatar from '../components/Avatar';
+import Icono from '../components/Icono';
+import EstadoCarga from '../components/EstadoCarga';
+import EstadoError from '../components/EstadoError';
+import EstadoVacio from '../components/EstadoVacio';
+
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -54,6 +64,12 @@ export default function DetalleClienteScreen({
     ] = useState(true);
 
 
+    const [
+        errorCarga,
+        setErrorCarga
+    ] = useState(false);
+
+
     const cargar =
         async () => {
 
@@ -61,6 +77,10 @@ export default function DetalleClienteScreen({
 
                 setLoading(
                     true
+                );
+
+                setErrorCarga(
+                    false
                 );
 
 
@@ -98,6 +118,10 @@ export default function DetalleClienteScreen({
                     error
                 );
 
+                setErrorCarga(
+                    true
+                );
+
             }
             finally{
 
@@ -132,20 +156,36 @@ export default function DetalleClienteScreen({
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <ActivityIndicator
-                    size="large"
-                    color={
-                        COLORS.primary
+                <EstadoCarga
+                    mensaje="Cargando cliente..."
+                />
+
+            </FondoPantalla>
+
+        );
+
+    }
+
+
+    if(
+        errorCarga
+    ){
+
+        return (
+
+            <FondoPantalla>
+
+                <EstadoError
+                    titulo="No fue posible cargar el cliente."
+                    mensaje="Revisa tu conexión e inténtalo de nuevo."
+                    onReintentar={
+                        cargar
                     }
                 />
 
-            </View>
+            </FondoPantalla>
 
         );
 
@@ -158,21 +198,15 @@ export default function DetalleClienteScreen({
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <Text
-                    style={
-                        styles.notFound
-                    }
-                >
-                    Cliente no encontrado.
-                </Text>
+                <EstadoVacio
+                    icono="search-outline"
+                    titulo="Cliente no encontrado."
+                    testID="cliente-no-encontrado"
+                />
 
-            </View>
+            </FondoPantalla>
 
         );
 
@@ -181,277 +215,100 @@ export default function DetalleClienteScreen({
 
     return (
 
-        <ScrollView
-            style={
-                styles.container
-            }
-            contentContainerStyle={
-                styles.content
-            }
-        >
+        <FondoPantalla>
 
-            <View
-                style={
-                    styles.header
+            <ScrollView
+                contentContainerStyle={
+                    styles.content
                 }
             >
 
-                <View
-                    style={
-                        styles.avatar
-                    }
-                >
+                <Tarjeta>
 
-                    <Text
+                    <View
                         style={
-                            styles.avatarText
+                            styles.header
                         }
                     >
-                        👤
-                    </Text>
 
-                </View>
+                        <Avatar
+                            icono="person-circle-outline"
+                            tamano={72}
+                            indice={0}
+                        />
 
-
-                <View
-                    style={
-                        styles.headerInfo
-                    }
-                >
-
-                    <Text
-                        style={
-                            styles.title
-                        }
-                    >
-                        {
-                            cliente.nombre
-                            ||
-                            'Sin nombre'
-                        }
-                    </Text>
-
-                    <Text
-                        style={
-                            styles.phone
-                        }
-                    >
-                        📱 {cliente.celular}
-                    </Text>
-
-                    {
-                        cliente.ciudad
-                        ?
-                        (
-                            <Text
-                                style={
-                                    styles.city
-                                }
-                            >
-                                📍 {cliente.ciudad}
-                            </Text>
-                        )
-                        :
-                        null
-                    }
-
-                </View>
-
-            </View>
-
-
-            <View
-                style={
-                    styles.summaryCard
-                }
-            >
-
-                <SummaryMetric
-                    label="Compras"
-                    value={
-                        String(
-                            Number(
-                                cliente.total_compras || 0
-                            )
-                        )
-                    }
-                />
-
-                <SummaryMetric
-                    label="Total aves"
-                    value={
-                        formatearDinero(
-                            cliente.total_ventas
-                        )
-                    }
-                />
-
-                <SummaryMetric
-                    label="Envíos"
-                    value={
-                        formatearDinero(
-                            cliente.total_envios
-                        )
-                    }
-                />
-
-            </View>
-
-
-            <Text
-                style={
-                    styles.sectionTitle
-                }
-            >
-                🐔 Compras realizadas
-            </Text>
-
-
-            {
-                compras.map(
-                    item => (
 
                         <View
-                            key={
-                                item.venta_id
-                            }
                             style={
-                                styles.purchaseCard
+                                styles.headerInfo
                             }
                         >
 
+                            <Text
+                                style={
+                                    styles.title
+                                }
+                            >
+                                {
+                                    cliente.nombre
+                                    ||
+                                    'Sin nombre'
+                                }
+                            </Text>
+
                             <View
                                 style={
-                                    styles.purchaseTop
+                                    styles.dato
                                 }
                             >
 
-                                {
-                                    item.ave_foto_uri
-                                    ?
-                                    (
-                                        <Image
-                                            source={{
-                                                uri:
-                                                    item.ave_foto_uri
-                                            }}
-                                            style={
-                                                styles.avePhoto
-                                            }
-                                        />
-                                    )
-                                    :
-                                    (
-                                        <View
-                                            style={
-                                                styles.avePhotoEmpty
-                                            }
-                                        >
-
-                                            <Text>
-                                                🐔
-                                            </Text>
-
-                                        </View>
-                                    )
-                                }
-
-
-                                <View
+                                <Icono
+                                    nombre="call-outline"
+                                    tamano={18}
+                                    color={colors.textSecondary}
                                     style={
-                                        styles.purchaseMain
+                                        styles.datoIcono
+                                    }
+                                />
+
+                                <Text
+                                    style={
+                                        styles.phone
                                     }
                                 >
-
-                                    <Text
-                                        style={
-                                            styles.aveCode
-                                        }
-                                    >
-                                        {item.ave_codigo}
-                                    </Text>
-
-                                    <Text
-                                        style={
-                                            styles.aveDetail
-                                        }
-                                    >
-                                        {
-                                            item.ave_raza ||
-                                            'Sin raza'
-                                        }
-                                        {' · '}
-                                        {
-                                            textoSexo(
-                                                item.ave_sexo
-                                            )
-                                        }
-                                    </Text>
-
-                                    <Text
-                                        style={
-                                            styles.date
-                                        }
-                                    >
-                                        {
-                                            formatearFecha(
-                                                item.fecha
-                                            )
-                                        }
-                                    </Text>
-
-                                </View>
+                                    {cliente.celular}
+                                </Text>
 
                             </View>
 
-
-                            <InfoRow
-                                label="Valor ave"
-                                value={
-                                    formatearDineroOpcional(
-                                        item.valor_venta
-                                    )
-                                }
-                            />
-
-                            <InfoRow
-                                label="Valor envío"
-                                value={
-                                    formatearDineroOpcional(
-                                        item.valor_envio
-                                    )
-                                }
-                            />
-
-                            <InfoRow
-                                label="Ciudad"
-                                value={
-                                    item.ciudad_destino
-                                    ||
-                                    'No registrado'
-                                }
-                            />
-
-                            <InfoRow
-                                label="Cooperativa"
-                                value={
-                                    item.cooperativa_envio
-                                    ||
-                                    'No registrado'
-                                }
-                            />
-
                             {
-                                item.detalle
+                                cliente.ciudad
                                 ?
                                 (
-                                    <Text
+                                    <View
                                         style={
-                                            styles.detail
+                                            styles.dato
                                         }
                                     >
-                                        {item.detalle}
-                                    </Text>
+
+                                        <Icono
+                                            nombre="location-outline"
+                                            tamano={18}
+                                            color={colors.textSecondary}
+                                            style={
+                                                styles.datoIcono
+                                            }
+                                        />
+
+                                        <Text
+                                            style={
+                                                styles.city
+                                            }
+                                        >
+                                            {cliente.ciudad}
+                                        </Text>
+
+                                    </View>
                                 )
                                 :
                                 null
@@ -459,11 +316,249 @@ export default function DetalleClienteScreen({
 
                         </View>
 
-                    )
-                )
-            }
+                    </View>
 
-        </ScrollView>
+                </Tarjeta>
+
+
+                <Tarjeta
+                    style={
+                        styles.summaryCard
+                    }
+                >
+
+                    <SummaryMetric
+                        label="Compras"
+                        value={
+                            String(
+                                Number(
+                                    cliente.total_compras || 0
+                                )
+                            )
+                        }
+                    />
+
+                    <SummaryMetric
+                        label="Total aves"
+                        value={
+                            formatearDinero(
+                                cliente.total_ventas
+                            )
+                        }
+                    />
+
+                    <SummaryMetric
+                        label="Envíos"
+                        value={
+                            formatearDinero(
+                                cliente.total_envios
+                            )
+                        }
+                    />
+
+                </Tarjeta>
+
+
+                <TituloSeccion
+                    icono="paw-outline"
+                    indice={2}
+                >
+                    Compras realizadas
+                </TituloSeccion>
+
+
+                {
+                    compras.map(
+                        item => (
+
+                            <Tarjeta
+                                key={
+                                    item.venta_id
+                                }
+                            >
+
+                                <View
+                                    style={
+                                        styles.purchaseTop
+                                    }
+                                >
+
+                                    {
+                                        item.ave_foto_uri
+                                        ?
+                                        (
+                                            <Image
+                                                source={{
+                                                    uri:
+                                                        item.ave_foto_uri
+                                                }}
+                                                style={
+                                                    styles.avePhoto
+                                                }
+                                            />
+                                        )
+                                        :
+                                        (
+                                            <Avatar
+                                                icono="paw-outline"
+                                                tamano={56}
+                                                indice={1}
+                                            />
+                                        )
+                                    }
+
+
+                                    <View
+                                        style={
+                                            styles.purchaseMain
+                                        }
+                                    >
+
+                                        <Text
+                                            style={
+                                                styles.aveCode
+                                            }
+                                        >
+                                            {item.ave_codigo}
+                                        </Text>
+
+                                        <View
+                                            style={
+                                                styles.dato
+                                            }
+                                        >
+
+                                            {
+                                                item.ave_sexo === 'MACHO'
+                                                ?
+                                                (
+                                                    <Icono
+                                                        nombre="male-outline"
+                                                        tamano={16}
+                                                        color={colors.textSecondary}
+                                                        style={
+                                                            styles.datoIcono
+                                                        }
+                                                    />
+                                                )
+                                                :
+                                                null
+                                            }
+
+                                            {
+                                                item.ave_sexo === 'HEMBRA'
+                                                ?
+                                                (
+                                                    <Icono
+                                                        nombre="female-outline"
+                                                        tamano={16}
+                                                        color={colors.textSecondary}
+                                                        style={
+                                                            styles.datoIcono
+                                                        }
+                                                    />
+                                                )
+                                                :
+                                                null
+                                            }
+
+                                            <Text
+                                                style={
+                                                    styles.aveDetail
+                                                }
+                                            >
+                                                {
+                                                    item.ave_raza ||
+                                                    'Sin raza'
+                                                }
+                                                {' · '}
+                                                {
+                                                    textoSexo(
+                                                        item.ave_sexo
+                                                    )
+                                                }
+                                            </Text>
+
+                                        </View>
+
+                                        <Text
+                                            style={
+                                                styles.date
+                                            }
+                                        >
+                                            {
+                                                formatearFecha(
+                                                    item.fecha
+                                                )
+                                            }
+                                        </Text>
+
+                                    </View>
+
+                                </View>
+
+
+                                <InfoRow
+                                    label="Valor ave"
+                                    value={
+                                        formatearDineroOpcional(
+                                            item.valor_venta
+                                        )
+                                    }
+                                />
+
+                                <InfoRow
+                                    label="Valor envío"
+                                    value={
+                                        formatearDineroOpcional(
+                                            item.valor_envio
+                                        )
+                                    }
+                                />
+
+                                <InfoRow
+                                    label="Ciudad"
+                                    value={
+                                        item.ciudad_destino
+                                        ||
+                                        'No registrado'
+                                    }
+                                />
+
+                                <InfoRow
+                                    label="Cooperativa"
+                                    value={
+                                        item.cooperativa_envio
+                                        ||
+                                        'No registrado'
+                                    }
+                                />
+
+                                {
+                                    item.detalle
+                                    ?
+                                    (
+                                        <Text
+                                            style={
+                                                styles.detail
+                                            }
+                                        >
+                                            {item.detalle}
+                                        </Text>
+                                    )
+                                    :
+                                    null
+                                }
+
+                            </Tarjeta>
+
+                        )
+                    )
+                }
+
+            </ScrollView>
+
+        </FondoPantalla>
 
     );
 
@@ -496,6 +591,7 @@ function SummaryMetric({
                 style={
                     styles.summaryValue
                 }
+                maxFontSizeMultiplier={1.3}
                 testID={label === 'Compras' ? 'cliente-compras' : undefined}
             >
                 {value}
@@ -554,7 +650,7 @@ function textoSexo(
         sexo === 'MACHO'
     ){
 
-        return '🐓 Macho';
+        return 'Macho';
 
     }
 
@@ -563,7 +659,7 @@ function textoSexo(
         sexo === 'HEMBRA'
     ){
 
-        return '🐔 Hembra';
+        return 'Hembra';
 
     }
 
@@ -673,43 +769,11 @@ function formatearFecha(
 const styles =
 StyleSheet.create({
 
-    container:{
-
-        flex:1,
-
-        backgroundColor:
-            COLORS.background
-
-    },
-
-
     content:{
 
-        padding:16,
+        padding:spacing.pantalla,
 
-        paddingBottom:40
-
-    },
-
-
-    center:{
-
-        flex:1,
-
-        justifyContent:'center',
-
-        alignItems:'center',
-
-        backgroundColor:
-            COLORS.background
-
-    },
-
-
-    notFound:{
-
-        color:
-            COLORS.textSecondary
+        paddingBottom:spacing.xl
 
     },
 
@@ -718,33 +782,7 @@ StyleSheet.create({
 
         flexDirection:'row',
 
-        alignItems:'center',
-
-        marginBottom:16
-
-    },
-
-
-    avatar:{
-
-        width:62,
-
-        height:62,
-
-        borderRadius:31,
-
-        backgroundColor:'#e7f5f5',
-
-        alignItems:'center',
-
-        justifyContent:'center'
-
-    },
-
-
-    avatarText:{
-
-        fontSize:30
+        alignItems:'center'
 
     },
 
@@ -753,39 +791,55 @@ StyleSheet.create({
 
         flex:1,
 
-        marginLeft:14
+        marginLeft:spacing.lg
 
     },
 
 
     title:{
 
-        fontSize:24,
-
-        fontWeight:'bold',
+        ...typography.titulo,
 
         color:
-            COLORS.primary
+            colors.primaryDark
+
+    },
+
+
+    dato:{
+
+        flexDirection:'row',
+
+        alignItems:'center',
+
+        marginTop:2
+
+    },
+
+
+    datoIcono:{
+
+        marginRight:spacing.xs
 
     },
 
 
     phone:{
 
-        marginTop:4,
+        ...typography.cuerpo,
 
         color:
-            COLORS.text
+            colors.text
 
     },
 
 
     city:{
 
-        marginTop:2,
+        ...typography.cuerpo,
 
         color:
-            COLORS.textSecondary
+            colors.textSecondary
 
     },
 
@@ -794,14 +848,7 @@ StyleSheet.create({
 
         flexDirection:'row',
 
-        backgroundColor:
-            COLORS.card,
-
-        borderRadius:16,
-
-        paddingVertical:15,
-
-        marginBottom:20
+        paddingHorizontal:spacing.sm
 
     },
 
@@ -812,17 +859,17 @@ StyleSheet.create({
 
         alignItems:'center',
 
-        paddingHorizontal:5
+        paddingHorizontal:spacing.xs
 
     },
 
 
     summaryLabel:{
 
-        fontSize:11,
+        ...typography.secundario,
 
         color:
-            COLORS.textSecondary,
+            colors.textSecondary,
 
         textAlign:'center'
 
@@ -831,44 +878,12 @@ StyleSheet.create({
 
     summaryValue:{
 
-        marginTop:4,
+        ...typography.subtitulo,
 
-        fontSize:16,
-
-        fontWeight:'bold',
+        marginTop:spacing.xs,
 
         color:
-            COLORS.text
-
-    },
-
-
-    sectionTitle:{
-
-        fontSize:19,
-
-        fontWeight:'bold',
-
-        color:
-            COLORS.text,
-
-        marginBottom:12
-
-    },
-
-
-    purchaseCard:{
-
-        backgroundColor:
-            COLORS.card,
-
-        borderRadius:16,
-
-        padding:15,
-
-        marginBottom:12,
-
-        elevation:2
+            colors.text
 
     },
 
@@ -879,35 +894,23 @@ StyleSheet.create({
 
         alignItems:'center',
 
-        marginBottom:12
+        marginBottom:spacing.md
 
     },
 
 
     avePhoto:{
 
-        width:54,
+        width:56,
 
-        height:54,
+        height:56,
 
-        borderRadius:27
+        borderRadius:28,
 
-    },
+        borderWidth:3,
 
-
-    avePhotoEmpty:{
-
-        width:54,
-
-        height:54,
-
-        borderRadius:27,
-
-        backgroundColor:'#e7f5f5',
-
-        alignItems:'center',
-
-        justifyContent:'center'
+        borderColor:
+            colors.white
 
     },
 
@@ -916,41 +919,39 @@ StyleSheet.create({
 
         flex:1,
 
-        marginLeft:12
+        marginLeft:spacing.md
 
     },
 
 
     aveCode:{
 
-        fontSize:18,
-
-        fontWeight:'bold',
+        ...typography.subtitulo,
 
         color:
-            COLORS.text
+            colors.text
 
     },
 
 
     aveDetail:{
 
-        marginTop:2,
+        ...typography.secundario,
 
         color:
-            COLORS.textSecondary
+            colors.textSecondary
 
     },
 
 
     date:{
 
-        marginTop:4,
+        ...typography.secundario,
 
-        fontSize:12,
+        marginTop:spacing.xs,
 
         color:
-            COLORS.textSecondary
+            colors.textSecondary
 
     },
 
@@ -961,34 +962,32 @@ StyleSheet.create({
 
         justifyContent:'space-between',
 
-        paddingVertical:7,
+        paddingVertical:spacing.sm,
 
         borderTopWidth:1,
 
         borderTopColor:
-            COLORS.border
+            colors.borderSoft
 
     },
 
 
     infoLabel:{
 
-        color:
-            COLORS.textSecondary,
+        ...typography.secundario,
 
-        fontSize:13
+        color:
+            colors.textSecondary
 
     },
 
 
     infoValue:{
 
+        ...typography.etiqueta,
+
         color:
-            COLORS.text,
-
-        fontWeight:'600',
-
-        fontSize:13,
+            colors.text,
 
         maxWidth:'60%',
 
@@ -999,12 +998,12 @@ StyleSheet.create({
 
     detail:{
 
-        marginTop:10,
+        ...typography.cuerpo,
+
+        marginTop:spacing.sm,
 
         color:
-            COLORS.textSecondary,
-
-        lineHeight:19
+            colors.textSecondary
 
     }
 

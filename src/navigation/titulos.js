@@ -24,11 +24,11 @@ const TITULOS = {
     // Finanzas
     FinanzasInicio: 'Finanzas',
     NuevoMovimientoFinanciero: 'Nuevo movimiento',
-    EditarMovimientoFinanciero: 'Movimiento financiero',
+    // «Corregir venta» (ventas automáticas) solo se sabe tras cargar el movimiento; la cabecera usa el título general.
+    EditarMovimientoFinanciero: 'Editar movimiento',
     // Más
     MasMenu: 'Más',
     Configuracion: 'Configuración',
-    EditarCatalogoItem: 'Elemento',
     ProduccionHuevos: 'Producción de huevos',
     Clientes: 'Clientes',
     DetalleCliente: 'Detalle del cliente',
@@ -42,6 +42,9 @@ const TITULOS = {
 export function tituloRuta(nombre, params) {
     if (nombre === 'NuevaAve') {
         return params && params.modoEdicion ? 'Editar ave' : 'Nueva ave';
+    }
+    if (nombre === 'EditarCatalogoItem') {
+        return params && params.item ? 'Editar elemento' : 'Nuevo elemento';
     }
     if (nombre === 'Catalogo') {
         return (params && params.titulo) || 'Catálogo';

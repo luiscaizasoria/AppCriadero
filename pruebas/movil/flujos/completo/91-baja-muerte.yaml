@@ -38,7 +38,10 @@ tags:
     visible: "Proceso completado"
     timeout: 20000
 - assertVisible: "El ave fue registrada como fallecida."
-- tapOn: "Aceptar"
+# C5: «Proceso completado» es un aviso (sin «Aceptar»); a los 1,8 s hace popToTop.
+- extendedWaitUntil:
+    notVisible: "Proceso completado"
+    timeout: 15000
 - extendedWaitUntil:
     visible: ".*Fallecidas.*"
     timeout: 20000

@@ -66,7 +66,10 @@ tags:
     visible: "Proceso completado"
     timeout: 20000
 - assertVisible: "El ave fue registrada como vendida."
-- tapOn: "Aceptar"
+# C5: «Proceso completado» es un aviso (sin «Aceptar»); a los 1,8 s hace popToTop.
+- extendedWaitUntil:
+    notVisible: "Proceso completado"
+    timeout: 15000
 # Lista de vendidas
 - extendedWaitUntil:
     visible: ".*Vendidas.*"
@@ -124,7 +127,9 @@ tags:
 - extendedWaitUntil:
     visible: "Proceso completado"
     timeout: 20000
-- tapOn: "Aceptar"
+- extendedWaitUntil:
+    notVisible: "Proceso completado"
+    timeout: 15000
 - extendedWaitUntil:
     visible: ".*Vendidas.*"
     timeout: 20000

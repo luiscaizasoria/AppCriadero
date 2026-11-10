@@ -7,12 +7,11 @@ import React, {
 import {
     View,
     Text,
-    TextInput,
     ScrollView,
-    TouchableOpacity,
-    ActivityIndicator,
     StyleSheet,
-    Alert
+    Alert,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 
 import {
@@ -32,9 +31,24 @@ import {
     obtenerCatalogoPorCodigo
 } from '../repositories/ConfiguracionRepository';
 
+import FondoPantalla from '../components/FondoPantalla';
+import Tarjeta from '../components/Tarjeta';
+import TituloSeccion from '../components/TituloSeccion';
+import CampoTexto from '../components/CampoTexto';
+import OpcionPildora from '../components/OpcionPildora';
+import Boton from '../components/Boton';
+import BarraAccion from '../components/BarraAccion';
+import Aviso from '../components/Aviso';
+import useAvisoExito from '../components/useAvisoExito';
+import EstadoCarga from '../components/EstadoCarga';
+import EstadoError from '../components/EstadoError';
+import EstadoVacio from '../components/EstadoVacio';
+
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 export default function EditarMovimientoFinancieroScreen({
@@ -57,7 +71,15 @@ export default function EditarMovimientoFinancieroScreen({
     const [valorVenta, setValorVenta] = useState('');
     const [valorEnvio, setValorEnvio] = useState('');
     const [loading, setLoading] = useState(true);
+    const [errorCarga, setErrorCarga] = useState(false);
     const [guardando, setGuardando] = useState(false);
+
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso,
+        saliendo
+    } = useAvisoExito();
 
 
     const cargar = async () => {
@@ -65,6 +87,8 @@ export default function EditarMovimientoFinancieroScreen({
         try {
 
             setLoading(true);
+
+            setErrorCarga(false);
 
             const mov =
                 await obtenerMovimientoPorId(
@@ -147,6 +171,7 @@ export default function EditarMovimientoFinancieroScreen({
                 'Error cargando movimiento:',
                 error
             );
+            setErrorCarga(true);
             Alert.alert(
                 'Error',
                 'No fue posible cargar el movimiento.'
@@ -224,16 +249,12 @@ export default function EditarMovimientoFinancieroScreen({
                 fecha:movimiento.fecha
             });
 
-            Alert.alert(
+            // Antes: Alert con «Aceptar» que hacía goBack. Ahora: aviso y vuelve solo.
+            mostrarAviso(
                 'Movimiento actualizado',
                 'Los cambios fueron guardados y quedaron registrados en el historial de correcciones.',
-                [
-                    {
-                        text:'Aceptar',
-                        onPress:() =>
-                            navigation.goBack()
-                    }
-                ]
+                () =>
+                    navigation.goBack()
             );
         }
         catch(error){
@@ -283,16 +304,11 @@ export default function EditarMovimientoFinancieroScreen({
                 valorEnvio:envioNumero
             });
 
-            Alert.alert(
+            mostrarAviso(
                 'Venta corregida',
                 'Se actualizaron la venta y sus movimientos financieros relacionados.',
-                [
-                    {
-                        text:'Aceptar',
-                        onPress:() =>
-                            navigation.goBack()
-                    }
-                ]
+                () =>
+                    navigation.goBack()
             );
         }
         catch(error){
@@ -311,23 +327,37 @@ export default function EditarMovimientoFinancieroScreen({
 
     if(loading){
         return (
-            <View style={styles.center}>
-                <ActivityIndicator
-                    size="large"
-                    color={COLORS.primary}
+            <FondoPantalla>
+                <EstadoCarga
+                    mensaje="Cargando movimiento..."
                 />
-            </View>
+            </FondoPantalla>
+        );
+    }
+
+
+    if(errorCarga){
+        return (
+            <FondoPantalla>
+                <EstadoError
+                    titulo="No fue posible cargar el movimiento."
+                    mensaje="Revisa tu conexión e inténtalo de nuevo."
+                    onReintentar={cargar}
+                />
+            </FondoPantalla>
         );
     }
 
 
     if(!movimiento){
         return (
-            <View style={styles.center}>
-                <Text>
-                    Movimiento no encontrado.
-                </Text>
-            </View>
+            <FondoPantalla>
+                <EstadoVacio
+                    icono="search-outline"
+                    titulo="Movimiento no encontrado."
+                    testID="movimiento-no-encontrado"
+                />
+            </FondoPantalla>
         );
     }
 
@@ -360,229 +390,263 @@ export default function EditarMovimientoFinancieroScreen({
 
 
     return (
-        <ScrollView
+        <KeyboardAvoidingView
             style={styles.container}
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
+            behavior={
+                Platform.OS === 'ios'
+                    ? 'padding'
+                    : undefined
+            }
         >
 
-            <Text style={styles.title}>
-                {automaticoVenta ? '🔗 Corregir venta' : '✏️ Editar movimiento'}
-            </Text>
+            <FondoPantalla>
 
-            <View style={styles.originCard}>
-                <Text style={styles.originTitle}>
-                    Origen
-                </Text>
-                <Text style={styles.originText}>
+                <ScrollView
+                    contentContainerStyle={styles.content}
+                    keyboardShouldPersistTaps="handled"
+                >
+
+                    <TituloSeccion
+                        icono={
+                            automaticoVenta
+                                ? 'link-outline'
+                                : 'create-outline'
+                        }
+                    >
+                        {automaticoVenta ? 'Corregir venta' : 'Editar movimiento'}
+                    </TituloSeccion>
+
+                    <Tarjeta>
+                        <Text style={styles.originTitle}>
+                            Origen
+                        </Text>
+                        <Text style={styles.originText}>
+                            {
+                                automaticoVenta
+                                    ? `Venta de ave ${venta?.ave_codigo || movimiento.ave_codigo || ''}`
+                                    : 'Movimiento manual'
+                            }
+                        </Text>
+                        <Text style={styles.originDate}>
+                            {new Date(movimiento.fecha).toLocaleString()}
+                        </Text>
+                    </Tarjeta>
+
                     {
                         automaticoVenta
-                            ? `Venta de ave ${venta?.ave_codigo || movimiento.ave_codigo || ''}`
-                            : 'Movimiento manual'
-                    }
-                </Text>
-                <Text style={styles.originDate}>
-                    {new Date(movimiento.fecha).toLocaleString()}
-                </Text>
-            </View>
+                        ? (
+                            <>
+                                <View style={styles.ayuda}>
+                                    <Aviso
+                                        tono="info"
+                                        duracion={0}
+                                        mensaje="Este movimiento fue generado por una venta. Para mantener la contabilidad consistente, la corrección modifica la venta y los dos movimientos relacionados: valor del ave y valor de envío."
+                                    />
+                                </View>
 
-            {
-                automaticoVenta
-                ? (
-                    <>
-                        <Text style={styles.helpText}>
-                            Este movimiento fue generado por una venta. Para mantener la contabilidad consistente, la corrección modifica la venta y los dos movimientos relacionados: valor del ave y valor de envío.
-                        </Text>
+                                <Tarjeta>
 
-                        <Text style={styles.label}>
-                            Valor del ave
-                        </Text>
-                        <TextInput
-                            style={styles.input}
-                            value={valorVenta}
-                            onChangeText={setValorVenta}
-                            keyboardType="decimal-pad"
-                        />
+                                    <CampoTexto
+                                        etiqueta="Valor del ave"
+                                        accessibilityLabel="Valor del ave en dólares"
+                                        icono="cash-outline"
+                                        value={valorVenta}
+                                        onChangeText={setValorVenta}
+                                        keyboardType="decimal-pad"
+                                        testID="venta-valor-ave"
+                                    />
 
-                        <Text style={styles.label}>
-                            Valor de envío
-                        </Text>
-                        <TextInput
-                            style={styles.input}
-                            value={valorEnvio}
-                            onChangeText={setValorEnvio}
-                            keyboardType="decimal-pad"
-                        />
+                                    <CampoTexto
+                                        etiqueta="Valor de envío"
+                                        accessibilityLabel="Valor de envío en dólares"
+                                        icono="cart-outline"
+                                        value={valorEnvio}
+                                        onChangeText={setValorEnvio}
+                                        keyboardType="decimal-pad"
+                                        testID="venta-valor-envio"
+                                    />
 
-                        <View style={styles.saleInfoCard}>
-                            <Text style={styles.saleInfoTitle}>
-                                Datos de la venta
-                            </Text>
-                            <Text style={styles.saleInfoText}>
-                                Cliente: {venta?.comprador || 'No registrado'}
-                            </Text>
-                            <Text style={styles.saleInfoText}>
-                                Celular: {venta?.celular || 'No registrado'}
-                            </Text>
-                            <Text style={styles.saleInfoText}>
-                                Destino: {venta?.ciudad_destino || 'No registrado'}
-                            </Text>
-                        </View>
+                                </Tarjeta>
 
-                        <TouchableOpacity
-                            style={styles.button}
-                            onPress={guardarVenta}
-                            disabled={guardando}
-                        >
-                            <Text style={styles.buttonText}>
-                                {guardando ? 'Guardando...' : '💾 Guardar corrección'}
-                            </Text>
-                        </TouchableOpacity>
-                    </>
-                )
-                : (
-                    <>
-                        <Text style={styles.label}>
-                            Tipo
-                        </Text>
-
-                        <View style={styles.row}>
-                            {
-                                ['INGRESO', 'EGRESO'].map(item => (
-                                    <TouchableOpacity
-                                        key={item}
-                                        style={[
-                                            styles.option,
-                                            tipo === item &&
-                                            styles.selected
-                                        ]}
-                                        onPress={() => {
-                                            setTipo(item);
-                                            setCategoria(null);
-                                        }}
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.optionText,
-                                                tipo === item &&
-                                                styles.selectedText
-                                            ]}
-                                        >
-                                            {item === 'INGRESO' ? '🟢 Ingreso' : '🔴 Egreso'}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))
-                            }
-                        </View>
-
-                        <Text style={styles.label}>
-                            Categoría
-                        </Text>
-
-                        <View style={styles.row}>
-                            {
-                                categoriasFiltradas.map(item => (
-                                    <TouchableOpacity
-                                        key={item.id}
-                                        style={[
-                                            styles.option,
-                                            categoria?.codigo === item.codigo &&
-                                            styles.selected
-                                        ]}
-                                        onPress={() =>
-                                            setCategoria(item)
-                                        }
-                                    >
-                                        <Text
-                                            style={[
-                                                styles.optionText,
-                                                categoria?.codigo === item.codigo &&
-                                                styles.selectedText
-                                            ]}
-                                        >
-                                            {item.nombre}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))
-                            }
-                        </View>
-
-                        <Text style={styles.label}>
-                            Valor
-                        </Text>
-                        <TextInput
-                            style={styles.input}
-                            value={valor}
-                            onChangeText={setValor}
-                            keyboardType="decimal-pad"
-                        />
-
-                        <Text style={styles.label}>
-                            Detalle
-                        </Text>
-                        <TextInput
-                            style={[
-                                styles.input,
-                                styles.area
-                            ]}
-                            value={detalle}
-                            onChangeText={setDetalle}
-                            multiline
-                        />
-
-                        <TouchableOpacity
-                            style={styles.button}
-                            onPress={guardarManual}
-                            disabled={guardando}
-                        >
-                            <Text style={styles.buttonText}>
-                                {guardando ? 'Guardando...' : '💾 Guardar cambios'}
-                            </Text>
-                        </TouchableOpacity>
-                    </>
-                )
-            }
-
-
-            <Text style={styles.historyTitle}>
-                Historial de correcciones
-            </Text>
-
-            {
-                historial.length === 0
-                    ? (
-                        <Text style={styles.historyEmpty}>
-                            Este movimiento todavía no tiene correcciones registradas.
-                        </Text>
-                    )
-                    : historial.map(item => (
-                        <View
-                            key={item.id}
-                            style={styles.historyCard}
-                        >
-                            <Text style={styles.historyAction}>
-                                {item.accion}
-                            </Text>
-                            <Text style={styles.historyDate}>
-                                {new Date(item.fecha).toLocaleString()}
-                            </Text>
-                            <Text style={styles.historyText}>
-                                Valor: {formatoDinero(item.valor_anterior)} → {formatoDinero(item.valor_nuevo)}
-                            </Text>
-                            {
-                                item.categoria_anterior !== item.categoria_nueva
-                                ? (
-                                    <Text style={styles.historyText}>
-                                        Categoría: {item.categoria_anterior || '-'} → {item.categoria_nueva || '-'}
+                                <Tarjeta>
+                                    <Text style={styles.saleInfoTitle}>
+                                        Datos de la venta
                                     </Text>
-                                )
-                                : null
-                            }
-                        </View>
-                    ))
-            }
+                                    <Text style={styles.saleInfoText}>
+                                        Cliente: {venta?.comprador || 'No registrado'}
+                                    </Text>
+                                    <Text style={styles.saleInfoText}>
+                                        Celular: {venta?.celular || 'No registrado'}
+                                    </Text>
+                                    <Text style={styles.saleInfoText}>
+                                        Destino: {venta?.ciudad_destino || 'No registrado'}
+                                    </Text>
+                                </Tarjeta>
+                            </>
+                        )
+                        : (
+                            <Tarjeta>
 
-        </ScrollView>
+                                <Text style={styles.label}>
+                                    Tipo
+                                </Text>
+
+                                <View
+                                    style={styles.row}
+                                    accessibilityRole="radiogroup"
+                                >
+                                    {
+                                        ['INGRESO', 'EGRESO'].map(item => (
+                                            <OpcionPildora
+                                                key={item}
+                                                testID={`movimiento-tipo-${item.toLowerCase()}`}
+                                                texto={item === 'INGRESO' ? 'Ingreso' : 'Egreso'}
+                                                icono={
+                                                    item === 'INGRESO'
+                                                        ? 'trending-up-outline'
+                                                        : 'trending-down-outline'
+                                                }
+                                                activo={tipo === item}
+                                                onPress={() => {
+                                                    setTipo(item);
+                                                    setCategoria(null);
+                                                }}
+                                            />
+                                        ))
+                                    }
+                                </View>
+
+                                <Text style={styles.label}>
+                                    Categoría
+                                </Text>
+
+                                <View
+                                    style={styles.row}
+                                    accessibilityRole="radiogroup"
+                                >
+                                    {
+                                        categoriasFiltradas.map(item => (
+                                            <OpcionPildora
+                                                key={item.id}
+                                                testID={`movimiento-categoria-${item.codigo}`}
+                                                texto={item.nombre}
+                                                activo={categoria?.codigo === item.codigo}
+                                                onPress={() =>
+                                                    setCategoria(item)
+                                                }
+                                            />
+                                        ))
+                                    }
+                                </View>
+
+                                <CampoTexto
+                                    etiqueta="Valor"
+                                    accessibilityLabel="Valor del movimiento"
+                                    icono="cash-outline"
+                                    value={valor}
+                                    onChangeText={setValor}
+                                    keyboardType="decimal-pad"
+                                    testID="movimiento-valor"
+                                />
+
+                                <CampoTexto
+                                    etiqueta="Detalle"
+                                    accessibilityLabel="Detalle del movimiento"
+                                    icono="create-outline"
+                                    value={detalle}
+                                    onChangeText={setDetalle}
+                                    multiline
+                                    testID="movimiento-detalle"
+                                />
+
+                            </Tarjeta>
+                        )
+                    }
+
+
+                    <TituloSeccion
+                        icono="time-outline"
+                        indice={1}
+                    >
+                        Historial de correcciones
+                    </TituloSeccion>
+
+                    {
+                        historial.length === 0
+                            ? (
+                                <Text style={styles.historyEmpty}>
+                                    Este movimiento todavía no tiene correcciones registradas.
+                                </Text>
+                            )
+                            : historial.map(item => (
+                                <Tarjeta
+                                    key={item.id}
+                                    franja={colors.primary}
+                                >
+                                    <Text style={styles.historyAction}>
+                                        {item.accion}
+                                    </Text>
+                                    <Text style={styles.historyDate}>
+                                        {new Date(item.fecha).toLocaleString()}
+                                    </Text>
+                                    <Text style={styles.historyText}>
+                                        Valor: {formatoDinero(item.valor_anterior)} → {formatoDinero(item.valor_nuevo)}
+                                    </Text>
+                                    {
+                                        item.categoria_anterior !== item.categoria_nueva
+                                        ? (
+                                            <Text style={styles.historyText}>
+                                                Categoría: {item.categoria_anterior || '-'} → {item.categoria_nueva || '-'}
+                                            </Text>
+                                        )
+                                        : null
+                                    }
+                                </Tarjeta>
+                            ))
+                    }
+
+                </ScrollView>
+
+
+                <BarraAccion>
+                    {
+                        automaticoVenta
+                            ? (
+                                <Boton
+                                    titulo={guardando ? 'Guardando...' : 'Guardar corrección'}
+                                    icono={guardando ? undefined : 'guardar'}
+                                    onPress={guardarVenta}
+                                    atenuado={guardando || saliendo}
+                                    testID="guardar-correccion-venta"
+                                />
+                            )
+                            : (
+                                <Boton
+                                    titulo={guardando ? 'Guardando...' : 'Guardar cambios'}
+                                    icono={guardando ? undefined : 'guardar'}
+                                    onPress={guardarManual}
+                                    atenuado={guardando || saliendo}
+                                    testID="guardar-cambios-movimiento"
+                                />
+                            )
+                    }
+                </BarraAccion>
+
+
+                {aviso ? (
+                    <Aviso
+                        flotante
+                        tono="exito"
+                        duracion={0}
+                        titulo={aviso.titulo}
+                        mensaje={aviso.mensaje}
+                        onCerrar={cerrarAviso}
+                    />
+                ) : null}
+
+            </FondoPantalla>
+
+        </KeyboardAvoidingView>
     );
 
 }
@@ -607,141 +671,65 @@ function formatoDinero(valor){
 
 const styles = StyleSheet.create({
     container:{
-        flex:1,
-        backgroundColor:COLORS.background
+        flex:1
     },
     content:{
-        padding:20,
-        paddingBottom:45
+        padding:spacing.pantalla,
+        paddingBottom:spacing.xl
     },
-    center:{
-        flex:1,
-        alignItems:'center',
-        justifyContent:'center',
-        backgroundColor:COLORS.background
-    },
-    title:{
-        fontSize:26,
-        fontWeight:'bold',
-        color:COLORS.primary
-    },
-    originCard:{
-        backgroundColor:COLORS.card,
-        borderRadius:14,
-        padding:14,
-        marginTop:16
+    ayuda:{
+        marginBottom:spacing.md
     },
     originTitle:{
-        color:COLORS.textSecondary,
-        fontSize:12
+        ...typography.secundario,
+        color:colors.textSecondary
     },
     originText:{
-        color:COLORS.text,
-        fontWeight:'bold',
-        marginTop:3
+        ...typography.subtitulo,
+        color:colors.text,
+        marginTop:2
     },
     originDate:{
-        color:COLORS.textSecondary,
-        fontSize:12,
-        marginTop:4
-    },
-    helpText:{
-        marginTop:15,
-        color:COLORS.textSecondary,
-        lineHeight:19
+        ...typography.secundario,
+        color:colors.textSecondary,
+        marginTop:spacing.xs
     },
     label:{
-        marginTop:20,
-        marginBottom:8,
-        fontWeight:'600',
-        color:COLORS.text
+        ...typography.etiqueta,
+        color:colors.text,
+        marginBottom:spacing.xs
     },
     row:{
         flexDirection:'row',
-        flexWrap:'wrap'
-    },
-    option:{
-        backgroundColor:'#e8eeee',
-        padding:11,
-        borderRadius:18,
-        marginRight:8,
-        marginBottom:8
-    },
-    selected:{
-        backgroundColor:COLORS.primary
-    },
-    optionText:{
-        color:COLORS.text
-    },
-    selectedText:{
-        color:'#fff',
-        fontWeight:'bold'
-    },
-    input:{
-        backgroundColor:COLORS.card,
-        borderWidth:1,
-        borderColor:COLORS.border,
-        borderRadius:12,
-        padding:13
-    },
-    area:{
-        minHeight:95,
-        textAlignVertical:'top'
-    },
-    button:{
-        backgroundColor:COLORS.primary,
-        borderRadius:14,
-        padding:16,
-        alignItems:'center',
-        marginTop:28
-    },
-    buttonText:{
-        color:'#fff',
-        fontWeight:'bold'
-    },
-    saleInfoCard:{
-        backgroundColor:'#edf7f5',
-        borderRadius:12,
-        padding:13,
-        marginTop:18
+        flexWrap:'wrap',
+        marginBottom:spacing.sm
     },
     saleInfoTitle:{
-        fontWeight:'bold',
-        color:COLORS.text
+        ...typography.subtitulo,
+        color:colors.text
     },
     saleInfoText:{
-        color:COLORS.textSecondary,
-        marginTop:4
-    },
-    historyTitle:{
-        marginTop:30,
-        fontSize:18,
-        fontWeight:'bold',
-        color:COLORS.text
+        ...typography.cuerpo,
+        color:colors.text,
+        marginTop:spacing.xs
     },
     historyEmpty:{
-        marginTop:10,
-        color:COLORS.textSecondary
-    },
-    historyCard:{
-        backgroundColor:COLORS.card,
-        borderRadius:12,
-        padding:13,
-        marginTop:10,
-        borderLeftWidth:3,
-        borderLeftColor:'#8ec9b8'
+        ...typography.cuerpo,
+        color:colors.textSecondary,
+        marginBottom:spacing.md
     },
     historyAction:{
-        fontWeight:'bold',
-        color:COLORS.text
+        ...typography.cuerpoFuerte,
+        color:colors.text
     },
     historyDate:{
-        color:COLORS.textSecondary,
-        fontSize:12,
-        marginTop:3
+        ...typography.secundario,
+        color:colors.textSecondary,
+        marginTop:2
     },
     historyText:{
-        color:COLORS.text,
-        marginTop:5
+        ...typography.cuerpo,
+        color:colors.text,
+        marginTop:spacing.xs
     }
 });

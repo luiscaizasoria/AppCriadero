@@ -28,7 +28,10 @@ tags:
     visible: "Huevo registrado"
     timeout: 15000
 - assertVisible: ".*H000001.*"
-- tapOn: "Aceptar"
+# C5: «Huevo registrado» es un aviso (sin «Aceptar»); a los 1,8 s vuelve solo a la ficha.
+- extendedWaitUntil:
+    notVisible: "Huevo registrado"
+    timeout: 15000
 - scrollUntilVisible:
     element: ".*Huevos registrados.*"
 - scrollUntilVisible:
