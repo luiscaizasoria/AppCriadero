@@ -34,6 +34,7 @@ import Pulsable from '../components/Pulsable';
 import Icono from '../components/Icono';
 import Aviso from '../components/Aviso';
 import useAvisoExito from '../components/useAvisoExito';
+import useValidacion from '../components/useValidacion';
 import EstadoCarga from '../components/EstadoCarga';
 import EstadoError from '../components/EstadoError';
 import EstadoVacio from '../components/EstadoVacio';
@@ -95,6 +96,15 @@ export default function CatalogoScreen({
     ] = useState(false);
 
     const anadiendoRef = useRef(false);
+
+    // Elemento que se está eliminando (retroalimentación visual en su botón)
+    const [
+        eliminandoId,
+        setEliminandoId
+    ] = useState(null);
+
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
 
 
     const {
@@ -243,6 +253,11 @@ export default function CatalogoScreen({
                                 try{
 
 
+                                    setEliminandoId(
+                                        item.id
+                                    );
+
+
                                     await eliminarItemCatalogo(
                                         item.id
                                     );
@@ -266,6 +281,13 @@ export default function CatalogoScreen({
                                         'No fue posible eliminar el elemento.'
                                     );
 
+
+                                }
+                                finally{
+
+                                    setEliminandoId(
+                                        null
+                                    );
 
                                 }
 
@@ -299,6 +321,11 @@ export default function CatalogoScreen({
             if(
                 !nombreNuevo.trim()
             ){
+
+                v.fallar(
+                    'nombre',
+                    'Ingrese un nombre.'
+                );
 
                 Alert.alert(
                     'Nombre requerido',
@@ -406,6 +433,7 @@ export default function CatalogoScreen({
             <FondoPantalla>
 
                 <ScrollView
+                    ref={scrollRef}
                     contentContainerStyle={
                         styles.content
                     }
@@ -482,6 +510,7 @@ export default function CatalogoScreen({
                                                     styles.altaCampo
                                                 }
                                                 testID="catalogo-alta-rapida"
+                                                {...v.props('nombre')}
                                             />
 
                                             <Boton
@@ -493,7 +522,7 @@ export default function CatalogoScreen({
                                                 disabled={
                                                     !catalogo
                                                 }
-                                                atenuado={
+                                                guardando={
                                                     anadiendo
                                                 }
                                                 style={
@@ -629,6 +658,10 @@ export default function CatalogoScreen({
                                                                 styles.delete
                                                             ]}
 
+                                                            disabled={
+                                                                eliminandoId !== null
+                                                            }
+
                                                             onPress={() =>
                                                                 eliminar(
                                                                     item
@@ -649,7 +682,11 @@ export default function CatalogoScreen({
                                                                     styles.deleteText
                                                                 ]}
                                                             >
-                                                                Eliminar
+                                                                {
+                                                                    eliminandoId === item.id
+                                                                        ? 'Eliminando...'
+                                                                        : 'Eliminar'
+                                                                }
                                                             </Text>
 
                                                         </Pulsable>

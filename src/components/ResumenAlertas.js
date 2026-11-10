@@ -21,7 +21,15 @@ function Contador({ icono, fondo, etiqueta, valor }) {
     return (
         <View style={[estilos.contador, { backgroundColor: fondo }]}>
             <Icono nombre={icono} tamano={22} color={colors.white} />
-            <Text style={estilos.etiqueta} maxFontSizeMultiplier={1.3}>
+            {/* Un solo Text; ajusta el tamaño para que "Advertencias:" no se corte con fuente grande
+                del sistema (fontScale 1.3 a 2.0: el multiplicador queda limitado a 1.3). */}
+            <Text
+                style={estilos.etiqueta}
+                maxFontSizeMultiplier={1.3}
+                numberOfLines={2}
+                adjustsFontSizeToFit
+                minimumFontScale={0.6}
+            >
                 {etiqueta}
                 {' '}
                 <Text style={estilos.cifra}>{valor}</Text>
@@ -36,12 +44,20 @@ const estilos = StyleSheet.create({
         flex: 1,
         minHeight: 92,
         borderRadius: radii.lg,
-        padding: spacing.sm,
+        minWidth: 0,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.xs,
         marginRight: spacing.sm,
         alignItems: 'center',
         justifyContent: 'center',
         ...shadows.resumen
     },
-    etiqueta: { ...typography.chip, color: colors.white, textAlign: 'center', marginTop: spacing.xs },
-    cifra: { ...typography.display, color: colors.white }
+    etiqueta: {
+        ...typography.chip,
+        alignSelf: 'stretch',
+        color: colors.white,
+        textAlign: 'center',
+        marginTop: spacing.xs
+    },
+    cifra: { ...typography.titulo, color: colors.white }
 });

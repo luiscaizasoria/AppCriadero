@@ -23,15 +23,24 @@ export default function Boton({
     icono,
     cargando = false,
     atenuado = false,
+    // `guardando`: patrón común de guardado. Apaga el botón, quita el icono y muestra «Guardando...»
+    // (o `tituloGuardando`) hasta que termina la operación.
+    guardando = false,
+    tituloGuardando = 'Guardando...',
     disabled = false,
     testID,
     accessibilityLabel,
+    acento,
     style
 }) {
-    const v = VARIANTES[variante] || VARIANTES.primario;
+    // `acento` (opcional): sustituye fondo y borde del botón primario (p. ej. verde de éxito).
+    const base = VARIANTES[variante] || VARIANTES.primario;
+    const v = acento ? { ...base, fondo: acento, borde: acento } : base;
     // `atenuado`: mientras envía, el botón conserva su texto, se ve apagado y no acepta otro toque
     // (sin spinner animado, que retrasa la detección de reposo de Maestro).
-    const inactivo = disabled || cargando || atenuado;
+    const inactivo = disabled || cargando || atenuado || guardando;
+    const tituloVisible = guardando ? tituloGuardando : titulo;
+    const iconoVisible = guardando ? undefined : icono;
     const deshabilitado = disabled && !v.subrayado;
     const colorTexto = deshabilitado ? colors.disabledText : v.texto;
     return (
@@ -40,14 +49,14 @@ export default function Boton({
             disabled={inactivo}
             testID={testID}
             accessibilityRole="button"
-            accessibilityLabel={accessibilityLabel || titulo}
-            accessibilityState={{ disabled: inactivo, busy: cargando || atenuado }}
+            accessibilityLabel={guardando ? tituloGuardando : accessibilityLabel || titulo}
+            accessibilityState={{ disabled: inactivo, busy: cargando || atenuado || guardando }}
             sinMinimo
             style={[
                 estilos.base,
                 { minHeight: v.alto, backgroundColor: v.fondo, borderColor: v.borde },
                 deshabilitado && estilos.deshabilitado,
-                (atenuado || (disabled && v.subrayado)) && estilos.apagado,
+                (atenuado || guardando || (disabled && v.subrayado)) && estilos.apagado,
                 style
             ]}
         >
@@ -55,8 +64,8 @@ export default function Boton({
                 <ActivityIndicator color={colorTexto} />
             ) : (
                 <>
-                    {icono ? <Icono nombre={icono} tamano={22} color={colorTexto} style={estilos.icono} /> : null}
-                    {titulo ? (
+                    {iconoVisible ? <Icono nombre={iconoVisible} tamano={22} color={colorTexto} style={estilos.icono} /> : null}
+                    {tituloVisible ? (
                         <Text
                             style={[
                                 typography.boton,
@@ -64,7 +73,7 @@ export default function Boton({
                                 v.subrayado && estilos.subrayado
                             ]}
                         >
-                            {titulo}
+                            {tituloVisible}
                         </Text>
                     ) : null}
                 </>

@@ -28,6 +28,7 @@ import BarraAccion from '../components/BarraAccion';
 import JaulaOpcion from '../components/JaulaOpcion';
 import Aviso from '../components/Aviso';
 import useAvisoExito from '../components/useAvisoExito';
+import useGuardaEnvio from '../components/useGuardaEnvio';
 
 import {
     ICONO_TIPO_SANIDAD
@@ -86,6 +87,9 @@ export default function SanidadJaulaScreen({
     } = useAvisoExito();
 
 
+
+
+    const guardia = useGuardaEnvio();
 
 
     const guardar =
@@ -259,11 +263,15 @@ export default function SanidadJaulaScreen({
                     icono="guardar"
 
                     onPress={
-                        guardar
+                        guardia(guardar)
+                    }
+
+                    guardando={
+                        guardando
                     }
 
                     atenuado={
-                        guardando || saliendo
+                        saliendo
                     }
 
                     testID="guardar-sanidad"

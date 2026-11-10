@@ -44,6 +44,9 @@ import Aviso
 import useAvisoExito
     from '../components/useAvisoExito';
 
+import useGuardaEnvio
+    from '../components/useGuardaEnvio';
+
 import {
     colors,
     spacing,
@@ -79,6 +82,9 @@ export default function FinalizarTratamientoScreen({
         cerrar: cerrarAviso,
         saliendo
     } = useAvisoExito();
+
+
+    const guardia = useGuardaEnvio();
 
 
     const guardar =
@@ -236,24 +242,15 @@ export default function FinalizarTratamientoScreen({
                 <BarraAccion>
 
                     <Boton
-                        titulo={
-                            guardando
-                                ?
-                                'Guardando...'
-                                :
-                                'Confirmar recuperación'
-                        }
-                        icono={
-                            guardando
-                                ? undefined
-                                : 'checkmark-circle-outline'
-                        }
+                        titulo="Confirmar recuperación"
+                        icono="checkmark-circle-outline"
                         onPress={
-                            guardar
+                            guardia(guardar)
+                        }
+                        guardando={
+                            guardando
                         }
                         atenuado={
-                            guardando
-                            ||
                             saliendo
                         }
                         testID="confirmar-recuperacion"

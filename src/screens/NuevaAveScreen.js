@@ -55,6 +55,12 @@ import Tarjeta
 import TituloSeccion
     from '../components/TituloSeccion';
 
+import useValidacion
+    from '../components/useValidacion';
+
+import CampoGrupo
+    from '../components/CampoGrupo';
+
 import CampoTexto
     from '../components/CampoTexto';
 
@@ -299,6 +305,16 @@ export default function NuevaAveScreen({
 
     const enviandoRef =
         useRef(false);
+
+
+    const scrollRef =
+        useRef(null);
+
+
+    const v =
+        useValidacion(
+            scrollRef
+        );
 
 
     const temporizadorRef =
@@ -857,6 +873,11 @@ export default function NuevaAveScreen({
 
             if (!codigoLimpio) {
 
+                v.fallar(
+                    'codigo',
+                    'Ingresa un código para el ave.'
+                );
+
                 Alert.alert(
                     'Código requerido',
                     'Ingresa un código para el ave.'
@@ -869,6 +890,11 @@ export default function NuevaAveScreen({
 
             if (!razaSeleccionada) {
 
+                v.fallar(
+                    'raza',
+                    'Selecciona la raza del ave.'
+                );
+
                 Alert.alert(
                     'Raza requerida',
                     'Selecciona la raza del ave.'
@@ -880,6 +906,11 @@ export default function NuevaAveScreen({
 
 
             if (!sexoSeleccionado) {
+
+                v.fallar(
+                    'sexo',
+                    'Selecciona si el ave es macho o hembra.'
+                );
 
                 Alert.alert(
                     'Sexo requerido',
@@ -899,6 +930,11 @@ export default function NuevaAveScreen({
 
             if (!pesoResultado.valido) {
 
+                v.fallar(
+                    'peso',
+                    'El peso debe ser un número mayor a cero o dejarse vacío.'
+                );
+
                 Alert.alert(
                     'Peso inválido',
                     'El peso debe ser un número mayor a cero o dejarse vacío.'
@@ -917,6 +953,11 @@ export default function NuevaAveScreen({
 
             if (!alturaResultado.valido) {
 
+                v.fallar(
+                    'altura',
+                    'La altura debe ser un número mayor a cero o dejarse vacía.'
+                );
+
                 Alert.alert(
                     'Altura inválida',
                     'La altura debe ser un número mayor a cero o dejarse vacía.'
@@ -934,6 +975,11 @@ export default function NuevaAveScreen({
 
 
             if (!largoResultado.valido) {
+
+                v.fallar(
+                    'largo',
+                    'El largo debe ser un número mayor a cero o dejarse vacío.'
+                );
 
                 Alert.alert(
                     'Largo inválido',
@@ -1010,6 +1056,11 @@ export default function NuevaAveScreen({
                     meses < 0
                 ) {
 
+                    v.fallar(
+                        'edad',
+                        'Ingresa la edad del ave en meses usando un número entero igual o mayor a cero.'
+                    );
+
                     Alert.alert(
                         'Edad requerida',
                         'Ingresa la edad del ave en meses usando un número entero igual o mayor a cero.'
@@ -1025,6 +1076,11 @@ export default function NuevaAveScreen({
                         .trim()
                 ) {
 
+                    v.fallar(
+                        'criaderoOrigen',
+                        'Ingresa el nombre del criadero de origen.'
+                    );
+
                     Alert.alert(
                         'Criadero requerido',
                         'Ingresa el nombre del criadero de origen.'
@@ -1039,6 +1095,11 @@ export default function NuevaAveScreen({
                     !metodoEnvio
                         .trim()
                 ) {
+
+                    v.fallar(
+                        'metodoEnvio',
+                        'Ingresa el método de envío o traslado del ave.'
+                    );
 
                     Alert.alert(
                         'Método de envío requerido',
@@ -1105,6 +1166,11 @@ export default function NuevaAveScreen({
 
 
                 if(codigoExiste){
+
+                    v.fallar(
+                        'codigo',
+                        'Ya existe un ave con ese código.'
+                    );
 
                     Alert.alert(
                         'Código duplicado',
@@ -1519,6 +1585,7 @@ export default function NuevaAveScreen({
         >
 
             <ScrollView
+                ref={scrollRef}
                 contentContainerStyle={
                     styles.content
                 }
@@ -1557,6 +1624,7 @@ export default function NuevaAveScreen({
                         autoCapitalize="characters"
                         maxLength={30}
                         testID="codigo-ave"
+                        {...v.props('codigo')}
                     />
 
                 </Tarjeta>
@@ -1801,6 +1869,7 @@ export default function NuevaAveScreen({
                                         keyboardType="numeric"
                                         placeholder="Ej. 8"
                                         testID="edad-meses-compra"
+                                        {...v.props('edad')}
                                     />
 
 
@@ -1903,6 +1972,7 @@ export default function NuevaAveScreen({
                                         }
                                         placeholder="Nombre del criadero"
                                         testID="criadero-origen"
+                                        {...v.props('criaderoOrigen')}
                                     />
 
 
@@ -1920,6 +1990,7 @@ export default function NuevaAveScreen({
                                         }
                                         placeholder="Ej. Cooperativa, vehículo propio..."
                                         testID="metodo-envio"
+                                        {...v.props('metodoEnvio')}
                                     />
 
                                 </>
@@ -2035,6 +2106,7 @@ export default function NuevaAveScreen({
                     </Text>
 
 
+                    <CampoGrupo {...v.grupo('raza')}>
                     <AveSelectorCatalogo
 
                         items={
@@ -2046,6 +2118,8 @@ export default function NuevaAveScreen({
                         }
 
                         onSelect={item=>{
+
+                            v.limpiar('raza');
 
                             setRazaSeleccionada(
                                 item
@@ -2064,6 +2138,7 @@ export default function NuevaAveScreen({
                         testIDPrefijo="raza"
 
                     />
+                    </CampoGrupo>
 
 
                     <Text
@@ -2075,6 +2150,7 @@ export default function NuevaAveScreen({
                     </Text>
 
 
+                    <CampoGrupo {...v.grupo('sexo')}>
                     <AveSelectorCatalogo
                         items={
                             sexos
@@ -2083,6 +2159,8 @@ export default function NuevaAveScreen({
                             sexoSeleccionado?.id
                         }
                         onSelect={item=>{
+
+                            v.limpiar('sexo');
 
                             setSexoSeleccionado(
                                 item
@@ -2102,6 +2180,7 @@ export default function NuevaAveScreen({
                         }
                         testIDPrefijo="sexo"
                     />
+                    </CampoGrupo>
 
                 </Tarjeta>
 
@@ -2140,6 +2219,7 @@ export default function NuevaAveScreen({
                         keyboardType="decimal-pad"
                         placeholder="Ej. 850"
                         testID="peso-gramos"
+                        {...v.props('peso')}
                     />
 
 
@@ -2158,6 +2238,7 @@ export default function NuevaAveScreen({
                         keyboardType="decimal-pad"
                         placeholder="Ej. 24.5"
                         testID="altura-cm"
+                        {...v.props('altura')}
                     />
 
 
@@ -2176,6 +2257,7 @@ export default function NuevaAveScreen({
                         keyboardType="decimal-pad"
                         placeholder="Ej. 31"
                         testID="largo-cm"
+                        {...v.props('largo')}
                     />
 
 
@@ -2271,19 +2353,18 @@ export default function NuevaAveScreen({
 
                 <Boton
                     titulo={
-                        guardando
-                            ? 'Guardando...'
-                            : modoEdicion
-                                ? 'Guardar cambios'
-                                : 'Guardar ave'
+                        modoEdicion
+                            ? 'Guardar cambios'
+                            : 'Guardar ave'
                     }
                     icono="guardar"
                     onPress={
                         guardar
                     }
-                    atenuado={
+                    guardando={
                         guardando
-                        ||
+                    }
+                    atenuado={
                         guardado
                     }
                     testID="guardar-ave"

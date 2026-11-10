@@ -420,3 +420,21 @@ Sin cambios de lógica, repositorios, importes, periodos (UTC), exportación CSV
 - Incidencia nueva: tras recuperar el emulador sin snapshot el DNS falló (FALLO DE RED en `97`-`99`); arrancarlo con `-dns-server 8.8.8.8,1.1.1.1`.
 - Sin medir: rendimiento en gama baja; fluidez de la lista de aves con cientos de registros y fotos; coste de los degradados; arranque en frío con fuentes; que el aviso de `navigate` haya desaparecido del logcat (falta un arranque real); `90-baja-venta` tardó 328 s.
 - Próximos pasos, en este orden: (1) prueba final del usuario en el teléfono, (2) fotos en R2, (3) login con Google, (4) ambientes de pruebas y producción, (5) retiro de SQLite con respaldo.
+
+## Correcciones tras prueba del usuario (2026-11-10)
+
+- Iconos: `Icono.js` dibuja con `react-native-svg` un ave (`ave`, `ave-relleno`) y una espiga (`grano`); `paw`/`paw-outline` y `nutrition`/`nutrition-outline` se redirigen a ellos en todo `src/`. `theme/icons.js`: `aves`/`avesActivo` -> `ave`/`ave-relleno`; `alimentacion` -> `grano`. Resto de iconos revisados sin cambio. testID intactos.
+- `SaludAveScreen`: tras guardar, `navigation.goBack()` (a la ficha; `cargarDatos()` se conserva). El aviso «Registro guardado» ya no llega a verse (la pantalla se cierra). Datos guardados sin cambio.
+- `components/filtroNumerico.js` (nuevo): `filtrarDecimal` (solo dígitos y un punto; coma -> punto) y `categoriaVisible`. Usado en Nuevo y Editar movimiento (Valor, Valor del ave, Valor de envío) con `decimal-pad`. Validaciones y mensajes sin cambio.
+- Nuevo movimiento: prop opcional `acento` en `OpcionPildora`, `CampoTexto` y `Boton`; verde `success` (Ingreso) o rojo `danger` (Egreso) en tarjeta, etiquetas (`successText`/`dangerText`), píldoras, campos y botón. Contraste AA (blanco sobre success 5,0; sobre danger 6,1).
+- EXCEPCIÓN APROBADA A LA PARIDAD DE V1 (decisión del usuario): en Nuevo y Editar movimiento las categorías cuyo código no está en las listas fijas (creadas por el usuario) se muestran en AMBOS tipos. Finanzas y Reportes no filtran por lista de categorías: sin cambio.
+- `ResumenAlertas`: un solo Text con `numberOfLines 2`, `adjustsFontSizeToFit`, `minimumFontScale 0.6`, cifra 24 px, menos padding horizontal. Textos iguales («Críticas: 0»...).
+
+### Puntos 1 y 7: «Guardando...» y validación visual (segunda parte)
+
+- Componentes nuevos: `useGuardaEnvio` (guard con `useRef` contra doble envío: `onPress={guardia(guardar)}`), `useValidacion` (errores por campo, `fallar(campo, mensaje)` con borde rojo + mensaje + scroll al campo + foco; el error se limpia al editar), `CampoGrupo` (borde rojo y mensaje para grupos de opciones). `CampoTexto` gana props `contenedorRef`, `inputRef`, `alEditar`. `Boton` gana `guardando` (apaga, quita icono y muestra «Guardando...») y `tituloGuardando`.
+- Los `Alert` de validación se conservan; el mensaje es el mismo texto de siempre. Sin cambio de momento de navegación ni de testID.
+- Acceso (Login, Registro, Criadero nuevo): el mensaje de validación local ya no sale en el `Aviso` superior sino bajo el primer campo vacío (mismo texto); los errores de API siguen en el `Aviso`. Registro y Criadero pasan de spinner a texto «Creando...»; Login «Ingresando...».
+- Retroalimentación nueva sin guardado previo: Nuevo movimiento («Guardando...»), SaludAve («Guardando...»), Sanidad (guard), Catálogo alta rápida («Guardando...»), Quitar ave de jaula («Quitando...»), Eliminar elemento de catálogo («Eliminando...»), abrir criadero («Entrando...»).
+- Guard añadido (ya tenían texto): NuevaJaula, DetalleJaula (editar), Alimentación, Bebida, Sanidad, SeleccionarAveJaula, FinalizarTratamiento, RegistrarHuevo, BajaAve, EditarMovimiento (manual y venta), EditarCatalogoItem, EvolucionAve. NuevaAve y alta rápida de catálogo ya tenían guard propio.
+- Validación visual en: NuevaJaula, DetalleJaula, NuevaAve (código, raza, sexo, peso, altura, largo, edad, criadero, método, código duplicado), Alimentación, Bebida, SaludAve, BajaAve, Nuevo/Editar movimiento, Catálogo (alta rápida y edición), EvolucionAve, Login, Registro, Criadero nuevo.

@@ -1,4 +1,5 @@
 import React, {
+    useRef,
     useState
 } from 'react';
 
@@ -32,6 +33,8 @@ import Icono from '../components/Icono';
 import BarraAccion from '../components/BarraAccion';
 import Aviso from '../components/Aviso';
 import useAvisoExito from '../components/useAvisoExito';
+import useGuardaEnvio from '../components/useGuardaEnvio';
+import useValidacion from '../components/useValidacion';
 
 
 const TIPOS_JAULA = [
@@ -69,10 +72,16 @@ export default function NuevaJaulaScreen({
         saliendo
     } = useAvisoExito();
 
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
+
 
     const guardar = async () => {
 
         if (!codigo.trim()) {
+
+            v.fallar('codigo', 'Ingresa un código para la jaula.');
 
             Alert.alert(
                 'Código requerido',
@@ -168,6 +177,7 @@ export default function NuevaJaulaScreen({
             <FondoPantalla>
 
                 <ScrollView
+                    ref={scrollRef}
                     contentContainerStyle={
                         styles.content
                     }
@@ -192,6 +202,7 @@ export default function NuevaJaulaScreen({
                             autoCapitalize="characters"
                             maxLength={20}
                             testID="jaula-codigo"
+                            {...v.props('codigo')}
                         />
 
 
@@ -299,20 +310,11 @@ export default function NuevaJaulaScreen({
                 <BarraAccion>
 
                     <Boton
-                        titulo={
-                            guardando
-                                ? 'Guardando...'
-                                : 'Guardar jaula'
-                        }
-                        icono={
-                            guardando
-                                ? undefined
-                                : 'guardar'
-                        }
-                        onPress={guardar}
-                        atenuado={
-                            guardando || saliendo
-                        }
+                        titulo="Guardar jaula"
+                        icono="guardar"
+                        onPress={guardia(guardar)}
+                        guardando={guardando}
+                        atenuado={saliendo}
                         testID="guardar-jaula"
                     />
 

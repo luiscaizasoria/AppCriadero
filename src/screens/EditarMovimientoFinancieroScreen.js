@@ -1,6 +1,7 @@
 import React, {
     useCallback,
     useEffect,
+    useRef,
     useState
 } from 'react';
 
@@ -35,11 +36,15 @@ import FondoPantalla from '../components/FondoPantalla';
 import Tarjeta from '../components/Tarjeta';
 import TituloSeccion from '../components/TituloSeccion';
 import CampoTexto from '../components/CampoTexto';
+import { filtrarDecimal } from '../components/filtroNumerico';
 import OpcionPildora from '../components/OpcionPildora';
 import Boton from '../components/Boton';
 import BarraAccion from '../components/BarraAccion';
 import Aviso from '../components/Aviso';
 import useAvisoExito from '../components/useAvisoExito';
+import useGuardaEnvio from '../components/useGuardaEnvio';
+import useValidacion from '../components/useValidacion';
+import CampoGrupo from '../components/CampoGrupo';
 import EstadoCarga from '../components/EstadoCarga';
 import EstadoError from '../components/EstadoError';
 import EstadoVacio from '../components/EstadoVacio';
@@ -80,6 +85,10 @@ export default function EditarMovimientoFinancieroScreen({
         cerrar: cerrarAviso,
         saliendo
     } = useAvisoExito();
+
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
 
 
     const cargar = async () => {
@@ -212,6 +221,10 @@ export default function EditarMovimientoFinancieroScreen({
     const guardarManual = async () => {
 
         if(!categoria){
+            v.fallar(
+                'categoria',
+                'Seleccione una categoría.'
+            );
             Alert.alert(
                 'Categoría requerida',
                 'Seleccione una categoría.'
@@ -230,6 +243,10 @@ export default function EditarMovimientoFinancieroScreen({
             ||
             valorNumero <= 0
         ){
+            v.fallar(
+                'valor',
+                'Ingrese un valor mayor a cero.'
+            );
             Alert.alert(
                 'Valor inválido',
                 'Ingrese un valor mayor a cero.'
@@ -288,6 +305,12 @@ export default function EditarMovimientoFinancieroScreen({
             ||
             envioNumero === null
         ){
+            v.fallar(
+                ventaNumero === null
+                    ? 'valorAve'
+                    : 'valorEnvio',
+                'El valor del ave y el valor de envío deben ser números mayores o iguales a cero.'
+            );
             Alert.alert(
                 'Valor inválido',
                 'El valor del ave y el valor de envío deben ser números mayores o iguales a cero.'
@@ -370,22 +393,35 @@ export default function EditarMovimientoFinancieroScreen({
 
     const categoriasFiltradas =
         categorias.filter(item => {
-            if(tipo === 'INGRESO'){
-                return [
-                    'VENTA_AVE',
-                    'ENVIO_AVE',
-                    'VENTA_HUEVOS',
-                    'OTRO'
-                ].includes(item.codigo);
-            }
-
-            return [
+            const fijasIngreso = [
+                'VENTA_AVE',
+                'ENVIO_AVE',
+                'VENTA_HUEVOS',
+                'OTRO'
+            ];
+            const fijasEgreso = [
                 'ALIMENTO',
                 'MEDICAMENTO',
                 'INFRAESTRUCTURA',
                 'COMPRA_AVE',
                 'OTRO'
-            ].includes(item.codigo);
+            ];
+
+            // Excepción aprobada a la paridad de V1: las categorías creadas por el usuario
+            // (código fuera de ambas listas fijas) se muestran en ambos tipos.
+            if(
+                !fijasIngreso.includes(item.codigo)
+                &&
+                !fijasEgreso.includes(item.codigo)
+            ){
+                return true;
+            }
+
+            return (
+                tipo === 'INGRESO'
+                ? fijasIngreso
+                : fijasEgreso
+            ).includes(item.codigo);
         });
 
 
@@ -402,6 +438,7 @@ export default function EditarMovimientoFinancieroScreen({
             <FondoPantalla>
 
                 <ScrollView
+                    ref={scrollRef}
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
                 >
@@ -451,9 +488,10 @@ export default function EditarMovimientoFinancieroScreen({
                                         accessibilityLabel="Valor del ave en dólares"
                                         icono="cash-outline"
                                         value={valorVenta}
-                                        onChangeText={setValorVenta}
+                                        onChangeText={texto=>setValorVenta(filtrarDecimal(texto))}
                                         keyboardType="decimal-pad"
                                         testID="venta-valor-ave"
+                                        {...v.props('valorAve')}
                                     />
 
                                     <CampoTexto
@@ -461,9 +499,10 @@ export default function EditarMovimientoFinancieroScreen({
                                         accessibilityLabel="Valor de envío en dólares"
                                         icono="cart-outline"
                                         value={valorEnvio}
-                                        onChangeText={setValorEnvio}
+                                        onChangeText={texto=>setValorEnvio(filtrarDecimal(texto))}
                                         keyboardType="decimal-pad"
                                         testID="venta-valor-envio"
+                                        {...v.props('valorEnvio')}
                                     />
 
                                 </Tarjeta>
@@ -520,6 +559,7 @@ export default function EditarMovimientoFinancieroScreen({
                                     Categoría
                                 </Text>
 
+                                <CampoGrupo {...v.grupo('categoria')}>
                                 <View
                                     style={styles.row}
                                     accessibilityRole="radiogroup"
@@ -531,22 +571,25 @@ export default function EditarMovimientoFinancieroScreen({
                                                 testID={`movimiento-categoria-${item.codigo}`}
                                                 texto={item.nombre}
                                                 activo={categoria?.codigo === item.codigo}
-                                                onPress={() =>
-                                                    setCategoria(item)
-                                                }
+                                                onPress={() => {
+                                                    v.limpiar('categoria');
+                                                    setCategoria(item);
+                                                }}
                                             />
                                         ))
                                     }
                                 </View>
+                                </CampoGrupo>
 
                                 <CampoTexto
                                     etiqueta="Valor"
                                     accessibilityLabel="Valor del movimiento"
                                     icono="cash-outline"
                                     value={valor}
-                                    onChangeText={setValor}
+                                    onChangeText={texto=>setValor(filtrarDecimal(texto))}
                                     keyboardType="decimal-pad"
                                     testID="movimiento-valor"
+                                    {...v.props('valor')}
                                 />
 
                                 <CampoTexto
@@ -613,19 +656,21 @@ export default function EditarMovimientoFinancieroScreen({
                         automaticoVenta
                             ? (
                                 <Boton
-                                    titulo={guardando ? 'Guardando...' : 'Guardar corrección'}
-                                    icono={guardando ? undefined : 'guardar'}
-                                    onPress={guardarVenta}
-                                    atenuado={guardando || saliendo}
+                                    titulo="Guardar corrección"
+                                    icono="guardar"
+                                    onPress={guardia(guardarVenta)}
+                                    guardando={guardando}
+                                    atenuado={saliendo}
                                     testID="guardar-correccion-venta"
                                 />
                             )
                             : (
                                 <Boton
-                                    titulo={guardando ? 'Guardando...' : 'Guardar cambios'}
-                                    icono={guardando ? undefined : 'guardar'}
-                                    onPress={guardarManual}
-                                    atenuado={guardando || saliendo}
+                                    titulo="Guardar cambios"
+                                    icono="guardar"
+                                    onPress={guardia(guardarManual)}
+                                    guardando={guardando}
+                                    atenuado={saliendo}
                                     testID="guardar-cambios-movimiento"
                                 />
                             )

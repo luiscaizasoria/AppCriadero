@@ -1,4 +1,5 @@
 import React, {
+    useRef,
     useState
 } from 'react';
 
@@ -26,6 +27,8 @@ import Boton from '../components/Boton';
 import BarraAccion from '../components/BarraAccion';
 import Aviso from '../components/Aviso';
 import useAvisoExito from '../components/useAvisoExito';
+import useGuardaEnvio from '../components/useGuardaEnvio';
+import useValidacion from '../components/useValidacion';
 
 
 import {
@@ -81,6 +84,11 @@ export default function EditarCatalogoItemScreen({
 
 
 
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
+
+
     const guardar =
         async () => {
 
@@ -88,6 +96,11 @@ export default function EditarCatalogoItemScreen({
             if(
                 !nombre.trim()
             ){
+
+                v.fallar(
+                    'nombre',
+                    'Ingrese un nombre.'
+                );
 
                 Alert.alert(
                     'Nombre requerido',
@@ -217,6 +230,7 @@ export default function EditarCatalogoItemScreen({
             <FondoPantalla>
 
                 <ScrollView
+                    ref={scrollRef}
                     contentContainerStyle={
                         styles.content
                     }
@@ -253,6 +267,7 @@ export default function EditarCatalogoItemScreen({
                                 setNombre
                             }
                             testID="catalogo-nombre"
+                            {...v.props('nombre')}
                         />
 
 
@@ -278,21 +293,16 @@ export default function EditarCatalogoItemScreen({
                 <BarraAccion>
 
                     <Boton
-                        titulo={
-                            guardando
-                                ? 'Guardando...'
-                                : 'Guardar'
-                        }
-                        icono={
-                            guardando
-                                ? undefined
-                                : 'guardar'
-                        }
+                        titulo="Guardar"
+                        icono="guardar"
                         onPress={
-                            guardar
+                            guardia(guardar)
+                        }
+                        guardando={
+                            guardando
                         }
                         atenuado={
-                            guardando || saliendo
+                            saliendo
                         }
                         testID="guardar-catalogo-item"
                     />

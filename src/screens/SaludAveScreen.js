@@ -1,5 +1,6 @@
 import React, {
     useCallback,
+    useRef,
     useState
 } from 'react';
 
@@ -67,6 +68,15 @@ import Aviso
 
 import useAvisoExito
     from '../components/useAvisoExito';
+
+import useGuardaEnvio
+    from '../components/useGuardaEnvio';
+
+import useValidacion
+    from '../components/useValidacion';
+
+import CampoGrupo
+    from '../components/CampoGrupo';
 
 import EstadoCarga
     from '../components/EstadoCarga';
@@ -183,6 +193,9 @@ export default function SaludAveScreen({
     } = useAvisoExito();
 
 
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
 
 
 
@@ -307,6 +320,11 @@ export default function SaludAveScreen({
                 !enfermedadSeleccionada
             ){
 
+                v.fallar(
+                    'enfermedad',
+                    'Selecciona una enfermedad.'
+                );
+
                 Alert.alert(
                     'Enfermedad requerida',
                     'Selecciona una enfermedad.'
@@ -374,6 +392,10 @@ export default function SaludAveScreen({
                 );
 
                 cargarDatos();
+
+                // Correcciones tras prueba: tras guardar se vuelve a la ficha del ave
+                // (SaludAve solo se abre desde DetalleAve).
+                navigation.goBack();
 
 
             }
@@ -493,6 +515,8 @@ export default function SaludAveScreen({
 
             <ScrollView
 
+                ref={scrollRef}
+
                 style={
                     styles.container
                 }
@@ -592,6 +616,7 @@ export default function SaludAveScreen({
                     </TituloSeccion>
 
 
+                    <CampoGrupo {...v.grupo('enfermedad')}>
                     <View
                         style={
                             styles.options
@@ -614,11 +639,12 @@ export default function SaludAveScreen({
                                             ===
                                             item.id
                                         }
-                                        onPress={() =>
+                                        onPress={() => {
+                                            v.limpiar('enfermedad');
                                             setEnfermedadSeleccionada(
                                                 item
-                                            )
-                                        }
+                                            );
+                                        }}
                                     />
 
                                 )
@@ -626,6 +652,7 @@ export default function SaludAveScreen({
                         }
 
                     </View>
+                    </CampoGrupo>
 
 
                     <CampoTexto
@@ -806,9 +833,9 @@ export default function SaludAveScreen({
                     titulo="Guardar diagnóstico"
                     icono="guardar"
                     onPress={
-                        guardar
+                        guardia(guardar)
                     }
-                    atenuado={
+                    guardando={
                         guardando
                     }
                     testID="guardar-diagnostico"

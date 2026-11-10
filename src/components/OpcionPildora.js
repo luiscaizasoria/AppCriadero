@@ -8,7 +8,8 @@ import Pulsable from './Pulsable';
 // fondo primario y texto blanco (6,6:1) con icono; sin seleccionar: blanco, borde de campo y texto
 // principal. Alto táctil 44. Uso:
 // <OpcionPildora texto="Ingreso" icono="trending-up-outline" activo={x} onPress={fn} testID="tipo-ingreso" />
-export default function OpcionPildora({ texto, icono, activo = false, onPress, testID }) {
+// `acento` (opcional): color de fondo y borde al estar seleccionada (por defecto, primario).
+export default function OpcionPildora({ texto, icono, activo = false, onPress, testID, acento }) {
     const colorIcono = activo ? colors.white : colors.primaryDark;
     return (
         <Pulsable
@@ -17,7 +18,11 @@ export default function OpcionPildora({ texto, icono, activo = false, onPress, t
             accessibilityState={{ selected: activo }}
             onPress={onPress}
             sinMinimo
-            style={[estilos.pildora, activo && estilos.activa]}
+            style={[
+                estilos.pildora,
+                activo && estilos.activa,
+                activo && acento ? { backgroundColor: acento, borderColor: acento } : null
+            ]}
         >
             {icono || activo ? (
                 <Icono nombre={icono || 'checkmark'} tamano={18} color={colorIcono} style={estilos.icono} />

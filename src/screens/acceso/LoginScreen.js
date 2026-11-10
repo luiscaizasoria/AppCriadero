@@ -1,4 +1,5 @@
 import React, {
+    useRef,
     useState
 } from 'react';
 
@@ -17,6 +18,8 @@ import {
 
 import Boton from '../../components/Boton';
 import CampoTexto from '../../components/CampoTexto';
+import useGuardaEnvio from '../../components/useGuardaEnvio';
+import useValidacion from '../../components/useValidacion';
 
 import {
     PantallaAcceso,
@@ -42,11 +45,22 @@ export default function LoginScreen({
         useState(null);
 
 
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
+
+
     const entrar = async () => {
 
         if (!email.trim() || !password) {
 
-            setError('Ingresa tu correo y tu contraseña.');
+            // Mismo mensaje de antes, ahora bajo el primer campo vacío (borde rojo, scroll y foco).
+            setError(null);
+
+            v.fallar(
+                !email.trim() ? 'email' : 'password',
+                'Ingresa tu correo y tu contraseña.'
+            );
 
             return;
 
@@ -88,6 +102,7 @@ export default function LoginScreen({
             subtitulo="Ingresa con tu cuenta para usar tus datos en la nube."
             lema="Control de aves, fácil"
             saltando
+            scrollRef={scrollRef}
             testID="pantalla-login"
         >
 
@@ -101,6 +116,7 @@ export default function LoginScreen({
                 autoCorrect={false}
                 keyboardType="email-address"
                 testID="login-correo"
+                {...v.props('email')}
             />
 
             <CampoContrasena
@@ -109,14 +125,16 @@ export default function LoginScreen({
                 onChangeText={setPassword}
                 placeholder="Contraseña"
                 testID="login-contrasena"
+                {...v.props('password')}
             />
 
             <MensajeError mensaje={error} />
 
             <Boton
-                titulo={procesando ? 'Ingresando...' : 'Ingresar'}
-                onPress={entrar}
-                atenuado={procesando}
+                titulo="Ingresar"
+                onPress={guardia(entrar)}
+                guardando={procesando}
+                tituloGuardando="Ingresando..."
                 testID="login-ingresar"
                 style={estilos.principal}
             />

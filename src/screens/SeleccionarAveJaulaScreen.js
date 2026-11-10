@@ -43,6 +43,9 @@ import Aviso
 import useAvisoExito
     from '../components/useAvisoExito';
 
+import useGuardaEnvio
+    from '../components/useGuardaEnvio';
+
 import EstadoCarga
     from '../components/EstadoCarga';
 
@@ -104,6 +107,9 @@ export default function SeleccionarAveJaulaScreen({
         cerrar: cerrarAviso,
         saliendo
     } = useAvisoExito();
+
+
+    const guardia = useGuardaEnvio();
 
 
     const cargar =
@@ -217,7 +223,7 @@ export default function SeleccionarAveJaulaScreen({
                                 : 'Agregar',
 
                         onPress: () =>
-                            asignarAve(
+                            guardia(asignarAve)(
                                 ave
                             )
                     }

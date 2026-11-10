@@ -1,5 +1,6 @@
 import React, {
     useEffect,
+    useRef,
     useState
 } from 'react';
 
@@ -30,6 +31,9 @@ import BarraAccion from '../components/BarraAccion';
 import JaulaOpcion from '../components/JaulaOpcion';
 import Aviso from '../components/Aviso';
 import useAvisoExito from '../components/useAvisoExito';
+import useGuardaEnvio from '../components/useGuardaEnvio';
+import useValidacion from '../components/useValidacion';
+import CampoGrupo from '../components/CampoGrupo';
 
 
 export default function BebidaJaulaScreen({
@@ -81,6 +85,11 @@ export default function BebidaJaulaScreen({
 
 
 
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
+
+
     useEffect(() => {
 
         cargar();
@@ -125,6 +134,11 @@ export default function BebidaJaulaScreen({
 
 
         if(!tipo){
+
+            v.fallar(
+                'tipo',
+                'Debe seleccionar un tipo de bebida.'
+            );
 
             Alert.alert(
                 'Seleccione bebida',
@@ -192,6 +206,7 @@ export default function BebidaJaulaScreen({
         <FondoPantalla>
 
             <ScrollView
+                ref={scrollRef}
                 contentContainerStyle={styles.content}
                 keyboardShouldPersistTaps="handled"
             >
@@ -243,20 +258,29 @@ export default function BebidaJaulaScreen({
                 {
                     !cargando &&
                     !errorCarga &&
-                    tipos.map(item => (
+                    tipos.length > 0
+                        ? (
+                            <CampoGrupo {...v.grupo('tipo')}>
+                                {
+                                    tipos.map(item => (
 
-                        <JaulaOpcion
-                            key={item.id}
-                            texto={item.nombre}
-                            icono="bebida"
-                            seleccionado={tipo?.id === item.id}
-                            onPress={() =>
-                                setTipo(item)
-                            }
-                            testID={`bebida-${item.id}`}
-                        />
+                                        <JaulaOpcion
+                                            key={item.id}
+                                            texto={item.nombre}
+                                            icono="bebida"
+                                            seleccionado={tipo?.id === item.id}
+                                            onPress={() => {
+                                                v.limpiar('tipo');
+                                                setTipo(item);
+                                            }}
+                                            testID={`bebida-${item.id}`}
+                                        />
 
-                    ))
+                                    ))
+                                }
+                            </CampoGrupo>
+                        )
+                        : null
                 }
 
             </ScrollView>
@@ -267,10 +291,9 @@ export default function BebidaJaulaScreen({
                 <Boton
                     titulo="Guardar"
                     icono="guardar"
-                    onPress={guardar}
-                    atenuado={
-                        guardando || saliendo
-                    }
+                    onPress={guardia(guardar)}
+                    guardando={guardando}
+                    atenuado={saliendo}
                     testID="guardar-bebida"
                 />
 

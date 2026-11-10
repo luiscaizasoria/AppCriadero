@@ -49,6 +49,7 @@ export function PantallaAcceso({
     lema,
     compacta = false,
     saltando = false,
+    scrollRef,
     testID
 }) {
 
@@ -68,6 +69,7 @@ export function PantallaAcceso({
             >
 
                 <ScrollView
+                    ref={scrollRef}
                     contentContainerStyle={estilos.contenido}
                     keyboardShouldPersistTaps="handled"
                     testID={testID}

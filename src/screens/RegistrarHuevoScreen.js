@@ -52,6 +52,9 @@ import Aviso
 import useAvisoExito
     from '../components/useAvisoExito';
 
+import useGuardaEnvio
+    from '../components/useGuardaEnvio';
+
 import EstadoError
     from '../components/EstadoError';
 
@@ -168,6 +171,9 @@ export default function RegistrarHuevoScreen({
 
 
 
+
+
+    const guardia = useGuardaEnvio();
 
 
     const guardar =
@@ -383,24 +389,15 @@ export default function RegistrarHuevoScreen({
 
                     <Boton
                         testID="guardar-huevo"
-                        titulo={
-                            guardando
-                            ?
-                            'Guardando...'
-                            :
-                            'Registrar huevo'
-                        }
-                        icono={
-                            guardando
-                                ? undefined
-                                : 'huevo'
-                        }
+                        titulo="Registrar huevo"
+                        icono="huevo"
                         onPress={
-                            guardar
+                            guardia(guardar)
+                        }
+                        guardando={
+                            guardando
                         }
                         atenuado={
-                            guardando
-                            ||
                             saliendo
                         }
                     />

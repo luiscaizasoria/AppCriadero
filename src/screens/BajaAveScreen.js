@@ -1,4 +1,5 @@
 import React, {
+    useRef,
     useState
 } from 'react';
 
@@ -43,6 +44,15 @@ import Boton
 
 import BarraAccion
     from '../components/BarraAccion';
+
+import useGuardaEnvio
+    from '../components/useGuardaEnvio';
+
+import useValidacion
+    from '../components/useValidacion';
+
+import CampoGrupo
+    from '../components/CampoGrupo';
 
 import {
     colors,
@@ -134,6 +144,11 @@ export default function BajaAveScreen({
 
 
 
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
+
+
     const guardar =
         async () => {
 
@@ -141,6 +156,11 @@ export default function BajaAveScreen({
             if(
                 !tipo
             ){
+
+                v.fallar(
+                    'tipo',
+                    'Debe seleccionar si es venta o fallecimiento.'
+                );
 
                 Alert.alert(
                     'Seleccione una opción',
@@ -187,6 +207,11 @@ export default function BajaAveScreen({
                         !celular.trim()
                     ){
 
+                        v.fallar(
+                            'celular',
+                            'Ingrese el número celular del comprador.'
+                        );
+
                         Alert.alert(
                             'Celular requerido',
                             'Ingrese el número celular del comprador.'
@@ -214,6 +239,13 @@ export default function BajaAveScreen({
                         ||
                         !valorEnvioResultado.valido
                     ){
+
+                        v.fallar(
+                            valorVentaResultado.valido
+                                ? 'valorEnvio'
+                                : 'valorVenta',
+                            'El valor de venta y el valor de envío son opcionales, pero si se ingresan deben ser números mayores o iguales a cero.'
+                        );
 
                         Alert.alert(
                             'Valor inválido',
@@ -344,6 +376,8 @@ export default function BajaAveScreen({
 
         <ScrollView
 
+            ref={scrollRef}
+
             style={
                 styles.container
             }
@@ -399,6 +433,7 @@ export default function BajaAveScreen({
                 </View>
 
 
+                <CampoGrupo {...v.grupo('tipo')}>
                 <View
                     style={
                         styles.options
@@ -411,11 +446,12 @@ export default function BajaAveScreen({
                         seleccionado={
                             tipo === 'MUERTE'
                         }
-                        onPress={() =>
+                        onPress={() => {
+                            v.limpiar('tipo');
                             setTipo(
                                 'MUERTE'
-                            )
-                        }
+                            );
+                        }}
                         testID="baja-fallecimiento"
                     />
 
@@ -426,15 +462,17 @@ export default function BajaAveScreen({
                         seleccionado={
                             tipo === 'VENTA'
                         }
-                        onPress={() =>
+                        onPress={() => {
+                            v.limpiar('tipo');
                             setTipo(
                                 'VENTA'
-                            )
-                        }
+                            );
+                        }}
                         testID="baja-venta"
                     />
 
                 </View>
+                </CampoGrupo>
 
             </Tarjeta>
 
@@ -509,6 +547,7 @@ export default function BajaAveScreen({
                                 setCelular
                             }
                             placeholder="Ej. 0991234567"
+                            {...v.props('celular')}
                         />
 
 
@@ -560,6 +599,7 @@ export default function BajaAveScreen({
                                 setValorVenta
                             }
                             placeholder="Opcional"
+                            {...v.props('valorVenta')}
                         />
 
 
@@ -574,6 +614,7 @@ export default function BajaAveScreen({
                                 setValorEnvio
                             }
                             placeholder="Opcional"
+                            {...v.props('valorEnvio')}
                             style={
                                 styles.campo
                             }
@@ -622,23 +663,13 @@ export default function BajaAveScreen({
         <BarraAccion>
 
             <Boton
-                titulo={
-                    guardando
-                    ?
-                    'Guardando...'
-                    :
-                    'Confirmar baja'
-                }
-                icono={
-                    guardando
-                        ? undefined
-                        : 'baja'
-                }
+                titulo="Confirmar baja"
+                icono="baja"
                 variante="peligro"
                 onPress={
-                    guardar
+                    guardia(guardar)
                 }
-                atenuado={
+                guardando={
                     guardando
                 }
                 testID="confirmar-baja"

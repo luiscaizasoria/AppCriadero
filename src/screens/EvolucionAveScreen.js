@@ -1,5 +1,6 @@
 import React, {
     useCallback,
+    useRef,
     useState
 } from 'react';
 
@@ -58,6 +59,12 @@ import Aviso
 
 import useAvisoExito
     from '../components/useAvisoExito';
+
+import useGuardaEnvio
+    from '../components/useGuardaEnvio';
+
+import useValidacion
+    from '../components/useValidacion';
 
 import EstadoCarga
     from '../components/EstadoCarga';
@@ -152,6 +159,11 @@ export default function EvolucionAveScreen({
         cerrar: cerrarAviso,
         saliendo
     } = useAvisoExito();
+
+
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
 
 
     const cargar =
@@ -366,6 +378,15 @@ export default function EvolucionAveScreen({
                 !largoResultado.valido
             ) {
 
+                v.fallar(
+                    !pesoResultado.valido
+                        ? 'peso'
+                        : !alturaResultado.valido
+                            ? 'altura'
+                            : 'largo',
+                    'Peso, altura y largo son opcionales, pero cuando se ingresan deben ser números mayores a cero.'
+                );
+
                 Alert.alert(
                     'Medidas inválidas',
                     'Peso, altura y largo son opcionales, pero cuando se ingresan deben ser números mayores a cero.'
@@ -416,6 +437,11 @@ export default function EvolucionAveScreen({
                 &&
                 !observacionLimpia
             ) {
+
+                v.fallar(
+                    'observacion',
+                    'Modifica la fotografía, características, alguna medida o agrega una observación.'
+                );
 
                 Alert.alert(
                     'Sin cambios',
@@ -607,6 +633,7 @@ export default function EvolucionAveScreen({
         >
 
         <ScrollView
+            ref={scrollRef}
             style={
                 styles.container
             }
@@ -792,6 +819,7 @@ export default function EvolucionAveScreen({
                     keyboardType="decimal-pad"
                     placeholder="Ej. 850"
                     testID="evolucion-peso"
+                    {...v.props('peso')}
                 />
 
 
@@ -806,6 +834,7 @@ export default function EvolucionAveScreen({
                     keyboardType="decimal-pad"
                     placeholder="Ej. 24.5"
                     testID="evolucion-altura"
+                    {...v.props('altura')}
                 />
 
 
@@ -820,6 +849,7 @@ export default function EvolucionAveScreen({
                     keyboardType="decimal-pad"
                     placeholder="Ej. 31"
                     testID="evolucion-largo"
+                    {...v.props('largo')}
                     style={
                         styles.ultimoCampo
                     }
@@ -855,6 +885,7 @@ export default function EvolucionAveScreen({
                     multiline
                     placeholder="Ej. Cambio notable de plumaje y desarrollo..."
                     testID="evolucion-observacion"
+                    {...v.props('observacion')}
                     style={
                         styles.ultimoCampo
                     }
@@ -868,22 +899,15 @@ export default function EvolucionAveScreen({
         <BarraAccion>
 
             <Boton
-                titulo={
-                    guardando
-                        ? 'Guardando...'
-                        : 'Guardar evolución'
-                }
-                icono={
-                    guardando
-                        ? undefined
-                        : 'guardar'
-                }
+                titulo="Guardar evolución"
+                icono="guardar"
                 onPress={
-                    guardar
+                    guardia(guardar)
+                }
+                guardando={
+                    guardando
                 }
                 atenuado={
-                    guardando
-                    ||
                     saliendo
                 }
                 testID="guardar-evolucion"

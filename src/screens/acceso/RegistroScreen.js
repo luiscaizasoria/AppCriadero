@@ -1,4 +1,5 @@
 import React, {
+    useRef,
     useState
 } from 'react';
 
@@ -17,6 +18,8 @@ import {
 
 import Boton from '../../components/Boton';
 import CampoTexto from '../../components/CampoTexto';
+import useGuardaEnvio from '../../components/useGuardaEnvio';
+import useValidacion from '../../components/useValidacion';
 
 import {
     PantallaAcceso,
@@ -45,11 +48,26 @@ export default function RegistroScreen({
         useState(null);
 
 
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
+
+
     const registrar = async () => {
 
         if (!nombre.trim() || !email.trim() || !password) {
 
-            setError('Completa tu nombre, correo y contraseña.');
+            // Mismo mensaje de antes, ahora bajo el primer campo vacío (borde rojo, scroll y foco).
+            setError(null);
+
+            v.fallar(
+                !nombre.trim()
+                    ? 'nombre'
+                    : !email.trim()
+                        ? 'email'
+                        : 'password',
+                'Completa tu nombre, correo y contraseña.'
+            );
 
             return;
 
@@ -91,6 +109,7 @@ export default function RegistroScreen({
             titulo="Crear cuenta"
             subtitulo="Tu información se guarda en la nube, asociada a tu cuenta."
             compacta
+            scrollRef={scrollRef}
             testID="pantalla-registro"
         >
 
@@ -101,6 +120,7 @@ export default function RegistroScreen({
                 onChangeText={setNombre}
                 placeholder="Tu nombre"
                 testID="registro-nombre"
+                {...v.props('nombre')}
             />
 
             <CampoTexto
@@ -113,6 +133,7 @@ export default function RegistroScreen({
                 autoCorrect={false}
                 keyboardType="email-address"
                 testID="registro-correo"
+                {...v.props('email')}
             />
 
             <CampoContrasena
@@ -121,14 +142,16 @@ export default function RegistroScreen({
                 onChangeText={setPassword}
                 placeholder="Contraseña"
                 testID="registro-contrasena"
+                {...v.props('password')}
             />
 
             <MensajeError mensaje={error} />
 
             <Boton
-                titulo={procesando ? 'Creando...' : 'Crear cuenta'}
-                onPress={registrar}
-                cargando={procesando}
+                titulo="Crear cuenta"
+                onPress={guardia(registrar)}
+                guardando={procesando}
+                tituloGuardando="Creando..."
                 testID="registro-crear"
                 style={estilos.principal}
             />

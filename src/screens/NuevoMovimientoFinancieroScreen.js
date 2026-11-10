@@ -1,5 +1,6 @@
 import React, {
     useEffect,
+    useRef,
     useState
 } from 'react';
 
@@ -33,7 +34,14 @@ import OpcionPildora from '../components/OpcionPildora';
 import Boton from '../components/Boton';
 import BarraAccion from '../components/BarraAccion';
 import Aviso from '../components/Aviso';
+import {
+    filtrarDecimal,
+    categoriaVisible
+} from '../components/filtroNumerico';
 import useAvisoExito from '../components/useAvisoExito';
+import useGuardaEnvio from '../components/useGuardaEnvio';
+import useValidacion from '../components/useValidacion';
+import CampoGrupo from '../components/CampoGrupo';
 
 
 import {
@@ -73,6 +81,10 @@ export default function NuevoMovimientoFinancieroScreen({
         cerrar: cerrarAviso,
         saliendo
     } = useAvisoExito();
+
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
 
 
 
@@ -122,6 +134,11 @@ export default function NuevoMovimientoFinancieroScreen({
 
             if(!categoria){
 
+                v.fallar(
+                    'categoria',
+                    'Seleccione una categoría.'
+                );
+
                 Alert.alert(
                     'Categoría requerida',
                     'Seleccione una categoría.'
@@ -136,6 +153,11 @@ export default function NuevoMovimientoFinancieroScreen({
                 !valor ||
                 Number(valor)<=0
             ){
+
+                v.fallar(
+                    'valor',
+                    'Ingrese un valor mayor a cero.'
+                );
 
                 Alert.alert(
                     'Valor inválido',
@@ -215,31 +237,24 @@ export default function NuevoMovimientoFinancieroScreen({
 
     const categoriasFiltradas =
         categorias.filter(
-            item => {
-
-                if(tipo==='INGRESO'){
-
-                    return [
-                        'VENTA_AVE',
-                        'VENTA_HUEVOS',
-                        'OTRO'
-                    ]
-                    .includes(item.codigo);
-
-                }
-
-
-                return [
-                    'ALIMENTO',
-                    'MEDICAMENTO',
-                    'INFRAESTRUCTURA',
-                    'COMPRA_AVE',
-                    'OTRO'
-                ]
-                .includes(item.codigo);
-
-            }
+            // Excepción aprobada a la paridad de V1: además de los códigos fijos de cada tipo,
+            // se muestran en ambos tipos las categorías creadas por el usuario.
+            item => categoriaVisible(item.codigo,tipo)
         );
+
+    const acento =
+        tipo==='INGRESO'
+        ?
+        colors.success
+        :
+        colors.danger;
+
+    const acentoTexto =
+        tipo==='INGRESO'
+        ?
+        colors.successText
+        :
+        colors.dangerText;
 
 
 
@@ -257,13 +272,14 @@ export default function NuevoMovimientoFinancieroScreen({
             <FondoPantalla>
 
                 <ScrollView
+                    ref={scrollRef}
                     contentContainerStyle={styles.content}
                     keyboardShouldPersistTaps="handled"
                 >
 
-                    <Tarjeta>
+                    <Tarjeta style={{borderColor:acento,borderWidth:2}}>
 
-                        <Text style={styles.label}>
+                        <Text style={[styles.label,{color:acentoTexto}]}>
                             Tipo
                         </Text>
 
@@ -295,6 +311,7 @@ export default function NuevoMovimientoFinancieroScreen({
                                             'trending-down-outline'
                                         }
                                         activo={tipo===item}
+                                        acento={acento}
                                         onPress={()=>setTipo(item)}
                                     />
 
@@ -304,11 +321,12 @@ export default function NuevoMovimientoFinancieroScreen({
                         </View>
 
 
-                        <Text style={styles.label}>
+                        <Text style={[styles.label,{color:acentoTexto}]}>
                             Categoría
                         </Text>
 
 
+                        <CampoGrupo {...v.grupo('categoria')}>
                         <View
                             style={styles.row}
                             accessibilityRole="radiogroup"
@@ -322,15 +340,18 @@ export default function NuevoMovimientoFinancieroScreen({
                                         testID={`movimiento-categoria-${item.codigo}`}
                                         texto={item.nombre}
                                         activo={categoria?.id===item.id}
-                                        onPress={()=>
-                                            setCategoria(item)
-                                        }
+                                        acento={acento}
+                                        onPress={()=>{
+                                            v.limpiar('categoria');
+                                            setCategoria(item);
+                                        }}
                                     />
 
                                 ))
                             }
 
                         </View>
+                        </CampoGrupo>
 
 
                         <CampoTexto
@@ -338,9 +359,11 @@ export default function NuevoMovimientoFinancieroScreen({
                             accessibilityLabel="Valor del movimiento"
                             icono="cash-outline"
                             value={valor}
-                            onChangeText={setValor}
-                            keyboardType="numeric"
+                            onChangeText={texto=>setValor(filtrarDecimal(texto))}
+                            keyboardType="decimal-pad"
+                            acento={acento}
                             testID="movimiento-valor"
+                            {...v.props('valor')}
                         />
 
 
@@ -350,6 +373,7 @@ export default function NuevoMovimientoFinancieroScreen({
                             icono="create-outline"
                             value={detalle}
                             onChangeText={setDetalle}
+                            acento={acento}
                             multiline
                             testID="movimiento-detalle"
                         />
@@ -364,10 +388,10 @@ export default function NuevoMovimientoFinancieroScreen({
                     <Boton
                         titulo="Guardar movimiento"
                         icono="guardar"
-                        onPress={guardar}
-                        atenuado={
-                            guardando || saliendo
-                        }
+                        onPress={guardia(guardar)}
+                        acento={acento}
+                        guardando={guardando}
+                        atenuado={saliendo}
                         testID="guardar-movimiento"
                     />
 

@@ -18,20 +18,31 @@ export default function CampoTexto({
     inputStyle,
     onFocus,
     onBlur,
+    acento,
+    contenedorRef,
+    inputRef,
+    alEditar,
     ...resto
 }) {
     const [enfocado, setEnfocado] = useState(false);
     const multilinea = !!resto.multiline;
 
     return (
-        <View style={[estilos.contenedor, style]}>
+        <View ref={contenedorRef} collapsable={false} style={[estilos.contenedor, style]}>
             {etiqueta ? <Text style={estilos.etiqueta}>{etiqueta}</Text> : null}
-            <View style={[estilos.halo, enfocado && !error && estilos.haloActivo]}>
+            <View
+                style={[
+                    estilos.halo,
+                    enfocado && !error && estilos.haloActivo,
+                    enfocado && !error && acento ? { borderColor: acento + '38' } : null
+                ]}
+            >
                 <View
                     style={[
                         estilos.caja,
                         multilinea && estilos.cajaMultilinea,
-                        enfocado && estilos.cajaEnfocada,
+                        acento && !error ? { borderColor: acento } : null,
+                        enfocado && !acento && estilos.cajaEnfocada,
                         error ? estilos.cajaError : null
                     ]}
                 >
@@ -39,7 +50,7 @@ export default function CampoTexto({
                         <Icono
                             nombre={icono}
                             tamano={22}
-                            color={error ? colors.danger : colors.primary}
+                            color={error ? colors.danger : acento || colors.primary}
                             style={estilos.icono}
                         />
                     ) : null}
@@ -47,9 +58,14 @@ export default function CampoTexto({
                         testID={testID}
                         accessibilityLabel={resto.accessibilityLabel || etiqueta}
                         placeholderTextColor={colors.textSecondary}
-                        selectionColor={colors.primary}
+                        selectionColor={acento || colors.primary}
                         style={[estilos.input, multilinea && estilos.inputMultilinea, inputStyle]}
                         {...resto}
+                        ref={inputRef}
+                        onChangeText={texto => {
+                            if (alEditar) alEditar();
+                            if (resto.onChangeText) resto.onChangeText(texto);
+                        }}
                         onFocus={e => {
                             setEnfocado(true);
                             if (onFocus) onFocus(e);

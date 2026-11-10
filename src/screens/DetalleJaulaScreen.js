@@ -1,5 +1,6 @@
 import React, {
     useCallback,
+    useRef,
     useState
 } from 'react';
 
@@ -48,6 +49,8 @@ import EstadoVacio from '../components/EstadoVacio';
 import BarraAccion from '../components/BarraAccion';
 import Aviso from '../components/Aviso';
 import useAvisoExito from '../components/useAvisoExito';
+import useGuardaEnvio from '../components/useGuardaEnvio';
+import useValidacion from '../components/useValidacion';
 
 import {
     estadoSanitarioJaula
@@ -140,6 +143,16 @@ export default function DetalleJaulaScreen({
 
     const ocupado =
         procesandoJaula || saliendo;
+
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
+
+    // Ave que se está retirando de la jaula (retroalimentación visual en su botón «Quitar»)
+    const [
+        quitandoId,
+        setQuitandoId
+    ] = useState(null);
 
 
     const cargar =
@@ -289,6 +302,10 @@ export default function DetalleJaulaScreen({
 
             try {
 
+                setQuitandoId(
+                    ave.id
+                );
+
                 await cambiarJaulaAve({
 
                     aveId:
@@ -326,6 +343,13 @@ export default function DetalleJaulaScreen({
                 Alert.alert(
                     'Error',
                     'No fue posible retirar el ave de la jaula.'
+                );
+
+            }
+            finally {
+
+                setQuitandoId(
+                    null
                 );
 
             }
@@ -393,6 +417,11 @@ export default function DetalleJaulaScreen({
 
 
             if (!codigoLimpio) {
+
+                v.fallar(
+                    'codigo',
+                    'Ingresa un código para la jaula.'
+                );
 
                 Alert.alert(
                     'Código requerido',
@@ -704,6 +733,7 @@ export default function DetalleJaulaScreen({
         <FondoPantalla>
 
             <ScrollView
+                ref={scrollRef}
                 style={
                     styles.container
                 }
@@ -823,6 +853,7 @@ export default function DetalleJaulaScreen({
                                         !ocupado
                                     }
                                     testID="editar-codigo"
+                                    {...v.props('codigo')}
                                 />
 
 
@@ -1098,6 +1129,9 @@ export default function DetalleJaulaScreen({
                                             }
                                             testID={`quitar-ave-${ave.codigo}`}
                                             accessibilityRole="button"
+                                            disabled={
+                                                quitandoId !== null
+                                            }
                                             onPress={() =>
                                                 confirmarQuitarAve(
                                                     ave
@@ -1110,7 +1144,11 @@ export default function DetalleJaulaScreen({
                                                     styles.removeBirdText
                                                 }
                                             >
-                                                Quitar
+                                                {
+                                                    quitandoId === ave.id
+                                                        ? 'Quitando...'
+                                                        : 'Quitar'
+                                                }
                                             </Text>
 
                                         </Pulsable>
@@ -1216,18 +1254,13 @@ export default function DetalleJaulaScreen({
                             />
 
                             <Boton
-                                titulo={
-                                    procesandoJaula
-                                        ? 'Guardando...'
-                                        : 'Guardar cambios'
-                                }
-                                icono={
-                                    procesandoJaula
-                                        ? undefined
-                                        : 'guardar'
-                                }
+                                titulo="Guardar cambios"
+                                icono="guardar"
                                 onPress={
-                                    guardarEdicion
+                                    guardia(guardarEdicion)
+                                }
+                                guardando={
+                                    procesandoJaula
                                 }
                                 atenuado={
                                     ocupado

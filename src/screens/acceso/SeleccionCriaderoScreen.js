@@ -1,5 +1,6 @@
 import React, {
     useEffect,
+    useRef,
     useState
 } from 'react';
 
@@ -32,6 +33,8 @@ import Icono from '../../components/Icono';
 import IconoCirculo from '../../components/IconoCirculo';
 import EstadoCarga from '../../components/EstadoCarga';
 import FondoPantalla from '../../components/FondoPantalla';
+import useGuardaEnvio from '../../components/useGuardaEnvio';
+import useValidacion from '../../components/useValidacion';
 
 import {
     PantallaAcceso,
@@ -76,6 +79,14 @@ export default function SeleccionCriaderoScreen() {
     const [error, setError] =
         useState(null);
 
+    // Criadero que se está abriendo (retroalimentación visual en su tarjeta)
+    const [eligiendoId, setEligiendoId] =
+        useState(null);
+
+    const guardia = useGuardaEnvio();
+    const scrollRef = useRef(null);
+    const v = useValidacion(scrollRef);
+
 
     const cargar = async () => {
 
@@ -115,7 +126,18 @@ export default function SeleccionCriaderoScreen() {
 
     const elegir = async (criaderoId) => {
 
-        await seleccionarCriadero(criaderoId);
+        setEligiendoId(criaderoId);
+
+        try {
+
+            await seleccionarCriadero(criaderoId);
+
+        }
+        finally {
+
+            setEligiendoId(null);
+
+        }
 
     };
 
@@ -143,7 +165,13 @@ export default function SeleccionCriaderoScreen() {
 
         if (Object.values(datos).some(valor => !valor)) {
 
-            setError('Completa todos los datos del criadero.');
+            // Mismo mensaje de antes, ahora bajo el primer campo vacío (borde rojo, scroll y foco).
+            setError(null);
+
+            v.fallar(
+                Object.keys(datos).find(clave => !datos[clave]),
+                'Completa todos los datos del criadero.'
+            );
 
             return;
 
@@ -216,6 +244,7 @@ export default function SeleccionCriaderoScreen() {
                     : 'Crea tu primer criadero para empezar.'
             }
             compacta
+            scrollRef={scrollRef}
             testID="pantalla-seleccion-criadero"
         >
 
@@ -224,7 +253,7 @@ export default function SeleccionCriaderoScreen() {
 
                     <Tarjeta
                         key={criadero.id}
-                        onPress={() => elegir(criadero.id)}
+                        onPress={() => guardia(elegir)(criadero.id)}
                         testID={`criadero-${criadero.id}`}
                         style={estilos.criadero}
                     >
@@ -244,7 +273,11 @@ export default function SeleccionCriaderoScreen() {
                                 </Text>
 
                                 <Text style={estilos.entrar}>
-                                    Toca para entrar
+                                    {
+                                        eligiendoId === criadero.id
+                                            ? 'Entrando...'
+                                            : 'Toca para entrar'
+                                    }
                                 </Text>
 
                             </View>
@@ -300,6 +333,7 @@ export default function SeleccionCriaderoScreen() {
                                         : 'sentences'
                                 }
                                 testID={`criadero-campo-${campo}`}
+                                {...v.props(campo)}
                             />
 
                         ))
@@ -308,9 +342,10 @@ export default function SeleccionCriaderoScreen() {
                     <MensajeError mensaje={error} />
 
                     <Boton
-                        titulo={procesando ? 'Creando...' : 'Crear criadero'}
-                        onPress={crear}
-                        cargando={procesando}
+                        titulo="Crear criadero"
+                        onPress={guardia(crear)}
+                        guardando={procesando}
+                        tituloGuardando="Creando..."
                         testID="seleccion-crear-criadero"
                         style={estilos.separado}
                     />
