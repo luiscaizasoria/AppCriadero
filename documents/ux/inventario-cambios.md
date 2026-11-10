@@ -449,3 +449,11 @@ Sin cambios de lógica, repositorios, importes, periodos (UTC), exportación CSV
 - Punto 7: `theme/icons.js`: `jaulas`/`jaulasActivo` -> `jaula`/`jaula-relleno` (SVG propio en `Icono.js`: jaula de barras); `grid-outline` y `grid` se redirigen a ellos (también en usos directos de Ciclo de vida, Nueva jaula, Reportes, Producción y Seleccionar ave). `cicloVida`: `leaf-outline` -> `hourglass-outline`. `JaulaEstado`: Limpieza `sparkles`/`sparkles-outline` -> `brush`/`brush-outline` (no choca con Bebida `water-outline`). Los `sparkles-outline` de «Origen del ave» (NuevaAve) y del evento de Ciclo de vida no se tocan (no son limpieza).
 - Punto 9: `documents/ux/pendiente-en-telefono.md` (nuevo).
 - Para los flujos Maestro: textos nuevos «Cerrando...» y «Eliminando...» solo aparecen durante la operación; el aviso «Registro guardado» ahora se ve en la ficha del ave (no en Salud); en venta corregida las letras ya no se descartan al teclear. testID sin cambio.
+
+## Resumen final del cierre (2026-11-10)
+
+- `/probar completo` FINAL `2026-11-10-163756-completo` (tras todas las correcciones): VERDE, 29 PASO, 0 regresiones, 73,1 min, con el flujo nuevo `87`. Corrige lo dicho arriba sobre «NO hubo ejecución completa en verde»: ese texto describe `105816` (ROJO por caída del emulador y un aviso efímero, corregido) y `080951` (ROJO por el aviso de `navigate`), anteriores a las correcciones.
+- Correcciones tras la prueba del usuario: 8 puntos en dos rondas (commits `80edd19` y `e1e8005`; empujado hasta `d363656`), descritas en las dos secciones anteriores. Excepción aprobada a la paridad de V1: categorías creadas visibles en Ingreso y Egreso.
+- Base de pruebas: 3 jaulas, 4 aves y 131 elementos de catálogo creados por el usuario desde el teléfono (no es anomalía); 0 cuentas desechables.
+- Sin verificar: rendimiento en gama baja, scroll al campo con error, foco bajo el Alert nativo, liberación del botón, aviso de Salud en la ficha y su temporizador de 4 s, tarjetas de alertas con fuente grande. Detalle en `pendiente-en-telefono.md`; otras validaciones: `validacion-cierre-total.md`, `validacion-correcciones-usuario.md`, `validacion-ronda2.md`; medición en `rendimiento.md`.
+- Siguiente: prueba final del usuario en el teléfono; luego R2, Google, ambientes y retiro de SQLite con respaldo.

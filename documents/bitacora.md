@@ -2,6 +2,14 @@
 
 Registro de sesiones, la entrada más nueva ARRIBA. Reglas: una entrada por sesión (`## AAAA-MM-DD sesión N`, máximo 15 líneas: Hecho con hashes, Decisiones con su motivo, Pendiente y Próximo paso exacto); las entradas anteriores nunca se reescriben; sin URLs, ids de recursos, correos ni secretos (repositorio público). Al pasar de 300 líneas, las antiguas se mueven a `documents/historico/bitacora-AAAA-MM.md` y quedan las 5 últimas. El hook de inicio muestra las 3 más recientes (deben caber en unos 4.500 caracteres). Estado resumido: `documents/estado-actual.md`.
 
+## 2026-11-10 sesión 2
+- Hecho: tras la prueba del usuario se corrigieron 8 puntos en dos rondas (`80edd19`, `e1e8005`; empujado hasta `d363656`): guardando y doble envío, iconos, Salud vuelve a la ficha (`avisoSalud`), «Valor» numérico (venta conserva «Valor inválido»), acento verde/rojo, categorías creadas en Ingreso y Egreso, validación visual, «Cerrando...»/«Eliminando...», Alert de error al guardar y tarjetas de alertas.
+- Resultado: `/probar completo` FINAL `2026-11-10-163756-completo` VERDE: 29 PASO, 0 regresiones, 73,1 min, con el flujo nuevo `87`. Sustituye al «NO verde» de la sesión 1 (`105816` ROJO por caída del emulador y un aviso efímero ya corregido; `080951` ROJO por el aviso de `navigate`).
+- Base de pruebas: 3 jaulas, 4 aves y 131 elementos de catálogo creados por el usuario desde el teléfono (no es anomalía); 0 desechables.
+- Decisión: excepción aprobada a la paridad: categorías creadas visibles en Ingreso y Egreso; motivo: decisión del usuario.
+- Pendiente: sin verificar rendimiento en gama baja, scroll al campo con error, foco bajo el Alert nativo, liberación del botón, aviso de Salud y su temporizador, tarjetas de alertas (`documents/ux/pendiente-en-telefono.md`).
+- Próximo paso exacto: prueba final del usuario en el teléfono; luego R2, Google, ambientes y retiro de SQLite con respaldo.
+
 ## 2026-11-10 sesión 1
 - Hecho: cierre de la fase UX (variante «Pajarera tropical», Fredoka y Nunito, mascota SVG; dependencias en `9b0799a`). Commits locales `b538d57`, `5165b25`, `a5f8880`, `2082a1d` y el de los flujos 95 y 96; último push `df6b1b8`. Baja vuelve al `Alert` con «Aceptar»; 6 componentes antiguos borrados; Genealogía inactiva con borde discontinuo; `React.memo` en tarjetas de aves.
 - Hecho: corregido `BarraPestanas.js` (`CommonActions.navigate(route.name, undefined, {merge:true})`); la forma de objeto era obsoleta, abría el LogBox en Expo Go y explicaba la mayoría de las regresiones del completo.

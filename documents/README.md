@@ -42,6 +42,11 @@ Ante una contradicción prevalece, de mayor a menor:
 | `documents/ux/inventario-cambios.md` | Fase UX: registro de los cambios aplicados por bloque |
 | `documents/ux/validacion-propuesta.md` | Fase UX: validación de la propuesta |
 | `documents/ux/validacion-bloque-c0.md` | Fase UX: validación del bloque C0 (base del tema y componentes comunes) |
+| `documents/ux/rendimiento.md` | Fase UX: análisis de rendimiento |
+| `documents/ux/pendiente-en-telefono.md` | Fase UX: puntos sin verificar que requieren el teléfono del usuario |
+| `documents/ux/validacion-cierre-total.md` | Fase UX: validación del cierre total |
+| `documents/ux/validacion-correcciones-usuario.md` | Fase UX: validación de las correcciones tras la prueba del usuario |
+| `documents/ux/validacion-ronda2.md` | Fase UX: validación de la segunda ronda de correcciones |
 | `documents/ux/validacion-bloque-a.md` | Fase UX: validación del bloque A (navegación y orientación) |
 | `documents/ux/propuesta-visual.md` | Fase UX: propuesta visual  |
 | `documents/ux/muestrario-visual.html` | Fase UX: muestrario visual  |

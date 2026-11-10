@@ -4,15 +4,19 @@ Se carga solo desde `CLAUDE.md` (import). Historial: `documents/bitacora.md`. Ac
 
 ## Rama y reglas de trabajo
 
-- Rama única: `trabajo/migracion-nube` (desde `main`). Último push: `df6b1b8`; hay commits locales sin empujar (jornada UX del 2026-11-10). Sin PR; fusión a `main` solo si el usuario lo pide. Cloudflare: solo `--env test` / base de pruebas, con aprobación; nunca `criadero-kikirikis-dev`, `controlgastos-*` ni `delete` sin aprobación.
+- Rama única: `trabajo/migracion-nube` (desde `main`). Último push: todos los commits de la fase UX (tras el cierre, HEAD). Sin PR; fusión a `main` solo si el usuario lo pide. Cloudflare: solo `--env test` / base de pruebas, con aprobación; nunca `criadero-kikirikis-dev`, `controlgastos-*` ni `delete` sin aprobación.
 
 ## Fase UX: CERRADA, pendiente la prueba final del usuario
 
 - Variante «Pajarera tropical»; Fredoka (títulos, botones, números) y Nunito (cuerpo); mascota SVG (3 saltos, respeta «reducir movimiento»). Dependencias: `expo-font`, `expo-linear-gradient`, `react-native-svg`, `@expo-google-fonts/*`.
 - Reglas del tema: tokens en `src/theme/`, componentes en `src/components/`, máximo 2 degradados por pantalla, toques >= 44, contraste AA, sin verde ni amarillo como marca, avisos de éxito no bloqueantes (`Aviso`/`useAvisoExito`; los `Alert` de error y confirmación se mantienen).
-- `/probar completo` del 2026-11-10: NO hubo ejecución completa en verde. Final `2026-11-10-105816-completo`: 23 PASO y 5 REGRESION (95 por aviso efímero, 96-99 por caída del emulador); 95-99 pasaron repetidos aparte; ninguna regresión real de la app. Último completo VÁLIDO: `2026-11-05-103724-completo`.
+- `/probar completo` FINAL del 2026-11-10 (`2026-11-10-163756-completo`, tras todas las correcciones): VERDE, 29 PASO, 0 regresiones, 73,1 min, con el flujo nuevo `87`. Es el último completo válido. Los anteriores del mismo día fueron ROJOS: `105816` (caída del emulador y un aviso efímero, corregido) y `080951` (aviso de `navigate`).
+- Correcciones tras la prueba del usuario (8 puntos, dos rondas; commits `80edd19` y `e1e8005`; empujado hasta `d363656`): «Guardando...» y doble envío, iconos (pollito, espiga, jaula SVG, hourglass, brush), Salud vuelve a la ficha con el aviso por el parámetro `avisoSalud`, «Valor» numérico en movimientos (la venta conserva el «Valor inválido» de V1), acento verde/rojo, categorías creadas visibles en Ingreso y Egreso (excepción aprobada a la paridad), validación visual (borde rojo, mensaje, scroll y foco), progreso «Cerrando...»/«Eliminando...», Alert «No fue posible guardar el registro.» y tarjetas de alertas con fuente grande.
+- Base de pruebas (recuento final): incluye 3 jaulas, 4 aves y 131 elementos de catálogo creados por el usuario desde el teléfono (no es anomalía); 0 cuentas desechables.
+- Sin verificar (ver `documents/ux/pendiente-en-telefono.md`): rendimiento en gama baja, scroll al campo con error, foco bajo el Alert nativo, liberación del botón, aviso de Salud en la ficha y su temporizador de 4 s, tarjetas de alertas con fuente grande.
 - Emulador: arrancarlo con `-dns-server 8.8.8.8,1.1.1.1` (sin snapshot perdió el DNS).
-- Sin medir: rendimiento en gama baja, lista de aves con cientos de registros y fotos, coste de degradados, arranque en frío con fuentes, desaparición del aviso de `navigate` en logcat. Detalle: `documents/ux/inventario-cambios.md`.
+- Sin medir: lista de aves con cientos de registros y fotos, coste de degradados, arranque en frío con fuentes. Detalle: `documents/ux/inventario-cambios.md` y `documents/ux/rendimiento.md`.
+- Siguiente: prueba final del usuario en el teléfono; luego R2, Google, ambientes y retiro de SQLite con respaldo.
 
 ## Módulos hechos
 
