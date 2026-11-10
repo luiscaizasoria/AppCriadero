@@ -20,7 +20,7 @@ const URL_API = urlApi();
 process.env.EXPO_PUBLIC_API_URL = URL_API;
 // Limites de tiempo. FLUJO_MAX_MS y EJECUCION_MAX_MS existen solo para probar estas defensas de forma controlada.
 const FLUJO_MAX_MS = Number(process.env.FLUJO_MAX_MS || 6 * 60 * 1000);
-const EJECUCION_MAX_MS = Number(process.env.EJECUCION_MAX_MS || 60 * 60 * 1000);
+const EJECUCION_MAX_MS = Number(process.env.EJECUCION_MAX_MS || 90 * 60 * 1000);
 
 const p = n => String(n).padStart(2, '0');
 const d = new Date();

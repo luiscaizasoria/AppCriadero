@@ -4,8 +4,8 @@ import { colors, shadows, spacing } from '../theme';
 
 // Barra fija al pie de un formulario (donde vive «Guardar»). Va fuera del ScrollView, así el botón
 // no se pierde al final de un formulario largo. Uso:
-// <JaulaBarraAccion><Boton titulo="Guardar" .../></JaulaBarraAccion>
-export default function JaulaBarraAccion({ children, fila = false, testID = 'barra-accion' }) {
+// <BarraAccion><Boton titulo="Guardar" .../></BarraAccion>
+export default function BarraAccion({ children, fila = false, testID = 'barra-accion' }) {
     return (
         <View testID={testID} style={[estilos.barra, fila && estilos.fila]}>
             {children}

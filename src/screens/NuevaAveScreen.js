@@ -63,6 +63,8 @@ import Boton
 
 import Aviso
     from '../components/Aviso';
+import BarraAccion
+    from '../components/BarraAccion';
 
 import Icono
     from '../components/Icono';
@@ -376,13 +378,15 @@ export default function NuevaAveScreen({
     // Muestra el aviso de éxito y, pasado un instante, hace la navegación que antes hacía «Aceptar»
     const avisarYNavegar =
         (
+            titulo,
             mensaje,
             destino
         ) => {
 
-            setAviso(
+            setAviso({
+                titulo,
                 mensaje
-            );
+            });
 
             setGuardado(
                 true
@@ -1207,6 +1211,8 @@ export default function NuevaAveScreen({
 
                     avisarYNavegar(
 
+                        'Ave actualizada',
+
                         `Los datos del ave ${codigoLimpio} fueron actualizados correctamente.`,
 
                         () =>
@@ -1289,6 +1295,8 @@ export default function NuevaAveScreen({
                 // «Ver ave» directo: tras registrar, navega a la ficha (mismo destino que la
                 // acción «Ver ave» del Alert anterior) después de mostrar el aviso.
                 avisarYNavegar(
+
+                    'Ave registrada',
 
                     `El ave ${codigoLimpio} fue registrada correctamente.`,
 
@@ -2232,11 +2240,7 @@ export default function NuevaAveScreen({
             </ScrollView>
 
 
-            <View
-                style={
-                    styles.barraGuardar
-                }
-            >
+            <BarraAccion>
 
                 {
                     aviso
@@ -2249,8 +2253,11 @@ export default function NuevaAveScreen({
                         >
 
                             <Aviso
+                                titulo={
+                                    aviso.titulo
+                                }
                                 mensaje={
-                                    aviso
+                                    aviso.mensaje
                                 }
                                 tono="exito"
                                 duracion={0}
@@ -2282,7 +2289,7 @@ export default function NuevaAveScreen({
                     testID="guardar-ave"
                 />
 
-            </View>
+            </BarraAccion>
 
         </KeyboardAvoidingView>
 

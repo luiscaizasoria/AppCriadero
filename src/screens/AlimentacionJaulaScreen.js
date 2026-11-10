@@ -26,11 +26,10 @@ import Boton from '../components/Boton';
 import EstadoCarga from '../components/EstadoCarga';
 import EstadoError from '../components/EstadoError';
 import EstadoVacio from '../components/EstadoVacio';
-import JaulaBarraAccion from '../components/JaulaBarraAccion';
+import BarraAccion from '../components/BarraAccion';
 import JaulaOpcion from '../components/JaulaOpcion';
-import JaulaAviso, {
-    useAvisoExito
-} from '../components/JaulaAviso';
+import Aviso from '../components/Aviso';
+import useAvisoExito from '../components/useAvisoExito';
 
 
 export default function AlimentacionJaulaScreen({
@@ -262,7 +261,7 @@ export default function AlimentacionJaulaScreen({
             </ScrollView>
 
 
-            <JaulaBarraAccion>
+            <BarraAccion>
 
                 <Boton
                     titulo="Guardar"
@@ -274,13 +273,19 @@ export default function AlimentacionJaulaScreen({
                     testID="guardar-alimentacion"
                 />
 
-            </JaulaBarraAccion>
+            </BarraAccion>
 
 
-            <JaulaAviso
-                aviso={aviso}
-                onCerrar={cerrarAviso}
-            />
+            {aviso ? (
+                <Aviso
+                    flotante
+                    tono="exito"
+                    duracion={0}
+                    titulo={aviso.titulo}
+                    mensaje={aviso.mensaje}
+                    onCerrar={cerrarAviso}
+                />
+            ) : null}
 
         </FondoPantalla>
 

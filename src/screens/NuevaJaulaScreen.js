@@ -29,10 +29,9 @@ import CampoTexto from '../components/CampoTexto';
 import Boton from '../components/Boton';
 import Pulsable from '../components/Pulsable';
 import Icono from '../components/Icono';
-import JaulaBarraAccion from '../components/JaulaBarraAccion';
-import JaulaAviso, {
-    useAvisoExito
-} from '../components/JaulaAviso';
+import BarraAccion from '../components/BarraAccion';
+import Aviso from '../components/Aviso';
+import useAvisoExito from '../components/useAvisoExito';
 
 
 const TIPOS_JAULA = [
@@ -297,7 +296,7 @@ export default function NuevaJaulaScreen({
                 </ScrollView>
 
 
-                <JaulaBarraAccion>
+                <BarraAccion>
 
                     <Boton
                         titulo={
@@ -317,13 +316,19 @@ export default function NuevaJaulaScreen({
                         testID="guardar-jaula"
                     />
 
-                </JaulaBarraAccion>
+                </BarraAccion>
 
 
-                <JaulaAviso
-                    aviso={aviso}
-                    onCerrar={cerrarAviso}
-                />
+                {aviso ? (
+                    <Aviso
+                        flotante
+                        tono="exito"
+                        duracion={0}
+                        titulo={aviso.titulo}
+                        mensaje={aviso.mensaje}
+                        onCerrar={cerrarAviso}
+                    />
+                ) : null}
 
             </FondoPantalla>
 

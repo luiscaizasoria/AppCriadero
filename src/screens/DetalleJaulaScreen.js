@@ -45,10 +45,9 @@ import Pulsable from '../components/Pulsable';
 import CampoTexto from '../components/CampoTexto';
 import EstadoCarga from '../components/EstadoCarga';
 import EstadoVacio from '../components/EstadoVacio';
-import JaulaBarraAccion from '../components/JaulaBarraAccion';
-import JaulaAviso, {
-    useAvisoExito
-} from '../components/JaulaAviso';
+import BarraAccion from '../components/BarraAccion';
+import Aviso from '../components/Aviso';
+import useAvisoExito from '../components/useAvisoExito';
 
 import {
     estadoSanitarioJaula
@@ -1196,7 +1195,7 @@ export default function DetalleJaulaScreen({
                 editando
                     ? (
 
-                        <JaulaBarraAccion
+                        <BarraAccion
                             fila
                             testID="barra-guardar-edicion"
                         >
@@ -1239,17 +1238,23 @@ export default function DetalleJaulaScreen({
                                 }
                             />
 
-                        </JaulaBarraAccion>
+                        </BarraAccion>
 
                     )
                     : null
             }
 
 
-            <JaulaAviso
-                aviso={aviso}
-                onCerrar={cerrarAviso}
-            />
+            {aviso ? (
+                <Aviso
+                    flotante
+                    tono="exito"
+                    duracion={0}
+                    titulo={aviso.titulo}
+                    mensaje={aviso.mensaje}
+                    onCerrar={cerrarAviso}
+                />
+            ) : null}
 
         </FondoPantalla>
 

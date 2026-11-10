@@ -24,11 +24,10 @@ import {
 import FondoPantalla from '../components/FondoPantalla';
 import Boton from '../components/Boton';
 import CampoTexto from '../components/CampoTexto';
-import JaulaBarraAccion from '../components/JaulaBarraAccion';
+import BarraAccion from '../components/BarraAccion';
 import JaulaOpcion from '../components/JaulaOpcion';
-import JaulaAviso, {
-    useAvisoExito
-} from '../components/JaulaAviso';
+import Aviso from '../components/Aviso';
+import useAvisoExito from '../components/useAvisoExito';
 
 import {
     ICONO_TIPO_SANIDAD
@@ -251,7 +250,7 @@ export default function SanidadJaulaScreen({
 
 
 
-            <JaulaBarraAccion>
+            <BarraAccion>
 
                 <Boton
 
@@ -271,14 +270,20 @@ export default function SanidadJaulaScreen({
 
                 />
 
-            </JaulaBarraAccion>
+            </BarraAccion>
 
 
 
-            <JaulaAviso
-                aviso={aviso}
-                onCerrar={cerrarAviso}
-            />
+            {aviso ? (
+                <Aviso
+                    flotante
+                    tono="exito"
+                    duracion={0}
+                    titulo={aviso.titulo}
+                    mensaje={aviso.mensaje}
+                    onCerrar={cerrarAviso}
+                />
+            ) : null}
 
         </FondoPantalla>
 

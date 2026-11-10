@@ -255,3 +255,14 @@ Del usuario, 2026-11-09:
 5. **`testID`** permitidos en elementos nuevos o modificados.
 
 - `RegistrarHuevoScreen.js`: añadido `testID="guardar-huevo"` al botón "Registrar huevo"/"Guardando..." (sin otro cambio).
+
+## C4 refactor (avisos y barra de acción comunes; 2026-11-09)
+
+Sin cambios de texto, testID, tiempos (1,5 s Aves; 1,8 s y 4 s Jaulas) ni lógica.
+
+- `components/Aviso.js`: props nuevos opcionales `titulo` (título y mensaje en textos separados) y `flotante` (superpuesto arriba con entrada animada, antes `JaulaAviso`). Sin ellos se comporta como antes.
+- `components/useAvisoExito.js` (nuevo, export por defecto): el hook movido desde `JaulaAviso.js`, idéntico.
+- `components/BarraAccion.js` (nuevo): el antiguo `JaulaBarraAccion`, idéntico.
+- Jaulas (`AlimentacionJaulaScreen`, `BebidaJaulaScreen`, `SanidadJaulaScreen`, `NuevaJaulaScreen`, `DetalleJaulaScreen`): imports y uso de `<Aviso flotante titulo mensaje tono="exito" duracion={0}>` y `<BarraAccion>`.
+- `NuevaAveScreen.js`: `avisarYNavegar(titulo, mensaje, destino)`; títulos «Ave registrada» y «Ave actualizada» (mensajes iguales); la barra inferior usa `BarraAccion` (añade la sombra de la barra de Jaulas; `styles.barraGuardar` queda sin uso).
+- `components/JaulaAviso.js` y `components/JaulaBarraAccion.js`: SIN USO y pendientes de borrar (el agente no puede borrar archivos).
