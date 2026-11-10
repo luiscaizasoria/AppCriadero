@@ -26,7 +26,9 @@ tags:
 - extendedWaitUntil:
     visible: "Jaula creada"
     timeout: 20000
-- tapOn: "Aceptar"
+- extendedWaitUntil:
+    notVisible: "Jaula creada"
+    timeout: 10000
 - extendedWaitUntil:
     visible: ".*SMK-1.*"
     timeout: 20000

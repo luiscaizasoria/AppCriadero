@@ -7,16 +7,27 @@ import {
     View,
     Text,
     StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    ActivityIndicator
+    ScrollView
 } from 'react-native';
 
 import {
     useFocusEffect
 } from '@react-navigation/native';
 
-import Header from '../components/Header';
+import {
+    useSafeAreaInsets
+} from 'react-native-safe-area-context';
+
+import FondoPantalla from '../components/FondoPantalla';
+import PantallaHeader from '../components/PantallaHeader';
+import BarraEstado from '../components/BarraEstado';
+import Pulsable from '../components/Pulsable';
+import Icono from '../components/Icono';
+import Chip from '../components/Chip';
+import Fab from '../components/Fab';
+import EstadoCarga from '../components/EstadoCarga';
+import EstadoError from '../components/EstadoError';
+import EstadoVacio from '../components/EstadoVacio';
 import JaulaCard from '../components/JaulaCard';
 
 import {
@@ -25,13 +36,33 @@ import {
 } from '../repositories/JaulaRepository';
 
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    radii,
+    spacing,
+    typography
+} from '../theme';
+
+
+const FILTROS = [
+    {
+        id: 'ACTIVAS',
+        label: 'Activas',
+        icono: 'home-outline'
+    },
+    {
+        id: 'INACTIVAS',
+        label: 'Inactivas',
+        icono: 'archive-outline'
+    }
+];
 
 
 export default function JaulasScreen({
     navigation
 }) {
+
+    const insets =
+        useSafeAreaInsets();
 
     const [jaulas, setJaulas] = useState([]);
     const [tabActual, setTabActual] = useState('ACTIVAS');
@@ -88,7 +119,18 @@ export default function JaulasScreen({
 
     return (
 
-        <View style={styles.container}>
+        <FondoPantalla>
+
+            <BarraEstado
+                estilo="light"
+                navigation={navigation}
+            />
+
+            <PantallaHeader
+                titulo="Jaulas"
+                insetSuperior={insets.top}
+                testID="jaulas-cabecera"
+            />
 
             <ScrollView
                 contentContainerStyle={
@@ -96,105 +138,74 @@ export default function JaulasScreen({
                 }
             >
 
-                <Header
-                    title="Jaulas"
-                    subtitle="Administración de espacios del criadero"
-                />
-
-
-                <View style={styles.tabs}>
+                <View
+                    style={styles.tabs}
+                    accessibilityRole="tablist"
+                >
 
                     {
-                        [
-                            {
-                                id:'ACTIVAS',
-                                label:'🏠 Activas'
-                            },
-                            {
-                                id:'INACTIVAS',
-                                label:'📦 Inactivas'
-                            }
-                        ].map(item => (
+                        FILTROS.map(item => {
 
-                            <TouchableOpacity
-                                key={item.id}
-                                style={[
-                                    styles.tab,
-                                    tabActual === item.id &&
-                                    styles.tabActive
-                                ]}
-                                onPress={() =>
-                                    setTabActual(item.id)
-                                }
-                            >
-                                <Text
+                            const activo =
+                                tabActual === item.id;
+
+                            return (
+
+                                <Pulsable
+                                    key={item.id}
+                                    testID={`filtro-jaulas-${item.id.toLowerCase()}`}
+                                    accessibilityRole="tab"
+                                    accessibilityState={{
+                                        selected: activo
+                                    }}
+                                    onPress={() =>
+                                        setTabActual(item.id)
+                                    }
+                                    sinMinimo
                                     style={[
-                                        styles.tabText,
-                                        tabActual === item.id &&
-                                        styles.tabTextActive
+                                        styles.tab,
+                                        activo &&
+                                        styles.tabActive
                                     ]}
                                 >
-                                    {item.label}
-                                </Text>
-                            </TouchableOpacity>
 
-                        ))
+                                    <Icono
+                                        nombre={item.icono}
+                                        tamano={20}
+                                        color={
+                                            activo
+                                                ? colors.white
+                                                : colors.primaryDark
+                                        }
+                                        style={styles.tabIcono}
+                                    />
+
+                                    <Text
+                                        style={[
+                                            styles.tabText,
+                                            activo &&
+                                            styles.tabTextActive
+                                        ]}
+                                    >
+                                        {item.label}
+                                    </Text>
+
+                                </Pulsable>
+
+                            );
+
+                        })
                     }
 
                 </View>
 
 
                 {
-                    tabActual === 'ACTIVAS'
-                    &&
-                    (
-                        <TouchableOpacity
-                            style={styles.newButton}
-                            onPress={() =>
-                                navigation.navigate(
-                                    'NuevaJaula'
-                                )
-                            }
-                        >
-
-                            <Text
-                                style={
-                                    styles.newButtonText
-                                }
-                            >
-                                ＋ Nueva jaula
-                            </Text>
-
-                        </TouchableOpacity>
-                    )
-                }
-
-
-                {
                     loading
                         ? (
-                            <View
-                                style={
-                                    styles.center
-                                }
-                            >
-
-                                <ActivityIndicator
-                                    size="large"
-                                    color={
-                                        COLORS.primary
-                                    }
-                                />
-
-                                <Text
-                                    style={
-                                        styles.loadingText
-                                    }
-                                >
-                                    Cargando jaulas...
-                                </Text>
-
-                            </View>
+                            <EstadoCarga
+                                mensaje="Cargando jaulas..."
+                            />
                         )
                         : null
                 }
@@ -203,40 +214,12 @@ export default function JaulasScreen({
                 {
                     !loading && error
                         ? (
-                            <View
-                                style={
-                                    styles.messageCard
+                            <EstadoError
+                                mensaje={error}
+                                onReintentar={
+                                    cargarJaulas
                                 }
-                            >
-
-                                <Text
-                                    style={
-                                        styles.errorText
-                                    }
-                                >
-                                    {error}
-                                </Text>
-
-                                <TouchableOpacity
-                                    style={
-                                        styles.retryButton
-                                    }
-                                    onPress={
-                                        cargarJaulas
-                                    }
-                                >
-
-                                    <Text
-                                        style={
-                                            styles.retryText
-                                        }
-                                    >
-                                        Reintentar
-                                    </Text>
-
-                                </TouchableOpacity>
-
-                            </View>
+                            />
                         )
                         : null
                 }
@@ -247,45 +230,24 @@ export default function JaulasScreen({
                     !error &&
                     jaulas.length === 0
                         ? (
-                            <View
-                                style={
-                                    styles.emptyCard
+                            <EstadoVacio
+                                icono={
+                                    tabActual === 'ACTIVAS'
+                                        ? 'home-outline'
+                                        : 'archive-outline'
                                 }
-                            >
-
-                                <Text
-                                    style={
-                                        styles.emptyIcon
-                                    }
-                                >
-                                    {tabActual === 'ACTIVAS' ? '🏠' : '📦'}
-                                </Text>
-
-                                <Text
-                                    style={
-                                        styles.emptyTitle
-                                    }
-                                >
-                                    {
-                                        tabActual === 'ACTIVAS'
-                                            ? 'No tienes jaulas registradas'
-                                            : 'No tienes jaulas inactivas'
-                                    }
-                                </Text>
-
-                                <Text
-                                    style={
-                                        styles.emptyText
-                                    }
-                                >
-                                    {
-                                        tabActual === 'ACTIVAS'
-                                            ? 'Crea tu primera jaula para comenzar a organizar las aves del criadero.'
-                                            : 'Las jaulas desactivadas aparecerán aquí y conservarán su historial.'
-                                    }
-                                </Text>
-
-                            </View>
+                                titulo={
+                                    tabActual === 'ACTIVAS'
+                                        ? 'No tienes jaulas registradas'
+                                        : 'No tienes jaulas inactivas'
+                                }
+                                mensaje={
+                                    tabActual === 'ACTIVAS'
+                                        ? 'Crea tu primera jaula para comenzar a organizar las aves del criadero.'
+                                        : 'Las jaulas desactivadas aparecerán aquí y conservarán su historial.'
+                                }
+                                testID="jaulas-vacio"
+                            />
                         )
                         : null
                 }
@@ -299,23 +261,24 @@ export default function JaulasScreen({
 
                             <View
                                 key={jaula.id}
-                                style={styles.cardWrapper}
                             >
 
                                 {
                                     tabActual === 'INACTIVAS'
                                     &&
                                     (
-                                        <View style={styles.inactiveBadge}>
-                                            <Text style={styles.inactiveBadgeText}>
-                                                Inactiva · Solo lectura
-                                            </Text>
-                                        </View>
+                                        <Chip
+                                            texto="Inactiva · Solo lectura"
+                                            tono="neutro"
+                                            icono="lock-closed-outline"
+                                            style={styles.inactiveBadge}
+                                        />
                                     )
                                 }
 
                                 <JaulaCard
                                     jaula={jaula}
+                                    testID={`lista-jaula-${jaula.codigo}`}
                                     onPress={() =>
                                         navigation.navigate(
                                             tabActual === 'ACTIVAS'
@@ -335,10 +298,27 @@ export default function JaulasScreen({
                     )
                 }
 
-
             </ScrollView>
 
-        </View>
+
+            {
+                tabActual === 'ACTIVAS'
+                &&
+                (
+                    <Fab
+                        titulo="Nueva jaula"
+                        icono="add"
+                        testID="fab-nueva-jaula"
+                        onPress={() =>
+                            navigation.navigate(
+                                'NuevaJaula'
+                            )
+                        }
+                    />
+                )
+            }
+
+        </FondoPantalla>
 
     );
 
@@ -348,145 +328,49 @@ export default function JaulasScreen({
 const styles =
     StyleSheet.create({
 
-        container: {
-            flex: 1,
-            backgroundColor:
-                COLORS.background
-        },
-
         content: {
-            padding: 16,
-            paddingBottom: 40
+            padding: spacing.pantalla,
+            paddingBottom: 112
         },
 
-        tabs:{
-            flexDirection:'row',
-            backgroundColor:COLORS.card,
-            borderRadius:14,
-            padding:4,
-            marginBottom:16
+        tabs: {
+            flexDirection: 'row',
+            backgroundColor: colors.surface,
+            borderRadius: radii.md,
+            borderWidth: 1,
+            borderColor: colors.borderSoft,
+            padding: 4,
+            marginBottom: spacing.lg
         },
 
-        tab:{
-            flex:1,
-            paddingVertical:10,
-            alignItems:'center',
-            borderRadius:11
-        },
-
-        tabActive:{
-            backgroundColor:COLORS.primary
-        },
-
-        tabText:{
-            color:COLORS.textSecondary,
-            fontWeight:'600'
-        },
-
-        tabTextActive:{
-            color:'#fff'
-        },
-
-        newButton: {
-            backgroundColor:
-                COLORS.primary,
-            paddingVertical: 14,
-            borderRadius: 14,
+        tab: {
+            flex: 1,
+            minHeight: spacing.touchMin,
+            flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 18
+            justifyContent: 'center',
+            borderRadius: radii.sm
         },
 
-        newButtonText: {
-            color: '#fff',
-            fontSize: 17,
-            fontWeight: 'bold'
+        tabActive: {
+            backgroundColor: colors.primary
         },
 
-        center: {
-            alignItems: 'center',
-            marginTop: 40
+        tabIcono: {
+            marginRight: spacing.xs
         },
 
-        loadingText: {
-            color:
-                COLORS.textSecondary,
-            marginTop: 10
+        tabText: {
+            ...typography.etiqueta,
+            color: colors.primaryDark
         },
 
-        emptyCard: {
-            backgroundColor:
-                COLORS.card,
-            borderRadius: 18,
-            padding: 25,
-            alignItems: 'center',
-            elevation: 2
+        tabTextActive: {
+            color: colors.white
         },
 
-        emptyIcon: {
-            fontSize: 42
-        },
-
-        emptyTitle: {
-            fontSize: 19,
-            fontWeight: 'bold',
-            color:
-                COLORS.text,
-            marginTop: 10
-        },
-
-        emptyText: {
-            textAlign: 'center',
-            color:
-                COLORS.textSecondary,
-            marginTop: 8,
-            lineHeight: 20
-        },
-
-        messageCard: {
-            backgroundColor:
-                COLORS.card,
-            padding: 20,
-            borderRadius: 15
-        },
-
-        errorText: {
-            color:
-                COLORS.danger,
-            textAlign: 'center'
-        },
-
-        retryButton: {
-            marginTop: 15,
-            alignSelf: 'center',
-            backgroundColor:
-                COLORS.primary,
-            paddingHorizontal: 20,
-            paddingVertical: 10,
-            borderRadius: 10
-        },
-
-        retryText: {
-            color: '#fff',
-            fontWeight: 'bold'
-        },
-
-        cardWrapper:{
-            position:'relative'
-        },
-
-        inactiveBadge:{
-            alignSelf:'flex-start',
-            backgroundColor:'#eceff1',
-            borderRadius:12,
-            paddingHorizontal:9,
-            paddingVertical:4,
-            marginBottom:5
-        },
-
-        inactiveBadgeText:{
-            color:'#59636a',
-            fontSize:12,
-            fontWeight:'600'
+        inactiveBadge: {
+            marginBottom: spacing.xs
         }
 
     });

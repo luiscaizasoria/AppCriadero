@@ -27,6 +27,8 @@ tags:
     element: "Padre"
 - tapOn: ".*AV-P.*"
 - tapOn: ".*AV-M.*"
+- scrollUntilVisible:
+    element: ".*Kikiris"
 - tapOn: ".*Kikiris"
 - scrollUntilVisible:
     element: ".*Macho"
@@ -36,10 +38,14 @@ tags:
 - takeScreenshot: ave-formulario-completo
 - tapOn: ".*Guardar ave.*"
 - extendedWaitUntil:
-    visible: "Ave registrada"
+    visible: ".*fue registrada correctamente.*"
     timeout: 20000
 - takeScreenshot: ave-creada
-- tapOn: "Ver ave"
+# El aviso desaparece solo y a los ~1,5 s la app navega a la ficha (ya no hay botón «Ver ave»).
+# El aviso también contiene "AV-H": se espera primero un texto que solo existe en la ficha.
+- extendedWaitUntil:
+    visible: ".*Información del ave.*"
+    timeout: 20000
 - extendedWaitUntil:
     visible: ".*AV-H.*"
     timeout: 20000

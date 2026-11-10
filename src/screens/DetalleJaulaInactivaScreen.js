@@ -8,8 +8,6 @@ import {
     Text,
     Image,
     ScrollView,
-    TouchableOpacity,
-    ActivityIndicator,
     StyleSheet
 } from 'react-native';
 
@@ -24,10 +22,21 @@ import {
 } from '../repositories/JaulaRepository';
 
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
-import Card from '../components/Card';
+import FondoPantalla from '../components/FondoPantalla';
+import Tarjeta from '../components/Tarjeta';
+import TituloSeccion from '../components/TituloSeccion';
+import IconoCirculo from '../components/IconoCirculo';
+import Icono from '../components/Icono';
+import Chip from '../components/Chip';
+import Aviso from '../components/Aviso';
+import Pulsable from '../components/Pulsable';
+import EstadoCarga from '../components/EstadoCarga';
+import EstadoVacio from '../components/EstadoVacio';
 
 import { useContextoPantalla } from '../navigation/contextoPantalla';
 
@@ -111,71 +120,84 @@ export default function DetalleJaulaInactivaScreen({
 
     if(loading){
         return (
-            <View style={styles.center}>
-                <ActivityIndicator
-                    size="large"
-                    color={COLORS.primary}
-                />
-                <Text style={styles.loadingText}>
-                    Cargando historial de la jaula...
-                </Text>
-            </View>
+            <FondoPantalla>
+                <View style={styles.center}>
+                    <EstadoCarga
+                        mensaje="Cargando historial de la jaula..."
+                    />
+                </View>
+            </FondoPantalla>
         );
     }
 
 
     if(!jaula){
         return (
-            <View style={styles.center}>
-                <Text style={styles.emptyText}>
-                    Jaula no encontrada.
-                </Text>
-            </View>
+            <FondoPantalla>
+                <View style={styles.center}>
+                    <EstadoVacio
+                        icono="archive-outline"
+                        titulo="Jaula no encontrada."
+                        testID="jaula-no-encontrada"
+                    />
+                </View>
+            </FondoPantalla>
         );
     }
 
 
     return (
+        <FondoPantalla>
         <ScrollView
             style={styles.container}
             contentContainerStyle={styles.content}
         >
 
-            <View style={styles.headerRow}>
-                <View style={styles.headerMain}>
-                    <Text style={styles.title}>
-                        {jaula.codigo}
-                    </Text>
-                    <Text style={styles.name}>
-                        {jaula.nombre || 'Sin nombre'}
-                    </Text>
-                </View>
+            <Tarjeta
+                franja={colors.border}
+                testID="jaula-encabezado"
+            >
+                <View style={styles.headerRow}>
+                    <View style={styles.headerMain}>
+                        <Text style={styles.title}>
+                            {jaula.codigo}
+                        </Text>
+                        <Text style={styles.name}>
+                            {jaula.nombre || 'Sin nombre'}
+                        </Text>
+                    </View>
 
-                <View style={styles.inactiveBadge}>
-                    <Text style={styles.inactiveBadgeText}>
-                        Inactiva
-                    </Text>
+                    <Chip
+                        texto="Inactiva"
+                        tono="neutro"
+                        icono="lock-closed-outline"
+                    />
                 </View>
+            </Tarjeta>
+
+            <View style={styles.aviso}>
+                <Aviso
+                    tono="info"
+                    duracion={0}
+                    testID="jaula-solo-lectura"
+                    mensaje="Esta jaula está desactivada. La información se conserva únicamente para consulta histórica."
+                />
             </View>
 
-            <Text style={styles.readOnlyText}>
-                Esta jaula est谩 desactivada. La informaci贸n se conserva 煤nicamente para consulta hist贸rica.
-            </Text>
 
+            <Tarjeta>
+                <TituloSeccion icono="home-outline" indice={0}>
+                    Información
+                </TituloSeccion>
 
-            <Card>
-                <Text style={styles.sectionTitle}>
-                    馃彔 Informaci贸n
-                </Text>
-
-                <Info label="C贸digo" value={jaula.codigo} />
+                <Info label="Código" value={jaula.codigo} />
                 <Info label="Nombre" value={jaula.nombre} />
-                <Info label="Ubicaci贸n" value={jaula.ubicacion} />
+                <Info label="Ubicación" value={jaula.ubicacion} />
                 <Info label="Tipo" value={jaula.tipo} />
                 <Info label="Estado sanitario" value={jaula.estado_sanitario} />
-                <Info label="Creaci贸n" value={formatearFecha(jaula.fecha_creacion)} />
+                <Info label="Creación" value={formatearFecha(jaula.fecha_creacion)} />
                 <Info
-                    label="Desactivaci贸n"
+                    label="Desactivación"
                     value={
                         formatearFecha(
                             jaula.fecha_desactivacion ||
@@ -184,14 +206,16 @@ export default function DetalleJaulaInactivaScreen({
                     }
                     last
                 />
-            </Card>
+            </Tarjeta>
 
 
-            <Card>
+            <Tarjeta>
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>
-                        馃悢 Aves que estuvieron aqu铆
-                    </Text>
+                    <View style={styles.sectionTitulo}>
+                        <TituloSeccion icono="aves" indice={2}>
+                            Aves que estuvieron aquí
+                        </TituloSeccion>
+                    </View>
                     <Text style={styles.counter}>
                         {aves.length}
                     </Text>
@@ -205,9 +229,11 @@ export default function DetalleJaulaInactivaScreen({
                             </Text>
                         )
                         : aves.map(item => (
-                            <TouchableOpacity
+                            <Pulsable
                                 key={item.id}
                                 style={styles.birdRow}
+                                testID={`ave-historica-${item.codigo}`}
+                                accessibilityRole="button"
                                 onPress={() =>
                                     abrirAve(item.id)
                                 }
@@ -221,11 +247,11 @@ export default function DetalleJaulaInactivaScreen({
                                             />
                                         )
                                         : (
-                                            <View style={styles.birdPhotoEmpty}>
-                                                <Text>
-                                                    {item.sexo === 'MACHO' ? '馃悡' : '馃悢'}
-                                                </Text>
-                                            </View>
+                                            <IconoCirculo
+                                                icono="aves"
+                                                indice={2}
+                                                tamano={44}
+                                            />
                                         )
                                 }
 
@@ -234,23 +260,28 @@ export default function DetalleJaulaInactivaScreen({
                                         {item.codigo}
                                     </Text>
                                     <Text style={styles.birdDetail}>
-                                        {item.raza || 'Sin raza'} 路 {textoSexo(item.sexo)}
+                                        {item.raza || 'Sin raza'} · {textoSexo(item.sexo)}
                                     </Text>
                                 </View>
 
-                                <Text style={styles.arrow}>
-                                    鈥?                                </Text>
-                            </TouchableOpacity>
+                                <Icono
+                                    nombre="siguiente"
+                                    tamano={22}
+                                    color={colors.primary}
+                                />
+                            </Pulsable>
                         ))
                 }
-            </Card>
+            </Tarjeta>
 
 
-            <Card>
+            <Tarjeta>
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>
-                        馃摉 Historial
-                    </Text>
+                    <View style={styles.sectionTitulo}>
+                        <TituloSeccion icono="historial" indice={0}>
+                            Historial
+                        </TituloSeccion>
+                    </View>
                     <Text style={styles.counter}>
                         {historial.length}
                     </Text>
@@ -268,30 +299,39 @@ export default function DetalleJaulaInactivaScreen({
                                 key={item.id}
                                 style={styles.event}
                             >
-                                <Text style={styles.eventType}>
-                                    {textoEvento(item.tipo_evento)}
-                                </Text>
-                                <Text style={styles.eventDate}>
-                                    {formatearFecha(item.fecha)}
-                                </Text>
-                                {
-                                    item.ave_codigo
-                                    ? (
-                                        <Text style={styles.eventBird}>
-                                            Ave: {item.ave_codigo}
-                                        </Text>
-                                    )
-                                    : null
-                                }
-                                <Text style={styles.eventDetail}>
-                                    {item.detalle || 'Sin detalle'}
-                                </Text>
+                                <IconoCirculo
+                                    icono={iconoEvento(item.tipo_evento)}
+                                    indice={item.tipo_evento === 'SALIDA_AVE' ? 3 : 1}
+                                    tamano={36}
+                                    style={styles.eventIcono}
+                                />
+                                <View style={styles.eventInfo}>
+                                    <Text style={styles.eventType}>
+                                        {textoEvento(item.tipo_evento)}
+                                    </Text>
+                                    <Text style={styles.eventDate}>
+                                        {formatearFecha(item.fecha)}
+                                    </Text>
+                                    {
+                                        item.ave_codigo
+                                        ? (
+                                            <Text style={styles.eventBird}>
+                                                Ave: {item.ave_codigo}
+                                            </Text>
+                                        )
+                                        : null
+                                    }
+                                    <Text style={styles.eventDetail}>
+                                        {item.detalle || 'Sin detalle'}
+                                    </Text>
+                                </View>
                             </View>
                         ))
                 }
-            </Card>
+            </Tarjeta>
 
         </ScrollView>
+        </FondoPantalla>
     );
 
 }
@@ -332,9 +372,16 @@ function textoSexo(sexo){
 
 
 function textoEvento(tipo){
-    if(tipo === 'INGRESO_AVE') return '猬囷笍 Ingreso de ave';
-    if(tipo === 'SALIDA_AVE') return '猬嗭笍 Salida de ave';
+    if(tipo === 'INGRESO_AVE') return 'Ingreso de ave';
+    if(tipo === 'SALIDA_AVE') return 'Salida de ave';
     return tipo || 'Evento';
+}
+
+
+function iconoEvento(tipo){
+    if(tipo === 'INGRESO_AVE') return 'enter-outline';
+    if(tipo === 'SALIDA_AVE') return 'exit-outline';
+    return 'historial';
 }
 
 
@@ -348,158 +395,132 @@ function formatearFecha(fecha){
 
 const styles = StyleSheet.create({
     container:{
-        flex:1,
-        backgroundColor:COLORS.background
+        flex:1
     },
     content:{
-        padding:16,
-        paddingBottom:40
+        padding:spacing.pantalla,
+        paddingBottom:spacing.xxl
     },
     center:{
         flex:1,
         alignItems:'center',
         justifyContent:'center',
-        backgroundColor:COLORS.background,
-        padding:20
+        padding:spacing.xl
     },
-    loadingText:{
-        marginTop:10,
-        color:COLORS.textSecondary
+    aviso:{
+        marginBottom:spacing.md
     },
     headerRow:{
         flexDirection:'row',
-        alignItems:'flex-start',
-        marginBottom:8
+        alignItems:'flex-start'
     },
     headerMain:{
-        flex:1
+        flex:1,
+        marginRight:spacing.sm
     },
     title:{
-        fontSize:28,
-        fontWeight:'bold',
-        color:COLORS.primary
+        ...typography.display,
+        color:colors.primaryDark
     },
     name:{
-        color:COLORS.textSecondary,
-        marginTop:3
-    },
-    inactiveBadge:{
-        backgroundColor:'#e9ecef',
-        paddingHorizontal:12,
-        paddingVertical:6,
-        borderRadius:14
-    },
-    inactiveBadgeText:{
-        color:'#59636a',
-        fontWeight:'bold',
-        fontSize:12
-    },
-    readOnlyText:{
-        color:COLORS.textSecondary,
-        lineHeight:19,
-        marginBottom:14
+        ...typography.cuerpo,
+        color:colors.textSecondary,
+        marginTop:spacing.xs
     },
     sectionHeader:{
         flexDirection:'row',
         alignItems:'center',
         justifyContent:'space-between'
     },
-    sectionTitle:{
-        fontSize:18,
-        fontWeight:'bold',
-        color:COLORS.text
+    sectionTitulo:{
+        flex:1
     },
     counter:{
-        color:COLORS.textSecondary,
-        fontWeight:'bold'
+        ...typography.cuerpoFuerte,
+        color:colors.textSecondary,
+        marginLeft:spacing.sm
     },
     infoRow:{
         flexDirection:'row',
         justifyContent:'space-between',
         borderBottomWidth:1,
-        borderBottomColor:COLORS.border,
-        paddingVertical:10
+        borderBottomColor:colors.borderSoft,
+        paddingVertical:spacing.md
     },
     infoRowLast:{
         borderBottomWidth:0
     },
     infoLabel:{
-        color:COLORS.textSecondary,
+        ...typography.secundario,
+        color:colors.textSecondary,
         flex:1
     },
     infoValue:{
-        color:COLORS.text,
-        fontWeight:'600',
+        ...typography.cuerpoFuerte,
+        color:colors.text,
         flex:1,
         textAlign:'right'
     },
     birdRow:{
         flexDirection:'row',
         alignItems:'center',
-        paddingVertical:11,
-        borderBottomWidth:1,
-        borderBottomColor:COLORS.border
+        minHeight:56,
+        paddingVertical:spacing.sm,
+        borderTopWidth:1,
+        borderTopColor:colors.borderSoft
     },
     birdPhoto:{
-        width:42,
-        height:42,
-        borderRadius:21
-    },
-    birdPhotoEmpty:{
-        width:42,
-        height:42,
-        borderRadius:21,
-        backgroundColor:'#e7f5f5',
-        alignItems:'center',
-        justifyContent:'center'
+        width:44,
+        height:44,
+        borderRadius:22,
+        backgroundColor:colors.surfaceAlt
     },
     birdInfo:{
         flex:1,
-        marginLeft:10
+        marginLeft:spacing.md
     },
     birdCode:{
-        fontWeight:'bold',
-        color:COLORS.text
+        ...typography.cuerpoFuerte,
+        color:colors.text
     },
     birdDetail:{
-        marginTop:2,
-        color:COLORS.textSecondary,
-        fontSize:12
-    },
-    arrow:{
-        fontSize:28,
-        color:COLORS.primary
+        ...typography.secundario,
+        color:colors.textSecondary
     },
     event:{
-        borderLeftWidth:3,
-        borderLeftColor:'#8ec9b8',
-        paddingLeft:12,
-        paddingVertical:9,
-        marginTop:8
+        flexDirection:'row',
+        paddingVertical:spacing.md,
+        borderTopWidth:1,
+        borderTopColor:colors.borderSoft
+    },
+    eventIcono:{
+        marginRight:spacing.md
+    },
+    eventInfo:{
+        flex:1
     },
     eventType:{
-        fontWeight:'bold',
-        color:COLORS.text
+        ...typography.cuerpoFuerte,
+        color:colors.text
     },
     eventDate:{
-        color:COLORS.textSecondary,
-        fontSize:12,
-        marginTop:2
+        ...typography.secundario,
+        color:colors.textSecondary
     },
     eventBird:{
-        color:COLORS.primary,
-        fontSize:12,
-        marginTop:3,
-        fontWeight:'600'
+        ...typography.etiqueta,
+        color:colors.primaryDark,
+        marginTop:2
     },
     eventDetail:{
-        color:COLORS.text,
-        marginTop:4,
-        lineHeight:18
+        ...typography.cuerpo,
+        color:colors.text,
+        marginTop:2
     },
     emptyText:{
-        color:COLORS.textSecondary,
+        ...typography.cuerpo,
+        color:colors.textSecondary,
         textAlign:'center',
-        paddingVertical:16
+        paddingVertical:spacing.lg
     }
 });

@@ -4,9 +4,8 @@ import React, {
 } from 'react';
 
 import {
-    View,
     Text,
-    TouchableOpacity,
+    ScrollView,
     StyleSheet,
     Alert
 } from 'react-native';
@@ -17,8 +16,21 @@ import {
 } from '../repositories/AlimentacionRepository';
 
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
+
+import FondoPantalla from '../components/FondoPantalla';
+import Boton from '../components/Boton';
+import EstadoCarga from '../components/EstadoCarga';
+import EstadoError from '../components/EstadoError';
+import EstadoVacio from '../components/EstadoVacio';
+import JaulaBarraAccion from '../components/JaulaBarraAccion';
+import JaulaOpcion from '../components/JaulaOpcion';
+import JaulaAviso, {
+    useAvisoExito
+} from '../components/JaulaAviso';
 
 
 export default function AlimentacionJaulaScreen({
@@ -43,6 +55,32 @@ export default function AlimentacionJaulaScreen({
     ] = useState(null);
 
 
+    const [
+        cargando,
+        setCargando
+    ] = useState(true);
+
+
+    const [
+        errorCarga,
+        setErrorCarga
+    ] = useState(false);
+
+
+    const [
+        guardando,
+        setGuardando
+    ] = useState(false);
+
+
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso,
+        saliendo
+    } = useAvisoExito();
+
+
     useEffect(() => {
 
         cargar();
@@ -53,10 +91,31 @@ export default function AlimentacionJaulaScreen({
 
     const cargar = async () => {
 
-        const data =
-            await obtenerTiposAlimentos();
+        try {
 
-        setTipos(data);
+            setCargando(true);
+            setErrorCarga(false);
+
+            const data =
+                await obtenerTiposAlimentos();
+
+            setTipos(data);
+
+        }
+        catch (error) {
+
+            console.error(
+                error
+            );
+
+            setErrorCarga(true);
+
+        }
+        finally {
+
+            setCargando(false);
+
+        }
 
     };
 
@@ -80,6 +139,8 @@ export default function AlimentacionJaulaScreen({
 
         try {
 
+            setGuardando(true);
+
             await registrarAlimentacion({
 
                 jaulaId,
@@ -100,6 +161,8 @@ export default function AlimentacionJaulaScreen({
                 error
             );
 
+            setGuardando(false);
+
             Alert.alert(
                 'Error',
                 'No fue posible guardar el registro.'
@@ -110,17 +173,14 @@ export default function AlimentacionJaulaScreen({
         }
 
 
+        setGuardando(false);
 
-        Alert.alert(
+
+        // Antes: Alert con «Aceptar» que hacía goBack. Ahora: aviso y vuelve solo.
+        mostrarAviso(
             'Alimentación registrada',
             'El registro fue guardado correctamente.',
-            [
-                {
-                    text:'Aceptar',
-                    onPress:
-                        () => navigation.goBack()
-                }
-            ]
+            () => navigation.goBack()
         );
 
     };
@@ -129,119 +189,117 @@ export default function AlimentacionJaulaScreen({
 
     return (
 
-        <View style={styles.container}>
+        <FondoPantalla>
 
-            <Text style={styles.title}>
-                🍚 Alimentación
-            </Text>
-
-
-            {
-                tipos.map(item => (
-
-                    <TouchableOpacity
-
-                        key={item.id}
-
-                        style={[
-                            styles.option,
-
-                            tipo?.id === item.id
-                            &&
-                            styles.selected
-
-                        ]}
-
-                        onPress={() =>
-                            setTipo(item)
-                        }
-
-                    >
-
-                        <Text
-                            style={[
-                                styles.optionText,
-
-                                tipo?.id === item.id
-                                &&
-                                styles.selectedText
-                            ]}
-                        >
-                            {item.nombre}
-                        </Text>
-
-                    </TouchableOpacity>
-
-                ))
-            }
-
-
-
-            <TouchableOpacity
-                style={styles.save}
-                onPress={guardar}
+            <ScrollView
+                contentContainerStyle={styles.content}
+                keyboardShouldPersistTaps="handled"
             >
 
-                <Text style={styles.saveText}>
-                    💾 Guardar
+                <Text style={styles.intro}>
+                    Selecciona el tipo de alimento que recibió la jaula.
                 </Text>
 
-            </TouchableOpacity>
+
+                {
+                    cargando
+                        ? (
+                            <EstadoCarga
+                                mensaje="Cargando tipos de alimento..."
+                            />
+                        )
+                        : null
+                }
 
 
-        </View>
+                {
+                    !cargando && errorCarga
+                        ? (
+                            <EstadoError
+                                mensaje="No se pudieron cargar los tipos de alimento."
+                                onReintentar={cargar}
+                            />
+                        )
+                        : null
+                }
+
+
+                {
+                    !cargando &&
+                    !errorCarga &&
+                    tipos.length === 0
+                        ? (
+                            <EstadoVacio
+                                icono="alimentacion"
+                                titulo="No hay tipos de alimento"
+                                mensaje="Aún no hay tipos de alimento disponibles para registrar."
+                                testID="alimentacion-vacio"
+                            />
+                        )
+                        : null
+                }
+
+
+                {
+                    !cargando &&
+                    !errorCarga &&
+                    tipos.map(item => (
+
+                        <JaulaOpcion
+                            key={item.id}
+                            texto={item.nombre}
+                            icono="alimentacion"
+                            seleccionado={tipo?.id === item.id}
+                            onPress={() =>
+                                setTipo(item)
+                            }
+                            testID={`alimento-${item.id}`}
+                        />
+
+                    ))
+                }
+
+            </ScrollView>
+
+
+            <JaulaBarraAccion>
+
+                <Boton
+                    titulo="Guardar"
+                    icono="guardar"
+                    onPress={guardar}
+                    atenuado={
+                        guardando || saliendo
+                    }
+                    testID="guardar-alimentacion"
+                />
+
+            </JaulaBarraAccion>
+
+
+            <JaulaAviso
+                aviso={aviso}
+                onCerrar={cerrarAviso}
+            />
+
+        </FondoPantalla>
 
     );
 
 }
 
 
-
 const styles = StyleSheet.create({
 
-    container:{
-        flex:1,
-        backgroundColor:COLORS.background,
-        padding:20
+    content: {
+        padding: spacing.pantalla,
+        paddingBottom: spacing.xl
     },
 
-    title:{
-        fontSize:26,
-        fontWeight:'bold',
-        color:COLORS.primary
-    },
-
-    option:{
-        padding:15,
-        backgroundColor:'#e8eeee',
-        borderRadius:12,
-        marginTop:10
-    },
-
-    selected:{
-        backgroundColor:COLORS.primary
-    },
-
-    optionText:{
-        color:COLORS.text
-    },
-
-    selectedText:{
-        color:'#fff',
-        fontWeight:'bold'
-    },
-
-    save:{
-        marginTop:30,
-        backgroundColor:COLORS.primary,
-        padding:15,
-        borderRadius:12,
-        alignItems:'center'
-    },
-
-    saveText:{
-        color:'#fff',
-        fontWeight:'bold'
+    intro: {
+        ...typography.cuerpo,
+        color: colors.textSecondary,
+        marginBottom: spacing.lg
     }
 
 });

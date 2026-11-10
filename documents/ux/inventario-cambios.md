@@ -160,6 +160,86 @@ Correcciones del validador (2026-11-09):
 
 Riesgos para `94-inicio.yaml`: la primera pantalla tiene cabecera, aviso (si hay alertas), 4 tarjetas y 3 accesos antes de «Distribución por raza»; «Aves activas: N», «Razas presentes: N», «Vendidas», «Fallecidas» y «Tratamiento» siguen en la primera pantalla en un teléfono de ~900 dp (estimado, no medido; con pantallas más bajas hay que añadir un `scrollUntilVisible` antes de `94:27`). El `scrollUntilVisible` pendiente de `94:111` no se toca aquí.
 
+## Sub-bloque C4-Aves (lista, ficha y Nueva/Editar ave; 2026-11-09)
+
+Lógica, repositorios llamados, validaciones, mensajes de error, nombres de campo y los `Alert` de error y de confirmación sin cambio. Revertir = revertir el commit de C4 (nuevos: `AveOpcion`, `AveSelectorCatalogo`, `AveAccion`, `aveVisual.js`). No se tocó ningún componente compartido ni `src/theme`. `SeleccionarAveJaulaScreen` no se toca (la usa el flujo de jaulas).
+
+| Archivo | Cambio |
+|---|---|
+| `AvesScreen.js` | `FondoPantalla` + `PantallaHeader` «Aves» (sin subtítulo «Control y trazabilidad de las aves»: decorativo, omitido como en C3) + `FlatList` (antes `ScrollView`); pestañas en píldora con icono + texto; búsqueda con `CampoTexto`; filtros con `AveOpcion` (icono + texto) y edad con `CampoTexto`; `Fab` coral «Nueva ave» (misma navegación `NuevaAve`, solo en Activas) en lugar del botón de ancho completo; carga `EstadoCarga` («Cargando aves...»), error `EstadoError` (mismo mensaje y «Reintentar» = `cargarAves`), vacío `EstadoVacio`. testID: `aves-cabecera`, `tab-aves-activas|vendidas|fallecidas`, `buscar-ave`, `filtros-aves`, `edad-desde`, `edad-hasta`, `limpiar-filtros`, `fab-agregar-ave` |
+| `AveCard.js` | `Tarjeta` pulsable (testID `lista-ave-<codigo>`), `Avatar` (círculo de color por sexo/estado) o foto, chips icono + texto (sexo, estado, salud), edad/jaula, padres con icono |
+| `DetalleAveScreen.js` | `FondoPantalla`; tarjeta de cabecera (avatar 72, código, raza, chips salud y estado); `Tarjeta` + `TituloSeccion` por sección; acciones en mosaicos `AveAccion` con círculo de color. NUEVO: si falla la carga y no hay ave, `EstadoError` con «Reintentar» (antes mostraba «Ave no encontrada.»; ese texto se conserva para el caso sin ave). testID: `ficha-ave-cabecera`, `ficha-ave-salud`, `accion-editar-ave`, `accion-evolucion-ave`, `accion-salud-ave`, `accion-registrar-huevo`, `accion-ciclo-vida`, `accion-genealogia`, `accion-dar-de-baja` |
+| `NuevaAveScreen.js` | `FondoPantalla`; una `Tarjeta` por sección; `CampoTexto` en todos los campos; opciones con `AveOpcion`; fecha con `CampoFecha` local; «Guardar ave»/«Guardar cambios» FIJO abajo (`Boton` con icono, mismo texto, `atenuado` mientras guarda o muestra el aviso; sin doble toque con un `ref`); se quita el título del cuerpo («Nueva ave»/«Editar ave») porque ya lo muestra la cabecera de la pila. testID: `codigo-ave`, `guardar-ave`, `foto-camara`, `foto-galeria`, `origen-nacida`, `origen-comprada`, `fecha-nacimiento`, `fecha-ingreso`, `edad-meses-compra`, `criadero-origen`, `metodo-envio`, `peso-gramos`, `altura-cm`, `largo-cm`, `caracteristicas`, `raza-<nombre>`, `sexo-<nombre>`, `aviso-ave` |
+
+Comportamientos aprobados aplicados:
+
+- «Ver ave» directo: tras `crearAve`, en vez del `Alert` con «Ver ave», se muestra el `Aviso` de éxito y 1,5 s después `navigation.replace('DetalleAve', {aveId})` (mismo destino). Hay que esperar ese tiempo para que el aviso se vea (el temporizador se cancela si se sale de la pantalla).
+- Aviso no bloqueante: los `Alert` de ÉXITO «Ave registrada» y «Ave actualizada» pasan a `Aviso` con el mismo mensaje (`El ave X fue registrada correctamente.` / `Los datos del ave X fueron actualizados correctamente.`); se pierde el título «Ave registrada»/«Ave actualizada» (el `Aviso` solo tiene mensaje). «Editar»: tras el aviso hace `goBack()` (lo que hacía «Aceptar»). Se conservan como `Alert`: todos los de validación y error, «Edición no disponible» (con «Aceptar») y los de permiso de foto.
+
+Textos visibles (antes -> después) y flujos (`pruebas/movil/flujos/completo/`):
+
+| Antes | Después | Flujos |
+|---|---|---|
+| «Ave registrada» (título del `Alert`) | desaparece; el aviso muestra solo «El ave X fue registrada correctamente.» | `40-aves.yaml:38-39` (`visible: "Ave registrada"`) ROMPE: usar `.*fue registrada correctamente.*` |
+| «Ver ave» (botón del `Alert`) | desaparece; navega solo | `40-aves.yaml:42` (`tapOn: "Ver ave"`) ROMPE: quitar el toque; esperar `.*AV-H.*` (ya en `:43-45`, tras 1,5 s) |
+| «Ave actualizada» | desaparece (solo el mensaje) | ningún flujo lo usa |
+| Botón «＋ Nueva ave» (ancho completo) | `Fab` «Nueva ave» (mismo texto) | `40:22`, `82:55`, `85:49` (`.*Nueva ave.*`) valen; con la lista vacía el mensaje NO repite «Nueva ave» para no duplicar coincidencias |
+| «🐔 Activas», «💰 Vendidas», «⚰ Fallecidas» | «Activas», «Vendidas», «Fallecidas» (icono aparte) | `90:104,143`, `98:62,67,107`, `91:45`, `90:74` (`.*Activas`, `.*Vendidas`, `.*Fallecidas`) valen. Vacíos: «Aún no hay ventas de aves» / «Aún no hay bajas por fallecimiento» (no terminan en esas palabras) |
+| «⚙ Filtros» | «Filtros» | ninguno |
+| Filtros «🐓 Macho», «🐔 Hembra», «🟢 Sana», «🔴 Enferma», «🟡 Tratamiento» | sin emoji (icono) | ninguno (`40:32-33` busca `.*Macho` en el formulario) |
+| «Sin resultados» (siempre que la lista quedaba vacía) | con filtros: «Sin resultados» (igual); sin aves: «Aún no hay aves registradas» + «Toca el botón de abajo para registrar la primera.» (vendidas/fallecidas: ver arriba) | ninguno |
+| AveCard: «🐓 Macho»/«🐔 Hembra», «🟢 Sana», «🟡 En tratamiento», «🔴 Enferma», «🐓 Padre: X», «🐔 Madre: X» | «Macho», «Hembra», «Sana», «En tratamiento», «Enferma», «Padre: X», «Madre: X» (iconos aparte) | `60:31` (`.*En tratamiento.*`) vale |
+| Ficha: «🐔 Información del ave», «🥚 Huevos registrados», «💰 Información de venta», «⚰ Información de fallecimiento» | sin emoji (icono en círculo) | `70:33`, `90:83,138`, `91:52-53` (regex `.*...*`) valen |
+| Ficha, acciones: «✏️ Editar», «📸 Evolución», «🩺 Salud», «🥚 Registrar huevo», «🌿 Ciclo de vida», «🌳 Genealogía», «⚫ Dar de baja» | mismo texto sin emoji, en mosaico | `42:23-24` (`.*Editar`), `60:20-21`, `82:28-29`, `85:42-43` (`.*Salud`), `70:20-21`, `81:21-22`, `90:94-95`, `91:57-58` (`.*Ciclo de vida`), `80:21-22`, `90:149-150` (`.*Genealogía`), `90:25-26,110-111`, `91:24-25`, `96:25-26`, `98:28-29,73-74` (`.*Dar de baja.*`) valen. Cuidado: no hay otro texto que termine en «Salud», «Editar», «Genealogía» ni «Ciclo de vida» en la ficha |
+| Ficha, sexo «🐓 Macho» / «🐔 Hembra» | «Macho» / «Hembra» (icono) | ninguno |
+| Ficha: estado de salud «🟢 Sana»... en cabecera | chip con icono; texto «Sana» / «En tratamiento» / «Enferma» | `60:31` vale |
+| Nueva ave: «✏️ Editar ave» / «🐔 Nueva ave» (título del cuerpo) | se quita (la cabecera de la pila ya dice «Nueva ave»/«Editar ave») | ninguno |
+| «💾 Guardar ave» / «💾 Guardar cambios» / «Guardando...» | «Guardar ave» / «Guardar cambios» / «Guardando...» (icono aparte; barra fija abajo) | `40:35,37`, `42:35-36` (`.*Guardar ave.*`, `.*Guardar cambios.*`) valen; `96:77` `assertNotVisible .*Guardar cambios.*` no cambia |
+| «📷 Cámara», «🖼️ Galería», «🐣 Nacida en criadero», «🛒 Comprada», «🐔 {raza}», «🐔 {código}», «🏠 {jaula}» | sin emoji (icono) | `40:30` (`.*Kikiris`), `40:28-29` (`.*AV-P.*`, `.*AV-M.*`), `40:32-33` (`.*Macho`) valen |
+| Campo «Código *»: etiqueta y `placeholder` | iguales; el campo lleva `accessibilityLabel` «Código del ave» para que «Código *» no coincida con la etiqueta y el campo a la vez | `42:26,30` (`'Código *'`, `below:`), `40:23` (`"Ej. K001"`) valen |
+| Cabecera de la lista: subtítulo «Control y trazabilidad de las aves» | se quita | ninguno |
+
+Pares de contraste: ninguno nuevo. Se reutilizan: blanco sobre primario 6,6:1 (opción y pestaña seleccionada), texto sobre `surfaceAlt` (opción sin seleccionar), `primaryDark` sobre `primarySoft` (contador y fecha estimada), blanco sobre `textSecondary` 7,2:1 (avatar de ave fallecida), blanco sobre `coral` 5,2:1 (Fab) y `successText` sobre `successSoft` 7,4:1 (aviso).
+
+Pendiente: `NuevaAveScreen` sigue usando `Number(item.id)` en los filtros de padres (observación de las limitaciones conocidas; no se toca).
+
+## Sub-bloque C4-Jaulas (lista, ficha, nueva/editar, cuidados e historial; 2026-11-09)
+
+Lógica, repositorios llamados, validaciones, mensajes de error, nombres de campo y navegación sin cambio. Los Alert de ERROR y de CONFIRMACIÓN (Quitar ave, Eliminar jaula, Código requerido, Código duplicado, Seleccione alimento/bebida, errores de guardado, incl. los `try/catch` con `Alert` de Alimentación y Bebida) siguen idénticos. Solo los Alert de ÉXITO pasan a aviso no bloqueante (`JaulaAviso`): mismo título y mismo mensaje en dos textos separados, visible 1,8 s y luego hace solo la navegación que hacía «Aceptar» (`goBack`); sin `goBack`, visible 4 s. Mientras tanto el botón queda atenuado (sin doble toque). Revertir = revertir el commit de C4-Jaulas.
+
+| Archivo | Cambio |
+|---|---|
+| `JaulasScreen.js` | `FondoPantalla` + `PantallaHeader` «Jaulas» (sin subtítulo, `testID` `jaulas-cabecera`); filtro Activas/Inactivas en píldoras de 44 con icono (`filtro-jaulas-activas`/`-inactivas`); `Fab` coral «Nueva jaula» (`fab-nueva-jaula`, solo en Activas, mismo `navigate('NuevaJaula')`); carga/error/vacío con `EstadoCarga`/`EstadoError`/`EstadoVacio` (mismos textos); «Inactiva · Solo lectura» pasa a `Chip` con candado |
+| `components/JaulaCard.js` | `Tarjeta` con franja = estado sanitario (misma lógica de V1: Normal éxito, Limpieza info, Fumigación advertencia, Quemadura y Cuarentena error), chips «Ocupada»/«Vacía» y de estado sanitario (icono + texto), «N aves», ubicación y tipo con iconos. `testID` `lista-jaula-<codigo>` |
+| `DetalleJaulaScreen.js` | `FondoPantalla`; tarjeta de cabecera con franja del estado sanitario; «Editar jaula» (secundario) y «Eliminar» (peligro) como `Boton`; edición con `CampoTexto` y barra fija «Cancelar» + «Guardar cambios»; «Aves» con `TituloSeccion`, «Agregar» `Boton`, filas con `IconoCirculo`/foto y «Quitar»; acciones en mosaicos 2x2 (`accion-alimentacion`, `-bebida`, `-sanidad`, `-historial`; mismo `navigate`) |
+| `DetalleJaulaInactivaScreen.js` | Mismo lenguaje (chip «Inactiva», `Aviso` informativo fijo, secciones con `TituloSeccion`). Se corrige texto con codificación rota (mojibake) que estaba en el archivo: «Esta jaula está desactivada. La información se conserva únicamente para consulta histórica.», «Información», «Código», «Ubicación», «Creación», «Desactivación», «Aves que estuvieron aquí», «·» |
+| `NuevaJaulaScreen.js` | `CampoTexto` con iconos (mismos placeholders), tipos de jaula en píldoras con marca de selección, `Guardar jaula` fijo abajo (`guardar-jaula`), `testID` `jaula-codigo`, `jaula-nombre`, `jaula-ubicacion`. Se quita el título del cuerpo «Nueva jaula» (ya lo muestra la cabecera; evitaba coincidencias dobles) |
+| `Alimentacion/Bebida/SanidadJaulaScreen.js` | Opciones en filas con radio (`JaulaOpcion`), «Guardar» / «Guardar sanidad» fijo abajo (`guardar-alimentacion`, `guardar-bebida`, `guardar-sanidad`), texto de ayuda nuevo. Alimentación y Bebida: la carga de tipos tiene `try/catch` propio con estado de error y «Reintentar» (antes un fallo era una promesa sin capturar) y estado de carga/vacío. Se quitan los títulos del cuerpo (la cabecera ya los muestra) |
+| `HistorialJaulaScreen.js` | Tarjetas con círculo de icono por tipo; tipo presentado legible («Alimentación», «Bebida», «Sanidad», «Ingreso de ave», «Salida de ave»; antes `ALIMENTACION`, etc.); carga/error con «Reintentar»/vacío |
+| nuevos | `components/JaulaAviso.js` (hook `useAvisoExito`), `JaulaBarraAccion.js`, `JaulaOpcion.js`, `JaulaEstado.js` |
+
+Iconos (reemplazan emojis): 🏠 `home-outline`/`grid-outline`, 🐔 `paw`, 📍 `location-outline`, 🏷️ `pricetag-outline`, ✏️ `create-outline`, 🗑️ `trash-outline`, 💾 `save-outline`, ＋ `add`, 🍚 `nutrition-outline`, 💧 `water-outline`, 🧼 `bandage-outline`, 📖 `time-outline`, 📦 `archive-outline`, 🟢 `checkmark-circle-outline`; estados: Normal `checkmark-circle`, Limpieza `sparkles`, Fumigación `cloud`, Quemadura `flame`, Cuarentena `ban`.
+
+Pares de contraste nuevos (calculados con los tokens): pestaña activa blanco sobre primario 6,6:1; inactiva primaryDark sobre blanco 9,8:1; `JaulaOpcion` seleccionada primaryDark sobre primarySoft >= 8:1 (radio primario sobre primarySoft >= 5:1, componente); píldora de tipo seleccionada blanco sobre primario 6,6:1; no seleccionada texto sobre blanco 17:1 y borde `border` 3,7:1; aviso de éxito successText sobre successSoft 7,4:1; «Quitar» dangerText sobre dangerSoft 6,9:1; código de jaula primaryDark sobre blanco 9,8:1; icono de dato textSecondary sobre blanco 7,2:1; «Eliminar» blanco sobre danger 6,1:1; círculo coral con icono blanco 5,2:1 y turquesa con icono oscuro 8,0:1.
+
+Textos visibles (antes -> después) y flujos (`pruebas/movil/flujos/`):
+
+| Antes | Después | Flujos |
+|---|---|---|
+| «Aceptar» (Alert de éxito: Jaula creada, Alimentación/Bebida/Sanidad registrada, Jaula eliminada) | no existe: aviso con el mismo título y mensaje; vuelve solo | `smoke/01-smoke:29`; `30:26,35,65-67` (el 66 es `optional`); `50:29`, `51:29`, `52:32` (usar `extendedWaitUntil` del título y quitar el toque; el título ya es un texto separado: `01:27`, `50:27`, `51:27`, `52:30`) |
+| «＋ Nueva jaula» (botón) | `Fab` «Nueva jaula» | `01:19`, `30:16,30,44`, `83:55`, `86:40` (regex `.*Nueva jaula.*`, valen) |
+| «🏠 Activas», «📦 Inactivas» | «Activas», «Inactivas» | `30:68`, `90:104,143`, `98:67` (regex, valen) |
+| «🏠 CÓDIGO» (tarjeta y ficha) | «CÓDIGO» | `.*JA-1.*` etc. valen |
+| «🐔 N aves» | «N aves» | ninguno |
+| «🗑️ Eliminar» | «Eliminar» | `30:57,59` (`.*Eliminar`, vale). **RIESGO** `30:64` `tapOn: "Eliminar"` (texto exacto, botón del Alert): ahora el botón de la ficha también se llama exactamente «Eliminar»; si Maestro ve ambos hay que usar `index` o el `id` `eliminar-jaula` |
+| «✏️ Editar jaula», «💾 Guardar cambios» | sin emoji | ninguno |
+| «🍚 Alimentación», «💧 Bebida», «🧼 Sanidad», «📖 Historial» (botones de la ficha) | «Alimentación», «Bebida», «Sanidad», «Historial» (mosaicos) | `50:20-21,31-32`, `51`, `52:20-21,34-35`, `53:20-21`, `83:29-30` (regex `.*X`, valen) |
+| «＋ Agregar» | «Agregar» | `41:24,37` (regex, valen); `41:32` exacto es del Alert de otra pantalla |
+| «💾 Guardar», «💾 Guardar sanidad», «💾 Guardar jaula» | «Guardar», «Guardar sanidad», «Guardar jaula» (barra fija) | `01:25`, `30:17,25,34,48`, `50:24-25`, `83:32`, `52:27-28` (regex, valen) |
+| Títulos en el cuerpo «Alimentación», «Bebida», «Sanidad», «Historial», «Nueva jaula» | quitados (los muestra la cabecera) | evita coincidencias dobles |
+| Tipos de sanidad «🟢 Normal» | «Normal» | ninguno |
+| Tipo de evento del historial `ALIMENTACION`... | «Alimentación»... | ninguno lo busca (el detalle `Alimentación: Morichillo` sigue igual: `50:34`, `52:37`) |
+
 ## Decisiones
 
 Del usuario, 2026-11-09:

@@ -3,19 +3,31 @@ import React from 'react';
 import {
     View,
     Text,
-    TouchableOpacity,
     StyleSheet
 } from 'react-native';
 
 import {
-    COLORS,
-    getJaulaSanitaryStatusStyle
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
+
+import Tarjeta from './Tarjeta';
+import Chip from './Chip';
+import Icono from './Icono';
+
+import {
+    estadoSanitarioJaula
+} from './JaulaEstado';
 
 
+// Tarjeta de jaula de la lista. La franja lateral CONSERVA el significado de V1: el estado sanitario
+// (Normal, Limpieza, Fumigación, Quemadura, Cuarentena), repetido en un chip con icono + texto.
+// «N aves» es el número real de aves (V1 no tiene capacidad de jaula).
 export default function JaulaCard({
     jaula,
-    onPress
+    onPress,
+    testID
 }) {
 
     const cantidadAves =
@@ -28,62 +40,46 @@ export default function JaulaCard({
         cantidadAves > 0;
 
 
-    const sanitaryStyle =
-        getJaulaSanitaryStatusStyle(
+    const estado =
+        estadoSanitarioJaula(
             jaula.estado_sanitario
         );
 
 
     return (
 
-        <TouchableOpacity
-            style={[
-                styles.card,
-                {
-                    borderLeftColor:
-                        sanitaryStyle.borderColor
-                }
-            ]}
+        <Tarjeta
+            franja={estado.franja}
             onPress={onPress}
-            activeOpacity={0.8}
+            testID={testID}
         >
 
             <View style={styles.header}>
 
-
-                <Text style={styles.codigo}>
-                    🏠 {jaula.codigo}
+                <Text
+                    style={styles.codigo}
+                    numberOfLines={1}
+                >
+                    {jaula.codigo}
                 </Text>
 
-
-                <View
-                    style={[
-                        styles.occupancyBadge,
-                        {
-                            backgroundColor:
-                                ocupada
-                                    ? COLORS.primary
-                                    : COLORS.textSecondary
-                        }
-                    ]}
-                >
-
-                    <Text
-                        style={
-                            styles.occupancyText
-                        }
-                    >
-
-                        {
-                            ocupada
-                                ? 'Ocupada'
-                                : 'Vacía'
-                        }
-
-                    </Text>
-
-                </View>
-
+                <Chip
+                    texto={
+                        ocupada
+                            ? 'Ocupada'
+                            : 'Vacía'
+                    }
+                    tono={
+                        ocupada
+                            ? 'primario'
+                            : 'neutro'
+                    }
+                    icono={
+                        ocupada
+                            ? 'paw'
+                            : 'ellipse-outline'
+                    }
+                />
 
             </View>
 
@@ -99,21 +95,21 @@ export default function JaulaCard({
             }
 
 
-            <Text style={styles.info}>
-                🐔 {cantidadAves} {
+            <Dato icono="paw-outline">
+                {cantidadAves} {
                     cantidadAves === 1
                         ? 'ave'
                         : 'aves'
                 }
-            </Text>
+            </Dato>
 
 
             {
                 jaula.ubicacion
                 ? (
-                    <Text style={styles.info}>
-                        📍 {jaula.ubicacion}
-                    </Text>
+                    <Dato icono="location-outline">
+                        {jaula.ubicacion}
+                    </Dato>
                 )
                 : null
             }
@@ -122,9 +118,9 @@ export default function JaulaCard({
             {
                 jaula.tipo
                 ? (
-                    <Text style={styles.info}>
-                        🏷️ {jaula.tipo}
-                    </Text>
+                    <Dato icono="pricetag-outline">
+                        {jaula.tipo}
+                    </Dato>
                 )
                 : null
             }
@@ -132,47 +128,46 @@ export default function JaulaCard({
 
             <View style={styles.sanitaryContainer}>
 
-                <Text
-                    style={
-                        styles.sanitaryLabel
-                    }
-                >
+                <Text style={styles.sanitaryLabel}>
                     Estado sanitario
                 </Text>
 
-
-                <View
-                    style={[
-                        styles.sanitaryBadge,
-                        {
-                            backgroundColor:
-                                sanitaryStyle
-                                    .backgroundColor
-                        }
-                    ]}
-                >
-
-                    <Text
-                        style={[
-                            styles.sanitaryText,
-                            {
-                                color:
-                                    sanitaryStyle
-                                        .textColor
-                            }
-                        ]}
-                    >
-                        {
-                            sanitaryStyle.label
-                        }
-                    </Text>
-
-                </View>
+                <Chip
+                    texto={estado.label}
+                    tono={estado.tono}
+                    icono={estado.icono}
+                />
 
             </View>
 
+        </Tarjeta>
 
-        </TouchableOpacity>
+    );
+
+}
+
+
+function Dato({
+    icono,
+    children
+}) {
+
+    return (
+
+        <View style={styles.dato}>
+
+            <Icono
+                nombre={icono}
+                tamano={18}
+                color={colors.textSecondary}
+                style={styles.datoIcono}
+            />
+
+            <Text style={styles.datoTexto}>
+                {children}
+            </Text>
+
+        </View>
 
     );
 
@@ -181,145 +176,54 @@ export default function JaulaCard({
 
 const styles = StyleSheet.create({
 
-    card: {
-
-        backgroundColor:
-            COLORS.card,
-
-        borderRadius: 16,
-
-        padding: 16,
-
-        marginBottom: 12,
-
-        borderLeftWidth: 6,
-
-        elevation: 3
-
-    },
-
-
     header: {
-
         flexDirection: 'row',
-
-        justifyContent:
-            'space-between',
-
-        alignItems:
-            'center'
-
+        justifyContent: 'space-between',
+        alignItems: 'center'
     },
-
 
     codigo: {
-
-        fontSize: 20,
-
-        fontWeight: 'bold',
-
-        color:
-            COLORS.text
-
+        ...typography.titulo,
+        color: colors.text,
+        flex: 1,
+        marginRight: spacing.sm
     },
-
 
     nombre: {
-
-        fontSize: 16,
-
-        marginTop: 8,
-
-        color:
-            COLORS.text
-
+        ...typography.cuerpoFuerte,
+        color: colors.text,
+        marginTop: spacing.xs
     },
 
-
-    info: {
-
-        fontSize: 15,
-
-        color:
-            COLORS.textSecondary,
-
-        marginTop: 6
-
+    dato: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: spacing.sm
     },
 
-
-    occupancyBadge: {
-
-        paddingHorizontal: 10,
-
-        paddingVertical: 5,
-
-        borderRadius: 15
-
+    datoIcono: {
+        marginRight: spacing.sm
     },
 
-
-    occupancyText: {
-
-        color:
-            COLORS.white,
-
-        fontWeight: 'bold',
-
-        fontSize: 12
-
+    datoTexto: {
+        ...typography.secundario,
+        color: colors.textSecondary,
+        flex: 1
     },
-
 
     sanitaryContainer: {
-
         flexDirection: 'row',
-
-        justifyContent:
-            'space-between',
-
-        alignItems:
-            'center',
-
-        marginTop: 14,
-
-        paddingTop: 12,
-
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: spacing.md,
+        paddingTop: spacing.md,
         borderTopWidth: 1,
-
-        borderTopColor:
-            COLORS.border
-
+        borderTopColor: colors.borderSoft
     },
-
 
     sanitaryLabel: {
-
-        fontSize: 13,
-
-        color:
-            COLORS.textSecondary
-
-    },
-
-
-    sanitaryBadge: {
-
-        paddingHorizontal: 12,
-
-        paddingVertical: 6,
-
-        borderRadius: 15
-
-    },
-
-
-    sanitaryText: {
-
-        fontWeight: 'bold',
-
-        fontSize: 12
-
+        ...typography.secundario,
+        color: colors.textSecondary
     }
 
 });

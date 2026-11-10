@@ -29,7 +29,9 @@ tags:
 - extendedWaitUntil:
     visible: "Sanidad registrada"
     timeout: 15000
-- tapOn: "Aceptar"
+- extendedWaitUntil:
+    notVisible: "Sanidad registrada"
+    timeout: 10000
 - scrollUntilVisible:
     element: ".*Historial"
 - tapOn: ".*Historial"

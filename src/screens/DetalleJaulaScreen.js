@@ -9,9 +9,6 @@ import {
     Image,
     ScrollView,
     StyleSheet,
-    ActivityIndicator,
-    TouchableOpacity,
-    TextInput,
     Alert
 } from 'react-native';
 
@@ -31,12 +28,31 @@ import {
 } from '../repositories/AveRepository';
 
 import {
-    COLORS,
-    getJaulaSanitaryStatusStyle
-} from '../config/constants';
+    colors,
+    radii,
+    spacing,
+    typography
+} from '../theme';
 
-import Card
-    from '../components/Card';
+import FondoPantalla from '../components/FondoPantalla';
+import Tarjeta from '../components/Tarjeta';
+import TituloSeccion from '../components/TituloSeccion';
+import IconoCirculo from '../components/IconoCirculo';
+import Icono from '../components/Icono';
+import Chip from '../components/Chip';
+import Boton from '../components/Boton';
+import Pulsable from '../components/Pulsable';
+import CampoTexto from '../components/CampoTexto';
+import EstadoCarga from '../components/EstadoCarga';
+import EstadoVacio from '../components/EstadoVacio';
+import JaulaBarraAccion from '../components/JaulaBarraAccion';
+import JaulaAviso, {
+    useAvisoExito
+} from '../components/JaulaAviso';
+
+import {
+    estadoSanitarioJaula
+} from '../components/JaulaEstado';
 
 import {
     useContextoPantalla
@@ -112,6 +128,19 @@ export default function DetalleJaulaScreen({
         procesandoJaula,
         setProcesandoJaula
     ] = useState(false);
+
+
+    // Aviso de éxito no bloqueante (sustituye a los Alert de éxito)
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso,
+        saliendo
+    } = useAvisoExito();
+
+
+    const ocupado =
+        procesandoJaula || saliendo;
 
 
     const cargar =
@@ -281,7 +310,7 @@ export default function DetalleJaulaScreen({
                 await cargar();
 
 
-                Alert.alert(
+                mostrarAviso(
                     'Ave retirada',
                     `El ave ${ave.codigo} quedó sin jaula asignada.`
                 );
@@ -411,7 +440,7 @@ export default function DetalleJaulaScreen({
                 await cargar();
 
 
-                Alert.alert(
+                mostrarAviso(
                     'Jaula actualizada',
                     'Los datos de la jaula fueron actualizados correctamente.'
                 );
@@ -539,7 +568,8 @@ export default function DetalleJaulaScreen({
                     );
 
 
-                Alert.alert(
+                // Antes: Alert con «Aceptar» que hacía goBack. Ahora: aviso y vuelve solo.
+                mostrarAviso(
 
                     'Jaula eliminada',
 
@@ -549,15 +579,8 @@ export default function DetalleJaulaScreen({
                             ? 'La jaula fue eliminada y el ave asignada quedó sin jaula.'
                             : `La jaula fue eliminada y ${cantidadLiberada} aves quedaron sin jaula.`,
 
-                    [
-                        {
-                            text:
-                                'Aceptar',
-
-                            onPress: () =>
-                                navigation.goBack()
-                        }
-                    ]
+                    () =>
+                        navigation.goBack()
 
                 );
 
@@ -591,29 +614,21 @@ export default function DetalleJaulaScreen({
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <ActivityIndicator
-                    size="large"
-                    color={
-                        COLORS.primary
-                    }
-                />
-
-
-                <Text
+                <View
                     style={
-                        styles.loadingText
+                        styles.center
                     }
                 >
-                    Cargando jaula...
-                </Text>
 
-            </View>
+                    <EstadoCarga
+                        mensaje="Cargando jaula..."
+                    />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -624,763 +639,655 @@ export default function DetalleJaulaScreen({
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <Text
+                <View
                     style={
-                        styles.notFoundText
+                        styles.center
                     }
                 >
-                    Jaula no encontrada.
-                </Text>
 
-            </View>
+                    <EstadoVacio
+                        icono="home-outline"
+                        titulo="Jaula no encontrada."
+                        testID="jaula-no-encontrada"
+                    />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
     }
 
 
-    const sanitaryStyle =
-        getJaulaSanitaryStatusStyle(
+    const estado =
+        estadoSanitarioJaula(
             jaula.estado_sanitario
         );
 
 
+    const ACCIONES = [
+        {
+            id: 'AlimentacionJaula',
+            texto: 'Alimentación',
+            icono: 'alimentacion',
+            indice: 1,
+            testID: 'accion-alimentacion'
+        },
+        {
+            id: 'BebidaJaula',
+            texto: 'Bebida',
+            icono: 'bebida',
+            indice: 2,
+            testID: 'accion-bebida'
+        },
+        {
+            id: 'SanidadJaula',
+            texto: 'Sanidad',
+            icono: 'sanidad',
+            indice: 4,
+            testID: 'accion-sanidad'
+        },
+        {
+            id: 'HistorialJaula',
+            texto: 'Historial',
+            icono: 'historial',
+            indice: 0,
+            testID: 'accion-historial'
+        }
+    ];
+
+
     return (
 
-        <ScrollView
-            style={
-                styles.container
-            }
-            contentContainerStyle={
-                styles.content
-            }
-        >
+        <FondoPantalla>
 
-            <Text
+            <ScrollView
                 style={
-                    styles.title
+                    styles.container
                 }
+                contentContainerStyle={
+                    styles.content
+                }
+                keyboardShouldPersistTaps="handled"
             >
-                🏠 {jaula.codigo}
-            </Text>
+
+                <Tarjeta
+                    franja={estado.franja}
+                    testID="jaula-encabezado"
+                >
+
+                    <Text
+                        style={
+                            styles.title
+                        }
+                    >
+                        {jaula.codigo}
+                    </Text>
 
 
-            {
-                jaula.nombre
-                    ? (
+                    {
+                        jaula.nombre
+                            ? (
 
-                        <Text
-                            style={
-                                styles.name
-                            }
-                        >
-                            {jaula.nombre}
-                        </Text>
+                                <Text
+                                    style={
+                                        styles.name
+                                    }
+                                >
+                                    {jaula.nombre}
+                                </Text>
 
-                    )
-                    : null
-            }
+                            )
+                            : null
+                    }
+
+                </Tarjeta>
 
 
-            {
-                !editando
-                    ? (
+                {
+                    !editando
+                        ? (
+
+                            <View
+                                style={
+                                    styles.managementActions
+                                }
+                            >
+
+                                <Boton
+                                    titulo="Editar jaula"
+                                    icono="editar"
+                                    variante="secundario"
+                                    onPress={
+                                        iniciarEdicion
+                                    }
+                                    disabled={
+                                        ocupado
+                                    }
+                                    testID="editar-jaula"
+                                    style={
+                                        styles.managementButton
+                                    }
+                                />
+
+                                <Boton
+                                    titulo="Eliminar"
+                                    icono="eliminar"
+                                    variante="peligro"
+                                    onPress={
+                                        confirmarEliminarJaula
+                                    }
+                                    disabled={
+                                        ocupado
+                                    }
+                                    testID="eliminar-jaula"
+                                    style={
+                                        styles.managementButton
+                                    }
+                                />
+
+                            </View>
+
+                        )
+                        : null
+                }
+
+
+                {
+                    editando
+                        ? (
+
+                            <Tarjeta>
+
+                                <TituloSeccion
+                                    icono="editar"
+                                    indice={0}
+                                >
+                                    Editar jaula
+                                </TituloSeccion>
+
+
+                                <CampoTexto
+                                    etiqueta="Código *"
+                                    value={
+                                        codigoEdit
+                                    }
+                                    onChangeText={
+                                        setCodigoEdit
+                                    }
+                                    autoCapitalize="characters"
+                                    maxLength={30}
+                                    editable={
+                                        !ocupado
+                                    }
+                                    testID="editar-codigo"
+                                />
+
+
+                                <CampoTexto
+                                    etiqueta="Nombre"
+                                    value={
+                                        nombreEdit
+                                    }
+                                    onChangeText={
+                                        setNombreEdit
+                                    }
+                                    placeholder="Nombre de la jaula"
+                                    editable={
+                                        !ocupado
+                                    }
+                                    testID="editar-nombre"
+                                />
+
+
+                                <CampoTexto
+                                    etiqueta="Ubicación"
+                                    value={
+                                        ubicacionEdit
+                                    }
+                                    onChangeText={
+                                        setUbicacionEdit
+                                    }
+                                    placeholder="Ubicación de la jaula"
+                                    editable={
+                                        !ocupado
+                                    }
+                                    testID="editar-ubicacion"
+                                />
+
+
+                                <CampoTexto
+                                    etiqueta="Tipo"
+                                    value={
+                                        tipoEdit
+                                    }
+                                    onChangeText={
+                                        setTipoEdit
+                                    }
+                                    placeholder="Tipo de jaula"
+                                    editable={
+                                        !ocupado
+                                    }
+                                    testID="editar-tipo"
+                                />
+
+                            </Tarjeta>
+
+                        )
+                        : null
+                }
+
+
+                <Tarjeta>
+
+                    <Dato
+                        icono="location-outline"
+                        etiqueta="Ubicación"
+                    >
+                        {
+                            jaula.ubicacion
+                            ||
+                            'Sin ubicación'
+                        }
+                    </Dato>
+
+
+                    <Dato
+                        icono="pricetag-outline"
+                        etiqueta="Tipo"
+                    >
+                        {
+                            jaula.tipo
+                            ||
+                            'Sin tipo'
+                        }
+                    </Dato>
+
+
+                    <Text
+                        style={
+                            styles.label
+                        }
+                    >
+                        Estado sanitario
+                    </Text>
+
+
+                    <Chip
+                        texto={
+                            estado.label
+                        }
+                        tono={
+                            estado.tono
+                        }
+                        icono={
+                            estado.icono
+                        }
+                        style={
+                            styles.statusChip
+                        }
+                    />
+
+                </Tarjeta>
+
+
+                <Tarjeta>
+
+                    <View
+                        style={
+                            styles.sectionHeader
+                        }
+                    >
 
                         <View
                             style={
-                                styles.managementActions
+                                styles.sectionMain
                             }
                         >
 
-                            <TouchableOpacity
-                                style={[
-                                    styles.editJaulaButton,
+                            <TituloSeccion
+                                icono="aves"
+                                indice={2}
+                            >
+                                Aves
+                            </TituloSeccion>
 
-                                    procesandoJaula
-                                    &&
-                                    styles.disabledManagementButton
-                                ]}
-                                onPress={
-                                    iniciarEdicion
-                                }
-                                disabled={
-                                    procesandoJaula
+
+                            <Text
+                                style={
+                                    styles.counter
                                 }
                             >
-
-                                <Text
-                                    style={
-                                        styles.editJaulaButtonText
-                                    }
-                                >
-                                    ✏️ Editar jaula
-                                </Text>
-
-                            </TouchableOpacity>
-
-
-                            <TouchableOpacity
-                                style={[
-                                    styles.deleteJaulaButton,
-
-                                    procesandoJaula
-                                    &&
-                                    styles.disabledManagementButton
-                                ]}
-                                onPress={
-                                    confirmarEliminarJaula
+                                {
+                                    aves.length
+                                } {
+                                    aves.length === 1
+                                        ? 'ave'
+                                        : 'aves'
                                 }
-                                disabled={
-                                    procesandoJaula
-                                }
-                            >
-
-                                <Text
-                                    style={
-                                        styles.deleteJaulaButtonText
-                                    }
-                                >
-                                    🗑️ Eliminar
-                                </Text>
-
-                            </TouchableOpacity>
+                            </Text>
 
                         </View>
 
-                    )
-                    : null
-            }
+
+                        <Boton
+                            titulo="Agregar"
+                            icono="add"
+                            variante="secundario"
+                            testID="agregar-ave-jaula"
+                            onPress={() =>
+                                navigation.navigate(
+                                    'SeleccionarAveJaula',
+                                    {
+                                        jaulaId:
+                                            jaula.id,
+
+                                        jaulaCodigo:
+                                            jaula.codigo
+                                    }
+                                )
+                            }
+                        />
+
+                    </View>
+
+
+                    {
+                        aves.length === 0
+                            ? (
+
+                                <EstadoVacio
+                                    icono="aves"
+                                    titulo="Jaula vacía"
+                                    mensaje="No existen aves asignadas actualmente a esta jaula."
+                                    testID="jaula-sin-aves"
+                                />
+
+                            )
+                            : aves.map(
+                                ave => (
+
+                                    <View
+                                        key={
+                                            ave.id
+                                        }
+                                        style={
+                                            styles.birdRow
+                                        }
+                                    >
+
+                                        <Pulsable
+                                            style={
+                                                styles.birdMain
+                                            }
+                                            testID={`ave-jaula-${ave.codigo}`}
+                                            accessibilityRole="button"
+                                            onPress={() =>
+                                                abrirAve(
+                                                    ave.id
+                                                )
+                                            }
+                                        >
+
+                                            {
+                                                ave.foto_uri
+                                                    ? (
+
+                                                        <Image
+                                                            source={{
+                                                                uri:
+                                                                    ave.foto_uri
+                                                            }}
+                                                            style={
+                                                                styles.birdPhoto
+                                                            }
+                                                        />
+
+                                                    )
+                                                    : (
+
+                                                        <IconoCirculo
+                                                            icono="aves"
+                                                            indice={2}
+                                                            tamano={48}
+                                                        />
+
+                                                    )
+                                            }
+
+
+                                            <View
+                                                style={
+                                                    styles.birdInfo
+                                                }
+                                            >
+
+                                                <Text
+                                                    style={
+                                                        styles.birdCode
+                                                    }
+                                                >
+                                                    {
+                                                        ave.codigo
+                                                    }
+                                                </Text>
+
+
+                                                <Text
+                                                    style={
+                                                        styles.birdBreed
+                                                    }
+                                                >
+                                                    {
+                                                        ave.raza
+                                                        ||
+                                                        'Raza no especificada'
+                                                    }
+                                                </Text>
+
+                                            </View>
+
+                                        </Pulsable>
+
+
+                                        <Pulsable
+                                            style={
+                                                styles.removeBirdButton
+                                            }
+                                            testID={`quitar-ave-${ave.codigo}`}
+                                            accessibilityRole="button"
+                                            onPress={() =>
+                                                confirmarQuitarAve(
+                                                    ave
+                                                )
+                                            }
+                                        >
+
+                                            <Text
+                                                style={
+                                                    styles.removeBirdText
+                                                }
+                                            >
+                                                Quitar
+                                            </Text>
+
+                                        </Pulsable>
+
+                                    </View>
+
+                                )
+                            )
+                    }
+
+                </Tarjeta>
+
+
+                <TituloSeccion
+                    icono="filtros"
+                    indice={4}
+                >
+                    Acciones de la jaula
+                </TituloSeccion>
+
+
+                <View
+                    style={
+                        styles.actionsGrid
+                    }
+                >
+
+                    {
+                        ACCIONES.map(
+                            accion => (
+
+                                <Tarjeta
+                                    key={
+                                        accion.id
+                                    }
+                                    testID={
+                                        accion.testID
+                                    }
+                                    style={
+                                        styles.actionTile
+                                    }
+                                    onPress={() =>
+                                        navigation.navigate(
+                                            accion.id,
+                                            {
+                                                jaulaId
+                                            }
+                                        )
+                                    }
+                                >
+
+                                    <IconoCirculo
+                                        icono={
+                                            accion.icono
+                                        }
+                                        indice={
+                                            accion.indice
+                                        }
+                                        tamano={48}
+                                    />
+
+                                    <Text
+                                        style={
+                                            styles.actionText
+                                        }
+                                    >
+                                        {accion.texto}
+                                    </Text>
+
+                                </Tarjeta>
+
+                            )
+                        )
+                    }
+
+                </View>
+
+            </ScrollView>
 
 
             {
                 editando
                     ? (
 
-                        <Card>
+                        <JaulaBarraAccion
+                            fila
+                            testID="barra-guardar-edicion"
+                        >
 
-                            <Text
+                            <Boton
+                                titulo="Cancelar"
+                                variante="contorno"
+                                onPress={
+                                    cancelarEdicion
+                                }
+                                disabled={
+                                    ocupado
+                                }
+                                testID="cancelar-edicion"
                                 style={
-                                    styles.editTitle
-                                }
-                            >
-                                ✏️ Editar jaula
-                            </Text>
-
-
-                            <Text
-                                style={
-                                    styles.label
-                                }
-                            >
-                                Código *
-                            </Text>
-
-
-                            <TextInput
-                                style={
-                                    styles.input
-                                }
-                                value={
-                                    codigoEdit
-                                }
-                                onChangeText={
-                                    setCodigoEdit
-                                }
-                                autoCapitalize="characters"
-                                maxLength={30}
-                                editable={
-                                    !procesandoJaula
+                                    styles.barButtonSecondary
                                 }
                             />
 
-
-                            <Text
+                            <Boton
+                                titulo={
+                                    procesandoJaula
+                                        ? 'Guardando...'
+                                        : 'Guardar cambios'
+                                }
+                                icono={
+                                    procesandoJaula
+                                        ? undefined
+                                        : 'guardar'
+                                }
+                                onPress={
+                                    guardarEdicion
+                                }
+                                atenuado={
+                                    ocupado
+                                }
+                                testID="guardar-cambios-jaula"
                                 style={
-                                    styles.label
-                                }
-                            >
-                                Nombre
-                            </Text>
-
-
-                            <TextInput
-                                style={
-                                    styles.input
-                                }
-                                value={
-                                    nombreEdit
-                                }
-                                onChangeText={
-                                    setNombreEdit
-                                }
-                                placeholder="Nombre de la jaula"
-                                editable={
-                                    !procesandoJaula
+                                    styles.barButtonPrimary
                                 }
                             />
 
-
-                            <Text
-                                style={
-                                    styles.label
-                                }
-                            >
-                                Ubicación
-                            </Text>
-
-
-                            <TextInput
-                                style={
-                                    styles.input
-                                }
-                                value={
-                                    ubicacionEdit
-                                }
-                                onChangeText={
-                                    setUbicacionEdit
-                                }
-                                placeholder="Ubicación de la jaula"
-                                editable={
-                                    !procesandoJaula
-                                }
-                            />
-
-
-                            <Text
-                                style={
-                                    styles.label
-                                }
-                            >
-                                Tipo
-                            </Text>
-
-
-                            <TextInput
-                                style={
-                                    styles.input
-                                }
-                                value={
-                                    tipoEdit
-                                }
-                                onChangeText={
-                                    setTipoEdit
-                                }
-                                placeholder="Tipo de jaula"
-                                editable={
-                                    !procesandoJaula
-                                }
-                            />
-
-
-                            <View
-                                style={
-                                    styles.editActions
-                                }
-                            >
-
-                                <TouchableOpacity
-                                    style={[
-                                        styles.saveEditButton,
-
-                                        procesandoJaula
-                                        &&
-                                        styles.disabledManagementButton
-                                    ]}
-                                    onPress={
-                                        guardarEdicion
-                                    }
-                                    disabled={
-                                        procesandoJaula
-                                    }
-                                >
-
-                                    <Text
-                                        style={
-                                            styles.saveEditButtonText
-                                        }
-                                    >
-                                        {
-                                            procesandoJaula
-                                                ? 'Guardando...'
-                                                : '💾 Guardar cambios'
-                                        }
-                                    </Text>
-
-                                </TouchableOpacity>
-
-
-                                <TouchableOpacity
-                                    style={[
-                                        styles.cancelEditButton,
-
-                                        procesandoJaula
-                                        &&
-                                        styles.disabledManagementButton
-                                    ]}
-                                    onPress={
-                                        cancelarEdicion
-                                    }
-                                    disabled={
-                                        procesandoJaula
-                                    }
-                                >
-
-                                    <Text
-                                        style={
-                                            styles.cancelEditButtonText
-                                        }
-                                    >
-                                        Cancelar
-                                    </Text>
-
-                                </TouchableOpacity>
-
-                            </View>
-
-                        </Card>
+                        </JaulaBarraAccion>
 
                     )
                     : null
             }
 
 
-            <Card>
+            <JaulaAviso
+                aviso={aviso}
+                onCerrar={cerrarAviso}
+            />
 
-                <Text
-                    style={
-                        styles.label
-                    }
-                >
-                    Ubicación
+        </FondoPantalla>
+
+    );
+
+}
+
+
+function Dato({
+    icono,
+    etiqueta,
+    children
+}) {
+
+    return (
+
+        <View style={styles.dato}>
+
+            <Icono
+                nombre={icono}
+                tamano={22}
+                color={colors.primary}
+                style={styles.datoIcono}
+            />
+
+            <View style={styles.datoTextos}>
+
+                <Text style={styles.label}>
+                    {etiqueta}
                 </Text>
 
-
-                <Text
-                    style={
-                        styles.value
-                    }
-                >
-                    {
-                        jaula.ubicacion
-                        ||
-                        'Sin ubicación'
-                    }
+                <Text style={styles.value}>
+                    {children}
                 </Text>
 
+            </View>
 
-                <Text
-                    style={
-                        styles.label
-                    }
-                >
-                    Tipo
-                </Text>
-
-
-                <Text
-                    style={
-                        styles.value
-                    }
-                >
-                    {
-                        jaula.tipo
-                        ||
-                        'Sin tipo'
-                    }
-                </Text>
-
-
-                <Text
-                    style={
-                        styles.label
-                    }
-                >
-                    Estado sanitario
-                </Text>
-
-
-                <View
-                    style={[
-                        styles.statusBadge,
-
-                        {
-                            backgroundColor:
-                                sanitaryStyle
-                                    .backgroundColor
-                        }
-                    ]}
-                >
-
-                    <Text
-                        style={[
-                            styles.statusText,
-
-                            {
-                                color:
-                                    sanitaryStyle
-                                        .textColor
-                            }
-                        ]}
-                    >
-                        {
-                            sanitaryStyle.label
-                        }
-                    </Text>
-
-                </View>
-
-            </Card>
-
-
-            <Card>
-
-                <View
-                    style={
-                        styles.sectionHeader
-                    }
-                >
-
-                    <View>
-
-                        <Text
-                            style={
-                                styles.sectionTitle
-                            }
-                        >
-                            🐔 Aves
-                        </Text>
-
-
-                        <Text
-                            style={
-                                styles.counter
-                            }
-                        >
-                            {
-                                aves.length
-                            } {
-                                aves.length === 1
-                                    ? 'ave'
-                                    : 'aves'
-                            }
-                        </Text>
-
-                    </View>
-
-
-                    <TouchableOpacity
-                        style={
-                            styles.addBirdButton
-                        }
-                        onPress={() =>
-                            navigation.navigate(
-                                'SeleccionarAveJaula',
-                                {
-                                    jaulaId:
-                                        jaula.id,
-
-                                    jaulaCodigo:
-                                        jaula.codigo
-                                }
-                            )
-                        }
-                    >
-
-                        <Text
-                            style={
-                                styles.addBirdText
-                            }
-                        >
-                            ＋ Agregar
-                        </Text>
-
-                    </TouchableOpacity>
-
-                </View>
-
-
-                {
-                    aves.length === 0
-                        ? (
-
-                            <View
-                                style={
-                                    styles.emptyBirds
-                                }
-                            >
-
-                                <Text
-                                    style={
-                                        styles.emptyBirdIcon
-                                    }
-                                >
-                                    🐔
-                                </Text>
-
-
-                                <Text
-                                    style={
-                                        styles.emptyBirdTitle
-                                    }
-                                >
-                                    Jaula vacía
-                                </Text>
-
-
-                                <Text
-                                    style={
-                                        styles.description
-                                    }
-                                >
-                                    No existen aves asignadas actualmente a esta jaula.
-                                </Text>
-
-                            </View>
-
-                        )
-                        : aves.map(
-                            ave => (
-
-                                <View
-                                    key={
-                                        ave.id
-                                    }
-                                    style={
-                                        styles.birdRow
-                                    }
-                                >
-
-                                    <TouchableOpacity
-                                        style={
-                                            styles.birdMain
-                                        }
-                                        onPress={() =>
-                                            abrirAve(
-                                                ave.id
-                                            )
-                                        }
-                                    >
-
-                                        {
-                                            ave.foto_uri
-                                                ? (
-
-                                                    <Image
-                                                        source={{
-                                                            uri:
-                                                                ave.foto_uri
-                                                        }}
-                                                        style={
-                                                            styles.birdPhoto
-                                                        }
-                                                    />
-
-                                                )
-                                                : (
-
-                                                    <View
-                                                        style={
-                                                            styles.birdAvatar
-                                                        }
-                                                    >
-
-                                                        <Text
-                                                            style={
-                                                                styles.birdAvatarText
-                                                            }
-                                                        >
-                                                            🐔
-                                                        </Text>
-
-                                                    </View>
-
-                                                )
-                                        }
-
-
-                                        <View
-                                            style={
-                                                styles.birdInfo
-                                            }
-                                        >
-
-                                            <Text
-                                                style={
-                                                    styles.birdCode
-                                                }
-                                            >
-                                                {
-                                                    ave.codigo
-                                                }
-                                            </Text>
-
-
-                                            <Text
-                                                style={
-                                                    styles.birdBreed
-                                                }
-                                            >
-                                                {
-                                                    ave.raza
-                                                    ||
-                                                    'Raza no especificada'
-                                                }
-                                            </Text>
-
-                                        </View>
-
-                                    </TouchableOpacity>
-
-
-                                    <TouchableOpacity
-                                        style={
-                                            styles.removeBirdButton
-                                        }
-                                        onPress={() =>
-                                            confirmarQuitarAve(
-                                                ave
-                                            )
-                                        }
-                                    >
-
-                                        <Text
-                                            style={
-                                                styles.removeBirdText
-                                            }
-                                        >
-                                            Quitar
-                                        </Text>
-
-                                    </TouchableOpacity>
-
-                                </View>
-
-                            )
-                        )
-                }
-
-            </Card>
-
-
-            <Card>
-
-                <Text
-                    style={
-                        styles.sectionTitle
-                    }
-                >
-                    Acciones de la jaula
-                </Text>
-
-
-                <TouchableOpacity
-                    style={
-                        styles.actionButton
-                    }
-                    onPress={() =>
-                        navigation.navigate(
-                            'AlimentacionJaula',
-                            {
-                                jaulaId
-                            }
-                        )
-                    }
-                >
-
-                    <Text
-                        style={
-                            styles.actionText
-                        }
-                    >
-                        🍚 Alimentación
-                    </Text>
-
-                </TouchableOpacity>
-
-
-                <TouchableOpacity
-                    style={
-                        styles.actionButton
-                    }
-                    onPress={() =>
-                        navigation.navigate(
-                            'BebidaJaula',
-                            {
-                                jaulaId
-                            }
-                        )
-                    }
-                >
-
-                    <Text
-                        style={
-                            styles.actionText
-                        }
-                    >
-                        💧 Bebida
-                    </Text>
-
-                </TouchableOpacity>
-
-
-                <TouchableOpacity
-                    style={
-                        styles.actionButton
-                    }
-                    onPress={() =>
-                        navigation.navigate(
-                            'SanidadJaula',
-                            {
-                                jaulaId
-                            }
-                        )
-                    }
-                >
-
-                    <Text
-                        style={
-                            styles.actionText
-                        }
-                    >
-                        🧼 Sanidad
-                    </Text>
-
-                </TouchableOpacity>
-
-
-                <TouchableOpacity
-                    style={
-                        styles.actionButton
-                    }
-                    onPress={() =>
-                        navigation.navigate(
-                            'HistorialJaula',
-                            {
-                                jaulaId
-                            }
-                        )
-                    }
-                >
-
-                    <Text
-                        style={
-                            styles.actionText
-                        }
-                    >
-                        📖 Historial
-                    </Text>
-
-                </TouchableOpacity>
-
-            </Card>
-
-        </ScrollView>
+        </View>
 
     );
 
@@ -1391,603 +1298,165 @@ const styles =
     StyleSheet.create({
 
         container: {
-
-            flex: 1,
-
-            backgroundColor:
-                COLORS.background
-
+            flex: 1
         },
-
 
         content: {
-
-            padding: 16,
-
-            paddingBottom: 40
-
+            padding: spacing.pantalla,
+            paddingBottom: spacing.xxl
         },
-
-
-        managementActions: {
-
-            flexDirection:
-                'row',
-
-            justifyContent:
-                'space-between',
-
-            marginTop: 16,
-
-            marginBottom: 4
-
-        },
-
-
-        editJaulaButton: {
-
-            width:
-                '48%',
-
-            backgroundColor:
-                COLORS.primary,
-
-            paddingVertical: 12,
-
-            borderRadius: 12,
-
-            alignItems:
-                'center'
-
-        },
-
-
-        editJaulaButtonText: {
-
-            color:
-                COLORS.white,
-
-            fontWeight:
-                'bold',
-
-            fontSize: 15
-
-        },
-
-
-        deleteJaulaButton: {
-
-            width:
-                '48%',
-
-            backgroundColor:
-                '#fde9e7',
-
-            paddingVertical: 12,
-
-            borderRadius: 12,
-
-            alignItems:
-                'center',
-
-            borderWidth: 1,
-
-            borderColor:
-                COLORS.danger
-
-        },
-
-
-        deleteJaulaButtonText: {
-
-            color:
-                COLORS.danger,
-
-            fontWeight:
-                'bold',
-
-            fontSize: 15
-
-        },
-
-
-        disabledManagementButton: {
-
-            opacity: 0.55
-
-        },
-
-
-        editTitle: {
-
-            fontSize: 19,
-
-            fontWeight:
-                'bold',
-
-            color:
-                COLORS.text,
-
-            marginBottom: 4
-
-        },
-
-
-        input: {
-
-            backgroundColor:
-                COLORS.card,
-
-            borderWidth: 1,
-
-            borderColor:
-                COLORS.border,
-
-            borderRadius: 12,
-
-            paddingHorizontal: 14,
-
-            paddingVertical: 12,
-
-            fontSize: 16,
-
-            color:
-                COLORS.text,
-
-            marginTop: 5
-
-        },
-
-
-        editActions: {
-
-            marginTop: 18
-
-        },
-
-
-        saveEditButton: {
-
-            backgroundColor:
-                COLORS.primary,
-
-            paddingVertical: 13,
-
-            borderRadius: 12,
-
-            alignItems:
-                'center'
-
-        },
-
-
-        saveEditButtonText: {
-
-            color:
-                COLORS.white,
-
-            fontWeight:
-                'bold',
-
-            fontSize: 15
-
-        },
-
-
-        cancelEditButton: {
-
-            backgroundColor:
-                '#e8eeee',
-
-            paddingVertical: 12,
-
-            borderRadius: 12,
-
-            alignItems:
-                'center',
-
-            marginTop: 9
-
-        },
-
-
-        cancelEditButtonText: {
-
-            color:
-                COLORS.text,
-
-            fontWeight:
-                'bold',
-
-            fontSize: 15
-
-        },
-
 
         center: {
-
             flex: 1,
-
-            justifyContent:
-                'center',
-
-            alignItems:
-                'center',
-
-            padding: 20,
-
-            backgroundColor:
-                COLORS.background
-
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: spacing.xl
         },
-
-
-        loadingText: {
-
-            marginTop: 10,
-
-            color:
-                COLORS.textSecondary
-
-        },
-
-
-        notFoundText: {
-
-            fontSize: 17,
-
-            color:
-                COLORS.textSecondary
-
-        },
-
 
         title: {
-
-            fontSize: 28,
-
-            fontWeight:
-                'bold',
-
-            color:
-                COLORS.primary
-
+            ...typography.display,
+            color: colors.primaryDark
         },
-
 
         name: {
-
-            fontSize: 17,
-
-            color:
-                COLORS.textSecondary,
-
-            marginTop: 4,
-
-            marginBottom: 15
-
+            ...typography.cuerpo,
+            color: colors.textSecondary,
+            marginTop: spacing.xs
         },
 
+        managementActions: {
+            flexDirection: 'row',
+            marginBottom: spacing.md
+        },
+
+        managementButton: {
+            flex: 1,
+            marginHorizontal: spacing.xs
+        },
+
+        barButtonSecondary: {
+            flex: 1,
+            marginRight: spacing.sm
+        },
+
+        barButtonPrimary: {
+            flex: 2
+        },
+
+        dato: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: spacing.md
+        },
+
+        datoIcono: {
+            marginRight: spacing.md
+        },
+
+        datoTextos: {
+            flex: 1
+        },
 
         label: {
-
-            fontSize: 13,
-
-            color:
-                COLORS.textSecondary,
-
-            marginTop: 12
-
+            ...typography.secundario,
+            color: colors.textSecondary
         },
-
 
         value: {
-
-            fontSize: 17,
-
-            color:
-                COLORS.text,
-
-            marginTop: 3
-
+            ...typography.cuerpoFuerte,
+            color: colors.text
         },
 
-
-        statusBadge: {
-
-            alignSelf:
-                'flex-start',
-
-            marginTop: 7,
-
-            paddingHorizontal: 14,
-
-            paddingVertical: 7,
-
-            borderRadius: 18
-
+        statusChip: {
+            marginTop: spacing.xs
         },
-
-
-        statusText: {
-
-            fontSize: 14,
-
-            fontWeight:
-                'bold'
-
-        },
-
 
         sectionHeader: {
-
-            flexDirection:
-                'row',
-
-            justifyContent:
-                'space-between',
-
-            alignItems:
-                'center',
-
-            marginBottom: 10
-
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center'
         },
 
-
-        sectionTitle: {
-
-            fontSize: 19,
-
-            fontWeight:
-                'bold',
-
-            color:
-                COLORS.text
-
+        sectionMain: {
+            flex: 1,
+            marginRight: spacing.sm
         },
-
 
         counter: {
-
-            color:
-                COLORS.textSecondary,
-
-            marginTop: 3
-
+            ...typography.secundario,
+            color: colors.textSecondary,
+            marginLeft: 40
         },
-
-
-        addBirdButton: {
-
-            backgroundColor:
-                COLORS.primary,
-
-            paddingHorizontal: 13,
-
-            paddingVertical: 9,
-
-            borderRadius: 18
-
-        },
-
-
-        addBirdText: {
-
-            color:
-                COLORS.white,
-
-            fontWeight:
-                'bold'
-
-        },
-
-
-        emptyBirds: {
-
-            alignItems:
-                'center',
-
-            paddingVertical: 20
-
-        },
-
-
-        emptyBirdIcon: {
-
-            fontSize: 36
-
-        },
-
-
-        emptyBirdTitle: {
-
-            marginTop: 7,
-
-            fontSize: 17,
-
-            fontWeight:
-                'bold',
-
-            color:
-                COLORS.text
-
-        },
-
-
-        description: {
-
-            color:
-                COLORS.textSecondary,
-
-            lineHeight: 20,
-
-            textAlign:
-                'center',
-
-            marginTop: 5
-
-        },
-
 
         birdRow: {
-
-            flexDirection:
-                'row',
-
-            alignItems:
-                'center',
-
+            flexDirection: 'row',
+            alignItems: 'center',
             borderTopWidth: 1,
-
-            borderTopColor:
-                COLORS.border,
-
-            paddingVertical: 12
-
+            borderTopColor: colors.borderSoft,
+            paddingVertical: spacing.md
         },
-
 
         birdMain: {
-
             flex: 1,
-
-            flexDirection:
-                'row',
-
-            alignItems:
-                'center'
-
+            flexDirection: 'row',
+            alignItems: 'center',
+            minHeight: spacing.touchMin
         },
-
-
-        birdAvatar: {
-
-            width: 50,
-
-            height: 50,
-
-            borderRadius: 25,
-
-            backgroundColor:
-                '#e7f5f5',
-
-            alignItems:
-                'center',
-
-            justifyContent:
-                'center'
-
-        },
-
 
         birdPhoto: {
-
-            width: 50,
-
-            height: 50,
-
-            borderRadius: 25,
-
-            backgroundColor:
-                '#e7f5f5'
-
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            backgroundColor: colors.surfaceAlt
         },
-
-
-        birdAvatarText: {
-
-            fontSize: 26
-
-        },
-
 
         birdInfo: {
-
             flex: 1,
-
-            marginLeft: 11
-
+            marginLeft: spacing.md
         },
-
 
         birdCode: {
-
-            fontSize: 17,
-
-            fontWeight:
-                'bold',
-
-            color:
-                COLORS.text
-
+            ...typography.cuerpoFuerte,
+            color: colors.text
         },
-
 
         birdBreed: {
-
-            marginTop: 3,
-
-            color:
-                COLORS.textSecondary
-
+            ...typography.secundario,
+            color: colors.textSecondary
         },
-
 
         removeBirdButton: {
-
-            backgroundColor:
-                '#fde9e7',
-
-            paddingHorizontal: 11,
-
-            paddingVertical: 8,
-
-            borderRadius: 12
-
+            backgroundColor: colors.dangerSoft,
+            minHeight: spacing.touchMin,
+            paddingHorizontal: spacing.md,
+            borderRadius: radii.md,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginLeft: spacing.sm
         },
-
 
         removeBirdText: {
-
-            color:
-                COLORS.danger,
-
-            fontWeight:
-                'bold',
-
-            fontSize: 12
-
+            ...typography.etiqueta,
+            color: colors.dangerText
         },
 
-
-        actionButton: {
-
-            backgroundColor:
-                COLORS.primary,
-
-            padding: 14,
-
-            borderRadius: 12,
-
-            marginTop: 10
-
+        actionsGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between'
         },
 
+        actionTile: {
+            width: '48%',
+            alignItems: 'center',
+            paddingVertical: spacing.lg
+        },
 
         actionText: {
-
-            color:
-                COLORS.white,
-
-            fontWeight:
-                'bold',
-
-            fontSize: 16,
-
-            textAlign:
-                'center'
-
+            ...typography.subtitulo,
+            color: colors.text,
+            marginTop: spacing.sm,
+            textAlign: 'center'
         }
 
     });

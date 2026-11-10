@@ -19,8 +19,27 @@ import {
 } from '../repositories/HistorialRepository';
 
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
+
+import FondoPantalla from '../components/FondoPantalla';
+import Tarjeta from '../components/Tarjeta';
+import IconoCirculo from '../components/IconoCirculo';
+import EstadoCarga from '../components/EstadoCarga';
+import EstadoError from '../components/EstadoError';
+import EstadoVacio from '../components/EstadoVacio';
+
+
+// Presentación del tipo de evento (el dato no cambia): texto legible, icono y color de círculo.
+const EVENTOS = {
+    ALIMENTACION: { texto: 'Alimentación', icono: 'alimentacion', indice: 1 },
+    BEBIDA: { texto: 'Bebida', icono: 'bebida', indice: 2 },
+    SANIDAD: { texto: 'Sanidad', icono: 'sanidad', indice: 4 },
+    INGRESO_AVE: { texto: 'Ingreso de ave', icono: 'enter-outline', indice: 1 },
+    SALIDA_AVE: { texto: 'Salida de ave', icono: 'exit-outline', indice: 3 }
+};
 
 
 export default function HistorialJaulaScreen({
@@ -32,6 +51,12 @@ export default function HistorialJaulaScreen({
 
     const [historial, setHistorial] =
         useState([]);
+
+    const [cargando, setCargando] =
+        useState(true);
+
+    const [error, setError] =
+        useState(false);
 
 
     useFocusEffect(
@@ -47,66 +72,153 @@ export default function HistorialJaulaScreen({
 
     const cargar = async () => {
 
-        const data =
-            await obtenerHistorialJaula(
-                jaulaId
+        try {
+
+            setError(false);
+
+            const data =
+                await obtenerHistorialJaula(
+                    jaulaId
+                );
+
+            setHistorial(data);
+
+        }
+        catch (err) {
+
+            console.error(
+                'Error cargando historial de jaula:',
+                err
             );
 
-        setHistorial(data);
+            setError(true);
+
+        }
+        finally {
+
+            setCargando(false);
+
+        }
 
     };
 
 
     return (
 
+        <FondoPantalla>
+
         <ScrollView
             style={styles.container}
             contentContainerStyle={styles.content}
         >
 
-            <Text style={styles.title}>
-                📖 Historial
-            </Text>
+            {
+                cargando
+                    ? (
+                        <EstadoCarga
+                            mensaje="Cargando historial..."
+                        />
+                    )
+                    : null
+            }
 
 
             {
-                historial.length === 0
+                !cargando && error
                     ? (
-                        <Text style={styles.empty}>
-                            La jaula todavía no tiene eventos registrados.
-                        </Text>
+                        <EstadoError
+                            mensaje="No se pudo cargar el historial de la jaula."
+                            onReintentar={() => {
+                                setCargando(true);
+                                cargar();
+                            }}
+                        />
                     )
-                    : historial.map(
-                        item => (
+                    : null
+            }
 
-                            <View
+
+            {
+                !cargando && !error && historial.length === 0
+                    ? (
+                        <EstadoVacio
+                            icono="historial"
+                            titulo="La jaula todavía no tiene eventos registrados."
+                            testID="historial-vacio"
+                        />
+                    )
+                    : null
+            }
+
+
+            {
+                !cargando && !error &&
+                historial.map(
+                    item => {
+
+                        const evento =
+                            EVENTOS[item.tipo_evento];
+
+                        return (
+
+                            <Tarjeta
                                 key={item.id}
-                                style={styles.event}
                             >
 
-                                <Text style={styles.type}>
-                                    {item.tipo_evento}
-                                </Text>
+                                <View style={styles.fila}>
 
-                                <Text style={styles.date}>
-                                    {
-                                        new Date(
-                                            item.fecha
-                                        ).toLocaleString()
-                                    }
-                                </Text>
+                                    <IconoCirculo
+                                        icono={
+                                            evento
+                                                ? evento.icono
+                                                : 'historial'
+                                        }
+                                        indice={
+                                            evento
+                                                ? evento.indice
+                                                : 0
+                                        }
+                                        tamano={44}
+                                        style={styles.icono}
+                                    />
 
-                                <Text style={styles.detail}>
-                                    {item.detalle}
-                                </Text>
+                                    <View style={styles.info}>
 
-                            </View>
+                                        <Text style={styles.type}>
+                                            {
+                                                evento
+                                                    ? evento.texto
+                                                    : item.tipo_evento
+                                            }
+                                        </Text>
 
-                        )
-                    )
+                                        <Text style={styles.date}>
+                                            {
+                                                new Date(
+                                                    item.fecha
+                                                ).toLocaleString()
+                                            }
+                                        </Text>
+
+                                        <Text style={styles.detail}>
+                                            {item.detalle}
+                                        </Text>
+
+                                    </View>
+
+                                </View>
+
+                            </Tarjeta>
+
+                        );
+
+                    }
+                )
             }
 
         </ScrollView>
+
+        </FondoPantalla>
 
     );
 
@@ -117,56 +229,41 @@ const styles =
     StyleSheet.create({
 
         container: {
-            flex: 1,
-            backgroundColor:
-                COLORS.background
+            flex: 1
         },
 
         content: {
-            padding: 20
+            padding: spacing.pantalla,
+            paddingBottom: spacing.xxl
         },
 
-        title: {
-            fontSize: 26,
-            fontWeight: 'bold',
-            color:
-                COLORS.primary,
-            marginBottom: 20
+        fila: {
+            flexDirection: 'row',
+            alignItems: 'flex-start'
         },
 
-        event: {
-            backgroundColor:
-                COLORS.card,
-            borderRadius: 14,
-            padding: 15,
-            marginBottom: 12,
-            borderLeftWidth: 4,
-            borderLeftColor:
-                COLORS.primary
+        icono: {
+            marginRight: spacing.md
+        },
+
+        info: {
+            flex: 1
         },
 
         type: {
-            fontWeight: 'bold',
-            fontSize: 16
+            ...typography.subtitulo,
+            color: colors.text
         },
 
         date: {
-            color:
-                COLORS.textSecondary,
-            fontSize: 12,
-            marginVertical: 5
+            ...typography.secundario,
+            color: colors.textSecondary,
+            marginVertical: 2
         },
 
         detail: {
-            color:
-                COLORS.text
-        },
-
-        empty: {
-            color:
-                COLORS.textSecondary,
-            textAlign: 'center',
-            marginTop: 40
+            ...typography.cuerpo,
+            color: colors.text
         }
 
     });

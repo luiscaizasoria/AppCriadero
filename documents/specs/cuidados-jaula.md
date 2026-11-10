@@ -209,6 +209,10 @@ Regla general: no se tocan las pantallas de V1. Excepciones aprobadas:
 1. **"Cerrar sesión" en `MasMenuScreen`** (solo en modo API). Aprobada antes de este módulo; motivo: autenticación.
 2. **`AlimentacionJaulaScreen.js` y `BebidaJaulaScreen.js`**: se añadió `try/catch` con `Alert.alert('Error', 'No fue posible guardar el registro.')` (mismo estilo que `SanidadJaulaScreen`). Aprobada por el usuario el 2026-11-02. Motivo: errores de red al pasar a la nube; V1 no manejaba errores en esas dos pantallas y la promesa rechazada dejaba la pantalla sin respuesta. Nada más cambió en esas pantallas.
 
+Nota de la fase UX (cambio visual aprobado, estados de error): en `AlimentacionJaulaScreen`, `BebidaJaulaScreen` y `HistorialJaulaScreen` la carga de tipos y datos ahora va dentro de un `try/catch` con estado de error y botón «Reintentar» (antes era una promesa sin capturar). No cambia la lógica ni los mensajes de la API, y el `try/catch` con `Alert` de la excepción 2 sigue igual.
+
+Además, el aviso de éxito al guardar un cuidado es ahora un aviso no bloqueante que navega solo (antes un `Alert` con «Aceptar»), con el mismo título y mensaje.
+
 ## Paridad con V1
 
 Estado inicial: criadero nuevo en V2 con la plantilla de catálogos de 42 ítems y una jaula activa en estado `NORMAL`, sin registros.

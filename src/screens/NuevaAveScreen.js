@@ -1,6 +1,7 @@
 import React, {
     useEffect,
     useMemo,
+    useRef,
     useState
 } from 'react';
 
@@ -8,12 +9,9 @@ import {
     View,
     Text,
     Image,
-    TextInput,
     ScrollView,
-    TouchableOpacity,
     StyleSheet,
     Alert,
-    ActivityIndicator,
     KeyboardAvoidingView,
     Platform
 } from 'react-native';
@@ -42,13 +40,48 @@ import {
 } from '../repositories/ConfiguracionRepository';
 
 
-import SelectorCatalogo
-    from '../components/SelectorCatalogo';
+import AveSelectorCatalogo
+    from '../components/AveSelectorCatalogo';
 
+import AveOpcion
+    from '../components/AveOpcion';
+
+import FondoPantalla
+    from '../components/FondoPantalla';
+
+import Tarjeta
+    from '../components/Tarjeta';
+
+import TituloSeccion
+    from '../components/TituloSeccion';
+
+import CampoTexto
+    from '../components/CampoTexto';
+
+import Boton
+    from '../components/Boton';
+
+import Aviso
+    from '../components/Aviso';
+
+import Icono
+    from '../components/Icono';
+
+import IconoCirculo
+    from '../components/IconoCirculo';
+
+import Pulsable
+    from '../components/Pulsable';
+
+import EstadoCarga
+    from '../components/EstadoCarga';
 
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    radii,
+    spacing,
+    typography
+} from '../theme';
 
 
 const ORIGEN_NACIDA =
@@ -56,6 +89,10 @@ const ORIGEN_NACIDA =
 
 const ORIGEN_COMPRADA =
     'COMPRADA';
+
+// Espera antes de navegar para que se vea el aviso de éxito (sustituye al Alert de éxito)
+const ESPERA_AVISO_MS =
+    1500;
 
 
 export default function NuevaAveScreen({
@@ -245,6 +282,27 @@ export default function NuevaAveScreen({
     ] = useState(false);
 
 
+    // Aviso de éxito (no bloqueante) y bloqueo de nuevos envíos hasta navegar
+    const [
+        aviso,
+        setAviso
+    ] = useState(null);
+
+
+    const [
+        guardado,
+        setGuardado
+    ] = useState(false);
+
+
+    const enviandoRef =
+        useRef(false);
+
+
+    const temporizadorRef =
+        useRef(null);
+
+
     useEffect(() => {
 
         cargarDatos();
@@ -252,6 +310,23 @@ export default function NuevaAveScreen({
     }, [
         aveIdEdicion
     ]);
+
+
+    useEffect(() => {
+
+        return () => {
+
+            if(temporizadorRef.current){
+
+                clearTimeout(
+                    temporizadorRef.current
+                );
+
+            }
+
+        };
+
+    }, []);
 
 
     const fechaNacimientoCalculada =
@@ -296,6 +371,30 @@ export default function NuevaAveScreen({
             edadMesesCompra,
             fechaIngreso
         ]);
+
+
+    // Muestra el aviso de éxito y, pasado un instante, hace la navegación que antes hacía «Aceptar»
+    const avisarYNavegar =
+        (
+            mensaje,
+            destino
+        ) => {
+
+            setAviso(
+                mensaje
+            );
+
+            setGuardado(
+                true
+            );
+
+            temporizadorRef.current =
+                setTimeout(
+                    destino,
+                    ESPERA_AVISO_MS
+                );
+
+        };
 
 
     const cargarDatos =
@@ -738,6 +837,14 @@ export default function NuevaAveScreen({
     const guardar =
         async () => {
 
+            // Sin doble toque mientras se envía o se muestra el aviso de éxito
+            if (enviandoRef.current) {
+
+                return;
+
+            }
+
+
             const codigoLimpio =
                 codigo
                     .trim()
@@ -969,7 +1076,15 @@ export default function NuevaAveScreen({
             }
 
 
+            let exito =
+                false;
+
+
             try {
+
+                enviandoRef.current =
+                    true;
+
 
                 setGuardando(
                     true
@@ -1086,21 +1201,16 @@ export default function NuevaAveScreen({
                     });
 
 
-                    Alert.alert(
+                    exito =
+                        true;
 
-                        'Ave actualizada',
+
+                    avisarYNavegar(
 
                         `Los datos del ave ${codigoLimpio} fueron actualizados correctamente.`,
 
-                        [
-                            {
-                                text:
-                                    'Aceptar',
-
-                                onPress: () =>
-                                    navigation.goBack()
-                            }
-                        ]
+                        () =>
+                            navigation.goBack()
 
                     );
 
@@ -1172,26 +1282,23 @@ export default function NuevaAveScreen({
                     });
 
 
-                Alert.alert(
+                exito =
+                    true;
 
-                    'Ave registrada',
+
+                // «Ver ave» directo: tras registrar, navega a la ficha (mismo destino que la
+                // acción «Ver ave» del Alert anterior) después de mostrar el aviso.
+                avisarYNavegar(
 
                     `El ave ${codigoLimpio} fue registrada correctamente.`,
 
-                    [
-                        {
-                            text:
-                                'Ver ave',
-
-                            onPress: () =>
-                                navigation.replace(
-                                    'DetalleAve',
-                                    {
-                                        aveId
-                                    }
-                                )
-                        }
-                    ]
+                    () =>
+                        navigation.replace(
+                            'DetalleAve',
+                            {
+                                aveId
+                            }
+                        )
 
                 );
 
@@ -1342,6 +1449,14 @@ export default function NuevaAveScreen({
             }
             finally {
 
+                if(!exito){
+
+                    enviandoRef.current =
+                        false;
+
+                }
+
+
                 setGuardando(
                     false
                 );
@@ -1355,33 +1470,25 @@ export default function NuevaAveScreen({
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <ActivityIndicator
-                    size="large"
-                    color={
-                        COLORS.primary
-                    }
-                />
-
-
-                <Text
+                <View
                     style={
-                        styles.loadingText
+                        styles.center
                     }
                 >
-                    {
-                        modoEdicion
-                            ? 'Cargando datos del ave...'
-                            : 'Preparando formulario...'
-                    }
-                </Text>
 
-            </View>
+                    <EstadoCarga
+                        mensaje={
+                            modoEdicion
+                                ? 'Cargando datos del ave...'
+                                : 'Preparando formulario...'
+                        }
+                    />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -1389,6 +1496,8 @@ export default function NuevaAveScreen({
 
 
     return (
+
+        <FondoPantalla>
 
         <KeyboardAvoidingView
             style={
@@ -1410,20 +1519,7 @@ export default function NuevaAveScreen({
 
                 <Text
                     style={
-                        styles.title
-                    }
-                >
-                    {
-                        modoEdicion
-                            ? '✏️ Editar ave'
-                            : '🐔 Nueva ave'
-                    }
-                </Text>
-
-
-                <Text
-                    style={
-                        styles.subtitle
+                        styles.intro
                     }
                 >
                     {
@@ -1434,842 +1530,834 @@ export default function NuevaAveScreen({
                 </Text>
 
 
-                <Text
-                    style={
-                        styles.label
-                    }
-                >
-                    Código *
-                </Text>
+                <Tarjeta>
+
+                    <CampoTexto
+                        etiqueta="Código *"
+                        accessibilityLabel="Código del ave"
+                        icono="paw-outline"
+                        style={
+                            styles.campoUltimo
+                        }
+                        value={
+                            codigo
+                        }
+                        onChangeText={
+                            setCodigo
+                        }
+                        placeholder="Ej. K001"
+                        autoCapitalize="characters"
+                        maxLength={30}
+                        testID="codigo-ave"
+                    />
+
+                </Tarjeta>
 
 
-                <TextInput
-                    style={
-                        styles.input
-                    }
-                    value={
-                        codigo
-                    }
-                    onChangeText={
-                        setCodigo
-                    }
-                    placeholder="Ej. K001"
-                    autoCapitalize="characters"
-                    maxLength={30}
-                />
+                <Tarjeta>
+
+                    <TituloSeccion
+                        icono="camera-outline"
+                        indice={1}
+                    >
+                        Fotografía
+                    </TituloSeccion>
 
 
-                <Text
-                    style={
-                        styles.sectionTitle
-                    }
-                >
-                    Fotografía
-                </Text>
+                    <View
+                        style={
+                            styles.photoContainer
+                        }
+                    >
+
+                        {
+                            fotoTemporal
+                                ? (
+
+                                    <Image
+                                        source={{
+                                            uri:
+                                                fotoTemporal
+                                        }}
+                                        style={
+                                            styles.photo
+                                        }
+                                    />
+
+                                )
+                                : (
+
+                                    <View
+                                        style={
+                                            styles.photoPlaceholder
+                                        }
+                                    >
+
+                                        <IconoCirculo
+                                            icono="paw-outline"
+                                            indice={0}
+                                            tamano={64}
+                                        />
 
 
-                <View
-                    style={
-                        styles.photoContainer
-                    }
-                >
+                                        <Text
+                                            style={
+                                                styles.photoPlaceholderText
+                                            }
+                                        >
+                                            Sin fotografía
+                                        </Text>
+
+                                    </View>
+
+                                )
+                        }
+
+                    </View>
+
+
+                    <View
+                        style={
+                            styles.photoActions
+                        }
+                    >
+
+                        <Boton
+                            titulo="Cámara"
+                            icono="camera-outline"
+                            variante="secundario"
+                            onPress={
+                                tomarFoto
+                            }
+                            testID="foto-camara"
+                            style={[
+                                styles.photoButton,
+                                styles.photoButtonLeft
+                            ]}
+                        />
+
+
+                        <Boton
+                            titulo="Galería"
+                            icono="galeria"
+                            variante="secundario"
+                            onPress={
+                                seleccionarGaleria
+                            }
+                            testID="foto-galeria"
+                            style={
+                                styles.photoButton
+                            }
+                        />
+
+                    </View>
+
+                </Tarjeta>
+
+
+                <Tarjeta>
+
+                    <TituloSeccion
+                        icono="sparkles-outline"
+                        indice={2}
+                    >
+                        Origen del ave
+                    </TituloSeccion>
+
+
+                    <View
+                        style={
+                            styles.options
+                        }
+                    >
+
+                        <AveOpcion
+                            texto="Nacida en criadero"
+                            icono="sparkles-outline"
+                            seleccionado={
+                                origen ===
+                                ORIGEN_NACIDA
+                            }
+                            onPress={() =>
+                                setOrigen(
+                                    ORIGEN_NACIDA
+                                )
+                            }
+                            testID="origen-nacida"
+                        />
+
+
+                        <AveOpcion
+                            texto="Comprada"
+                            icono="venta"
+                            seleccionado={
+                                origen ===
+                                ORIGEN_COMPRADA
+                            }
+                            onPress={() =>
+                                setOrigen(
+                                    ORIGEN_COMPRADA
+                                )
+                            }
+                            testID="origen-comprada"
+                        />
+
+                    </View>
+
 
                     {
-                        fotoTemporal
+                        origen ===
+                        ORIGEN_NACIDA
                             ? (
 
-                                <Image
-                                    source={{
-                                        uri:
-                                            fotoTemporal
-                                    }}
-                                    style={
-                                        styles.photo
+                                <>
+
+                                    <CampoFecha
+                                        etiqueta="Fecha de nacimiento *"
+                                        valor={
+                                            fechaNacimiento
+                                                .toLocaleDateString()
+                                        }
+                                        onPress={() =>
+                                            setMostrarFechaNacimiento(
+                                                true
+                                            )
+                                        }
+                                        testID="fecha-nacimiento"
+                                    />
+
+
+                                    {
+                                        mostrarFechaNacimiento
+                                        && (
+
+                                            <DateTimePicker
+                                                value={
+                                                    fechaNacimiento
+                                                }
+                                                mode="date"
+                                                maximumDate={
+                                                    new Date()
+                                                }
+                                                onChange={(
+                                                    event,
+                                                    selectedDate
+                                                ) => {
+
+                                                    setMostrarFechaNacimiento(
+                                                        false
+                                                    );
+
+
+                                                    if (
+                                                        event.type ===
+                                                        'set'
+                                                        &&
+                                                        selectedDate
+                                                    ) {
+
+                                                        setFechaNacimiento(
+                                                            selectedDate
+                                                        );
+
+                                                    }
+
+                                                }}
+                                            />
+
+                                        )
                                     }
-                                />
+
+                                </>
 
                             )
                             : (
 
-                                <View
-                                    style={
-                                        styles.photoPlaceholder
+                                <>
+
+                                    <CampoTexto
+                                        etiqueta="Edad al ingresar en meses *"
+                                        icono="time-outline"
+                                        value={
+                                            edadMesesCompra
+                                        }
+                                        onChangeText={
+                                            text =>
+                                                setEdadMesesCompra(
+                                                    text.replace(
+                                                        /[^0-9]/g,
+                                                        ''
+                                                    )
+                                                )
+                                        }
+                                        keyboardType="numeric"
+                                        placeholder="Ej. 8"
+                                        testID="edad-meses-compra"
+                                    />
+
+
+                                    <CampoFecha
+                                        etiqueta="Fecha de ingreso *"
+                                        valor={
+                                            fechaIngreso
+                                                .toLocaleDateString()
+                                        }
+                                        onPress={() =>
+                                            setMostrarFechaIngreso(
+                                                true
+                                            )
+                                        }
+                                        testID="fecha-ingreso"
+                                    />
+
+
+                                    {
+                                        mostrarFechaIngreso
+                                        && (
+
+                                            <DateTimePicker
+                                                value={
+                                                    fechaIngreso
+                                                }
+                                                mode="date"
+                                                maximumDate={
+                                                    new Date()
+                                                }
+                                                onChange={(
+                                                    event,
+                                                    selectedDate
+                                                ) => {
+
+                                                    setMostrarFechaIngreso(
+                                                        false
+                                                    );
+
+
+                                                    if (
+                                                        event.type ===
+                                                        'set'
+                                                        &&
+                                                        selectedDate
+                                                    ) {
+
+                                                        setFechaIngreso(
+                                                            selectedDate
+                                                        );
+
+                                                    }
+
+                                                }}
+                                            />
+
+                                        )
                                     }
-                                >
 
-                                    <Text
+
+                                    <View
                                         style={
-                                            styles.photoPlaceholderIcon
+                                            styles.calculatedCard
                                         }
                                     >
-                                        🐔
-                                    </Text>
+
+                                        <Text
+                                            style={
+                                                styles.calculatedLabel
+                                            }
+                                        >
+                                            Fecha de nacimiento estimada
+                                        </Text>
 
 
-                                    <Text
-                                        style={
-                                            styles.photoPlaceholderText
+                                        <Text
+                                            style={
+                                                styles.calculatedValue
+                                            }
+                                        >
+                                            {
+                                                fechaNacimientoCalculada
+                                                    ? fechaNacimientoCalculada
+                                                        .toLocaleDateString()
+                                                    : 'Ingresa la edad en meses'
+                                            }
+                                        </Text>
+
+                                    </View>
+
+
+                                    <CampoTexto
+                                        etiqueta="Criadero de origen *"
+                                        icono="home-outline"
+                                        value={
+                                            criaderoOrigen
                                         }
-                                    >
-                                        Sin fotografía
-                                    </Text>
+                                        onChangeText={
+                                            setCriaderoOrigen
+                                        }
+                                        placeholder="Nombre del criadero"
+                                        testID="criadero-origen"
+                                    />
 
-                                </View>
+
+                                    <CampoTexto
+                                        etiqueta="Método de envío / traslado *"
+                                        icono="car-outline"
+                                        style={
+                                            styles.campoUltimo
+                                        }
+                                        value={
+                                            metodoEnvio
+                                        }
+                                        onChangeText={
+                                            setMetodoEnvio
+                                        }
+                                        placeholder="Ej. Cooperativa, vehículo propio..."
+                                        testID="metodo-envio"
+                                    />
+
+                                </>
 
                             )
                     }
 
-                </View>
-
-
-                <View
-                    style={
-                        styles.photoActions
-                    }
-                >
-
-                    <TouchableOpacity
-                        style={
-                            styles.photoButton
-                        }
-                        onPress={
-                            tomarFoto
-                        }
-                    >
-
-                        <Text
-                            style={
-                                styles.photoButtonText
-                            }
-                        >
-                            📷 Cámara
-                        </Text>
-
-                    </TouchableOpacity>
-
-
-                    <TouchableOpacity
-                        style={
-                            styles.photoButton
-                        }
-                        onPress={
-                            seleccionarGaleria
-                        }
-                    >
-
-                        <Text
-                            style={
-                                styles.photoButtonText
-                            }
-                        >
-                            🖼️ Galería
-                        </Text>
-
-                    </TouchableOpacity>
-
-                </View>
-
-
-                <Text
-                    style={
-                        styles.sectionTitle
-                    }
-                >
-                    Origen del ave
-                </Text>
-
-
-                <View
-                    style={
-                        styles.options
-                    }
-                >
-
-                    <TouchableOpacity
-                        style={[
-                            styles.originButton,
-
-                            origen ===
-                            ORIGEN_NACIDA
-                            &&
-                            styles.selected
-                        ]}
-                        onPress={() =>
-                            setOrigen(
-                                ORIGEN_NACIDA
-                            )
-                        }
-                    >
-
-                        <Text
-                            style={[
-                                styles.optionText,
-
-                                origen ===
-                                ORIGEN_NACIDA
-                                &&
-                                styles.selectedText
-                            ]}
-                        >
-                            🐣 Nacida en criadero
-                        </Text>
-
-                    </TouchableOpacity>
-
-
-                    <TouchableOpacity
-                        style={[
-                            styles.originButton,
-
-                            origen ===
-                            ORIGEN_COMPRADA
-                            &&
-                            styles.selected
-                        ]}
-                        onPress={() =>
-                            setOrigen(
-                                ORIGEN_COMPRADA
-                            )
-                        }
-                    >
-
-                        <Text
-                            style={[
-                                styles.optionText,
-
-                                origen ===
-                                ORIGEN_COMPRADA
-                                &&
-                                styles.selectedText
-                            ]}
-                        >
-                            🛒 Comprada
-                        </Text>
-
-                    </TouchableOpacity>
-
-                </View>
+                </Tarjeta>
 
 
                 {
                     origen ===
                     ORIGEN_NACIDA
-                        ? (
+                    &&
+                    (
 
-                            <>
+                        <Tarjeta>
 
-                                <Text
-                                    style={
-                                        styles.label
-                                    }
-                                >
-                                    Fecha de nacimiento *
-                                </Text>
-
-
-                                <TouchableOpacity
-                                    style={
-                                        styles.input
-                                    }
-                                    onPress={() =>
-                                        setMostrarFechaNacimiento(
-                                            true
-                                        )
-                                    }
-                                >
-
-                                    <Text>
-                                        {
-                                            fechaNacimiento
-                                                .toLocaleDateString()
-                                        }
-                                    </Text>
-
-                                </TouchableOpacity>
+                            <TituloSeccion
+                                icono="genealogia"
+                                indice={0}
+                            >
+                                Padres
+                            </TituloSeccion>
 
 
-                                {
-                                    mostrarFechaNacimiento
-                                    && (
-
-                                        <DateTimePicker
-                                            value={
-                                                fechaNacimiento
-                                            }
-                                            mode="date"
-                                            maximumDate={
-                                                new Date()
-                                            }
-                                            onChange={(
-                                                event,
-                                                selectedDate
-                                            ) => {
-
-                                                setMostrarFechaNacimiento(
-                                                    false
-                                                );
+                            <Text
+                                style={
+                                    styles.helpText
+                                }
+                            >
+                                Son opcionales. Selecciona únicamente si conoces la trazabilidad de los padres. Al editar, los descendientes de esta ave se excluyen para evitar relaciones circulares.
+                            </Text>
 
 
-                                                if (
-                                                    event.type ===
-                                                    'set'
-                                                    &&
-                                                    selectedDate
-                                                ) {
+                            <Text
+                                style={
+                                    styles.label
+                                }
+                            >
+                                Padre
+                            </Text>
 
-                                                    setFechaNacimiento(
-                                                        selectedDate
-                                                    );
 
-                                                }
-
-                                            }}
-                                        />
-
+                            <SelectorAve
+                                aves={
+                                    avesPadres.filter(
+                                        item =>
+                                            item.sexo === 'MACHO'
+                                            ||
+                                            Number(item.id) === Number(padreId)
                                     )
                                 }
+                                selectedId={
+                                    padreId
+                                }
+                                onSelect={
+                                    setPadreId
+                                }
+                                emptyText="Todavía no existen aves disponibles para seleccionar como padre."
+                            />
 
 
-                                <Text
-                                    style={
-                                        styles.sectionTitle
-                                    }
-                                >
-                                    Padres
-                                </Text>
+                            <Text
+                                style={
+                                    styles.label
+                                }
+                            >
+                                Madre
+                            </Text>
 
 
-                                <Text
-                                    style={
-                                        styles.helpText
-                                    }
-                                >
-                                    Son opcionales. Selecciona únicamente si conoces la trazabilidad de los padres. Al editar, los descendientes de esta ave se excluyen para evitar relaciones circulares.
-                                </Text>
-
-
-                                <Text
-                                    style={
-                                        styles.label
-                                    }
-                                >
-                                    Padre
-                                </Text>
-
-
-                                <SelectorAve
-                                    aves={
-                                        avesPadres.filter(
-                                            item =>
-                                                item.sexo === 'MACHO'
-                                                ||
-                                                Number(item.id) === Number(padreId)
-                                        )
-                                    }
-                                    selectedId={
-                                        padreId
-                                    }
-                                    onSelect={
-                                        setPadreId
-                                    }
-                                    emptyText="Todavía no existen aves disponibles para seleccionar como padre."
-                                />
-
-
-                                <Text
-                                    style={
-                                        styles.label
-                                    }
-                                >
-                                    Madre
-                                </Text>
-
-
-                                <SelectorAve
-                                    aves={
-                                        avesPadres.filter(
-                                            item =>
-                                                item.sexo === 'HEMBRA'
-                                                ||
-                                                Number(item.id) === Number(madreId)
-                                        )
-                                    }
-                                    selectedId={
-                                        madreId
-                                    }
-                                    onSelect={
-                                        setMadreId
-                                    }
-                                    emptyText="Todavía no existen aves disponibles para seleccionar como madre."
-                                />
-
-                            </>
-
-                        )
-                        : (
-
-                            <>
-
-                                <Text
-                                    style={
-                                        styles.label
-                                    }
-                                >
-                                    Edad al ingresar en meses *
-                                </Text>
-
-
-                                <TextInput
-                                    style={
-                                        styles.input
-                                    }
-                                    value={
-                                        edadMesesCompra
-                                    }
-                                    onChangeText={
-                                        text =>
-                                            setEdadMesesCompra(
-                                                text.replace(
-                                                    /[^0-9]/g,
-                                                    ''
-                                                )
-                                            )
-                                    }
-                                    keyboardType="numeric"
-                                    placeholder="Ej. 8"
-                                />
-
-
-                                <Text
-                                    style={
-                                        styles.label
-                                    }
-                                >
-                                    Fecha de ingreso *
-                                </Text>
-
-
-                                <TouchableOpacity
-                                    style={
-                                        styles.input
-                                    }
-                                    onPress={() =>
-                                        setMostrarFechaIngreso(
-                                            true
-                                        )
-                                    }
-                                >
-
-                                    <Text>
-                                        {
-                                            fechaIngreso
-                                                .toLocaleDateString()
-                                        }
-                                    </Text>
-
-                                </TouchableOpacity>
-
-
-                                {
-                                    mostrarFechaIngreso
-                                    && (
-
-                                        <DateTimePicker
-                                            value={
-                                                fechaIngreso
-                                            }
-                                            mode="date"
-                                            maximumDate={
-                                                new Date()
-                                            }
-                                            onChange={(
-                                                event,
-                                                selectedDate
-                                            ) => {
-
-                                                setMostrarFechaIngreso(
-                                                    false
-                                                );
-
-
-                                                if (
-                                                    event.type ===
-                                                    'set'
-                                                    &&
-                                                    selectedDate
-                                                ) {
-
-                                                    setFechaIngreso(
-                                                        selectedDate
-                                                    );
-
-                                                }
-
-                                            }}
-                                        />
-
+                            <SelectorAve
+                                aves={
+                                    avesPadres.filter(
+                                        item =>
+                                            item.sexo === 'HEMBRA'
+                                            ||
+                                            Number(item.id) === Number(madreId)
                                     )
                                 }
+                                selectedId={
+                                    madreId
+                                }
+                                onSelect={
+                                    setMadreId
+                                }
+                                emptyText="Todavía no existen aves disponibles para seleccionar como madre."
+                            />
 
+                        </Tarjeta>
 
-                                <View
-                                    style={
-                                        styles.calculatedCard
-                                    }
-                                >
-
-                                    <Text
-                                        style={
-                                            styles.calculatedLabel
-                                        }
-                                    >
-                                        Fecha de nacimiento estimada
-                                    </Text>
-
-
-                                    <Text
-                                        style={
-                                            styles.calculatedValue
-                                        }
-                                    >
-                                        {
-                                            fechaNacimientoCalculada
-                                                ? fechaNacimientoCalculada
-                                                    .toLocaleDateString()
-                                                : 'Ingresa la edad en meses'
-                                        }
-                                    </Text>
-
-                                </View>
-
-
-                                <Text
-                                    style={
-                                        styles.label
-                                    }
-                                >
-                                    Criadero de origen *
-                                </Text>
-
-
-                                <TextInput
-                                    style={
-                                        styles.input
-                                    }
-                                    value={
-                                        criaderoOrigen
-                                    }
-                                    onChangeText={
-                                        setCriaderoOrigen
-                                    }
-                                    placeholder="Nombre del criadero"
-                                />
-
-
-                                <Text
-                                    style={
-                                        styles.label
-                                    }
-                                >
-                                    Método de envío / traslado *
-                                </Text>
-
-
-                                <TextInput
-                                    style={
-                                        styles.input
-                                    }
-                                    value={
-                                        metodoEnvio
-                                    }
-                                    onChangeText={
-                                        setMetodoEnvio
-                                    }
-                                    placeholder="Ej. Cooperativa, vehículo propio..."
-                                />
-
-                            </>
-
-                        )
+                    )
                 }
 
 
-                <Text
-                    style={
-                        styles.sectionTitle
-                    }
-                >
-                    Datos generales
-                </Text>
+                <Tarjeta>
+
+                    <TituloSeccion
+                        icono="paw-outline"
+                        indice={4}
+                    >
+                        Datos generales
+                    </TituloSeccion>
 
 
-                <Text
-                    style={
-                        styles.label
-                    }
-                >
-                    Raza *
-                </Text>
+                    <Text
+                        style={
+                            styles.label
+                        }
+                    >
+                        Raza *
+                    </Text>
 
 
-                <SelectorCatalogo
+                    <AveSelectorCatalogo
 
-                    items={
-                        razas
-                    }
+                        items={
+                            razas
+                        }
 
-                    selectedId={
-                        razaSeleccionada?.id
-                    }
+                        selectedId={
+                            razaSeleccionada?.id
+                        }
 
-                    onSelect={item=>{
+                        onSelect={item=>{
 
-                        setRazaSeleccionada(
-                            item
-                        );
+                            setRazaSeleccionada(
+                                item
+                            );
 
-                        setRaza(
-                            item.nombre
-                        );
+                            setRaza(
+                                item.nombre
+                            );
 
-                    }}
+                        }}
 
-                />
+                        iconoPara={() =>
+                            'paw-outline'
+                        }
 
+                        testIDPrefijo="raza"
 
-                <Text
-                    style={
-                        styles.label
-                    }
-                >
-                    Sexo *
-                </Text>
+                    />
 
 
-                <SelectorCatalogo
-                    items={
-                        sexos
-                    }
-                    selectedId={
-                        sexoSeleccionado?.id
-                    }
-                    onSelect={item=>{
-
-                        setSexoSeleccionado(
-                            item
-                        );
-
-                        setSexo(
-                            item.codigo
-                        );
-
-                    }}
-                />
+                    <Text
+                        style={
+                            styles.label
+                        }
+                    >
+                        Sexo *
+                    </Text>
 
 
-                <Text
-                    style={
-                        styles.sectionTitle
-                    }
-                >
-                    Medidas actuales
-                </Text>
+                    <AveSelectorCatalogo
+                        items={
+                            sexos
+                        }
+                        selectedId={
+                            sexoSeleccionado?.id
+                        }
+                        onSelect={item=>{
+
+                            setSexoSeleccionado(
+                                item
+                            );
+
+                            setSexo(
+                                item.codigo
+                            );
+
+                        }}
+                        iconoPara={item =>
+                            String(item.codigo || '').toUpperCase() === 'MACHO'
+                                ? 'male-outline'
+                                : String(item.codigo || '').toUpperCase() === 'HEMBRA'
+                                    ? 'female-outline'
+                                    : 'paw-outline'
+                        }
+                        testIDPrefijo="sexo"
+                    />
+
+                </Tarjeta>
 
 
-                <Text
-                    style={
-                        styles.helpText
-                    }
-                >
-                    Son opcionales. Puedes completarlas ahora o agregarlas posteriormente al editar el ave.
-                </Text>
+                <Tarjeta>
+
+                    <TituloSeccion
+                        icono="resize-outline"
+                        indice={2}
+                    >
+                        Medidas actuales
+                    </TituloSeccion>
 
 
-                <Text
-                    style={
-                        styles.label
-                    }
-                >
-                    Peso en gramos
-                </Text>
+                    <Text
+                        style={
+                            styles.helpText
+                        }
+                    >
+                        Son opcionales. Puedes completarlas ahora o agregarlas posteriormente al editar el ave.
+                    </Text>
 
 
-                <TextInput
-                    style={
-                        styles.input
-                    }
-                    value={
-                        pesoGramos
-                    }
-                    onChangeText={text =>
-                        setPesoGramos(
-                            normalizarEntradaDecimal(
-                                text
+                    <CampoTexto
+                        etiqueta="Peso en gramos"
+                        value={
+                            pesoGramos
+                        }
+                        onChangeText={text =>
+                            setPesoGramos(
+                                normalizarEntradaDecimal(
+                                    text
+                                )
                             )
-                        )
-                    }
-                    keyboardType="decimal-pad"
-                    placeholder="Ej. 850"
-                />
+                        }
+                        keyboardType="decimal-pad"
+                        placeholder="Ej. 850"
+                        testID="peso-gramos"
+                    />
 
 
-                <Text
-                    style={
-                        styles.label
-                    }
-                >
-                    Altura en centímetros
-                </Text>
-
-
-                <TextInput
-                    style={
-                        styles.input
-                    }
-                    value={
-                        alturaCm
-                    }
-                    onChangeText={text =>
-                        setAlturaCm(
-                            normalizarEntradaDecimal(
-                                text
+                    <CampoTexto
+                        etiqueta="Altura en centímetros"
+                        value={
+                            alturaCm
+                        }
+                        onChangeText={text =>
+                            setAlturaCm(
+                                normalizarEntradaDecimal(
+                                    text
+                                )
                             )
-                        )
-                    }
-                    keyboardType="decimal-pad"
-                    placeholder="Ej. 24.5"
-                />
+                        }
+                        keyboardType="decimal-pad"
+                        placeholder="Ej. 24.5"
+                        testID="altura-cm"
+                    />
 
 
-                <Text
-                    style={
-                        styles.label
-                    }
-                >
-                    Largo en centímetros
-                </Text>
-
-
-                <TextInput
-                    style={
-                        styles.input
-                    }
-                    value={
-                        largoCm
-                    }
-                    onChangeText={text =>
-                        setLargoCm(
-                            normalizarEntradaDecimal(
-                                text
+                    <CampoTexto
+                        etiqueta="Largo en centímetros"
+                        value={
+                            largoCm
+                        }
+                        onChangeText={text =>
+                            setLargoCm(
+                                normalizarEntradaDecimal(
+                                    text
+                                )
                             )
-                        )
-                    }
-                    keyboardType="decimal-pad"
-                    placeholder="Ej. 31"
-                />
+                        }
+                        keyboardType="decimal-pad"
+                        placeholder="Ej. 31"
+                        testID="largo-cm"
+                    />
 
 
-                <Text
-                    style={
-                        styles.label
-                    }
-                >
-                    Características
-                </Text>
+                    <CampoTexto
+                        etiqueta="Características"
+                        style={
+                            styles.campoUltimo
+                        }
+                        value={
+                            caracteristicas
+                        }
+                        onChangeText={
+                            setCaracteristicas
+                        }
+                        multiline
+                        placeholder="Color, plumaje, comportamiento, tamaño u otras características..."
+                        testID="caracteristicas"
+                    />
 
-
-                <TextInput
-                    style={[
-                        styles.input,
-                        styles.textArea
-                    ]}
-                    value={
-                        caracteristicas
-                    }
-                    onChangeText={
-                        setCaracteristicas
-                    }
-                    multiline
-                    placeholder="Color, plumaje, comportamiento, tamaño u otras características..."
-                />
+                </Tarjeta>
 
 
                 {
                     !modoEdicion
                     &&
                     (
-                        <>
+                        <Tarjeta>
 
-                                            <Text
-                                                style={
-                                                    styles.sectionTitle
-                                                }
-                                            >
-                                                Jaula inicial
-                                            </Text>
-
-
-                                            <Text
-                                                style={
-                                                    styles.helpText
-                                                }
-                                            >
-                                                Puedes asignarla ahora o dejar el ave sin jaula.
-                                            </Text>
+                            <TituloSeccion
+                                icono="jaulas"
+                                indice={3}
+                            >
+                                Jaula inicial
+                            </TituloSeccion>
 
 
-                                            <SelectorJaula
-                                                jaulas={
-                                                    jaulas
-                                                }
-                                                selectedId={
-                                                    jaulaId
-                                                }
-                                                onSelect={
-                                                    setJaulaId
-                                                }
-                                            />
+                            <Text
+                                style={
+                                    styles.helpText
+                                }
+                            >
+                                Puedes asignarla ahora o dejar el ave sin jaula.
+                            </Text>
 
-                        </>
+
+                            <SelectorJaula
+                                jaulas={
+                                    jaulas
+                                }
+                                selectedId={
+                                    jaulaId
+                                }
+                                onSelect={
+                                    setJaulaId
+                                }
+                            />
+
+                        </Tarjeta>
+                    )
+                }
+
+            </ScrollView>
+
+
+            <View
+                style={
+                    styles.barraGuardar
+                }
+            >
+
+                {
+                    aviso
+                    &&
+                    (
+                        <View
+                            style={
+                                styles.avisoContenedor
+                            }
+                        >
+
+                            <Aviso
+                                mensaje={
+                                    aviso
+                                }
+                                tono="exito"
+                                duracion={0}
+                                testID="aviso-ave"
+                            />
+
+                        </View>
                     )
                 }
 
 
-                <TouchableOpacity
-                    style={[
-                        styles.saveButton,
-
+                <Boton
+                    titulo={
                         guardando
-                        &&
-                        styles.disabledButton
-                    ]}
+                            ? 'Guardando...'
+                            : modoEdicion
+                                ? 'Guardar cambios'
+                                : 'Guardar ave'
+                    }
+                    icono="guardar"
                     onPress={
                         guardar
                     }
-                    disabled={
+                    atenuado={
                         guardando
+                        ||
+                        guardado
                     }
-                >
+                    testID="guardar-ave"
+                />
 
-                    <Text
-                        style={
-                            styles.saveButtonText
-                        }
-                    >
-                        {
-                            guardando
-                                ? 'Guardando...'
-                                : modoEdicion
-                                    ? '💾 Guardar cambios'
-                                    : '💾 Guardar ave'
-                        }
-                    </Text>
-
-                </TouchableOpacity>
-
-            </ScrollView>
+            </View>
 
         </KeyboardAvoidingView>
+
+        </FondoPantalla>
+
+    );
+
+}
+
+
+// Campo de fecha: abre el selector de fecha (misma lógica; solo cambia el aspecto)
+function CampoFecha({
+    etiqueta,
+    valor,
+    onPress,
+    testID
+}) {
+
+    return (
+
+        <View
+            style={
+                styles.campoFecha
+            }
+        >
+
+            <Text
+                style={
+                    styles.label
+                }
+            >
+                {etiqueta}
+            </Text>
+
+
+            <Pulsable
+                onPress={
+                    onPress
+                }
+                testID={
+                    testID
+                }
+                accessibilityRole="button"
+                accessibilityLabel={
+                    `${etiqueta} ${valor}`
+                }
+                sinMinimo
+                style={
+                    styles.fechaCaja
+                }
+            >
+
+                <Icono
+                    nombre="calendar-outline"
+                    tamano={22}
+                    color={
+                        colors.primary
+                    }
+                    style={
+                        styles.fechaIcono
+                    }
+                />
+
+
+                <Text
+                    style={
+                        styles.fechaTexto
+                    }
+                >
+                    {valor}
+                </Text>
+
+            </Pulsable>
+
+        </View>
 
     );
 
@@ -2310,73 +2398,41 @@ function SelectorAve({
             }
         >
 
-            <TouchableOpacity
-                style={[
-                    styles.smallOption,
-
+            <AveOpcion
+                texto="Sin seleccionar"
+                seleccionado={
                     selectedId === null
-                    &&
-                    styles.selected
-                ]}
+                }
                 onPress={() =>
                     onSelect(
                         null
                     )
                 }
-            >
-
-                <Text
-                    style={[
-                        styles.optionText,
-
-                        selectedId === null
-                        &&
-                        styles.selectedText
-                    ]}
-                >
-                    Sin seleccionar
-                </Text>
-
-            </TouchableOpacity>
+            />
 
 
             {
                 aves.map(
                     ave => (
 
-                        <TouchableOpacity
+                        <AveOpcion
                             key={
                                 ave.id
                             }
-                            style={[
-                                styles.smallOption,
-
+                            texto={
+                                ave.codigo
+                            }
+                            icono="paw-outline"
+                            seleccionado={
                                 selectedId ===
                                 ave.id
-                                &&
-                                styles.selected
-                            ]}
+                            }
                             onPress={() =>
                                 onSelect(
                                     ave.id
                                 )
                             }
-                        >
-
-                            <Text
-                                style={[
-                                    styles.optionText,
-
-                                    selectedId ===
-                                    ave.id
-                                    &&
-                                    styles.selectedText
-                                ]}
-                            >
-                                🐔 {ave.codigo}
-                            </Text>
-
-                        </TouchableOpacity>
+                        />
 
                     )
                 )
@@ -2403,73 +2459,41 @@ function SelectorJaula({
             }
         >
 
-            <TouchableOpacity
-                style={[
-                    styles.smallOption,
-
+            <AveOpcion
+                texto="Sin jaula"
+                seleccionado={
                     selectedId === null
-                    &&
-                    styles.selected
-                ]}
+                }
                 onPress={() =>
                     onSelect(
                         null
                     )
                 }
-            >
-
-                <Text
-                    style={[
-                        styles.optionText,
-
-                        selectedId === null
-                        &&
-                        styles.selectedText
-                    ]}
-                >
-                    Sin jaula
-                </Text>
-
-            </TouchableOpacity>
+            />
 
 
             {
                 jaulas.map(
                     jaula => (
 
-                        <TouchableOpacity
+                        <AveOpcion
                             key={
                                 jaula.id
                             }
-                            style={[
-                                styles.smallOption,
-
+                            texto={
+                                jaula.codigo
+                            }
+                            icono="jaulas"
+                            seleccionado={
                                 selectedId ===
                                 jaula.id
-                                &&
-                                styles.selected
-                            ]}
+                            }
                             onPress={() =>
                                 onSelect(
                                     jaula.id
                                 )
                             }
-                        >
-
-                            <Text
-                                style={[
-                                    styles.optionText,
-
-                                    selectedId ===
-                                    jaula.id
-                                    &&
-                                    styles.selectedText
-                                ]}
-                            >
-                                🏠 {jaula.codigo}
-                            </Text>
-
-                        </TouchableOpacity>
+                        />
 
                     )
                 )
@@ -2766,19 +2790,16 @@ const styles =
 
         container: {
 
-            flex: 1,
-
-            backgroundColor:
-                COLORS.background
+            flex: 1
 
         },
 
 
         content: {
 
-            padding: 20,
+            padding: spacing.pantalla,
 
-            paddingBottom: 50
+            paddingBottom: spacing.xl
 
         },
 
@@ -2791,122 +2812,52 @@ const styles =
                 'center',
 
             justifyContent:
-                'center',
-
-            backgroundColor:
-                COLORS.background
+                'center'
 
         },
 
 
-        loadingText: {
+        intro: {
 
-            marginTop: 10,
-
-            color:
-                COLORS.textSecondary
-
-        },
-
-
-        title: {
-
-            fontSize: 27,
-
-            fontWeight:
-                'bold',
+            ...typography.cuerpo,
 
             color:
-                COLORS.primary
+                colors.text,
 
-        },
-
-
-        subtitle: {
-
-            color:
-                COLORS.textSecondary,
-
-            marginTop: 5,
-
-            marginBottom: 20
-
-        },
-
-
-        sectionTitle: {
-
-            fontSize: 19,
-
-            fontWeight:
-                'bold',
-
-            color:
-                COLORS.text,
-
-            marginTop: 24,
-
-            marginBottom: 8
+            marginBottom: spacing.md
 
         },
 
 
         label: {
 
-            fontSize: 15,
-
-            fontWeight:
-                '600',
+            ...typography.etiqueta,
 
             color:
-                COLORS.text,
+                colors.text,
 
-            marginTop: 14,
+            marginTop: spacing.sm,
 
-            marginBottom: 6
+            marginBottom: spacing.sm
 
         },
 
 
         helpText: {
 
+            ...typography.secundario,
+
             color:
-                COLORS.textSecondary,
+                colors.textSecondary,
 
-            lineHeight: 20,
-
-            marginBottom: 8
+            marginBottom: spacing.sm
 
         },
 
 
-        input: {
+        campoUltimo: {
 
-            backgroundColor:
-                COLORS.card,
-
-            borderWidth: 1,
-
-            borderColor:
-                COLORS.border,
-
-            borderRadius: 12,
-
-            paddingHorizontal: 14,
-
-            paddingVertical: 13,
-
-            fontSize: 16
-
-        },
-
-
-        textArea: {
-
-            minHeight: 110,
-
-            textAlignVertical:
-                'top'
+            marginBottom: 0
 
         },
 
@@ -2916,37 +2867,42 @@ const styles =
             alignItems:
                 'center',
 
-            marginTop: 5,
+            marginTop: spacing.xs,
 
-            marginBottom: 15
+            marginBottom: spacing.lg
 
         },
 
 
         photo: {
 
-            width: 190,
+            width: 176,
 
-            height: 190,
+            height: 176,
 
-            borderRadius: 22,
+            borderRadius: radii.lg,
+
+            borderWidth: 3,
+
+            borderColor:
+                colors.white,
 
             backgroundColor:
-                '#e7f5f5'
+                colors.primarySoft
 
         },
 
 
         photoPlaceholder: {
 
-            width: 190,
+            width: 176,
 
-            height: 190,
+            height: 176,
 
-            borderRadius: 22,
+            borderRadius: radii.lg,
 
             backgroundColor:
-                '#e7f5f5',
+                colors.primarySoft,
 
             alignItems:
                 'center',
@@ -2957,19 +2913,14 @@ const styles =
         },
 
 
-        photoPlaceholderIcon: {
-
-            fontSize: 56
-
-        },
-
-
         photoPlaceholderText: {
 
-            color:
-                COLORS.textSecondary,
+            ...typography.secundario,
 
-            marginTop: 7
+            color:
+                colors.textSecondary,
+
+            marginTop: spacing.sm
 
         },
 
@@ -2977,39 +2928,21 @@ const styles =
         photoActions: {
 
             flexDirection:
-                'row',
-
-            justifyContent:
-                'space-between'
+                'row'
 
         },
 
 
         photoButton: {
 
-            width:
-                '48%',
-
-            backgroundColor:
-                COLORS.primary,
-
-            borderRadius: 12,
-
-            paddingVertical: 12,
-
-            alignItems:
-                'center'
+            flex: 1
 
         },
 
 
-        photoButtonText: {
+        photoButtonLeft: {
 
-            color:
-                COLORS.white,
-
-            fontWeight:
-                'bold'
+            marginRight: spacing.sm
 
         },
 
@@ -3022,70 +2955,59 @@ const styles =
             flexWrap:
                 'wrap',
 
-            marginTop: 4
+            marginTop: spacing.xs
 
         },
 
 
-        originButton: {
+        campoFecha: {
+
+            marginBottom: spacing.md
+
+        },
+
+
+        fechaCaja: {
+
+            minHeight: 54,
+
+            flexDirection:
+                'row',
+
+            alignItems:
+                'center',
 
             backgroundColor:
-                '#e8eeee',
+                colors.surface,
 
-            paddingHorizontal: 15,
+            borderWidth: 2,
 
-            paddingVertical: 12,
+            borderColor:
+                colors.border,
 
-            borderRadius: 20,
+            borderRadius:
+                radii.md,
 
-            marginRight: 8,
-
-            marginBottom: 8
-
-        },
-
-
-        smallOption: {
-
-            backgroundColor:
-                '#e8eeee',
-
-            paddingHorizontal: 12,
-
-            paddingVertical: 9,
-
-            borderRadius: 18,
-
-            marginRight: 7,
-
-            marginBottom: 8
+            paddingHorizontal:
+                spacing.md
 
         },
 
 
-        selected: {
+        fechaIcono: {
 
-            backgroundColor:
-                COLORS.primary
+            marginRight:
+                spacing.sm
 
         },
 
 
-        optionText: {
+        fechaTexto: {
+
+            ...typography.cuerpo,
 
             color:
-                COLORS.text
-
-        },
-
-
-        selectedText: {
-
-            color:
-                COLORS.white,
-
-            fontWeight:
-                'bold'
+                colors.text
 
         },
 
@@ -3093,75 +3015,68 @@ const styles =
         calculatedCard: {
 
             backgroundColor:
-                '#e7f5f5',
+                colors.primarySoft,
 
-            borderRadius: 12,
+            borderRadius:
+                radii.md,
 
-            padding: 14,
+            padding:
+                spacing.md,
 
-            marginTop: 14
+            marginBottom:
+                spacing.md
 
         },
 
 
         calculatedLabel: {
 
-            fontSize: 13,
+            ...typography.secundario,
 
             color:
-                COLORS.textSecondary
+                colors.textSecondary
 
         },
 
 
         calculatedValue: {
 
-            fontSize: 18,
-
-            fontWeight:
-                'bold',
+            ...typography.subtitulo,
 
             color:
-                COLORS.primary,
+                colors.primaryDark,
 
-            marginTop: 4
+            marginTop: spacing.xs
 
         },
 
 
-        saveButton: {
+        barraGuardar: {
 
             backgroundColor:
-                COLORS.primary,
+                colors.surface,
 
-            borderRadius: 14,
+            borderTopWidth: 1,
 
-            paddingVertical: 16,
+            borderTopColor:
+                colors.borderSoft,
 
-            alignItems:
-                'center',
+            paddingHorizontal:
+                spacing.pantalla,
 
-            marginTop: 35
+            paddingTop:
+                spacing.md,
 
-        },
-
-
-        disabledButton: {
-
-            opacity: 0.6
+            paddingBottom:
+                spacing.md
 
         },
 
 
-        saveButtonText: {
+        avisoContenedor: {
 
-            color:
-                COLORS.white,
-
-            fontWeight:
-                'bold',
-
-            fontSize: 17
+            marginBottom:
+                spacing.sm
 
         }
 

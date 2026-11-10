@@ -9,9 +9,7 @@ import {
     Text,
     Image,
     ScrollView,
-    TouchableOpacity,
-    StyleSheet,
-    ActivityIndicator
+    StyleSheet
 } from 'react-native';
 
 
@@ -20,8 +18,41 @@ import {
 } from '@react-navigation/native';
 
 
-import Card
-    from '../components/Card';
+import Tarjeta
+    from '../components/Tarjeta';
+
+import TituloSeccion
+    from '../components/TituloSeccion';
+
+import Chip
+    from '../components/Chip';
+
+import Avatar
+    from '../components/Avatar';
+
+import Icono
+    from '../components/Icono';
+
+import AveAccion
+    from '../components/AveAccion';
+
+import FondoPantalla
+    from '../components/FondoPantalla';
+
+import EstadoCarga
+    from '../components/EstadoCarga';
+
+import EstadoError
+    from '../components/EstadoError';
+
+import EstadoVacio
+    from '../components/EstadoVacio';
+
+import {
+    visualSalud,
+    visualEstadoAve,
+    propsAvatar
+} from '../components/aveVisual';
 
 import {
     useContextoPantalla
@@ -40,10 +71,11 @@ import {
 } from '../repositories/HuevoRepository';
 
 
-
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
 
 
 
@@ -70,6 +102,12 @@ export default function DetalleAveScreen({
         loading,
         setLoading
     ] = useState(true);
+
+
+    const [
+        error,
+        setError
+    ] = useState(null);
 
 
     const [
@@ -101,6 +139,11 @@ export default function DetalleAveScreen({
 
                 setLoading(
                     true
+                );
+
+
+                setError(
+                    null
                 );
 
 
@@ -138,12 +181,17 @@ export default function DetalleAveScreen({
 
 
             }
-            catch(error) {
+            catch(err) {
 
 
                 console.error(
                     'Error cargando ave:',
-                    error
+                    err
+                );
+
+
+                setError(
+                    err
                 );
 
 
@@ -189,26 +237,21 @@ export default function DetalleAveScreen({
 
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <ActivityIndicator
-                    size="large"
-                    color={
-                        COLORS.primary
+                <View
+                    style={
+                        styles.center
                     }
-                />
+                >
 
+                    <EstadoCarga
+                        mensaje="Cargando ave..."
+                    />
 
-                <Text>
-                    Cargando ave...
-                </Text>
+                </View>
 
-
-            </View>
+            </FondoPantalla>
 
         );
 
@@ -220,19 +263,54 @@ export default function DetalleAveScreen({
     if(!ave){
 
 
+        // Fallo de carga (red u otro): estado de error con «Reintentar» (misma carga).
+        if(error){
+
+            return (
+
+                <FondoPantalla>
+
+                    <View
+                        style={
+                            styles.center
+                        }
+                    >
+
+                        <EstadoError
+                            mensaje={
+                                error?.message
+                            }
+                            onReintentar={
+                                cargar
+                            }
+                        />
+
+                    </View>
+
+                </FondoPantalla>
+
+            );
+
+        }
+
+
         return (
 
-            <View
-                style={
-                    styles.center
-                }
-            >
+            <FondoPantalla>
 
-                <Text>
-                    Ave no encontrada.
-                </Text>
+                <View
+                    style={
+                        styles.center
+                    }
+                >
 
-            </View>
+                    <EstadoVacio
+                        titulo="Ave no encontrada."
+                    />
+
+                </View>
+
+            </FondoPantalla>
 
         );
 
@@ -240,8 +318,36 @@ export default function DetalleAveScreen({
 
 
 
+    const salud =
+        visualSalud(
+            ave.estado_salud
+        );
+
+
+    const estadoVisual =
+        visualEstadoAve(
+            ave.estado
+        );
+
+
+    const sexoTexto =
+        obtenerTextoSexo(
+            ave.sexo
+        );
+
+
+    const iconoSexo =
+        ave.sexo === 'MACHO'
+            ? 'male-outline'
+            : ave.sexo === 'HEMBRA'
+                ? 'female-outline'
+                : null;
+
+
 
     return (
+
+        <FondoPantalla>
 
         <ScrollView
 
@@ -256,116 +362,79 @@ export default function DetalleAveScreen({
         >
 
 
-
-            <View
-                style={
-                    styles.header
-                }
+            <Tarjeta
+                testID="ficha-ave-cabecera"
             >
-
-
-                {
-                    ave.foto_uri
-
-                    ?
-
-                    (
-
-                        <Image
-
-                            source={{
-                                uri:
-                                    ave.foto_uri
-                            }}
-
-                            style={
-                                styles.photo
-                            }
-
-                        />
-
-                    )
-
-                    :
-
-                    (
-
-                        <View
-                            style={
-                                styles.photoEmpty
-                            }
-                        >
-
-                            <Text
-                                style={
-                                    styles.photoText
-                                }
-                            >
-                                🐔
-                            </Text>
-
-                        </View>
-
-                    )
-
-                }
-
-
-
 
                 <View
                     style={
-                        styles.headerInfo
+                        styles.header
                     }
                 >
 
 
-                    <Text
-                        style={
-                            styles.title
-                        }
-                    >
-                        {ave.codigo}
-                    </Text>
+                    {
+                        ave.foto_uri
 
+                        ?
 
-                    <Text
-                        style={
-                            styles.subtitle
-                        }
-                    >
-                        {
-                            ave.raza ||
-                            'Sin raza'
-                        }
-                    </Text>
+                        (
+
+                            <Image
+
+                                source={{
+                                    uri:
+                                        ave.foto_uri
+                                }}
+
+                                style={
+                                    styles.photo
+                                }
+
+                            />
+
+                        )
+
+                        :
+
+                        (
+
+                            <Avatar
+                                icono="paw-outline"
+                                tamano={72}
+                                {...propsAvatar(ave)}
+                            />
+
+                        )
+
+                    }
 
 
                     <View
-
-                        style={[
-                            styles.healthBadge,
-
-                            {
-                                backgroundColor:
-                                    obtenerColorSalud(
-                                        ave.estado_salud
-                                    )
-                            }
-
-                        ]}
-
+                        style={
+                            styles.headerInfo
+                        }
                     >
+
 
                         <Text
                             style={
-                                styles.healthText
+                                styles.title
+                            }
+                            numberOfLines={1}
+                        >
+                            {ave.codigo}
+                        </Text>
+
+
+                        <Text
+                            style={
+                                styles.subtitle
                             }
                         >
                             {
-                                obtenerTextoSalud(
-                                    ave.estado_salud
-                                )
+                                ave.raza ||
+                                'Sin raza'
                             }
                         </Text>
 
@@ -376,23 +445,46 @@ export default function DetalleAveScreen({
                 </View>
 
 
-            </View>
-
-
-
-
-
-
-            <Card>
-
-
-                <Text
+                <View
                     style={
-                        styles.sectionTitle
+                        styles.chips
                     }
                 >
-                    🐔 Información del ave
-                </Text>
+
+                    <Chip
+                        texto={salud.texto}
+                        icono={salud.icono}
+                        tono={salud.tono}
+                        style={styles.chip}
+                        testID="ficha-ave-salud"
+                    />
+
+                    <Chip
+                        texto={estadoVisual.texto}
+                        icono={estadoVisual.icono}
+                        tono={estadoVisual.tono}
+                        style={styles.chip}
+                    />
+
+                </View>
+
+
+            </Tarjeta>
+
+
+
+
+
+
+            <Tarjeta>
+
+
+                <TituloSeccion
+                    icono="paw-outline"
+                    indice={0}
+                >
+                    Información del ave
+                </TituloSeccion>
 
 
 
@@ -410,9 +502,10 @@ export default function DetalleAveScreen({
                 <Info
                     label="Sexo"
                     value={
-                        obtenerTextoSexo(
-                            ave.sexo
-                        )
+                        sexoTexto
+                    }
+                    icono={
+                        iconoSexo
                     }
                 />
 
@@ -580,7 +673,7 @@ export default function DetalleAveScreen({
 
 
 
-            </Card>
+            </Tarjeta>
 
 
 
@@ -592,19 +685,26 @@ export default function DetalleAveScreen({
                 ave.estado !== 'ACTIVA'
                 &&
                 (
-                    <Card>
+                    <Tarjeta>
 
-                        <Text
-                            style={
-                                styles.sectionTitle
+                        <TituloSeccion
+                            icono={
+                                ave.estado === 'VENDIDA'
+                                ? 'cash-outline'
+                                : 'skull-outline'
+                            }
+                            indice={
+                                ave.estado === 'VENDIDA'
+                                ? 2
+                                : 3
                             }
                         >
                             {
                                 ave.estado === 'VENDIDA'
-                                ? '💰 Información de venta'
-                                : '⚰ Información de fallecimiento'
+                                ? 'Información de venta'
+                                : 'Información de fallecimiento'
                             }
-                        </Text>
+                        </TituloSeccion>
 
 
                         <Info
@@ -692,7 +792,7 @@ export default function DetalleAveScreen({
                             last
                         />
 
-                    </Card>
+                    </Tarjeta>
                 )
             }
 
@@ -702,7 +802,7 @@ export default function DetalleAveScreen({
 
 
 
-            <Card>
+            <Tarjeta>
 
 
                 <View
@@ -711,13 +811,20 @@ export default function DetalleAveScreen({
                     }
                 >
 
-                    <Text
+                    <View
                         style={
                             styles.sectionTitle
                         }
                     >
-                        🥚 Huevos registrados
-                    </Text>
+
+                        <TituloSeccion
+                            icono="huevo"
+                            indice={4}
+                        >
+                            Huevos registrados
+                        </TituloSeccion>
+
+                    </View>
 
 
                     <View
@@ -774,13 +881,32 @@ export default function DetalleAveScreen({
                                 ]}
                             >
 
-                                <Text
+                                <View
                                     style={
-                                        styles.eggCode
+                                        styles.eggLeft
                                     }
                                 >
-                                    {item.codigo}
-                                </Text>
+
+                                    <Icono
+                                        nombre="huevo"
+                                        tamano={18}
+                                        color={
+                                            colors.textSecondary
+                                        }
+                                        style={
+                                            styles.eggIcon
+                                        }
+                                    />
+
+                                    <Text
+                                        style={
+                                            styles.eggCode
+                                        }
+                                    >
+                                        {item.codigo}
+                                    </Text>
+
+                                </View>
 
                                 <Text
                                     style={
@@ -801,7 +927,7 @@ export default function DetalleAveScreen({
                     )
                 }
 
-            </Card>
+            </Tarjeta>
 
 
 
@@ -809,16 +935,15 @@ export default function DetalleAveScreen({
 
 
 
-            <Card>
+            <Tarjeta>
 
 
-                <Text
-                    style={
-                        styles.sectionTitle
-                    }
+                <TituloSeccion
+                    icono="apps-outline"
+                    indice={0}
                 >
                     Acciones
-                </Text>
+                </TituloSeccion>
 
 
                 <View
@@ -832,13 +957,11 @@ export default function DetalleAveScreen({
                         ave.estado === 'ACTIVA'
                         &&
                         (
-                            <TouchableOpacity
-
-                                style={[
-                                    styles.actionButton,
-                                    styles.editButton
-                                ]}
-
+                            <AveAccion
+                                texto="Editar"
+                                icono="editar"
+                                indice={0}
+                                testID="accion-editar-ave"
                                 onPress={() =>
                                     navigation.navigate(
                                         'NuevaAve',
@@ -849,18 +972,7 @@ export default function DetalleAveScreen({
                                         }
                                     )
                                 }
-
-                            >
-
-                                <Text
-                                    style={
-                                        styles.actionText
-                                    }
-                                >
-                                    ✏️ Editar
-                                </Text>
-
-                            </TouchableOpacity>
+                            />
                         )
                     }
 
@@ -869,13 +981,11 @@ export default function DetalleAveScreen({
                         ave.estado === 'ACTIVA'
                         &&
                         (
-                            <TouchableOpacity
-
-                                style={[
-                                    styles.actionButton,
-                                    styles.primaryButton
-                                ]}
-
+                            <AveAccion
+                                texto="Evolución"
+                                icono="evolucion"
+                                indice={1}
+                                testID="accion-evolucion-ave"
                                 onPress={() =>
                                     navigation.navigate(
                                         'EvolucionAve',
@@ -884,18 +994,7 @@ export default function DetalleAveScreen({
                                         }
                                     )
                                 }
-
-                            >
-
-                                <Text
-                                    style={
-                                        styles.actionText
-                                    }
-                                >
-                                    📸 Evolución
-                                </Text>
-
-                            </TouchableOpacity>
+                            />
                         )
                     }
 
@@ -904,13 +1003,11 @@ export default function DetalleAveScreen({
                         ave.estado === 'ACTIVA'
                         &&
                         (
-                            <TouchableOpacity
-
-                                style={[
-                                    styles.actionButton,
-                                    styles.healthButton
-                                ]}
-
+                            <AveAccion
+                                texto="Salud"
+                                icono="salud"
+                                indice={2}
+                                testID="accion-salud-ave"
                                 onPress={() =>
                                     navigation.navigate(
                                         'SaludAve',
@@ -919,18 +1016,7 @@ export default function DetalleAveScreen({
                                         }
                                     )
                                 }
-
-                            >
-
-                                <Text
-                                    style={
-                                        styles.actionText
-                                    }
-                                >
-                                    🩺 Salud
-                                </Text>
-
-                            </TouchableOpacity>
+                            />
                         )
                     }
 
@@ -939,13 +1025,11 @@ export default function DetalleAveScreen({
                         ave.estado === 'ACTIVA'
                         &&
                         (
-                            <TouchableOpacity
-
-                                style={[
-                                    styles.actionButton,
-                                    styles.eggButton
-                                ]}
-
+                            <AveAccion
+                                texto="Registrar huevo"
+                                icono="huevo"
+                                indice={4}
+                                testID="accion-registrar-huevo"
                                 onPress={() =>
                                     navigation.navigate(
                                         'RegistrarHuevo',
@@ -954,29 +1038,16 @@ export default function DetalleAveScreen({
                                         }
                                     )
                                 }
-
-                            >
-
-                                <Text
-                                    style={
-                                        styles.actionTextDark
-                                    }
-                                >
-                                    🥚 Registrar huevo
-                                </Text>
-
-                            </TouchableOpacity>
+                            />
                         )
                     }
 
 
-                    <TouchableOpacity
-
-                        style={[
-                            styles.actionButton,
-                            styles.lifeCycleButton
-                        ]}
-
+                    <AveAccion
+                        texto="Ciclo de vida"
+                        icono="cicloVida"
+                        indice={1}
+                        testID="accion-ciclo-vida"
                         onPress={() =>
                             navigation.navigate(
                                 'CicloVidaAve',
@@ -985,27 +1056,14 @@ export default function DetalleAveScreen({
                                 }
                             )
                         }
-
-                    >
-
-                        <Text
-                            style={
-                                styles.actionTextDark
-                            }
-                        >
-                            🌿 Ciclo de vida
-                        </Text>
-
-                    </TouchableOpacity>
+                    />
 
 
-                    <TouchableOpacity
-
-                        style={[
-                            styles.actionButton,
-                            styles.genealogyButton
-                        ]}
-
+                    <AveAccion
+                        texto="Genealogía"
+                        icono="genealogia"
+                        indice={0}
+                        testID="accion-genealogia"
                         onPress={() =>
                             navigation.navigate(
                                 'GenealogiaAve',
@@ -1014,31 +1072,18 @@ export default function DetalleAveScreen({
                                 }
                             )
                         }
-
-                    >
-
-                        <Text
-                            style={
-                                styles.actionText
-                            }
-                        >
-                            🌳 Genealogía
-                        </Text>
-
-                    </TouchableOpacity>
+                    />
 
 
                     {
                         ave.estado === 'ACTIVA'
                         &&
                         (
-                            <TouchableOpacity
-
-                                style={[
-                                    styles.actionButton,
-                                    styles.dangerButton
-                                ]}
-
+                            <AveAccion
+                                texto="Dar de baja"
+                                icono="baja"
+                                indice={3}
+                                testID="accion-dar-de-baja"
                                 onPress={() =>
                                     navigation.navigate(
                                         'BajaAve',
@@ -1047,18 +1092,7 @@ export default function DetalleAveScreen({
                                         }
                                     )
                                 }
-
-                            >
-
-                                <Text
-                                    style={
-                                        styles.actionText
-                                    }
-                                >
-                                    ⚫ Dar de baja
-                                </Text>
-
-                            </TouchableOpacity>
+                            />
                         )
                     }
 
@@ -1066,12 +1100,14 @@ export default function DetalleAveScreen({
                 </View>
 
 
-            </Card>
+            </Tarjeta>
 
 
 
 
         </ScrollView>
+
+        </FondoPantalla>
 
     );
 
@@ -1083,6 +1119,7 @@ export default function DetalleAveScreen({
 function Info({
     label,
     value,
+    icono,
     last = false
 }) {
 
@@ -1127,13 +1164,36 @@ function Info({
             </Text>
 
 
-            <Text
+            <View
                 style={
-                    styles.value
+                    styles.valueBox
                 }
             >
-                {valorMostrar}
-            </Text>
+
+                {
+                    icono
+                    &&
+                    valorMostrar !== 'No registrado'
+                    &&
+                    (
+                        <Icono
+                            nombre={icono}
+                            tamano={16}
+                            color={colors.textSecondary}
+                            style={styles.valueIcon}
+                        />
+                    )
+                }
+
+                <Text
+                    style={
+                        styles.value
+                    }
+                >
+                    {valorMostrar}
+                </Text>
+
+            </View>
 
 
         </View>
@@ -1156,12 +1216,12 @@ function obtenerTextoSexo(
 
         case 'MACHO':
 
-            return '🐓 Macho';
+            return 'Macho';
 
 
         case 'HEMBRA':
 
-            return '🐔 Hembra';
+            return 'Hembra';
 
 
         default:
@@ -1286,86 +1346,20 @@ function obtenerTextoEstadoAve(
 
 
 
-
-function obtenerColorSalud(
-    estado
-){
-
-    switch(
-        estado
-    ){
-
-        case 'EN_TRATAMIENTO':
-
-            return '#fff0b3';
-
-
-        case 'ENFERMA':
-
-            return '#f7d7d7';
-
-
-        default:
-
-            return '#d9f2e4';
-
-    }
-
-}
-
-
-
-
-
-function obtenerTextoSalud(
-    estado
-){
-
-
-    switch(
-        estado
-    ){
-
-        case 'EN_TRATAMIENTO':
-
-            return '🟡 En tratamiento';
-
-
-        case 'ENFERMA':
-
-            return '🔴 Enferma';
-
-
-        default:
-
-            return '🟢 Sana';
-
-
-    }
-
-
-}
-
-
-
-
 const styles =
     StyleSheet.create({
 
 
         container: {
 
-            flex:1,
-
-            backgroundColor:
-                COLORS.background
+            flex:1
 
         },
 
 
         content: {
 
-            padding:16,
+            padding:spacing.pantalla,
 
             paddingBottom:40
 
@@ -1391,44 +1385,26 @@ const styles =
                 'row',
 
             alignItems:
-                'center',
-
-            marginBottom: 14
+                'center'
 
         },
 
 
         photo: {
 
-            width:74,
+            width:72,
 
-            height:74,
+            height:72,
 
-            borderRadius:37
+            borderRadius:36,
 
-        },
+            borderWidth:3,
 
+            borderColor:
+                colors.white,
 
-        photoEmpty: {
-
-            width:74,
-
-            height:74,
-
-            borderRadius:37,
-
-            backgroundColor:'#e7f5f5',
-
-            justifyContent:'center',
-
-            alignItems:'center'
-
-        },
-
-
-        photoText: {
-
-            fontSize:36
+            backgroundColor:
+                colors.primarySoft
 
         },
 
@@ -1437,72 +1413,49 @@ const styles =
 
             flex:1,
 
-            marginLeft:15
+            marginLeft:spacing.md
 
         },
 
 
         title: {
 
-            fontSize:28,
-
-            fontWeight:'bold',
+            ...typography.display,
 
             color:
-                COLORS.primary
+                colors.primaryDark
 
         },
 
 
         subtitle: {
 
-            color:
-                COLORS.textSecondary,
-
-            marginTop:1,
-
-            fontSize:15
-
-        },
-
-
-        healthBadge: {
-
-            alignSelf:
-                'flex-start',
-
-            marginTop:6,
-
-            paddingHorizontal:9,
-
-            paddingVertical:4,
-
-            borderRadius:12
-
-        },
-
-
-        healthText: {
-
-            color:'#000000',
-
-            fontWeight:'700',
-
-            fontSize:13,
-
-            lineHeight:18
-
-        },
-
-
-        sectionTitle: {
-
-            fontSize:19,
-
-            fontWeight:'bold',
+            ...typography.cuerpo,
 
             color:
-                COLORS.text
+                colors.textSecondary
+
+        },
+
+
+        chips: {
+
+            flexDirection:
+                'row',
+
+            flexWrap:
+                'wrap',
+
+            marginTop:spacing.md
+
+        },
+
+
+        chip: {
+
+            marginRight:spacing.sm,
+
+            marginBottom:spacing.xs
 
         },
 
@@ -1516,40 +1469,44 @@ const styles =
                 'center',
 
             justifyContent:
-                'space-between',
+                'space-between'
 
-            marginBottom:4
+        },
+
+
+        sectionTitle: {
+
+            flex:1
 
         },
 
 
         countBadge: {
 
-            minWidth:30,
+            minWidth:32,
 
-            height:30,
+            height:32,
 
-            borderRadius:15,
+            borderRadius:16,
 
-            backgroundColor:'#e7f5f5',
+            backgroundColor:
+                colors.primarySoft,
 
             alignItems:'center',
 
             justifyContent:'center',
 
-            paddingHorizontal:8
+            paddingHorizontal:spacing.sm
 
         },
 
 
         countBadgeText: {
 
+            ...typography.chip,
+
             color:
-                COLORS.primary,
-
-            fontWeight:'bold',
-
-            fontSize:13
+                colors.primaryDark
 
         },
 
@@ -1565,42 +1522,65 @@ const styles =
             alignItems:
                 'flex-start',
 
-            paddingVertical:10,
+            paddingVertical:spacing.md,
 
             borderBottomWidth:1,
 
             borderColor:
-                COLORS.border
+                colors.borderSoft
 
         },
 
 
         label: {
 
+            ...typography.secundario,
+
             flex:0.42,
 
             color:
-                COLORS.textSecondary,
+                colors.textSecondary,
 
-            fontSize:13,
+            paddingRight:spacing.sm
 
-            paddingRight:10
+        },
+
+
+        valueBox: {
+
+            flex:0.58,
+
+            flexDirection:
+                'row',
+
+            alignItems:
+                'center',
+
+            justifyContent:
+                'flex-end'
+
+        },
+
+
+        valueIcon: {
+
+            marginRight:spacing.xs
 
         },
 
 
         value: {
 
-            flex:0.58,
+            ...typography.etiqueta,
 
             fontSize:15,
 
             color:
-                COLORS.text,
+                colors.text,
 
             textAlign:'right',
 
-            fontWeight:'500'
+            flexShrink:1
 
         },
 
@@ -1616,44 +1596,62 @@ const styles =
             alignItems:
                 'center',
 
-            paddingVertical:10,
+            paddingVertical:spacing.md,
 
             borderBottomWidth:1,
 
             borderColor:
-                COLORS.border
+                colors.borderSoft
+
+        },
+
+
+        eggLeft: {
+
+            flexDirection:
+                'row',
+
+            alignItems:
+                'center'
+
+        },
+
+
+        eggIcon: {
+
+            marginRight:spacing.sm
 
         },
 
 
         eggCode: {
 
+            ...typography.etiqueta,
+
             color:
-                COLORS.text,
-
-            fontSize:15,
-
-            fontWeight:'600'
+                colors.text
 
         },
 
 
         eggDate: {
 
-            color:
-                COLORS.textSecondary,
+            ...typography.secundario,
 
-            fontSize:13
+            color:
+                colors.textSecondary
 
         },
 
 
         emptyText: {
 
-            color:
-                COLORS.textSecondary,
+            ...typography.cuerpo,
 
-            marginTop:10
+            color:
+                colors.textSecondary,
+
+            marginTop:spacing.sm
 
         },
 
@@ -1676,110 +1674,7 @@ const styles =
             justifyContent:
                 'space-between',
 
-            marginTop:12
-
-        },
-
-
-        actionButton: {
-
-            width:'48.5%',
-
-            minHeight:46,
-
-            borderRadius:12,
-
-            paddingHorizontal:8,
-
-            paddingVertical:10,
-
-            alignItems:'center',
-
-            justifyContent:'center',
-
-            marginBottom:10
-
-        },
-
-
-        editButton: {
-
-            backgroundColor:
-                '#6c757d'
-
-        },
-
-
-        primaryButton: {
-
-            backgroundColor:
-                COLORS.primary
-
-        },
-
-
-        healthButton: {
-
-            backgroundColor:
-                '#4ea8de'
-
-        },
-
-
-        dangerButton: {
-
-            backgroundColor:
-                '#d9534f'
-
-        },
-
-
-        lifeCycleButton: {
-
-            backgroundColor:
-                '#58c7b4'
-
-        },
-
-
-        genealogyButton: {
-
-            backgroundColor:
-                '#5b8f72'
-
-        },
-
-
-        eggButton: {
-
-            backgroundColor:
-                '#e9c46a'
-
-        },
-
-
-        actionText: {
-
-            color:'#fff',
-
-            fontWeight:'bold',
-
-            fontSize:13,
-
-            textAlign:'center'
-
-        },
-
-
-        actionTextDark: {
-
-            color:'#5c4a00',
-
-            fontWeight:'bold',
-
-            fontSize:13,
-
-            textAlign:'center'
+            marginTop:spacing.sm
 
         }
 

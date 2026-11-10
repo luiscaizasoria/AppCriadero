@@ -23,7 +23,12 @@ tags:
 - inputText: "jb-2"
 - hideKeyboard
 - tapOn: ".*Guardar jaula.*"
-- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: "Jaula creada"
+    timeout: 20000
+- extendedWaitUntil:
+    notVisible: "Jaula creada"
+    timeout: 10000
 - extendedWaitUntil:
     visible: ".*JB-2.*"
     timeout: 20000
@@ -32,7 +37,12 @@ tags:
 - inputText: "JA-1"
 - hideKeyboard
 - tapOn: ".*Guardar jaula.*"
-- tapOn: "Aceptar"
+- extendedWaitUntil:
+    visible: "Jaula creada"
+    timeout: 20000
+- extendedWaitUntil:
+    notVisible: "Jaula creada"
+    timeout: 10000
 - extendedWaitUntil:
     visible: ".*JA-1.*"
     timeout: 20000
@@ -61,10 +71,12 @@ tags:
     visible: "Eliminar jaula"
     timeout: 10000
 - takeScreenshot: jaulas-confirmar-eliminar
-- tapOn: "Eliminar"
 - tapOn:
-    text: "Aceptar"
-    optional: true
+    text: "Eliminar"
+    rightOf: "Cancelar"
+- extendedWaitUntil:
+    visible: ".*Inactivas.*"
+    timeout: 15000
 - tapOn: ".*Inactivas.*"
 - extendedWaitUntil:
     visible: ".*JA-1.*"

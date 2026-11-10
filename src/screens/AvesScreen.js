@@ -7,10 +7,8 @@ import React, {
 import {
     View,
     Text,
-    TextInput,
+    FlatList,
     ScrollView,
-    TouchableOpacity,
-    ActivityIndicator,
     StyleSheet
 } from 'react-native';
 
@@ -18,11 +16,51 @@ import {
     useFocusEffect
 } from '@react-navigation/native';
 
-import Header
-    from '../components/Header';
+import {
+    useSafeAreaInsets
+} from 'react-native-safe-area-context';
 
 import AveCard
     from '../components/AveCard';
+
+import AveOpcion
+    from '../components/AveOpcion';
+
+import FondoPantalla
+    from '../components/FondoPantalla';
+
+import PantallaHeader
+    from '../components/PantallaHeader';
+
+import BarraEstado
+    from '../components/BarraEstado';
+
+import Tarjeta
+    from '../components/Tarjeta';
+
+import CampoTexto
+    from '../components/CampoTexto';
+
+import Boton
+    from '../components/Boton';
+
+import Fab
+    from '../components/Fab';
+
+import Icono
+    from '../components/Icono';
+
+import Pulsable
+    from '../components/Pulsable';
+
+import EstadoCarga
+    from '../components/EstadoCarga';
+
+import EstadoError
+    from '../components/EstadoError';
+
+import EstadoVacio
+    from '../components/EstadoVacio';
 
 import {
     obtenerAvesActivas,
@@ -31,13 +69,26 @@ import {
 } from '../repositories/AveRepository';
 
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    radii,
+    spacing,
+    typography
+} from '../theme';
+
+
+const TABS = [
+    {id:'ACTIVAS', label:'Activas', icono:'paw-outline'},
+    {id:'VENDIDAS', label:'Vendidas', icono:'cash-outline'},
+    {id:'FALLECIDAS', label:'Fallecidas', icono:'skull-outline'}
+];
 
 
 export default function AvesScreen({
     navigation
 }) {
+
+    const insets =
+        useSafeAreaInsets();
 
     const [aves, setAves] = useState([]);
     const [tabActual, setTabActual] = useState('ACTIVAS');
@@ -276,285 +327,345 @@ export default function AvesScreen({
     };
 
 
-    return (
+    // Contenido bajo la lista cuando no hay filas que mostrar (carga, error o vacío)
+    let estado = null;
 
-        <View style={styles.container}>
+    if (loading) {
 
-            <ScrollView
-                contentContainerStyle={
-                    styles.content
+        estado = (
+            <EstadoCarga
+                mensaje="Cargando aves..."
+            />
+        );
+
+    }
+    else if (error) {
+
+        estado = (
+            <EstadoError
+                mensaje={error}
+                onReintentar={cargarAves}
+            />
+        );
+
+    }
+    else if (aves.length === 0) {
+
+        estado = (
+            <EstadoVacio
+                titulo={
+                    tabActual === 'ACTIVAS'
+                        ? 'Aún no hay aves registradas'
+                        : tabActual === 'VENDIDAS'
+                            ? 'Aún no hay ventas de aves'
+                            : 'Aún no hay bajas por fallecimiento'
                 }
-                keyboardShouldPersistTaps="handled"
+                mensaje={
+                    tabActual === 'ACTIVAS'
+                        ? 'Toca el botón de abajo para registrar la primera.'
+                        : 'Aparecerán aquí cuando se den de baja desde la ficha del ave.'
+                }
+            />
+        );
+
+    }
+    else if (listaFiltrada.length === 0) {
+
+        estado = (
+            <EstadoVacio
+                titulo="Sin resultados"
+                mensaje="No hay aves que coincidan con los filtros seleccionados."
+            />
+        );
+
+    }
+
+
+    const encabezado = (
+
+        <View>
+
+            <View
+                style={styles.tabs}
+                accessibilityRole="tablist"
             >
+                {
+                    TABS.map(tab => {
 
-                <Header
-                    title="Aves"
-                    subtitle="Control y trazabilidad de las aves"
-                />
+                        const activa =
+                            tabActual === tab.id;
 
-
-                <View style={styles.tabs}>
-                    {
-                        [
-                            {id:'ACTIVAS', label:'🐔 Activas'},
-                            {id:'VENDIDAS', label:'💰 Vendidas'},
-                            {id:'FALLECIDAS', label:'⚰ Fallecidas'}
-                        ].map(tab => (
-                            <TouchableOpacity
+                        return (
+                            <Pulsable
                                 key={tab.id}
+                                testID={`tab-aves-${tab.id.toLowerCase()}`}
+                                accessibilityRole="tab"
+                                accessibilityLabel={tab.label}
+                                accessibilityState={{
+                                    selected: activa
+                                }}
                                 style={[
                                     styles.tab,
-                                    tabActual === tab.id &&
+                                    activa &&
                                     styles.tabActive
                                 ]}
                                 onPress={() =>
                                     setTabActual(tab.id)
                                 }
                             >
+                                <Icono
+                                    nombre={tab.icono}
+                                    tamano={18}
+                                    color={
+                                        activa
+                                            ? colors.white
+                                            : colors.textSecondary
+                                    }
+                                    style={styles.tabIcono}
+                                />
                                 <Text
                                     style={[
                                         styles.tabText,
-                                        tabActual === tab.id &&
+                                        activa &&
                                         styles.tabTextActive
                                     ]}
                                 >
                                     {tab.label}
                                 </Text>
-                            </TouchableOpacity>
-                        ))
+                            </Pulsable>
+                        );
+
+                    })
+                }
+            </View>
+
+
+            <View style={styles.searchRow}>
+
+                <CampoTexto
+                    style={styles.searchField}
+                    icono="buscar"
+                    value={busqueda}
+                    onChangeText={setBusqueda}
+                    placeholder="Buscar por código..."
+                    accessibilityLabel="Buscar ave por código"
+                    autoCapitalize="characters"
+                    testID="buscar-ave"
+                />
+
+                <Pulsable
+                    testID="filtros-aves"
+                    accessibilityRole="button"
+                    accessibilityLabel="Filtros"
+                    accessibilityState={{
+                        expanded: mostrarFiltros
+                    }}
+                    style={[
+                        styles.filterButton,
+                        mostrarFiltros &&
+                        styles.filterButtonActive
+                    ]}
+                    onPress={() =>
+                        setMostrarFiltros(
+                            value => !value
+                        )
                     }
-                </View>
-
-
-                {
-                    tabActual === 'ACTIVAS'
-                    &&
-                    (
-                        <TouchableOpacity
-                            style={styles.newButton}
-                            onPress={() =>
-                                navigation.navigate('NuevaAve')
-                            }
-                        >
-                            <Text style={styles.newButtonText}>
-                                ＋ Nueva ave
-                            </Text>
-                        </TouchableOpacity>
-                    )
-                }
-
-
-                <View style={styles.searchRow}>
-                    <TextInput
-                        style={styles.searchInput}
-                        value={busqueda}
-                        onChangeText={setBusqueda}
-                        placeholder="Buscar por código..."
-                        autoCapitalize="characters"
-                    />
-
-                    <TouchableOpacity
-                        style={[
-                            styles.filterButton,
-                            mostrarFiltros &&
-                            styles.filterButtonActive
-                        ]}
-                        onPress={() =>
-                            setMostrarFiltros(
-                                value => !value
-                            )
+                >
+                    <Icono
+                        nombre="filtros"
+                        tamano={20}
+                        color={
+                            mostrarFiltros
+                                ? colors.white
+                                : colors.primaryDark
                         }
+                        style={styles.filterIcono}
+                    />
+                    <Text
+                        style={[
+                            styles.filterButtonText,
+                            mostrarFiltros &&
+                            styles.filterButtonTextActive
+                        ]}
                     >
-                        <Text style={styles.filterButtonText}>
-                            ⚙ Filtros
-                        </Text>
-                    </TouchableOpacity>
-                </View>
+                        Filtros
+                    </Text>
+                </Pulsable>
+
+            </View>
 
 
-                {
-                    mostrarFiltros
-                    &&
-                    (
-                        <View style={styles.filterCard}>
+            {
+                mostrarFiltros
+                &&
+                (
+                    <Tarjeta>
 
-                            <FilterSection
-                                title="Raza"
-                                values={[
-                                    {id:'TODAS', label:'Todas'},
-                                    ...razas.map(item => ({
-                                        id:item,
-                                        label:item
-                                    }))
-                                ]}
-                                selected={filtroRaza}
-                                onSelect={setFiltroRaza}
-                            />
-
-                            <FilterSection
-                                title="Sexo"
-                                values={[
-                                    {id:'TODOS', label:'Todos'},
-                                    {id:'MACHO', label:'🐓 Macho'},
-                                    {id:'HEMBRA', label:'🐔 Hembra'}
-                                ]}
-                                selected={filtroSexo}
-                                onSelect={setFiltroSexo}
-                            />
-
-                            <FilterSection
-                                title="Salud"
-                                values={[
-                                    {id:'TODAS', label:'Todas'},
-                                    {id:'SANA', label:'🟢 Sana'},
-                                    {id:'ENFERMA', label:'🔴 Enferma'},
-                                    {id:'EN_TRATAMIENTO', label:'🟡 Tratamiento'}
-                                ]}
-                                selected={filtroSalud}
-                                onSelect={setFiltroSalud}
-                            />
-
-                            <FilterSection
-                                title="Jaula"
-                                values={[
-                                    {id:'TODAS', label:'Todas'},
-                                    {id:'SIN_JAULA', label:'Sin jaula'},
-                                    ...jaulas.map(item => ({
-                                        id:item,
-                                        label:item
-                                    }))
-                                ]}
-                                selected={filtroJaula}
-                                onSelect={setFiltroJaula}
-                            />
-
-                            <Text style={styles.filterLabel}>
-                                Edad en meses
-                            </Text>
-
-                            <View style={styles.ageRow}>
-                                <TextInput
-                                    style={styles.ageInput}
-                                    value={edadDesde}
-                                    onChangeText={setEdadDesde}
-                                    keyboardType="number-pad"
-                                    placeholder="Desde"
-                                />
-                                <TextInput
-                                    style={styles.ageInput}
-                                    value={edadHasta}
-                                    onChangeText={setEdadHasta}
-                                    keyboardType="number-pad"
-                                    placeholder="Hasta"
-                                />
-                            </View>
-
-                            <TouchableOpacity
-                                style={styles.clearButton}
-                                onPress={limpiarFiltros}
-                            >
-                                <Text style={styles.clearButtonText}>
-                                    Limpiar filtros
-                                </Text>
-                            </TouchableOpacity>
-
-                        </View>
-                    )
-                }
-
-
-                {
-                    !loading && !error
-                    &&
-                    (
-                        <Text style={styles.resultCount}>
-                            {listaFiltrada.length} ave{listaFiltrada.length === 1 ? '' : 's'} encontrada{listaFiltrada.length === 1 ? '' : 's'}
-                        </Text>
-                    )
-                }
-
-
-                {
-                    loading
-                    ? (
-                        <View style={styles.center}>
-                            <ActivityIndicator
-                                size="large"
-                                color={COLORS.primary}
-                            />
-                            <Text style={styles.loadingText}>
-                                Cargando aves...
-                            </Text>
-                        </View>
-                    )
-                    : null
-                }
-
-
-                {
-                    !loading && error
-                    ? (
-                        <View style={styles.messageCard}>
-                            <Text style={styles.errorText}>
-                                {error}
-                            </Text>
-                            <TouchableOpacity
-                                style={styles.retryButton}
-                                onPress={cargarAves}
-                            >
-                                <Text style={styles.retryText}>
-                                    Reintentar
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    )
-                    : null
-                }
-
-
-                {
-                    !loading &&
-                    !error &&
-                    listaFiltrada.length === 0
-                    ? (
-                        <View style={styles.emptyCard}>
-                            <Text style={styles.emptyIcon}>
-                                🐔
-                            </Text>
-                            <Text style={styles.emptyTitle}>
-                                Sin resultados
-                            </Text>
-                            <Text style={styles.emptyText}>
-                                No hay aves que coincidan con los filtros seleccionados.
-                            </Text>
-                        </View>
-                    )
-                    : null
-                }
-
-
-                {
-                    !loading &&
-                    !error &&
-                    listaFiltrada.map(ave => (
-                        <AveCard
-                            key={ave.id}
-                            ave={ave}
-                            onPress={() =>
-                                navigation.navigate(
-                                    'DetalleAve',
-                                    {
-                                        aveId:ave.id
-                                    }
-                                )
-                            }
+                        <FilterSection
+                            title="Raza"
+                            values={[
+                                {id:'TODAS', label:'Todas'},
+                                ...razas.map(item => ({
+                                    id:item,
+                                    label:item
+                                }))
+                            ]}
+                            selected={filtroRaza}
+                            onSelect={setFiltroRaza}
                         />
-                    ))
-                }
 
-            </ScrollView>
+                        <FilterSection
+                            title="Sexo"
+                            values={[
+                                {id:'TODOS', label:'Todos'},
+                                {id:'MACHO', label:'Macho', icono:'male-outline'},
+                                {id:'HEMBRA', label:'Hembra', icono:'female-outline'}
+                            ]}
+                            selected={filtroSexo}
+                            onSelect={setFiltroSexo}
+                        />
+
+                        <FilterSection
+                            title="Salud"
+                            values={[
+                                {id:'TODAS', label:'Todas'},
+                                {id:'SANA', label:'Sana', icono:'checkmark-circle'},
+                                {id:'ENFERMA', label:'Enferma', icono:'alert-circle'},
+                                {id:'EN_TRATAMIENTO', label:'Tratamiento', icono:'medkit'}
+                            ]}
+                            selected={filtroSalud}
+                            onSelect={setFiltroSalud}
+                        />
+
+                        <FilterSection
+                            title="Jaula"
+                            values={[
+                                {id:'TODAS', label:'Todas'},
+                                {id:'SIN_JAULA', label:'Sin jaula'},
+                                ...jaulas.map(item => ({
+                                    id:item,
+                                    label:item
+                                }))
+                            ]}
+                            selected={filtroJaula}
+                            onSelect={setFiltroJaula}
+                        />
+
+                        <Text style={styles.filterLabel}>
+                            Edad en meses
+                        </Text>
+
+                        <View style={styles.ageRow}>
+                            <CampoTexto
+                                style={styles.ageInput}
+                                value={edadDesde}
+                                onChangeText={setEdadDesde}
+                                keyboardType="number-pad"
+                                placeholder="Desde"
+                                accessibilityLabel="Edad desde, en meses"
+                                testID="edad-desde"
+                            />
+                            <CampoTexto
+                                style={styles.ageInput}
+                                value={edadHasta}
+                                onChangeText={setEdadHasta}
+                                keyboardType="number-pad"
+                                placeholder="Hasta"
+                                accessibilityLabel="Edad hasta, en meses"
+                                testID="edad-hasta"
+                            />
+                        </View>
+
+                        <Boton
+                            titulo="Limpiar filtros"
+                            variante="terciario"
+                            onPress={limpiarFiltros}
+                            testID="limpiar-filtros"
+                            style={styles.clearButton}
+                        />
+
+                    </Tarjeta>
+                )
+            }
+
+
+            {
+                !loading && !error
+                &&
+                (
+                    <Text style={styles.resultCount}>
+                        {listaFiltrada.length} ave{listaFiltrada.length === 1 ? '' : 's'} encontrada{listaFiltrada.length === 1 ? '' : 's'}
+                    </Text>
+                )
+            }
 
         </View>
+
+    );
+
+
+    return (
+
+        <FondoPantalla>
+
+            <BarraEstado
+                estilo="light"
+                navigation={navigation}
+            />
+
+            <PantallaHeader
+                titulo="Aves"
+                insetSuperior={insets.top}
+                testID="aves-cabecera"
+            />
+
+            <FlatList
+                data={
+                    !loading && !error
+                        ? listaFiltrada
+                        : []
+                }
+                keyExtractor={ave =>
+                    String(ave.id)
+                }
+                renderItem={({item}) => (
+                    <AveCard
+                        ave={item}
+                        onPress={() =>
+                            navigation.navigate(
+                                'DetalleAve',
+                                {
+                                    aveId:item.id
+                                }
+                            )
+                        }
+                    />
+                )}
+                ListHeaderComponent={encabezado}
+                ListEmptyComponent={estado}
+                contentContainerStyle={styles.content}
+                keyboardShouldPersistTaps="handled"
+                initialNumToRender={8}
+                windowSize={7}
+            />
+
+            {
+                tabActual === 'ACTIVAS'
+                &&
+                (
+                    <Fab
+                        titulo="Nueva ave"
+                        icono="add"
+                        testID="fab-agregar-ave"
+                        onPress={() =>
+                            navigation.navigate('NuevaAve')
+                        }
+                    />
+                )
+            }
+
+        </FondoPantalla>
+
     );
 
 }
@@ -574,31 +685,20 @@ function FilterSection({
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
                 contentContainerStyle={styles.chips}
             >
                 {
                     values.map(item => (
-                        <TouchableOpacity
+                        <AveOpcion
                             key={String(item.id)}
-                            style={[
-                                styles.chip,
-                                selected === item.id &&
-                                styles.chipSelected
-                            ]}
+                            texto={item.label}
+                            icono={item.icono}
+                            seleccionado={selected === item.id}
                             onPress={() =>
                                 onSelect(item.id)
                             }
-                        >
-                            <Text
-                                style={[
-                                    styles.chipText,
-                                    selected === item.id &&
-                                    styles.chipTextSelected
-                                ]}
-                            >
-                                {item.label}
-                            </Text>
-                        </TouchableOpacity>
+                        />
                     ))
                 }
             </ScrollView>
@@ -645,114 +745,85 @@ function normalizarSalud(estado){
 
 
 const styles = StyleSheet.create({
-    container:{
-        flex:1,
-        backgroundColor:COLORS.background
-    },
     content:{
-        padding:16,
-        paddingBottom:40
+        paddingHorizontal:spacing.pantalla,
+        paddingTop:spacing.lg,
+        // espacio para que el botón flotante no tape la última tarjeta
+        paddingBottom:104
     },
     tabs:{
         flexDirection:'row',
-        marginBottom:15,
-        backgroundColor:COLORS.card,
-        borderRadius:14,
+        marginBottom:spacing.md,
+        backgroundColor:colors.surface,
+        borderRadius:radii.pill,
+        borderWidth:1,
+        borderColor:colors.borderSoft,
         padding:4
     },
     tab:{
         flex:1,
-        paddingVertical:10,
+        flexDirection:'row',
         alignItems:'center',
-        borderRadius:12
+        justifyContent:'center',
+        minHeight:spacing.touchMin,
+        borderRadius:radii.pill
     },
     tabActive:{
-        backgroundColor:COLORS.primary
+        backgroundColor:colors.primary
+    },
+    tabIcono:{
+        marginRight:spacing.xs
     },
     tabText:{
-        fontSize:12,
-        color:COLORS.textSecondary,
-        fontWeight:'600'
+        ...typography.etiqueta,
+        color:colors.textSecondary
     },
     tabTextActive:{
-        color:COLORS.white
-    },
-    newButton:{
-        backgroundColor:COLORS.primary,
-        paddingVertical:14,
-        borderRadius:14,
-        alignItems:'center',
-        marginBottom:14
-    },
-    newButtonText:{
-        color:COLORS.white,
-        fontSize:17,
-        fontWeight:'bold'
+        color:colors.white
     },
     searchRow:{
         flexDirection:'row',
-        alignItems:'center',
-        marginBottom:12
+        alignItems:'flex-start',
+        marginBottom:spacing.sm
     },
-    searchInput:{
+    searchField:{
         flex:1,
-        backgroundColor:COLORS.card,
-        borderWidth:1,
-        borderColor:COLORS.border,
-        borderRadius:12,
-        paddingHorizontal:13,
-        paddingVertical:11
+        marginBottom:0
     },
     filterButton:{
-        marginLeft:8,
-        backgroundColor:'#e8eeee',
-        paddingHorizontal:12,
-        paddingVertical:12,
-        borderRadius:12
+        marginLeft:spacing.sm,
+        minHeight:54,
+        flexDirection:'row',
+        alignItems:'center',
+        paddingHorizontal:spacing.md,
+        borderRadius:radii.md,
+        borderWidth:2,
+        borderColor:colors.primary,
+        backgroundColor:colors.surface
     },
     filterButtonActive:{
-        backgroundColor:'#d7efea'
+        backgroundColor:colors.primary
+    },
+    filterIcono:{
+        marginRight:spacing.xs
     },
     filterButtonText:{
-        color:COLORS.text,
-        fontWeight:'600'
+        ...typography.etiqueta,
+        color:colors.primaryDark
     },
-    filterCard:{
-        backgroundColor:COLORS.card,
-        borderRadius:16,
-        padding:14,
-        marginBottom:12,
-        borderWidth:1,
-        borderColor:COLORS.border
+    filterButtonTextActive:{
+        color:colors.white
     },
     filterSection:{
-        marginBottom:13
+        marginBottom:spacing.sm
     },
     filterLabel:{
-        color:COLORS.text,
-        fontWeight:'600',
-        marginBottom:7
+        ...typography.etiqueta,
+        color:colors.text,
+        marginBottom:spacing.sm
     },
     chips:{
-        paddingRight:8
-    },
-    chip:{
-        backgroundColor:'#eef2f2',
-        borderRadius:18,
-        paddingHorizontal:12,
-        paddingVertical:8,
-        marginRight:7
-    },
-    chipSelected:{
-        backgroundColor:COLORS.primary
-    },
-    chipText:{
-        color:COLORS.text,
-        fontSize:12
-    },
-    chipTextSelected:{
-        color:'#fff',
-        fontWeight:'bold'
+        paddingRight:spacing.sm
     },
     ageRow:{
         flexDirection:'row',
@@ -760,77 +831,16 @@ const styles = StyleSheet.create({
     },
     ageInput:{
         width:'48%',
-        backgroundColor:'#f8fafa',
-        borderWidth:1,
-        borderColor:COLORS.border,
-        borderRadius:10,
-        paddingHorizontal:12,
-        paddingVertical:10
+        marginBottom:0
     },
     clearButton:{
         alignSelf:'flex-end',
-        marginTop:12,
-        paddingHorizontal:12,
-        paddingVertical:8
-    },
-    clearButtonText:{
-        color:COLORS.primary,
-        fontWeight:'bold'
+        marginTop:spacing.sm
     },
     resultCount:{
-        color:COLORS.textSecondary,
-        fontSize:12,
-        marginBottom:10
-    },
-    center:{
-        alignItems:'center',
-        marginTop:40
-    },
-    loadingText:{
-        marginTop:10,
-        color:COLORS.textSecondary
-    },
-    emptyCard:{
-        backgroundColor:COLORS.card,
-        borderRadius:18,
-        padding:25,
-        alignItems:'center',
-        elevation:2
-    },
-    emptyIcon:{
-        fontSize:42
-    },
-    emptyTitle:{
-        fontSize:19,
-        fontWeight:'bold',
-        color:COLORS.text,
-        marginTop:10
-    },
-    emptyText:{
-        textAlign:'center',
-        color:COLORS.textSecondary,
-        marginTop:8,
-        lineHeight:20
-    },
-    messageCard:{
-        backgroundColor:COLORS.card,
-        padding:20,
-        borderRadius:15
-    },
-    errorText:{
-        color:COLORS.danger,
-        textAlign:'center'
-    },
-    retryButton:{
-        marginTop:15,
-        alignSelf:'center',
-        backgroundColor:COLORS.primary,
-        paddingHorizontal:20,
-        paddingVertical:10,
-        borderRadius:10
-    },
-    retryText:{
-        color:COLORS.white,
-        fontWeight:'bold'
+        ...typography.secundario,
+        color:colors.textSecondary,
+        marginTop:spacing.xs,
+        marginBottom:spacing.md
     }
 });

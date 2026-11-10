@@ -5,9 +5,7 @@ import React, {
 import {
     View,
     Text,
-    TextInput,
     ScrollView,
-    TouchableOpacity,
     StyleSheet,
     Alert,
     KeyboardAvoidingView,
@@ -19,8 +17,22 @@ import {
 } from '../repositories/JaulaRepository';
 
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    radii,
+    spacing,
+    typography
+} from '../theme';
+
+import FondoPantalla from '../components/FondoPantalla';
+import Tarjeta from '../components/Tarjeta';
+import CampoTexto from '../components/CampoTexto';
+import Boton from '../components/Boton';
+import Pulsable from '../components/Pulsable';
+import Icono from '../components/Icono';
+import JaulaBarraAccion from '../components/JaulaBarraAccion';
+import JaulaAviso, {
+    useAvisoExito
+} from '../components/JaulaAviso';
 
 
 const TIPOS_JAULA = [
@@ -50,6 +62,13 @@ export default function NuevaJaulaScreen({
 
     const [guardando, setGuardando] =
         useState(false);
+
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso,
+        saliendo
+    } = useAvisoExito();
 
 
     const guardar = async () => {
@@ -84,20 +103,15 @@ export default function NuevaJaulaScreen({
             });
 
 
-            Alert.alert(
+            // Antes: Alert con «Aceptar» que hacía goBack. Ahora: aviso y vuelve solo.
+            mostrarAviso(
 
                 'Jaula creada',
 
                 `La jaula ${codigo.trim().toUpperCase()} fue registrada correctamente.`,
 
-                [
-                    {
-                        text: 'Aceptar',
-
-                        onPress: () =>
-                            navigation.goBack()
-                    }
-                ]
+                () =>
+                    navigation.goBack()
 
             );
 
@@ -152,143 +166,166 @@ export default function NuevaJaulaScreen({
             }
         >
 
-            <ScrollView
-                contentContainerStyle={
-                    styles.content
-                }
-                keyboardShouldPersistTaps="handled"
-            >
+            <FondoPantalla>
 
-                <Text style={styles.title}>
-                    🏠 Nueva jaula
-                </Text>
-
-                <Text style={styles.subtitle}>
-                    Registra un nuevo espacio del criadero.
-                </Text>
-
-
-                <Text style={styles.label}>
-                    Código *
-                </Text>
-
-                <TextInput
-                    style={styles.input}
-                    placeholder="Ej. J001"
-                    value={codigo}
-                    onChangeText={
-                        setCodigo
+                <ScrollView
+                    contentContainerStyle={
+                        styles.content
                     }
-                    autoCapitalize="characters"
-                    maxLength={20}
-                />
-
-
-                <Text style={styles.label}>
-                    Nombre
-                </Text>
-
-                <TextInput
-                    style={styles.input}
-                    placeholder="Ej. Reproductores Sebright"
-                    value={nombre}
-                    onChangeText={
-                        setNombre
-                    }
-                />
-
-
-                <Text style={styles.label}>
-                    Ubicación
-                </Text>
-
-                <TextInput
-                    style={styles.input}
-                    placeholder="Ej. Sector A"
-                    value={ubicacion}
-                    onChangeText={
-                        setUbicacion
-                    }
-                />
-
-
-                <Text style={styles.label}>
-                    Tipo de jaula
-                </Text>
-
-
-                <View
-                    style={
-                        styles.typeContainer
-                    }
+                    keyboardShouldPersistTaps="handled"
                 >
 
-                    {
-                        TIPOS_JAULA.map(
-                            item => (
-
-                                <TouchableOpacity
-                                    key={item}
-                                    style={[
-                                        styles.typeButton,
-
-                                        tipo === item &&
-                                        styles.typeSelected
-                                    ]}
-                                    onPress={() =>
-                                        setTipo(item)
-                                    }
-                                >
-
-                                    <Text
-                                        style={[
-                                            styles.typeText,
-
-                                            tipo === item &&
-                                            styles.typeTextSelected
-                                        ]}
-                                    >
-                                        {item}
-                                    </Text>
-
-                                </TouchableOpacity>
-
-                            )
-                        )
-                    }
-
-                </View>
-
-
-                <TouchableOpacity
-                    style={[
-                        styles.saveButton,
-
-                        guardando &&
-                        styles.disabledButton
-                    ]}
-                    onPress={guardar}
-                    disabled={
-                        guardando
-                    }
-                >
-
-                    <Text
-                        style={
-                            styles.saveButtonText
-                        }
-                    >
-                        {
-                            guardando
-                                ? 'Guardando...'
-                                : '💾 Guardar jaula'
-                        }
+                    <Text style={styles.subtitle}>
+                        Registra un nuevo espacio del criadero.
                     </Text>
 
-                </TouchableOpacity>
+
+                    <Tarjeta>
+
+                        <CampoTexto
+                            etiqueta="Código *"
+                            icono="grid-outline"
+                            placeholder="Ej. J001"
+                            value={codigo}
+                            onChangeText={
+                                setCodigo
+                            }
+                            autoCapitalize="characters"
+                            maxLength={20}
+                            testID="jaula-codigo"
+                        />
 
 
-            </ScrollView>
+                        <CampoTexto
+                            etiqueta="Nombre"
+                            icono="create-outline"
+                            placeholder="Ej. Reproductores Sebright"
+                            value={nombre}
+                            onChangeText={
+                                setNombre
+                            }
+                            testID="jaula-nombre"
+                        />
+
+
+                        <CampoTexto
+                            etiqueta="Ubicación"
+                            icono="location-outline"
+                            placeholder="Ej. Sector A"
+                            value={ubicacion}
+                            onChangeText={
+                                setUbicacion
+                            }
+                            testID="jaula-ubicacion"
+                        />
+
+
+                        <Text style={styles.label}>
+                            Tipo de jaula
+                        </Text>
+
+
+                        <View
+                            style={
+                                styles.typeContainer
+                            }
+                            accessibilityRole="radiogroup"
+                        >
+
+                            {
+                                TIPOS_JAULA.map(
+                                    item => {
+
+                                        const activo =
+                                            tipo === item;
+
+                                        return (
+
+                                            <Pulsable
+                                                key={item}
+                                                testID={`jaula-tipo-${item}`}
+                                                accessibilityRole="radio"
+                                                accessibilityState={{
+                                                    selected: activo
+                                                }}
+                                                onPress={() =>
+                                                    setTipo(item)
+                                                }
+                                                sinMinimo
+                                                style={[
+                                                    styles.typeButton,
+                                                    activo &&
+                                                    styles.typeSelected
+                                                ]}
+                                            >
+
+                                                {
+                                                    activo
+                                                        ? (
+                                                            <Icono
+                                                                nombre="checkmark"
+                                                                tamano={18}
+                                                                color={colors.white}
+                                                                style={styles.typeIcono}
+                                                            />
+                                                        )
+                                                        : null
+                                                }
+
+                                                <Text
+                                                    style={[
+                                                        styles.typeText,
+                                                        activo &&
+                                                        styles.typeTextSelected
+                                                    ]}
+                                                >
+                                                    {item}
+                                                </Text>
+
+                                            </Pulsable>
+
+                                        );
+
+                                    }
+                                )
+                            }
+
+                        </View>
+
+                    </Tarjeta>
+
+                </ScrollView>
+
+
+                <JaulaBarraAccion>
+
+                    <Boton
+                        titulo={
+                            guardando
+                                ? 'Guardando...'
+                                : 'Guardar jaula'
+                        }
+                        icono={
+                            guardando
+                                ? undefined
+                                : 'guardar'
+                        }
+                        onPress={guardar}
+                        atenuado={
+                            guardando || saliendo
+                        }
+                        testID="guardar-jaula"
+                    />
+
+                </JaulaBarraAccion>
+
+
+                <JaulaAviso
+                    aviso={aviso}
+                    onCerrar={cerrarAviso}
+                />
+
+            </FondoPantalla>
 
         </KeyboardAvoidingView>
 
@@ -301,166 +338,61 @@ const styles =
     StyleSheet.create({
 
         container: {
-
-            flex: 1,
-
-            backgroundColor:
-                COLORS.background
-
+            flex: 1
         },
-
 
         content: {
-
-            padding: 20,
-
-            paddingBottom: 40
-
+            padding: spacing.pantalla,
+            paddingBottom: spacing.xl
         },
-
-
-        title: {
-
-            fontSize: 26,
-
-            fontWeight: 'bold',
-
-            color:
-                COLORS.primary
-
-        },
-
 
         subtitle: {
-
-            color:
-                COLORS.textSecondary,
-
-            marginTop: 5,
-
-            marginBottom: 25
-
+            ...typography.cuerpo,
+            color: colors.textSecondary,
+            marginBottom: spacing.lg
         },
-
 
         label: {
-
-            fontSize: 15,
-
-            fontWeight: '600',
-
-            color:
-                COLORS.text,
-
-            marginBottom: 6,
-
-            marginTop: 12
-
+            ...typography.etiqueta,
+            color: colors.text,
+            marginBottom: spacing.xs
         },
-
-
-        input: {
-
-            backgroundColor:
-                COLORS.card,
-
-            borderWidth: 1,
-
-            borderColor: '#d9e2e5',
-
-            borderRadius: 12,
-
-            paddingHorizontal: 14,
-
-            paddingVertical: 13,
-
-            fontSize: 16
-
-        },
-
 
         typeContainer: {
-
             flexDirection: 'row',
-
             flexWrap: 'wrap'
-
         },
-
 
         typeButton: {
-
-            backgroundColor: '#e8eeee',
-
-            borderRadius: 20,
-
-            paddingHorizontal: 14,
-
-            paddingVertical: 9,
-
-            marginRight: 8,
-
-            marginBottom: 8
-
+            minHeight: spacing.touchMin,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface,
+            borderWidth: 2,
+            borderColor: colors.border,
+            borderRadius: radii.pill,
+            paddingHorizontal: spacing.lg,
+            marginRight: spacing.sm,
+            marginBottom: spacing.sm
         },
-
 
         typeSelected: {
-
-            backgroundColor:
-                COLORS.primary
-
+            backgroundColor: colors.primary,
+            borderColor: colors.primary
         },
 
+        typeIcono: {
+            marginRight: spacing.xs
+        },
 
         typeText: {
-
-            color:
-                COLORS.text
-
+            ...typography.cuerpo,
+            color: colors.text
         },
-
 
         typeTextSelected: {
-
-            color: '#fff',
-
-            fontWeight: 'bold'
-
-        },
-
-
-        saveButton: {
-
-            backgroundColor:
-                COLORS.primary,
-
-            borderRadius: 14,
-
-            paddingVertical: 15,
-
-            alignItems: 'center',
-
-            marginTop: 30
-
-        },
-
-
-        disabledButton: {
-
-            opacity: 0.6
-
-        },
-
-
-        saveButtonText: {
-
-            color: '#fff',
-
-            fontWeight: 'bold',
-
-            fontSize: 17
-
+            ...typography.cuerpoFuerte,
+            color: colors.white
         }
 
     });

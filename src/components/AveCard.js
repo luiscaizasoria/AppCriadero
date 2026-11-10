@@ -4,15 +4,37 @@ import {
     View,
     Text,
     Image,
-    TouchableOpacity,
     StyleSheet
 } from 'react-native';
 
 import {
-    COLORS
-} from '../config/constants';
+    colors,
+    spacing,
+    typography
+} from '../theme';
+
+import Tarjeta
+    from './Tarjeta';
+
+import Avatar
+    from './Avatar';
+
+import Chip
+    from './Chip';
+
+import Icono
+    from './Icono';
+
+import {
+    visualSalud,
+    visualSexo,
+    visualEstadoAve,
+    propsAvatar
+} from './aveVisual';
 
 
+// Tarjeta de una ave en la lista: avatar (foto o icono en círculo de color por sexo/estado),
+// código y raza, chips de sexo / estado / salud (icono + texto), edad, jaula y padres.
 export default function AveCard({
     ave,
     onPress
@@ -23,95 +45,65 @@ export default function AveCard({
             ave.fecha_nacimiento
         );
 
-
-    const textoSexo =
-        obtenerTextoSexo(
+    const sexo =
+        visualSexo(
             ave.sexo
         );
 
-
     const estadoVisual =
-        obtenerEstadoVisual(
+        visualEstadoAve(
             ave.estado
+        );
+
+    const salud =
+        visualSalud(
+            ave.estado_salud
         );
 
 
     return (
 
-        <TouchableOpacity
-            style={
-                styles.card
-            }
-            onPress={
-                onPress
-            }
-            activeOpacity={
-                0.8
+        <Tarjeta
+            onPress={onPress}
+            testID={`lista-ave-${ave.codigo}`}
+            accessibilityLabel={
+                `${ave.codigo}, ${ave.raza || 'Sin raza'}`
             }
         >
 
-            <View
-                style={
-                    styles.row
-                }
-            >
+            <View style={styles.row}>
 
                 {
                     ave.foto_uri
                         ? (
-
                             <Image
                                 source={{
-                                    uri:
-                                        ave.foto_uri
+                                    uri: ave.foto_uri
                                 }}
-                                style={
-                                    styles.photo
-                                }
+                                style={styles.photo}
                             />
-
                         )
                         : (
-
-                            <View
-                                style={
-                                    styles.photoEmpty
-                                }
-                            >
-
-                                <Text
-                                    style={
-                                        styles.photoEmptyIcon
-                                    }
-                                >
-                                    🐔
-                                </Text>
-
-                            </View>
-
+                            <Avatar
+                                icono="paw-outline"
+                                tamano={64}
+                                {...propsAvatar(ave)}
+                            />
                         )
                 }
 
-
-                <View
-                    style={
-                        styles.info
-                    }
-                >
+                <View style={styles.info}>
 
                     <Text
-                        style={
-                            styles.code
-                        }
+                        style={styles.code}
+                        numberOfLines={1}
                     >
                         {ave.codigo}
                     </Text>
 
-
                     <Text
-                        style={
-                            styles.raza
-                        }
+                        style={styles.raza}
+                        numberOfLines={1}
                     >
                         {
                             ave.raza ||
@@ -121,76 +113,52 @@ export default function AveCard({
 
                 </View>
 
-
-                <View
-                    style={
-                        styles.badges
-                    }
-                >
-
-                    <View
-                        style={
-                            styles.sexBadge
-                        }
-                    >
-
-                        <Text
-                            style={
-                                styles.sexText
-                            }
-                        >
-                            {textoSexo}
-                        </Text>
-
-                    </View>
-
-
-                    <View
-                        style={[
-                            styles.stateBadge,
-                            {
-                                backgroundColor:
-                                    estadoVisual.backgroundColor
-                            }
-                        ]}
-                    >
-
-                        <Text
-                            style={[
-                                styles.stateText,
-                                {
-                                    color:
-                                        estadoVisual.textColor
-                                }
-                            ]}
-                        >
-                            {estadoVisual.texto}
-                        </Text>
-
-                    </View>
-
-                </View>
+                <Icono
+                    nombre="siguiente"
+                    tamano={22}
+                    color={colors.textSecondary}
+                />
 
             </View>
 
 
-            <View
-                style={
-                    styles.dataGrid
+            <View style={styles.chips}>
+
+                <Chip
+                    texto={sexo.texto}
+                    icono={sexo.icono}
+                    tono="neutro"
+                    style={styles.chip}
+                />
+
+                <Chip
+                    texto={estadoVisual.texto}
+                    icono={estadoVisual.icono}
+                    tono={estadoVisual.tono}
+                    style={styles.chip}
+                />
+
+                {
+                    ave.estado === 'ACTIVA'
+                        ? (
+                            <Chip
+                                texto={salud.texto}
+                                icono={salud.icono}
+                                tono={salud.tono}
+                                style={styles.chip}
+                            />
+                        )
+                        : null
                 }
-            >
 
-                <View
-                    style={
-                        styles.dataItem
-                    }
-                >
+            </View>
 
-                    <Text
-                        style={
-                            styles.dataLabel
-                        }
-                    >
+
+            <View style={styles.dataGrid}>
+
+                <View style={styles.dataItem}>
+
+                    <Text style={styles.dataLabel}>
                         {
                             ave.origen === 'COMPRADA'
                                 ? 'Edad aprox.'
@@ -198,36 +166,19 @@ export default function AveCard({
                         }
                     </Text>
 
-                    <Text
-                        style={
-                            styles.dataValue
-                        }
-                    >
+                    <Text style={styles.dataValue}>
                         {edad}
                     </Text>
 
                 </View>
 
+                <View style={styles.dataItem}>
 
-                <View
-                    style={
-                        styles.dataItem
-                    }
-                >
-
-                    <Text
-                        style={
-                            styles.dataLabel
-                        }
-                    >
+                    <Text style={styles.dataLabel}>
                         Jaula
                     </Text>
 
-                    <Text
-                        style={
-                            styles.dataValue
-                        }
-                    >
+                    <Text style={styles.dataValue}>
                         {
                             ave.jaula_codigo
                                 ? ave.jaula_codigo
@@ -240,143 +191,55 @@ export default function AveCard({
             </View>
 
 
-            <View
-                style={
-                    styles.parentsRow
-                }
-            >
+            <View style={styles.parentsRow}>
 
-                <Text
-                    style={
-                        styles.parentText
-                    }
-                    numberOfLines={1}
-                >
-                    🐓 Padre: {
-                        ave.padre_codigo ||
-                        'No registrado'
-                    }
-                </Text>
+                <View style={styles.parent}>
 
+                    <Icono
+                        nombre="male-outline"
+                        tamano={16}
+                        color={colors.textSecondary}
+                        style={styles.parentIcon}
+                    />
 
-                <Text
-                    style={
-                        styles.parentText
-                    }
-                    numberOfLines={1}
-                >
-                    🐔 Madre: {
-                        ave.madre_codigo ||
-                        'No registrado'
-                    }
-                </Text>
+                    <Text
+                        style={styles.parentText}
+                        numberOfLines={1}
+                    >
+                        Padre: {
+                            ave.padre_codigo ||
+                            'No registrado'
+                        }
+                    </Text>
+
+                </View>
+
+                <View style={styles.parent}>
+
+                    <Icono
+                        nombre="female-outline"
+                        tamano={16}
+                        color={colors.textSecondary}
+                        style={styles.parentIcon}
+                    />
+
+                    <Text
+                        style={styles.parentText}
+                        numberOfLines={1}
+                    >
+                        Madre: {
+                            ave.madre_codigo ||
+                            'No registrado'
+                        }
+                    </Text>
+
+                </View>
 
             </View>
 
-
-            {
-                ave.estado === 'ACTIVA'
-                    ? (
-
-                        <View
-                            style={[
-                                styles.health,
-                                {
-                                    backgroundColor:
-                                        getColorSalud(
-                                            ave.estado_salud
-                                        )
-                                }
-                            ]}
-                        >
-
-                            <Text
-                                style={
-                                    styles.healthText
-                                }
-                            >
-                                {
-                                    getTextSalud(
-                                        ave.estado_salud
-                                    )
-                                }
-                            </Text>
-
-                        </View>
-
-                    )
-                    : null
-            }
-
-        </TouchableOpacity>
+        </Tarjeta>
 
     );
-
-}
-
-
-function obtenerTextoSexo(
-    sexo
-) {
-
-    if (
-        sexo === 'MACHO'
-    ) {
-
-        return '🐓 Macho';
-
-    }
-
-
-    if (
-        sexo === 'HEMBRA'
-    ) {
-
-        return '🐔 Hembra';
-
-    }
-
-
-    return 'Sexo sin registrar';
-
-}
-
-
-function obtenerEstadoVisual(
-    estado
-) {
-
-    if (
-        estado === 'VENDIDA'
-    ) {
-
-        return {
-            texto: 'Vendida',
-            backgroundColor: '#d9f2e4',
-            textColor: '#1f6f46'
-        };
-
-    }
-
-
-    if (
-        estado === 'FALLECIDA'
-    ) {
-
-        return {
-            texto: 'Fallecida',
-            backgroundColor: '#ececec',
-            textColor: '#555555'
-        };
-
-    }
-
-
-    return {
-        texto: 'Activa',
-        backgroundColor: '#d9f2e4',
-        textColor: '#1f6f46'
-    };
 
 }
 
@@ -533,307 +396,94 @@ function obtenerEdad(
 }
 
 
-function getColorSalud(
-    estado
-) {
-
-    if (
-        estado === 'EN_TRATAMIENTO'
-    ) {
-
-        return '#fff0b3';
-
-    }
-
-
-    if (
-        estado === 'ENFERMA'
-    ) {
-
-        return '#f7d7d7';
-
-    }
-
-
-    return '#d9f2e4';
-
-}
-
-
-function getTextSalud(
-    estado
-) {
-
-    if (
-        estado === 'EN_TRATAMIENTO'
-    ) {
-
-        return '🟡 En tratamiento';
-
-    }
-
-
-    if (
-        estado === 'ENFERMA'
-    ) {
-
-        return '🔴 Enferma';
-
-    }
-
-
-    return '🟢 Sana';
-
-}
-
-
 const styles =
     StyleSheet.create({
 
-        card: {
-
-            backgroundColor:
-                COLORS.card,
-
-            borderRadius: 16,
-
-            padding: 15,
-
-            marginBottom: 12,
-
-            elevation: 3
-
-        },
-
-
         row: {
-
             flexDirection: 'row',
-
             alignItems: 'center'
-
         },
-
 
         photo: {
-
             width: 64,
-
             height: 64,
-
-            borderRadius: 32
-
-        },
-
-
-        photoEmpty: {
-
-            width: 64,
-
-            height: 64,
-
             borderRadius: 32,
-
-            backgroundColor: '#e7f5f5',
-
-            alignItems: 'center',
-
-            justifyContent: 'center'
-
+            borderWidth: 3,
+            borderColor: colors.white,
+            backgroundColor: colors.primarySoft
         },
-
-
-        photoEmptyIcon: {
-
-            fontSize: 28
-
-        },
-
 
         info: {
-
             flex: 1,
-
-            marginLeft: 12,
-
-            marginRight: 8
-
+            marginLeft: spacing.md,
+            marginRight: spacing.sm
         },
-
 
         code: {
-
-            fontSize: 20,
-
-            fontWeight: 'bold',
-
-            color:
-                COLORS.text
-
+            ...typography.subtitulo,
+            color: colors.text
         },
-
 
         raza: {
-
-            marginTop: 3,
-
-            color:
-                COLORS.textSecondary,
-
-            fontSize: 14
-
+            ...typography.secundario,
+            color: colors.textSecondary,
+            marginTop: 2
         },
 
-
-        badges: {
-
-            alignItems: 'flex-end'
-
+        chips: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            marginTop: spacing.md
         },
 
-
-        sexBadge: {
-
-            backgroundColor: '#e7f5f5',
-
-            paddingHorizontal: 9,
-
-            paddingVertical: 5,
-
-            borderRadius: 12,
-
-            maxWidth: 125
-
+        chip: {
+            marginRight: spacing.sm,
+            marginBottom: spacing.xs
         },
-
-
-        sexText: {
-
-            color:
-                COLORS.text,
-
-            fontSize: 11,
-
-            fontWeight: '700'
-
-        },
-
-
-        stateBadge: {
-
-            marginTop: 6,
-
-            paddingHorizontal: 9,
-
-            paddingVertical: 4,
-
-            borderRadius: 12
-
-        },
-
-
-        stateText: {
-
-            fontWeight: '700',
-
-            fontSize: 11
-
-        },
-
 
         dataGrid: {
-
             flexDirection: 'row',
-
-            marginTop: 13,
-
+            marginTop: spacing.sm,
             borderTopWidth: 1,
-
-            borderTopColor:
-                COLORS.border,
-
-            paddingTop: 11
-
+            borderTopColor: colors.borderSoft,
+            paddingTop: spacing.md
         },
-
 
         dataItem: {
-
             flex: 1
-
         },
-
 
         dataLabel: {
-
-            color:
-                COLORS.textSecondary,
-
-            fontSize: 11
-
+            ...typography.chip,
+            color: colors.textSecondary
         },
-
 
         dataValue: {
-
+            ...typography.etiqueta,
             marginTop: 2,
-
-            color:
-                COLORS.text,
-
-            fontSize: 14,
-
-            fontWeight: '600'
-
+            color: colors.text
         },
-
 
         parentsRow: {
-
             flexDirection: 'row',
-
-            marginTop: 10
-
+            marginTop: spacing.md
         },
 
+        parent: {
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginRight: spacing.sm
+        },
+
+        parentIcon: {
+            marginRight: spacing.xs
+        },
 
         parentText: {
-
+            ...typography.secundario,
             flex: 1,
-
-            color:
-                COLORS.textSecondary,
-
-            fontSize: 12,
-
-            marginRight: 6
-
-        },
-
-
-        health: {
-
-            marginTop: 10,
-
-            alignSelf: 'flex-start',
-
-            paddingHorizontal: 10,
-
-            paddingVertical: 5,
-
-            borderRadius: 13
-
-        },
-
-
-        healthText: {
-
-            color: '#000000',
-
-            fontWeight: '700',
-
-            fontSize: 12
-
+            color: colors.textSecondary
         }
 
     });
