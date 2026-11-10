@@ -35,14 +35,14 @@ tags:
 - assertNotVisible: ".*Guardar"
 # La pestana Jaulas sigue en su lista
 - tapOn:
-    point: "30%,96%"
+    id: "tab-jaulas"
 - extendedWaitUntil:
     visible: ".*Nueva jaula.*"
     timeout: 20000
 - assertNotVisible: "Alimentación"
 # 2) Desde Alertas (Mas)
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000
@@ -57,7 +57,7 @@ tags:
     element: ".*Guardar"
 - takeScreenshot: nav-alertas-bebida
 - tapOn:
-    id: "cabecera-atras"
+    text: "Volver"
 - extendedWaitUntil:
     visible: "Alertas pendientes"
     timeout: 20000
@@ -65,7 +65,7 @@ tags:
 - takeScreenshot: nav-alertas-vuelta
 # 3) C3 UX: los accesos de Inicio abren Alertas y Nuevo movimiento DENTRO de la pila de Inicio; la flecha vuelve a Inicio
 - tapOn:
-    point: "10%,96%"
+    id: "tab-inicio"
 - extendedWaitUntil:
     visible: "Tus aves registradas"
     timeout: 20000
@@ -78,7 +78,7 @@ tags:
     visible: "Alertas pendientes"
     timeout: 25000
 - tapOn:
-    id: "cabecera-atras"
+    text: "Volver"
 - extendedWaitUntil:
     visible: "Tus aves registradas"
     timeout: 20000
@@ -92,7 +92,7 @@ tags:
     visible: ".*Guardar movimiento.*"
     timeout: 15000
 - tapOn:
-    id: "cabecera-atras"
+    text: "Volver"
 - extendedWaitUntil:
     visible: "Tus aves registradas"
     timeout: 20000

@@ -16,7 +16,7 @@ tags:
       PASSWORD: ${PASSWORD}
       CRIADERO: ${CRIADERO}
 - tapOn:
-    point: "50%,96%"
+    id: "tab-aves"
 - extendedWaitUntil:
     visible: ".*AV-N5.*"
     timeout: 20000
@@ -26,12 +26,12 @@ tags:
     timeout: 20000
 # Otra pestana y regreso: la ficha sigue abierta
 - tapOn:
-    point: "70%,96%"
+    id: "tab-finanzas"
 - extendedWaitUntil:
     visible: "Consolidado por categoría"
     timeout: 20000
 - tapOn:
-    point: "50%,96%"
+    id: "tab-aves"
 - extendedWaitUntil:
     visible: "Ficha del ave"
     timeout: 15000
@@ -44,7 +44,7 @@ tags:
 - scrollUntilVisible:
     element: ".*Guardar diagnóstico.*"
 - tapOn:
-    point: "50%,96%"
+    id: "tab-aves"
 - extendedWaitUntil:
     visible: ".*Nueva ave.*"
     timeout: 15000

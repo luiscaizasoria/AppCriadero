@@ -74,7 +74,7 @@ tags:
     notVisible: "Movimiento guardado"
     timeout: 15000
 - extendedWaitUntil:
-    visible: ".*Egreso manual uno.*"
+    visible: "\\$9[.]25"
     timeout: 20000
 # Resumen del mes (arriba) y lista (el mas nuevo primero)
 - assertVisible: "\\$12[.]50"

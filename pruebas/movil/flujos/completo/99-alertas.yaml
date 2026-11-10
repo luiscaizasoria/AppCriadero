@@ -21,7 +21,7 @@ tags:
       CRIADERO: ${CRIADERO}
 # Mas (espera un texto de Mas antes de tocar la barra)
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000
@@ -46,6 +46,8 @@ tags:
 - assertVisible: "Sin alimentación registrada"
 - assertVisible: "La jaula JX-1 no tiene alimentación registrada hoy."
 - assertVisible: "Sin bebida registrada"
+- scrollUntilVisible:
+    element: "La jaula JX-1 no tiene bebida registrada hoy."
 - assertVisible: "La jaula JX-1 no tiene bebida registrada hoy."
 - scrollUntilVisible:
     element: "Sin producción registrada"
@@ -72,7 +74,7 @@ tags:
 - assertNotVisible: ".*Guardar.*"
 # Tocar la pestana Mas (activa) vuelve a la raiz de su pila; se abre Alertas otra vez
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000
@@ -82,7 +84,7 @@ tags:
     timeout: 25000
 # AISLAMIENTO: raiz de Mas, cerrar sesion y entrar con la segunda cuenta
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000
@@ -102,7 +104,7 @@ tags:
       PASSWORD: ${PASSWORD2}
       CRIADERO: ${CRIADERO2}
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000

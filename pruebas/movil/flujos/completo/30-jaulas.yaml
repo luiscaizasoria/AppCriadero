@@ -23,12 +23,7 @@ tags:
 - inputText: "jb-2"
 - hideKeyboard
 - tapOn: ".*Guardar jaula.*"
-- extendedWaitUntil:
-    visible: "Jaula creada"
-    timeout: 20000
-- extendedWaitUntil:
-    notVisible: "Jaula creada"
-    timeout: 10000
+# El aviso «Jaula creada» es efímero: se espera la condición final (la jaula en la lista), no el aviso.
 - extendedWaitUntil:
     visible: ".*JB-2.*"
     timeout: 20000
@@ -37,12 +32,6 @@ tags:
 - inputText: "JA-1"
 - hideKeyboard
 - tapOn: ".*Guardar jaula.*"
-- extendedWaitUntil:
-    visible: "Jaula creada"
-    timeout: 20000
-- extendedWaitUntil:
-    notVisible: "Jaula creada"
-    timeout: 10000
 - extendedWaitUntil:
     visible: ".*JA-1.*"
     timeout: 20000

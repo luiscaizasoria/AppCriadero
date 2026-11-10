@@ -21,7 +21,7 @@ tags:
       CRIADERO: ${CRIADERO}
 # Mas > Reportes (espera un texto de Mas antes de tocar la barra)
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000
@@ -42,9 +42,13 @@ tags:
     element: ".*Ingresos: .0[.]00.*"
 - assertVisible: ".*Ingresos: .0[.]00.*"
 - assertVisible: ".*Egresos: .0[.]00.*"
+- scrollUntilVisible:
+    element: ".*Utilidad: .0[.]00.*"
 - assertVisible: ".*Utilidad: .0[.]00.*"
 - scrollUntilVisible:
     element: "Exportar Aves"
+- scrollUntilVisible:
+    element: "Exportar Jaulas"
 - assertVisible: "Exportar Jaulas"
 - takeScreenshot: reportes-datos
 # Exportar Aves: sin Alert de error; el boton vuelve a su texto tras la hoja de compartir
@@ -66,7 +70,7 @@ tags:
     timeout: 20000
 # AISLAMIENTO: vuelve a la raiz de Mas, cierra sesion y entra con la segunda cuenta
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000
@@ -86,7 +90,7 @@ tags:
       PASSWORD: ${PASSWORD2}
       CRIADERO: ${CRIADERO2}
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000

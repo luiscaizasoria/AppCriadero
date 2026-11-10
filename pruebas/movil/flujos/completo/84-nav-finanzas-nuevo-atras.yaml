@@ -20,13 +20,13 @@ tags:
     timeout: 25000
 # Mas (espera un texto de Mas antes de seguir)
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000
 # Finanzas
 - tapOn:
-    point: "70%,96%"
+    id: "tab-finanzas"
 - extendedWaitUntil:
     visible: "Consolidado por categoría"
     timeout: 20000
@@ -47,7 +47,7 @@ tags:
     visible: ".*Guardar movimiento.*"
     timeout: 15000
 - tapOn:
-    id: "cabecera-atras"
+    text: "Volver"
 - extendedWaitUntil:
     visible: "Consolidado por categoría"
     timeout: 15000

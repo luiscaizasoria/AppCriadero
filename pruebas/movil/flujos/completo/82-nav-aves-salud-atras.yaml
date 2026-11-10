@@ -27,6 +27,9 @@ tags:
 - scrollUntilVisible:
     element: ".*Salud"
 - tapOn: ".*Salud"
+- extendedWaitUntil:
+    visible: ".*Coriza.*"
+    timeout: 20000
 - scrollUntilVisible:
     element: ".*Guardar diagnóstico.*"
 - takeScreenshot: nav-aves-salud
@@ -43,14 +46,14 @@ tags:
 - scrollUntilVisible:
     element: ".*Guardar diagnóstico.*"
 - tapOn:
-    id: "cabecera-miga-1"
+    text: "Ir a AV-N1"
 - extendedWaitUntil:
     visible: "Ficha del ave"
     timeout: 15000
 - assertNotVisible: ".*Guardar diagnóstico.*"
 # La flecha de la cabecera: de la ficha a la lista de aves
 - tapOn:
-    id: "cabecera-atras"
+    text: "Volver"
 - extendedWaitUntil:
     visible: ".*Nueva ave.*"
     timeout: 15000

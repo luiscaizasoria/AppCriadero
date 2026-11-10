@@ -60,6 +60,8 @@ tags:
       - extendedWaitUntil:
           visible: "Consolidado por categoría"
           timeout: 10000
+- scrollUntilVisible:
+    element: "Consolidado por categoría"
 - assertVisible: "Consolidado por categoría"
 - assertVisible: "\\$12[.]50"
 - scrollUntilVisible:

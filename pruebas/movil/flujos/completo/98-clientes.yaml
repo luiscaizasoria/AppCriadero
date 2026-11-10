@@ -111,7 +111,7 @@ tags:
 - assertVisible: ".*AV-CA.*"
 # Mas > Clientes (espera un texto de la pantalla antes de tocar la barra)
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000
@@ -161,7 +161,7 @@ tags:
 # AISLAMIENTO: vuelve a la raiz de Mas (tocar la pestana activa vacia su pila), cierra sesion y entra con la
 # segunda cuenta; sus Clientes deben estar vacios (no comparte el SQLite de la primera).
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000
@@ -181,7 +181,7 @@ tags:
       PASSWORD: ${PASSWORD2}
       CRIADERO: ${CRIADERO2}
 - tapOn:
-    point: "90%,96%"
+    id: "tab-mas"
 - extendedWaitUntil:
     visible: "Compradores e historial de ventas por celular"
     timeout: 20000

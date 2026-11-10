@@ -19,6 +19,9 @@ tags:
 - scrollUntilVisible:
     element: ".*Salud"
 - tapOn: ".*Salud"
+- extendedWaitUntil:
+    visible: ".*Coriza.*"
+    timeout: 20000
 - tapOn: ".*Coriza.*"
 - scrollUntilVisible:
     element: ".*Guardar diagnóstico.*"

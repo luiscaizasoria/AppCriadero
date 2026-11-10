@@ -26,6 +26,8 @@ tags:
 - scrollUntilVisible:
     element: "Padre"
 - tapOn: ".*AV-P.*"
+- scrollUntilVisible:
+    element: ".*AV-M.*"
 - tapOn: ".*AV-M.*"
 - scrollUntilVisible:
     element: ".*Kikiris"

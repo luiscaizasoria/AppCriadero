@@ -19,8 +19,10 @@ tags:
 - scrollUntilVisible:
     element: ".*Registrar huevo"
 - tapOn: ".*Registrar huevo"
-- scrollUntilVisible:
-    element: ".*Registrar huevo.*"
+- extendedWaitUntil:
+    visible:
+      id: "guardar-huevo"
+    timeout: 20000
 # El botón de guardar se toca por testID (el título y el botón comparten texto).
 - tapOn:
     id: "guardar-huevo"

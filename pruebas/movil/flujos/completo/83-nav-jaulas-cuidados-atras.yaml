@@ -50,7 +50,7 @@ tags:
 - assertNotVisible: "Ficha del ave"
 # La flecha de la cabecera vuelve a la lista de jaulas
 - tapOn:
-    id: "cabecera-atras"
+    text: "Volver"
 - extendedWaitUntil:
     visible: ".*Nueva jaula.*"
     timeout: 15000
