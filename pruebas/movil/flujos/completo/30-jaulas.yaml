@@ -24,6 +24,13 @@ tags:
 - hideKeyboard
 - tapOn: ".*Guardar jaula.*"
 # El aviso «Jaula creada» es efímero: se espera la condición final (la jaula en la lista), no el aviso.
+# El campo del formulario ya muestra «jb-2»: se espera a que el formulario desaparezca (el botón pasa a «Guardando...» y luego se va).
+- extendedWaitUntil:
+    notVisible: ".*Guardar jaula.*"
+    timeout: 20000
+- extendedWaitUntil:
+    notVisible: ".*Guardando.*"
+    timeout: 20000
 - extendedWaitUntil:
     visible: ".*JB-2.*"
     timeout: 20000
@@ -32,6 +39,12 @@ tags:
 - inputText: "JA-1"
 - hideKeyboard
 - tapOn: ".*Guardar jaula.*"
+- extendedWaitUntil:
+    notVisible: ".*Guardar jaula.*"
+    timeout: 20000
+- extendedWaitUntil:
+    notVisible: ".*Guardando.*"
+    timeout: 20000
 - extendedWaitUntil:
     visible: ".*JA-1.*"
     timeout: 20000
