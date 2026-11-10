@@ -26,15 +26,26 @@ tags:
 - scrollUntilVisible:
     element: ".*Guardar diagnóstico.*"
 - tapOn: ".*Guardar diagnóstico.*"
+# Correcciones tras prueba: al guardar, Salud vuelve sola a la ficha del ave (el aviso «Registro guardado» ya no
+# llega a verse). Se espera la condición real: la ficha con el estado «En tratamiento».
 - extendedWaitUntil:
-    visible: "Registro guardado"
-    timeout: 15000
-# C5: «Registro guardado» ya es un aviso no bloqueante (sin «Aceptar»); los datos se recargan solos.
+    visible: "Ficha del ave"
+    timeout: 30000
+- assertNotVisible: ".*Guardar diagnóstico.*"
 - extendedWaitUntil:
     visible: ".*En tratamiento.*"
     timeout: 20000
+# El historial sanitario sigue en Salud: se vuelve a abrir
+- scrollUntilVisible:
+    element: ".*Salud"
+- tapOn: ".*Salud"
+# Salud abre arriba (formulario de diagnóstico); el historial queda bajo el pliegue: se espera la pantalla y se baja
+- extendedWaitUntil:
+    visible: ".*Guardar diagnóstico.*"
+    timeout: 20000
 - scrollUntilVisible:
     element: ".*Historial sanitario.*"
+    timeout: 40000
 - scrollUntilVisible:
     element: ".*Sin medicamento.*"
 - assertVisible: ".*Coriza.*"

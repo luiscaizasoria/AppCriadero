@@ -1,0 +1,112 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-U:MACHO:JX-1
+# CORRECCIONES TRAS PRUEBA DEL USUARIO (2026-11-10): (1) validacion visual: guardar jaula vacia muestra, ademas del
+# aviso de siempre, el mismo texto bajo el campo; (2) una categoria creada en el catalogo CATEGORIAS_FINANCIERAS se ve
+# en Nuevo movimiento tanto en Ingreso como en Egreso; (3) el campo Valor solo admite digitos y un punto (la coma pasa
+# a punto, las letras se descartan); (4) Salud guarda y termina en la ficha del ave. No espera avisos efimeros.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - correcciones
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+# (1) Validacion visual en Nueva jaula
+- tapOn: "Jaulas"
+- tapOn: ".*Nueva jaula.*"
+- tapOn: ".*Guardar jaula.*"
+- extendedWaitUntil:
+    visible: "Código requerido"
+    timeout: 10000
+- tapOn: "OK"
+# Tras cerrar el Alert queda el mensaje bajo el campo (mismo texto) y el formulario sigue abierto
+- extendedWaitUntil:
+    visible: "Ingresa un código para la jaula."
+    timeout: 10000
+- assertVisible: ".*Guardar jaula.*"
+- takeScreenshot: correcciones-validacion-jaula
+- pressKey: back
+# (2) Categoria creada en el catalogo
+- tapOn:
+    id: "tab-mas"
+- tapOn: ".*Configuración.*"
+- tapOn: ".*Categorías financieras.*"
+- extendedWaitUntil:
+    visible:
+      id: "catalogo-alta-rapida"
+    timeout: 20000
+- tapOn:
+    id: "catalogo-alta-rapida"
+- inputText: "Cat movil"
+- hideKeyboard
+- tapOn:
+    id: "catalogo-alta-rapida-anadir"
+- extendedWaitUntil:
+    visible: ".*Cat movil.*"
+    timeout: 20000
+- tapOn:
+    id: "tab-finanzas"
+- extendedWaitUntil:
+    visible: "Consolidado por categoría"
+    timeout: 20000
+- tapOn: ".*Nuevo movimiento.*"
+- extendedWaitUntil:
+    visible: ".*Guardar movimiento.*"
+    timeout: 15000
+# Ingreso (tipo por defecto): la categoria creada aparece
+- tapOn: ".*Ingreso"
+- extendedWaitUntil:
+    visible: "Cat movil"
+    timeout: 15000
+- takeScreenshot: correcciones-categoria-ingreso
+# Egreso: tambien aparece
+- tapOn: ".*Egreso"
+- extendedWaitUntil:
+    visible: "Cat movil"
+    timeout: 15000
+- takeScreenshot: correcciones-categoria-egreso
+# (3) Valor: letras fuera, coma a punto
+- tapOn:
+    id: "movimiento-valor"
+- inputText: "ab1,5x"
+- hideKeyboard
+- assertVisible: "1[.]5"
+- assertNotVisible: ".*ab.*"
+- takeScreenshot: correcciones-valor-filtrado
+- back
+- extendedWaitUntil:
+    visible: "Consolidado por categoría"
+    timeout: 15000
+# (4) Salud guarda y vuelve a la ficha
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: ".*AV-U.*"
+    timeout: 20000
+- tapOn: ".*AV-U.*"
+- extendedWaitUntil:
+    visible: "Ficha del ave"
+    timeout: 20000
+- scrollUntilVisible:
+    element: ".*Salud"
+- tapOn: ".*Salud"
+- extendedWaitUntil:
+    visible: ".*Coriza.*"
+    timeout: 20000
+- tapOn: ".*Coriza.*"
+- scrollUntilVisible:
+    element: ".*Guardar diagnóstico.*"
+- tapOn: ".*Guardar diagnóstico.*"
+- extendedWaitUntil:
+    visible: "Ficha del ave"
+    timeout: 30000
+- assertNotVisible: ".*Guardar diagnóstico.*"
+- extendedWaitUntil:
+    visible: ".*En tratamiento.*"
+    timeout: 20000
+- takeScreenshot: correcciones-salud-ficha

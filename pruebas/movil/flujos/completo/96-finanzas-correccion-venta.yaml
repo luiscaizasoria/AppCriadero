@@ -79,10 +79,12 @@ tags:
 - assertNotVisible: ".*Guardar cambios.*"
 - assertVisible: ".*Comprador Fin.*"
 - takeScreenshot: finanzas-corregir-venta
-# Valor invalido
-- tapOn: "12.5"
+# Valor invalido: el campo ya filtra letras (solo digitos y un punto), asi que «abc» se vaciaria y V1 lo toma
+# como 0 (valido). Un punto solo sigue siendo no numerico y la validacion de siempre lo rechaza.
+- tapOn:
+    id: "venta-valor-ave"
 - eraseText: 10
-- inputText: "abc"
+- inputText: "."
 - hideKeyboard
 - scrollUntilVisible:
     element: ".*Guardar corrección.*"
@@ -96,7 +98,8 @@ tags:
 - scrollUntilVisible:
     element: "Valor del ave"
     direction: UP
-- tapOn: "abc"
+- tapOn:
+    id: "venta-valor-ave"
 - eraseText: 10
 - inputText: "20.25"
 - hideKeyboard
