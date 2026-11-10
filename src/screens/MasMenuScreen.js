@@ -63,6 +63,12 @@ export default function MasMenuScreen({
 
 
 
+    const [
+        cerrando,
+        setCerrando
+    ] = useState(false);
+
+
     const cargarAlertas =
         async()=>{
 
@@ -240,11 +246,19 @@ export default function MasMenuScreen({
                     <MasFila
                         icono="log-out-outline"
                         color={colors.danger}
-                        titulo="Cerrar sesión"
+                        titulo={
+                            cerrando
+                                ? 'Cerrando...'
+                                : 'Cerrar sesión'
+                        }
                         descripcion="Salir de la cuenta en este teléfono"
                         testID="mas-cerrar-sesion"
                         onPress={
-                            confirmarCerrarSesion
+                            cerrando
+                                ? undefined
+                                : () => confirmarCerrarSesion(
+                                    setCerrando
+                                )
                         }
                     />
                 }
@@ -259,7 +273,7 @@ export default function MasMenuScreen({
 
 
 
-function confirmarCerrarSesion(){
+function confirmarCerrarSesion(setCerrando){
 
     Alert.alert(
         'Cerrar sesión',
@@ -272,11 +286,22 @@ function confirmarCerrarSesion(){
             {
                 text:'Cerrar sesión',
                 style:'destructive',
-                onPress:()=>{
+                onPress:async()=>{
 
-                    // require diferido: en modo SQLite el modulo de sesion no se carga.
-                    require('../api/sesion')
-                        .cerrarSesion();
+                    setCerrando(true);
+
+                    try{
+
+                        // require diferido: en modo SQLite el modulo de sesion no se carga.
+                        await require('../api/sesion')
+                            .cerrarSesion();
+
+                    }
+                    finally{
+
+                        setCerrando(false);
+
+                    }
 
                 }
             }

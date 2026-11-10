@@ -565,7 +565,7 @@ export default function DetalleJaulaScreen({
                             'destructive',
 
                         onPress:
-                            eliminarJaula
+                            guardia(eliminarJaula)
                     }
                 ]
 
@@ -812,6 +812,10 @@ export default function DetalleJaulaScreen({
                                     disabled={
                                         ocupado
                                     }
+                                    guardando={
+                                        procesandoJaula
+                                    }
+                                    tituloGuardando="Eliminando..."
                                     testID="eliminar-jaula"
                                     style={
                                         styles.managementButton

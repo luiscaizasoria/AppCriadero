@@ -16,7 +16,8 @@ import {
 
 
 import {
-    useFocusEffect
+    useFocusEffect,
+    CommonActions
 } from '@react-navigation/native';
 
 
@@ -188,7 +189,6 @@ export default function SaludAveScreen({
 
     const {
         aviso,
-        mostrar: mostrarAviso,
         cerrar: cerrarAviso
     } = useAvisoExito();
 
@@ -382,19 +382,33 @@ export default function SaludAveScreen({
 
 
                 // Antes: Alert «Registro guardado» con «Aceptar» que recargaba los datos.
-                // Ahora: aviso no bloqueante (mismo título y mensaje) y recarga inmediata.
-                mostrarAviso(
+                // Ahora: aviso no bloqueante (mismo título y mensaje) que se muestra en la ficha del
+                // ave (DetalleAve) mediante el parámetro de ruta `avisoSalud`.
+                // SaludAve solo se abre desde DetalleAve: se fija el parámetro en la ruta previa.
+                const estadoNav =
+                    navigation.getState();
 
-                    'Registro guardado',
+                const rutaPrevia =
+                    estadoNav?.routes?.[
+                        (estadoNav.index || 0) - 1
+                    ];
 
-                    'El tratamiento fue registrado correctamente.'
+                if(
+                    rutaPrevia
+                    &&
+                    rutaPrevia.name === 'DetalleAve'
+                ){
+                    navigation.dispatch({
+                        ...CommonActions.setParams({
+                            avisoSalud:{
+                                titulo:'Registro guardado',
+                                mensaje:'El tratamiento fue registrado correctamente.'
+                            }
+                        }),
+                        source:rutaPrevia.key
+                    });
+                }
 
-                );
-
-                cargarDatos();
-
-                // Correcciones tras prueba: tras guardar se vuelve a la ficha del ave
-                // (SaludAve solo se abre desde DetalleAve).
                 navigation.goBack();
 
 

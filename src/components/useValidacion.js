@@ -29,8 +29,15 @@ export default function useValidacion(scrollRef) {
     const limpiarTodo = useCallback(() => setErrores({}), []);
 
     const fallar = useCallback(
-        (nombre, mensaje) => {
-            setErrores({ [nombre]: mensaje });
+        (campos, mensaje) => {
+            // `campos` puede ser un nombre o una lista: se marcan todos; scroll y foco al primero.
+            const lista = Array.isArray(campos) ? campos : [campos];
+            const nombre = lista[0];
+            const marcados = {};
+            lista.forEach(item => {
+                marcados[item] = Array.isArray(mensaje) ? mensaje[lista.indexOf(item)] : mensaje;
+            });
+            setErrores(marcados);
             setTimeout(() => {
                 const el = contenedores.current[nombre];
                 const sv = scrollRef && scrollRef.current;

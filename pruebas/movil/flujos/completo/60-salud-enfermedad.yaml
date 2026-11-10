@@ -26,8 +26,8 @@ tags:
 - scrollUntilVisible:
     element: ".*Guardar diagnóstico.*"
 - tapOn: ".*Guardar diagnóstico.*"
-# Correcciones tras prueba: al guardar, Salud vuelve sola a la ficha del ave (el aviso «Registro guardado» ya no
-# llega a verse). Se espera la condición real: la ficha con el estado «En tratamiento».
+# Al guardar, Salud vuelve sola a la ficha del ave y el aviso «Registro guardado» se ve ahora en la ficha (efímero,
+# 4 s: no se espera). Se espera la condición real: la ficha con el estado «En tratamiento».
 - extendedWaitUntil:
     visible: "Ficha del ave"
     timeout: 30000

@@ -224,6 +224,11 @@ export default function NuevoMovimientoFinancieroScreen({
                     error
                 );
 
+                Alert.alert(
+                    'Error',
+                    'No fue posible guardar el registro.'
+                );
+
             }
             finally{
 

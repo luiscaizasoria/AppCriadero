@@ -61,11 +61,11 @@ export default function RegistroScreen({
             setError(null);
 
             v.fallar(
-                !nombre.trim()
-                    ? 'nombre'
-                    : !email.trim()
-                        ? 'email'
-                        : 'password',
+                [
+                    !nombre.trim() && 'nombre',
+                    !email.trim() && 'email',
+                    !password && 'password'
+                ].filter(Boolean),
                 'Completa tu nombre, correo y contraseña.'
             );
 

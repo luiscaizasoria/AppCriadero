@@ -1,5 +1,6 @@
 import React, {
     useCallback,
+    useEffect,
     useState
 } from 'react';
 
@@ -35,6 +36,12 @@ import Icono
 
 import AveAccion
     from '../components/AveAccion';
+
+import Aviso
+    from '../components/Aviso';
+
+import useAvisoExito
+    from '../components/useAvisoExito';
 
 import FondoPantalla
     from '../components/FondoPantalla';
@@ -120,6 +127,35 @@ export default function DetalleAveScreen({
         huevos,
         setHuevos
     ] = useState([]);
+
+
+    // Aviso de éxito que llega de Salud por el parámetro de ruta `avisoSalud`; se limpia el
+    // parámetro tras mostrarlo para que no reaparezca al volver a la ficha.
+    const {
+        aviso,
+        mostrar: mostrarAviso,
+        cerrar: cerrarAviso
+    } = useAvisoExito();
+
+    const avisoSalud =
+        route.params?.avisoSalud;
+
+    useEffect(() => {
+
+        if(avisoSalud){
+
+            mostrarAviso(
+                avisoSalud.titulo,
+                avisoSalud.mensaje
+            );
+
+            navigation.setParams({
+                avisoSalud:undefined
+            });
+
+        }
+
+    }, [avisoSalud]);
 
 
     // Migas: las pantallas hijas muestran "Aves › {código}"
@@ -1104,6 +1140,17 @@ export default function DetalleAveScreen({
 
 
         </ScrollView>
+
+        {aviso ? (
+            <Aviso
+                flotante
+                tono="exito"
+                duracion={0}
+                titulo={aviso.titulo}
+                mensaje={aviso.mensaje}
+                onCerrar={cerrarAviso}
+            />
+        ) : null}
 
         </FondoPantalla>
 

@@ -58,7 +58,10 @@ export default function LoginScreen({
             setError(null);
 
             v.fallar(
-                !email.trim() ? 'email' : 'password',
+                [
+                    !email.trim() && 'email',
+                    !password && 'password'
+                ].filter(Boolean),
                 'Ingresa tu correo y tu contraseña.'
             );
 

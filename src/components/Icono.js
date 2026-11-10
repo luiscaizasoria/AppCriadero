@@ -17,7 +17,12 @@ const ALIAS_SVG = {
     'nutrition-outline': 'grano',
     ave: 'ave',
     'ave-relleno': 'ave-relleno',
-    grano: 'grano'
+    grano: 'grano',
+    // Jaula de barras: reemplaza a 'grid' / 'grid-outline' (cuadrícula) en todas las pantallas.
+    jaula: 'jaula',
+    'jaula-relleno': 'jaula-relleno',
+    'grid-outline': 'jaula',
+    grid: 'jaula-relleno'
 };
 
 function GlifoSvg({ tipo, tamano, color, style, testID, accesible, etiqueta }) {
@@ -43,6 +48,22 @@ function GlifoSvg({ tipo, tamano, color, style, testID, accesible, etiqueta }) {
                 <Ellipse cx="15.6" cy="9.5" rx="1.8" ry="2.9" transform="rotate(35 15.6 9.5)" fill="none" {...trazo} />
                 <Ellipse cx="8.4" cy="15" rx="1.8" ry="2.9" transform="rotate(-35 8.4 15)" fill="none" {...trazo} />
                 <Ellipse cx="15.6" cy="15" rx="1.8" ry="2.9" transform="rotate(35 15.6 15)" fill="none" {...trazo} />
+            </Svg>
+        );
+    }
+    if (tipo === 'jaula' || tipo === 'jaula-relleno') {
+        // Jaula de barras: asa, techo curvo, cuatro barras verticales, base y patas.
+        const lleno = tipo === 'jaula-relleno';
+        return (
+            <Svg {...props}>
+                <Path d="M12 2.5 L12 5" fill="none" {...trazo} />
+                <Path d="M4 19 L4 11 A8 6.5 0 0 1 20 11 L20 19 Z" fill={lleno ? color : 'none'} {...trazo} />
+                <Line x1="8.7" y1="5.4" x2="8.7" y2="19" {...trazo} stroke={lleno ? colors.white : color} />
+                <Line x1="12" y1="5" x2="12" y2="19" {...trazo} stroke={lleno ? colors.white : color} />
+                <Line x1="15.3" y1="5.4" x2="15.3" y2="19" {...trazo} stroke={lleno ? colors.white : color} />
+                <Line x1="2.8" y1="19" x2="21.2" y2="19" {...trazo} />
+                <Line x1="6" y1="19" x2="6" y2="21.5" {...trazo} />
+                <Line x1="18" y1="19" x2="18" y2="21.5" {...trazo} />
             </Svg>
         );
     }

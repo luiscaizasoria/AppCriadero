@@ -8,7 +8,7 @@ import { colors } from '../theme';
 // solo: cada estado lleva un icono distinto.
 const MAPA = {
     NORMAL: { label: 'Normal', tono: 'exito', icono: 'checkmark-circle', franja: colors.success },
-    LIMPIEZA: { label: 'Limpieza', tono: 'info', icono: 'sparkles', franja: colors.info },
+    LIMPIEZA: { label: 'Limpieza', tono: 'info', icono: 'brush', franja: colors.info },
     FUMIGACION: { label: 'Fumigación', tono: 'advertencia', icono: 'cloud', franja: colors.warning },
     QUEMADURA: { label: 'Quemadura', tono: 'peligro', icono: 'flame', franja: colors.danger },
     CUARENTENA: { label: 'Cuarentena', tono: 'peligro', icono: 'ban', franja: colors.danger }
@@ -22,7 +22,7 @@ export function estadoSanitarioJaula(estado) {
 // Iconos de los tipos de sanidad que se eligen en SanidadJaulaScreen (texto del tipo -> icono).
 export const ICONO_TIPO_SANIDAD = {
     Normal: 'checkmark-circle-outline',
-    Limpieza: 'sparkles-outline',
+    Limpieza: 'brush-outline',
     Fumigación: 'cloud-outline',
     Quemadura: 'flame-outline',
     Cuarentena: 'ban-outline'

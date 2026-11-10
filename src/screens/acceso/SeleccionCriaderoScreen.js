@@ -83,7 +83,28 @@ export default function SeleccionCriaderoScreen() {
     const [eligiendoId, setEligiendoId] =
         useState(null);
 
+    const [cerrando, setCerrando] =
+        useState(false);
+
     const guardia = useGuardaEnvio();
+
+    const cerrarSesionGuardado = async () => {
+
+        setCerrando(true);
+
+        try {
+
+            await cerrarSesion();
+
+        }
+        finally {
+
+            setCerrando(false);
+
+        }
+
+    };
+
     const scrollRef = useRef(null);
     const v = useValidacion(scrollRef);
 
@@ -169,7 +190,7 @@ export default function SeleccionCriaderoScreen() {
             setError(null);
 
             v.fallar(
-                Object.keys(datos).find(clave => !datos[clave]),
+                Object.keys(datos).filter(clave => !datos[clave]),
                 'Completa todos los datos del criadero.'
             );
 
@@ -378,8 +399,10 @@ export default function SeleccionCriaderoScreen() {
                     titulo="Cerrar sesión"
                     variante="terciario"
                     icono="cerrarSesion"
-                    onPress={cerrarSesion}
-                    disabled={procesando}
+                    onPress={guardia(cerrarSesionGuardado)}
+                    disabled={procesando || cerrando}
+                    guardando={cerrando}
+                    tituloGuardando="Cerrando..."
                     testID="seleccion-cerrar-sesion"
                 />
 

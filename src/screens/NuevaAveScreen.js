@@ -999,6 +999,14 @@ export default function NuevaAveScreen({
                 padreId === madreId
             ) {
 
+                v.fallar(
+                    ['padre', 'madre'],
+                    [
+                        'El padre y la madre no pueden ser la misma ave.',
+                        'El padre y la madre no pueden ser la misma ave.'
+                    ]
+                );
+
                 Alert.alert(
                     'Padres inválidos',
                     'El padre y la madre no pueden ser la misma ave.'
@@ -1472,6 +1480,11 @@ export default function NuevaAveScreen({
                         'padres_iguales'
                     )
                 ){
+
+                    v.fallar(
+                        ['padre', 'madre'],
+                        'El padre y la madre no pueden ser la misma ave.'
+                    );
 
                     Alert.alert(
                         'Padres inválidos',
@@ -2035,23 +2048,29 @@ export default function NuevaAveScreen({
                             </Text>
 
 
-                            <SelectorAve
-                                aves={
-                                    avesPadres.filter(
-                                        item =>
-                                            item.sexo === 'MACHO'
-                                            ||
-                                            Number(item.id) === Number(padreId)
-                                    )
-                                }
-                                selectedId={
-                                    padreId
-                                }
-                                onSelect={
-                                    setPadreId
-                                }
-                                emptyText="Todavía no existen aves disponibles para seleccionar como padre."
-                            />
+                            <CampoGrupo {...v.grupo('padre')}>
+                                <SelectorAve
+                                    aves={
+                                        avesPadres.filter(
+                                            item =>
+                                                item.sexo === 'MACHO'
+                                                ||
+                                                Number(item.id) === Number(padreId)
+                                        )
+                                    }
+                                    selectedId={
+                                        padreId
+                                    }
+                                    onSelect={
+                                        valor => {
+                                            v.limpiar('padre');
+                                            v.limpiar('madre');
+                                            setPadreId(valor);
+                                        }
+                                    }
+                                    emptyText="Todavía no existen aves disponibles para seleccionar como padre."
+                                />
+                            </CampoGrupo>
 
 
                             <Text
@@ -2063,23 +2082,29 @@ export default function NuevaAveScreen({
                             </Text>
 
 
-                            <SelectorAve
-                                aves={
-                                    avesPadres.filter(
-                                        item =>
-                                            item.sexo === 'HEMBRA'
-                                            ||
-                                            Number(item.id) === Number(madreId)
-                                    )
-                                }
-                                selectedId={
-                                    madreId
-                                }
-                                onSelect={
-                                    setMadreId
-                                }
-                                emptyText="Todavía no existen aves disponibles para seleccionar como madre."
-                            />
+                            <CampoGrupo {...v.grupo('madre')}>
+                                <SelectorAve
+                                    aves={
+                                        avesPadres.filter(
+                                            item =>
+                                                item.sexo === 'HEMBRA'
+                                                ||
+                                                Number(item.id) === Number(madreId)
+                                        )
+                                    }
+                                    selectedId={
+                                        madreId
+                                    }
+                                    onSelect={
+                                        valor => {
+                                            v.limpiar('padre');
+                                            v.limpiar('madre');
+                                            setMadreId(valor);
+                                        }
+                                    }
+                                    emptyText="Todavía no existen aves disponibles para seleccionar como madre."
+                                />
+                            </CampoGrupo>
 
                         </Tarjeta>
 

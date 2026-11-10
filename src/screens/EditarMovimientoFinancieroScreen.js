@@ -488,7 +488,7 @@ export default function EditarMovimientoFinancieroScreen({
                                         accessibilityLabel="Valor del ave en dólares"
                                         icono="cash-outline"
                                         value={valorVenta}
-                                        onChangeText={texto=>setValorVenta(filtrarDecimal(texto))}
+                                        onChangeText={texto=>setValorVenta(texto.replace(/,/g, '.'))}
                                         keyboardType="decimal-pad"
                                         testID="venta-valor-ave"
                                         {...v.props('valorAve')}
@@ -499,7 +499,7 @@ export default function EditarMovimientoFinancieroScreen({
                                         accessibilityLabel="Valor de envío en dólares"
                                         icono="cart-outline"
                                         value={valorEnvio}
-                                        onChangeText={texto=>setValorEnvio(filtrarDecimal(texto))}
+                                        onChangeText={texto=>setValorEnvio(texto.replace(/,/g, '.'))}
                                         keyboardType="decimal-pad"
                                         testID="venta-valor-envio"
                                         {...v.props('valorEnvio')}

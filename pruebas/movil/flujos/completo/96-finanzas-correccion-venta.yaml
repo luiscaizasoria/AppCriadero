@@ -79,12 +79,12 @@ tags:
 - assertNotVisible: ".*Guardar cambios.*"
 - assertVisible: ".*Comprador Fin.*"
 - takeScreenshot: finanzas-corregir-venta
-# Valor invalido: el campo ya filtra letras (solo digitos y un punto), asi que «abc» se vaciaria y V1 lo toma
-# como 0 (valido). Un punto solo sigue siendo no numerico y la validacion de siempre lo rechaza.
+# Valor invalido: en la correccion de venta el campo ya no filtra letras (como V1; solo la coma pasa a punto),
+# asi que «abc» se ve y la validacion de siempre responde «Valor inválido». (El vacio vale 0, como V1.)
 - tapOn:
     id: "venta-valor-ave"
 - eraseText: 10
-- inputText: "."
+- inputText: "abc"
 - hideKeyboard
 - scrollUntilVisible:
     element: ".*Guardar corrección.*"
