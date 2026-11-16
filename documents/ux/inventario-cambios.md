@@ -465,3 +465,7 @@ Detalle y tabla de destinos en `inicio-navegable.md`. Archivos: `InicioScreen`, 
 ## Cards con color por estado (2026-11-16)
 
 Detalle, tabla y contrastes en `colores-estado.md`. Archivos: `src/theme/estados.js` (nuevo; `coloresEstado`, `estiloTarjetaEstado`, `franjaEstado`) y `src/theme/index.js` (reexporta), `JaulaEstado.js` (campo `tarjeta`; franja de Fumigación pasa a `#B45309`), `JaulaCard.js` (fondo y borde por estado, `accessibilityLabel` nuevo con estado sanitario), `aveVisual.js` (campo `tarjeta` en `visualSalud`), `AveCard.js` (fondo y borde por salud solo en aves ACTIVA; `accessibilityLabel` ahora termina en `, salud: X` o `, Vendida/Fallecida`). Sin textos visibles cambiados. Revertir: deshacer estos archivos.
+
+## Quemadura en naranja (2026-11-16)
+
+Decisión del usuario: en la tarjeta de jaula, Quemadura pasa de rojo a naranja de advertencia (`#B45309` / `#FFF1E3`, como V1 y como Fumigación) para separarla de Cuarentena (rojo). Archivo: `src/components/JaulaEstado.js` (tono, franja y `tarjeta` de QUEMADURA). Icono `flame` y texto sin cambio; Quemadura y Fumigación se distinguen por icono y texto. Tabla en `colores-estado.md`. Revertir: devolver `tono: 'peligro'`, `franja: colors.danger`, `tarjeta: 'peligro'` a QUEMADURA.

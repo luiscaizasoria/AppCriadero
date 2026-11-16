@@ -3,7 +3,8 @@ import { colors } from '../theme';
 // Estado sanitario de la jaula presentado con el tema. Mismos estados y textos que V1
 // (`JAULA_SANITARY_STATUS_STYLES` de config/constants: Normal, Limpieza, Fumigación, Quemadura,
 // Cuarentena; cualquier otro valor o vacío cae en Normal). Cada estado conserva su "familia" de
-// color (Normal éxito, Limpieza información, Fumigación advertencia, Quemadura y Cuarentena error);
+// color (Normal éxito, Limpieza información, Fumigación y Quemadura advertencia/naranja como en V1,
+// Cuarentena error); Quemadura y Fumigación se distinguen por icono y texto;
 // el texto del chip usa los pares *Text/*Soft del tema (contraste >= 4,5:1) y el color nunca va
 // solo: cada estado lleva un icono distinto.
 const MAPA = {
@@ -11,7 +12,7 @@ const MAPA = {
     NORMAL: { label: 'Normal', tono: 'exito', icono: 'checkmark-circle', franja: colors.success, tarjeta: 'neutro' },
     LIMPIEZA: { label: 'Limpieza', tono: 'info', icono: 'brush', franja: colors.info, tarjeta: 'info' },
     FUMIGACION: { label: 'Fumigación', tono: 'advertencia', icono: 'cloud', franja: colors.warningSolid, tarjeta: 'advertencia' },
-    QUEMADURA: { label: 'Quemadura', tono: 'peligro', icono: 'flame', franja: colors.danger, tarjeta: 'peligro' },
+    QUEMADURA: { label: 'Quemadura', tono: 'advertencia', icono: 'flame', franja: colors.warningSolid, tarjeta: 'advertencia' },
     CUARENTENA: { label: 'Cuarentena', tono: 'peligro', icono: 'ban', franja: colors.danger, tarjeta: 'peligro' }
 };
 

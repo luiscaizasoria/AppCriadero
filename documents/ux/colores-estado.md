@@ -9,12 +9,14 @@ Tokens en `src/theme/estados.js` (`coloresEstado`, `estiloTarjetaEstado`, `franj
 | Normal (jaula) | Jaulas | neutro | `#FFFFFF` | borde `#E4DDF5` 1 px; franja verde `#12803C` (V1) | `#1B1636` / `#5A5278` | checkmark-circle (chip verde) |
 | Limpieza | Jaulas | info (azul) | `#EEF5FF` | `#1D5FB8` | `#1B1636` / `#5A5278` | brush |
 | Fumigación | Jaulas | advertencia (naranja) | `#FFF1E3` | `#B45309` | `#1B1636` / `#5A5278` | cloud |
-| Quemadura | Jaulas | peligro (rojo) | `#FFEEF0` | `#C0182B` | `#1B1636` / `#5A5278` | flame |
+| Quemadura | Jaulas | advertencia (naranja, como V1) | `#FFF1E3` | `#B45309` | `#1B1636` / `#5A5278` | flame |
 | Cuarentena | Jaulas | peligro (rojo) | `#FFEEF0` | `#C0182B` | `#1B1636` / `#5A5278` | ban |
 | Sana | Aves activas | neutro | `#FFFFFF` | `#E4DDF5` 1 px | igual | checkmark-circle (chip verde) |
 | En tratamiento | Aves activas | advertencia | `#FFF1E3` | `#B45309` | igual | medkit |
 | Enferma | Aves activas | peligro | `#FFEEF0` | `#C0182B` | igual | alert-circle |
 | Vendida / Fallecida | Aves | sin cambio (blanca, como antes) | `#FFFFFF` | `#E4DDF5` | igual | cart-outline / skull-outline |
+
+Nota: Quemadura y Fumigación comparten el tono naranja de advertencia (decisión del usuario, 2026-11-16, para separar Quemadura de Cuarentena, que queda en rojo); se distinguen por icono (flame / cloud) y texto. Contraste ya calculado abajo para ese tono.
 
 Estados leídos del código: `JAULA_SANITARY_STATUS_STYLES` (Normal, Limpieza, Fumigación, Quemadura, Cuarentena; cualquier otro valor cae en Normal) y `visualSalud` (SANA por defecto, EN_TRATAMIENTO, ENFERMA).
 
