@@ -10,6 +10,12 @@ from '../screens/acceso/LoginScreen';
 import RegistroScreen
 from '../screens/acceso/RegistroScreen';
 
+import VerificarCorreoScreen
+from '../screens/acceso/VerificarCorreoScreen';
+
+import CambiarCorreoScreen
+from '../screens/acceso/CambiarCorreoScreen';
+
 import SeleccionCriaderoScreen
 from '../screens/acceso/SeleccionCriaderoScreen';
 
@@ -57,6 +63,16 @@ export default function AccesoNavigator({
                             <Stack.Screen
                                 name="Registro"
                                 component={RegistroScreen}
+                            />
+
+                            <Stack.Screen
+                                name="VerificarCorreo"
+                                component={VerificarCorreoScreen}
+                            />
+
+                            <Stack.Screen
+                                name="CambiarCorreo"
+                                component={CambiarCorreoScreen}
                             />
 
                         </>

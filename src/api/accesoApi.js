@@ -46,7 +46,74 @@ export async function registrarUsuario({
         }
     );
 
+    // Con verificación de correo activa la API no emite token: se devuelve
+    // { verificationRequired, email, expiresIn, resendAfterSeconds } y no se inicia sesión.
+    if (data?.verificationRequired) {
+
+        return data;
+
+    }
+
     await guardarSesion(data);
+
+    return null;
+
+}
+
+
+export async function verifyEmail({
+    email,
+    code
+}) {
+
+    const data = await apiFetch(
+        '/api/v1/auth/verification/verify',
+        {
+            method: 'POST',
+            auth: false,
+            body: { email, code }
+        }
+    );
+
+    await guardarSesion(data);
+
+}
+
+
+export async function resendCode({
+    email
+}) {
+
+    const data = await apiFetch(
+        '/api/v1/auth/verification/resend',
+        {
+            method: 'POST',
+            auth: false,
+            body: { email }
+        }
+    );
+
+    return data;
+
+}
+
+
+export async function changeEmail({
+    email,
+    password,
+    nuevoEmail
+}) {
+
+    const data = await apiFetch(
+        '/api/v1/auth/verification/change-email',
+        {
+            method: 'POST',
+            auth: false,
+            body: { email, password, nuevoEmail }
+        }
+    );
+
+    return data;
 
 }
 

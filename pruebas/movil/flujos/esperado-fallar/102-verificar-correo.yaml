@@ -1,0 +1,52 @@
+# VERIFICAR CORREO: login con cuenta sin verificar -> "Verifica tu correo" -> codigo incorrecto -> codigo correcto -> "Tu criadero".
+# REQUISITOS: el Worker de pruebas debe tener EMAIL_VERIFICATION_REQUIRED=true y el secreto VERIFICATION_BYPASS_SECRET, y el
+# secreto debe estar en el entorno o en pruebas/.entorno.local del PC. Sin eso el flujo FALLA (no hay mecanismo de omision).
+# Necesita el ejecutor: '# SIN-VERIFICAR' -> pasar '--sin-verificar' a preparar.mjs y -e CODIGO a maestro (ver informe del probador).
+# SIN-VERIFICAR
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - acceso
+  - verificacion
+---
+- runFlow:
+    file: ../lib/abrir-app.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+- tapOn: "correo@ejemplo.com"
+- inputText: ${EMAIL}
+- hideKeyboard
+- tapOn:
+    text: "Contraseña"
+    index: 1
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn: "Ingresar"
+- extendedWaitUntil:
+    visible: "Verifica tu correo"
+    timeout: 30000
+- takeScreenshot: verificar-pantalla
+# Codigo incorrecto
+- tapOn:
+    id: "codigo-verificacion"
+- inputText: "000000"
+- hideKeyboard
+- tapOn:
+    id: "btn-verificar"
+- extendedWaitUntil:
+    visible: ".*Código incorrecto o vencido.*"
+    timeout: 20000
+- takeScreenshot: verificar-error
+# Codigo correcto
+- tapOn:
+    id: "codigo-verificacion"
+- eraseText: 6
+- inputText: ${CODIGO}
+- hideKeyboard
+- tapOn:
+    id: "btn-verificar"
+- extendedWaitUntil:
+    visible: "Tu criadero"
+    timeout: 30000
+- takeScreenshot: verificar-listo

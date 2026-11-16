@@ -17,6 +17,10 @@ import defaultInicioRouter from './inicio/inicio.routes';
 export type Env = {
   DB: D1Database;
   JWT_SECRET: string;
+  EMAIL_VERIFICATION_REQUIRED?: string;
+  RESEND_API_KEY?: string;
+  EMAIL_FROM?: string;
+  VERIFICATION_BYPASS_SECRET?: string;
 };
 
 

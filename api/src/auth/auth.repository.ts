@@ -3,7 +3,7 @@
  */
 
 import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types';
-import { v7 as uuidv7 } from 'uuid';
+import { constantTimeCompare } from '../shared/crypto';
 
 export interface UserInfo {
   id: string;
@@ -12,17 +12,32 @@ export interface UserInfo {
   password_hash: string | null;
   active: number;
   deleted_at: string | null;
+  email_verified_at: string | null;
 }
 
 export interface AuthRepository {
   findUserByEmail(email: string): Promise<UserInfo | null>;
   emailExists(email: string): Promise<boolean>;
+  /** verified = true escribe email_verified_at = CURRENT_TIMESTAMP; false lo deja en NULL. */
   createUser(data: {
     id: string;
     email: string;
     nombre: string;
     passwordHash: string;
+    verified: boolean;
   }): Promise<void>;
+  /** Solo cuentas sin verificar: reemplaza nombre y hash de contraseña. */
+  updateUnverifiedCredentials(
+    userId: string,
+    nombre: string,
+    passwordHash: string
+  ): Promise<void>;
+  /** Borrado fisico, solo si la cuenta sigue sin verificar y sin criaderos. */
+  deleteUnverifiedUser(userId: string): Promise<void>;
+  /** Solo cuentas sin verificar: cambia el correo. */
+  changeUnverifiedEmail(userId: string, email: string): Promise<void>;
+  /** Limpieza oportunista: borra hasta `limit` cuentas sin verificar creadas antes de `cutoff` ('YYYY-MM-DD HH:MM:SS'). */
+  purgeStaleUnverified(cutoff: string, limit: number): Promise<number>;
   getDb(): D1Database;
 }
 
@@ -38,7 +53,8 @@ export class D1AuthRepository implements AuthRepository {
           nombre,
           password_hash,
           active,
-          deleted_at
+          deleted_at,
+          email_verified_at
         FROM users
         WHERE email = ?
       `)
@@ -62,14 +78,79 @@ export class D1AuthRepository implements AuthRepository {
     email: string;
     nombre: string;
     passwordHash: string;
+    verified: boolean;
   }): Promise<void> {
     await this.db
       .prepare(`
-        INSERT INTO users (id, email, nombre, password_hash, active)
-        VALUES (?, ?, ?, ?, 1)
+        INSERT INTO users (id, email, nombre, password_hash, active, email_verified_at)
+        VALUES (?, ?, ?, ?, 1, CASE WHEN ? = 1 THEN CURRENT_TIMESTAMP ELSE NULL END)
       `)
-      .bind(data.id, data.email, data.nombre, data.passwordHash)
+      .bind(
+        data.id,
+        data.email,
+        data.nombre,
+        data.passwordHash,
+        data.verified ? 1 : 0
+      )
       .run();
+  }
+
+  async updateUnverifiedCredentials(
+    userId: string,
+    nombre: string,
+    passwordHash: string
+  ): Promise<void> {
+    await this.db
+      .prepare(`
+        UPDATE users
+           SET nombre = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND email_verified_at IS NULL
+      `)
+      .bind(nombre, passwordHash, userId)
+      .run();
+  }
+
+  async deleteUnverifiedUser(userId: string): Promise<void> {
+    await this.db
+      .prepare(`
+        DELETE FROM users
+         WHERE id = ?
+           AND email_verified_at IS NULL
+           AND NOT EXISTS (SELECT 1 FROM criaderos c WHERE c.user_id = users.id)
+      `)
+      .bind(userId)
+      .run();
+  }
+
+  async changeUnverifiedEmail(userId: string, email: string): Promise<void> {
+    await this.db
+      .prepare(`
+        UPDATE users
+           SET email = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND email_verified_at IS NULL
+      `)
+      .bind(email, userId)
+      .run();
+  }
+
+  async purgeStaleUnverified(cutoff: string, limit: number): Promise<number> {
+    const result = await this.db
+      .prepare(`
+        DELETE FROM users
+         WHERE id IN (
+           SELECT u.id FROM users u
+            WHERE u.email_verified_at IS NULL
+              AND u.google_sub IS NULL
+              AND u.created_at < ?
+              AND NOT EXISTS (SELECT 1 FROM criaderos c WHERE c.user_id = u.id)
+            ORDER BY u.created_at
+            LIMIT ?
+         )
+      `)
+      .bind(cutoff, limit)
+      .run();
+
+    return result.meta?.changes ?? 0;
   }
 
   getDb(): D1Database {
@@ -172,17 +253,4 @@ export async function verifyPassword(
   } catch (error) {
     return false;
   }
-}
-
-function constantTimeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-
-  return result === 0;
 }

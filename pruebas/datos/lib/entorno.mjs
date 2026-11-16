@@ -29,6 +29,18 @@ export function urlApi() {
     return url;
 }
 
+// Opcional: VERIFICATION_BYPASS_SECRET (entorno o pruebas/.entorno.local). Nunca se imprime.
+export function secretoVerificacion() {
+    const deEntorno = (process.env.VERIFICATION_BYPASS_SECRET || '').trim();
+    if (deEntorno) return deEntorno;
+    if (!fs.existsSync(ARCHIVO_LOCAL)) return '';
+    const linea = fs.readFileSync(ARCHIVO_LOCAL, 'utf8')
+        .split(/\r?\n/)
+        .map(l => l.trim())
+        .find(l => /^VERIFICATION_BYPASS_SECRET\s*=/.test(l));
+    return linea ? linea.slice(linea.indexOf('=') + 1).trim().replace(/^["']|["']$/g, '') : '';
+}
+
 export function claveAleatoria() {
     return `Aa1-${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
 }

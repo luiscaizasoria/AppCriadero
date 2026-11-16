@@ -79,11 +79,24 @@ export default function RegistroScreen({
 
             setError(null);
 
-            await registrarUsuario({
+            const pendiente = await registrarUsuario({
                 nombre: nombre.trim(),
                 email: email.trim(),
                 password
             });
+
+            if (pendiente?.verificationRequired) {
+
+                navigation.navigate(
+                    'VerificarCorreo',
+                    {
+                        email: pendiente.email || email.trim(),
+                        hasActiveCode: true,
+                        resendAfterSeconds: pendiente.resendAfterSeconds
+                    }
+                );
+
+            }
 
         }
         catch (err) {

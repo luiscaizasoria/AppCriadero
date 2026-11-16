@@ -7,7 +7,7 @@
 export class FakeAuthRepository implements AuthRepository {
 
 
-  private users: UserInfo[] = [];
+  users: (UserInfo & { created_at?: string })[] = [];
 
 
   async findUserByEmail(email: string): Promise<UserInfo | null> {
@@ -33,6 +33,7 @@ export class FakeAuthRepository implements AuthRepository {
     email: string;
     nombre: string;
     passwordHash: string;
+    verified: boolean;
   }): Promise<void> {
 
 
@@ -48,9 +49,61 @@ export class FakeAuthRepository implements AuthRepository {
 
       active: 1,
 
-      deleted_at: null
+      deleted_at: null,
+
+      email_verified_at: data.verified ? "2026-01-01 00:00:00" : null
 
     });
+
+  }
+
+
+  async updateUnverifiedCredentials(
+    userId: string,
+    nombre: string,
+    passwordHash: string
+  ): Promise<void> {
+
+    const user = this.users.find(
+      x => x.id === userId && x.email_verified_at === null
+    );
+
+    if(user){
+      user.nombre = nombre;
+      user.password_hash = passwordHash;
+    }
+
+  }
+
+
+  async deleteUnverifiedUser(userId: string): Promise<void> {
+
+    this.users = this.users.filter(
+      x => !(x.id === userId && x.email_verified_at === null)
+    );
+
+  }
+
+
+  async changeUnverifiedEmail(
+    userId: string,
+    email: string
+  ): Promise<void> {
+
+    const user = this.users.find(
+      x => x.id === userId && x.email_verified_at === null
+    );
+
+    if(user){
+      user.email = email;
+    }
+
+  }
+
+
+  async purgeStaleUnverified(): Promise<number> {
+
+    return 0;
 
   }
 

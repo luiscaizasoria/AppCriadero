@@ -83,6 +83,23 @@ export default function LoginScreen({
         }
         catch (err) {
 
+            if (err?.code === 'EMAIL_NOT_VERIFIED') {
+
+                const info = err.data?.data || {};
+
+                navigation.navigate(
+                    'VerificarCorreo',
+                    {
+                        email: info.email || email.trim(),
+                        hasActiveCode: info.hasActiveCode !== false,
+                        resendAfterSeconds: info.resendAfterSeconds
+                    }
+                );
+
+                return;
+
+            }
+
             setError(
                 err?.message ||
                 'No fue posible iniciar sesión.'
