@@ -1,0 +1,101 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-P:MACHO:JX-1
+# COLORES POR ESTADO (UX parte 2): la tarjeta cambia de color segun el estado, pero el estado SIEMPRE se lee como
+# texto (chip). Se pone la jaula JX-1 en Cuarentena (Sanidad) y el ave AV-P En tratamiento (Salud: Coriza) y se
+# comprueba el TEXTO en las listas (el color no se puede verificar por texto: ver capturas). Las tarjetas tienen
+# accessibilityLabel nuevo ("JX-1, N aves, estado sanitario Cuarentena" / "AV-P, raza, salud: En tratamiento"):
+# los patrones ".*JX-1.*" y ".*AV-P.*" siguen coincidiendo. No se prueba el orden ni los filtros.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - colores-estado
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+# Jaula en Cuarentena
+- tapOn:
+    point: "30%,96%"
+- extendedWaitUntil:
+    visible: ".*JX-1.*"
+    timeout: 20000
+- takeScreenshot: colores-jaula-normal
+- tapOn: ".*JX-1.*"
+- extendedWaitUntil:
+    visible: "Detalle de jaula"
+    timeout: 20000
+- scrollUntilVisible:
+    element: ".*Sanidad"
+- tapOn: ".*Sanidad"
+- tapOn: ".*Cuarentena.*"
+- tapOn: ".*Detalle de la actividad sanitaria.*"
+- inputText: "Aislamiento por prueba"
+- hideKeyboard
+- scrollUntilVisible:
+    element: ".*Guardar sanidad.*"
+- tapOn: ".*Guardar sanidad.*"
+- extendedWaitUntil:
+    visible: "Sanidad registrada"
+    timeout: 15000
+- extendedWaitUntil:
+    notVisible: "Sanidad registrada"
+    timeout: 10000
+# Volver a la lista de jaulas: la tarjeta muestra el texto del estado (chip) y la etiqueta nueva
+- scrollUntilVisible:
+    element: "Volver"
+    direction: UP
+- tapOn:
+    text: "Volver"
+- extendedWaitUntil:
+    visible: ".*Nueva jaula.*"
+    timeout: 15000
+- extendedWaitUntil:
+    visible: "Cuarentena"
+    timeout: 20000
+- assertVisible: "Estado sanitario"
+- assertVisible: ".*JX-1.*"
+- takeScreenshot: colores-jaula-cuarentena
+# Ave En tratamiento
+- tapOn:
+    point: "50%,96%"
+- extendedWaitUntil:
+    visible: ".*AV-P.*"
+    timeout: 20000
+- takeScreenshot: colores-ave-sana
+- tapOn: ".*AV-P.*"
+- extendedWaitUntil:
+    visible: "Ficha del ave"
+    timeout: 20000
+- scrollUntilVisible:
+    element: ".*Salud"
+- tapOn: ".*Salud"
+- extendedWaitUntil:
+    visible: ".*Coriza.*"
+    timeout: 20000
+- tapOn: ".*Coriza.*"
+- scrollUntilVisible:
+    element: ".*Guardar diagnóstico.*"
+- tapOn: ".*Guardar diagnóstico.*"
+# Salud vuelve sola a la ficha (flujo 60)
+- extendedWaitUntil:
+    visible: "Ficha del ave"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: ".*En tratamiento.*"
+    timeout: 20000
+- tapOn:
+    text: "Volver"
+- extendedWaitUntil:
+    notVisible: "Ficha del ave"
+    timeout: 15000
+- extendedWaitUntil:
+    visible: ".*AV-P.*"
+    timeout: 20000
+- extendedWaitUntil:
+    visible: "En tratamiento"
+    timeout: 20000
+- takeScreenshot: colores-ave-en-tratamiento

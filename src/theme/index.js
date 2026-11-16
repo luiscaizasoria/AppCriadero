@@ -6,6 +6,7 @@ import { shadows } from './shadows';
 import { icons } from './icons';
 
 export { colors, acentos, typography, spacing, radii, shadows, icons };
+export { coloresEstado, estiloTarjetaEstado, franjaEstado } from './estados';
 export { useReducirMovimiento, useAnimacionesReducidas } from './movimiento';
 
 export const theme = { colors, acentos, typography, spacing, radii, shadows, icons };

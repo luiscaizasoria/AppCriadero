@@ -9,6 +9,7 @@ import {
 
 import {
     colors,
+    estiloTarjetaEstado,
     spacing,
     typography
 } from '../theme';
@@ -74,8 +75,17 @@ function AveCard({
         <Tarjeta
             onPress={alPulsar}
             testID={`lista-ave-${ave.codigo}`}
+            style={
+                ave.estado === 'ACTIVA'
+                    ? estiloTarjetaEstado(salud.tarjeta)
+                    : undefined
+            }
             accessibilityLabel={
-                `${ave.codigo}, ${ave.raza || 'Sin raza'}`
+                `${ave.codigo}, ${ave.raza || 'Sin raza'}${
+                    ave.estado === 'ACTIVA'
+                        ? `, salud: ${salud.texto}`
+                        : `, ${estadoVisual.texto}`
+                }`
             }
         >
 

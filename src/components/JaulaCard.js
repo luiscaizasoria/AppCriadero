@@ -8,6 +8,7 @@ import {
 
 import {
     colors,
+    estiloTarjetaEstado,
     spacing,
     typography
 } from '../theme';
@@ -50,8 +51,12 @@ export default function JaulaCard({
 
         <Tarjeta
             franja={estado.franja}
+            style={estiloTarjetaEstado(estado.tarjeta)}
             onPress={onPress}
             testID={testID}
+            accessibilityLabel={
+                `${jaula.codigo}${jaula.nombre ? `, ${jaula.nombre}` : ''}, ${cantidadAves} ${cantidadAves === 1 ? 'ave' : 'aves'}, estado sanitario ${estado.label}`
+            }
         >
 
             <View style={styles.header}>

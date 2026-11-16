@@ -6,12 +6,13 @@ import { colors } from '../theme';
 // Estado de salud -> chip (texto, tono de Chip, icono)
 export function visualSalud(estado) {
     if (estado === 'EN_TRATAMIENTO') {
-        return { texto: 'En tratamiento', tono: 'advertencia', icono: 'medkit' };
+        return { texto: 'En tratamiento', tono: 'advertencia', icono: 'medkit', tarjeta: 'advertencia' };
     }
     if (estado === 'ENFERMA') {
-        return { texto: 'Enferma', tono: 'peligro', icono: 'alert-circle' };
+        return { texto: 'Enferma', tono: 'peligro', icono: 'alert-circle', tarjeta: 'peligro' };
     }
-    return { texto: 'Sana', tono: 'exito', icono: 'checkmark-circle' };
+    // `tarjeta` = familia de color de la tarjeta completa (theme/estados.js); Sana queda neutra.
+    return { texto: 'Sana', tono: 'exito', icono: 'checkmark-circle', tarjeta: 'neutro' };
 }
 
 // Sexo -> texto e icono (el texto Macho/Hembra se mantiene)

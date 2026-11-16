@@ -461,3 +461,7 @@ Sin cambios de lógica, repositorios, importes, periodos (UTC), exportación CSV
 ## Inicio navegable (2026-11-16)
 
 Detalle y tabla de destinos en `inicio-navegable.md`. Archivos: `InicioScreen`, `AvesScreen` (parámetros iniciales y filtro de raza «Sin raza»), `JaulasScreen` y `FinanzasScreen` (sin cabecera propia si van apiladas), `InicioStackNavigator` (cinco pantallas registradas), `usePantallaApilada` y `TarjetaEnlace` (nuevos), `MetricCard`, `ProductionMetricCard` y `ProductionInfoCard` (`onPress`). Sin textos visibles cambiados. Revertir: deshacer estos archivos.
+
+## Cards con color por estado (2026-11-16)
+
+Detalle, tabla y contrastes en `colores-estado.md`. Archivos: `src/theme/estados.js` (nuevo; `coloresEstado`, `estiloTarjetaEstado`, `franjaEstado`) y `src/theme/index.js` (reexporta), `JaulaEstado.js` (campo `tarjeta`; franja de Fumigación pasa a `#B45309`), `JaulaCard.js` (fondo y borde por estado, `accessibilityLabel` nuevo con estado sanitario), `aveVisual.js` (campo `tarjeta` en `visualSalud`), `AveCard.js` (fondo y borde por salud solo en aves ACTIVA; `accessibilityLabel` ahora termina en `, salud: X` o `, Vendida/Fallecida`). Sin textos visibles cambiados. Revertir: deshacer estos archivos.

@@ -7,11 +7,12 @@ import { colors } from '../theme';
 // el texto del chip usa los pares *Text/*Soft del tema (contraste >= 4,5:1) y el color nunca va
 // solo: cada estado lleva un icono distinto.
 const MAPA = {
-    NORMAL: { label: 'Normal', tono: 'exito', icono: 'checkmark-circle', franja: colors.success },
-    LIMPIEZA: { label: 'Limpieza', tono: 'info', icono: 'brush', franja: colors.info },
-    FUMIGACION: { label: 'Fumigación', tono: 'advertencia', icono: 'cloud', franja: colors.warning },
-    QUEMADURA: { label: 'Quemadura', tono: 'peligro', icono: 'flame', franja: colors.danger },
-    CUARENTENA: { label: 'Cuarentena', tono: 'peligro', icono: 'ban', franja: colors.danger }
+    // `tarjeta` = familia de color de la tarjeta completa (theme/estados.js); Normal queda neutra.
+    NORMAL: { label: 'Normal', tono: 'exito', icono: 'checkmark-circle', franja: colors.success, tarjeta: 'neutro' },
+    LIMPIEZA: { label: 'Limpieza', tono: 'info', icono: 'brush', franja: colors.info, tarjeta: 'info' },
+    FUMIGACION: { label: 'Fumigación', tono: 'advertencia', icono: 'cloud', franja: colors.warningSolid, tarjeta: 'advertencia' },
+    QUEMADURA: { label: 'Quemadura', tono: 'peligro', icono: 'flame', franja: colors.danger, tarjeta: 'peligro' },
+    CUARENTENA: { label: 'Cuarentena', tono: 'peligro', icono: 'ban', franja: colors.danger, tarjeta: 'peligro' }
 };
 
 export function estadoSanitarioJaula(estado) {
