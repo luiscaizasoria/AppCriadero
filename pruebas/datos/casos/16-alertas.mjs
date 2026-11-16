@@ -1,9 +1,11 @@
 // ALERTAS con el cliente REST real (solo lectura, calculadas en el servidor): obtenerTodasLasAlertas y
 // obtenerResumenAlertas. Se trabaja en un criadero NUEVO de la cuenta A (arranca vacio). Los datos se cargan por la
 // API (jaulas, aves, diagnosticos, alimentacion, bebida, huevos, ventas y movimientos) con fechas RELATIVAS al reloj:
-// "hoy" = ahora, "ayer" = ahora - 24 h, control de salud = ahora - 10 dias - 1 h (nunca cerca del umbral de 7 dias),
-// movimientos del mes UTC en curso. El esperado se calcula en JS con el algoritmo de V1 (AlertasRepository.sqlite.js):
-// orden salud -> jaulas (alimentacion y luego bebida por jaula) -> produccion -> finanzas. Todo el borrado lo hace la
+// "hoy" = ahora, "ayer" = ahora - 24 h, control de salud = 12:00 UTC del dia (hoy UTC - N), movimientos del mes UTC en
+// curso. El esperado se calcula en JS con el algoritmo de V1 (AlertasRepository.sqlite.js), salvo Salud: excepcion
+// aprobada a la paridad (documents/specs/alertas-del-dia.md): alerta SOLO el dia UTC en que control + 7 dias = hoy UTC
+// ("lleva 7 dias"), ave ACTIVA y EN_TRATAMIENTO.
+// Orden salud -> jaulas (alimentacion y luego bebida por jaula) -> produccion -> finanzas. Todo el borrado lo hace la
 // limpieza de cuentas desechables. Si la prueba cruza la medianoche UTC se aborta con un mensaje claro: repetir.
 import { prueba, assert } from '../lib/arnes.mjs';
 import { ctx, entrarComo } from '../lib/contexto.mjs';
@@ -20,7 +22,10 @@ const HORA = 3600 * 1000;
 const hoyUtc = () => new Date().toISOString().slice(0, 10);
 const mesUtc = () => hoyUtc().slice(0, 7);
 const haceHoras = h => new Date(Date.now() - h * HORA).toISOString();
-const controlHace = dias => haceHoras(dias * 24 + 1);   // 10 dias y 1 hora: el mensaje dice 10, nunca cerca de 7
+// Fecha fija: 12:00 UTC del dia hoy - N (hoy = fecha UTC actual)
+const controlHace = dias => { const d = new Date(); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - dias, 12)).toISOString(); };
+// control + 7 dias (por dia UTC) coincide con hoy UTC
+const venceHoy = control => new Date(Date.parse(control) + 7 * 86400000).toISOString().slice(0, 10) === hoyUtc();
 const sinCruzar = () => assert.equal(hoyUtc(), al.dia0, 'se cruzo la medianoche UTC durante la prueba: repetir');
 
 async function entrarAl() {
@@ -34,9 +39,8 @@ function esperadas(m, ahoraMs) {
     const out = [];
     for (const a of m.aves) {
         if (a.estado !== 'ACTIVA' || a.salud !== 'EN_TRATAMIENTO' || !a.control) continue;
-        const dias = (ahoraMs - Date.parse(a.control)) / 86400000;
-        if (dias >= 7) {
-            out.push({ tipo: 'SALUD', nivel: 'ALTO', titulo: 'Ave en tratamiento prolongado', mensaje: `El ave ${a.codigo} lleva ${Math.floor(dias)} días en tratamiento.`, entidadId: a.id, accion: 'DETALLE_AVE', accionDestino: 'DETALLE_AVE' });
+        if (venceHoy(a.control)) {
+            out.push({ tipo: 'SALUD', nivel: 'ALTO', titulo: 'Ave en tratamiento prolongado', mensaje: `El ave ${a.codigo} lleva 7 días en tratamiento.`, entidadId: a.id, accion: 'DETALLE_AVE', accionDestino: 'DETALLE_AVE' });
         }
     }
     for (const j of m.jaulas.filter(x => x.activa)) {
@@ -108,25 +112,27 @@ prueba(G, 'debe cargar por la API 4 jaulas (una desactivada), 5 aves, cuidados d
     const diag = (aveId, fecha) => saludAve.registrarDiagnostico({ aveId, enfermedad: 'Coriza', sintomas: '', observacion: '', medicamento: 'Oxitetraciclina', dosis: '1 ml', fecha });
     const ids = {};
     ids.SANA = await ave('AL-SANA');                       // sin diagnostico
-    ids.T10 = await ave('AL-T10'); await diag(ids.T10, controlHace(10));     // alerta: 10 dias
-    ids.VEN = await ave('AL-VEN'); await diag(ids.VEN, controlHace(10));     // en tratamiento pero VENDIDA: sin alerta
+    ids.T7 = await ave('AL-T7'); await diag(ids.T7, controlHace(7));         // alerta: vence hoy (7 dias)
+    ids.VEN = await ave('AL-VEN'); await diag(ids.VEN, controlHace(7));      // en tratamiento pero VENDIDA: sin alerta
     ids.T1 = await ave('AL-T1'); await diag(ids.T1, controlHace(1));         // reciente: sin alerta
-    ids.T11 = await ave('AL-T11'); await diag(ids.T11, controlHace(11));     // alerta: 11 dias
+    ids.T8 = await ave('AL-T8'); await diag(ids.T8, controlHace(8));         // ya paso el dia 7: sin alerta
+    ids.T6 = await ave('AL-T6'); await diag(ids.T6, controlHace(6));         // aun no llega: sin alerta
+    ids.T7B = await ave('AL-T7B'); await diag(ids.T7B, controlHace(7));      // alerta: vence hoy (7 dias)
     await bajas.registrarVentaAve({
         aveId: ids.VEN, fechaVenta: '2001-03-10T12:00:00.000Z', celular: '0991234567', ciudadDestino: 'Quito', cooperativaEnvio: '',
         comprador: 'Juan', valorVenta: null, valorEnvio: null, detalle: ''
     });
 
     // Estado real que dejo la API (el esperado usa lo guardado, no lo supuesto)
-    for (const codigo of ['SANA', 'T10', 'VEN', 'T1', 'T11']) {
+    for (const codigo of ['SANA', 'T7', 'VEN', 'T1', 'T8', 'T6', 'T7B']) {
         const x = await aves.obtenerAvePorId(ids[codigo]);
         m.aves.push({ codigo: `AL-${codigo}`, id: ids[codigo], estado: x.estado, salud: x.estado_salud, control: x.fecha_ultimo_control_salud ?? null });
     }
     const por = c => m.aves.find(a => a.codigo === `AL-${c}`);
     assert.equal(por('VEN').estado, 'VENDIDA');
     assert.equal(por('SANA').salud === 'EN_TRATAMIENTO', false, 'la sana no esta en tratamiento');
-    for (const c of ['T10', 'T1', 'T11']) assert.equal(por(c).salud, 'EN_TRATAMIENTO', c);
-    for (const c of ['T10', 'T1', 'T11']) assert.equal(typeof por(c).control, 'string', `control de ${c}`);
+    for (const c of ['T7', 'T1', 'T8', 'T6', 'T7B']) assert.equal(por(c).salud, 'EN_TRATAMIENTO', c);
+    for (const c of ['T7', 'T1', 'T8', 'T6', 'T7B']) assert.equal(typeof por(c).control, 'string', `control de ${c}`);
 
     // Cuidados: J1 alimentacion y bebida de hoy; J3 solo alimentacion de ayer (no cuenta); J4 desactivada sin nada.
     // (J2 desactivada tampoco). Para cubrir "solo alimentacion hoy" se usa una quinta jaula.
@@ -156,12 +162,12 @@ prueba(G, 'debe cargar por la API 4 jaulas (una desactivada), 5 aves, cuidados d
 prueba(G, 'debe devolver el array completo de V1: salud, jaulas (alimentacion y bebida), produccion y finanzas, con claves y textos exactos (ALE-03 a ALE-28)', async () => {
     await entrarAl();
     const lista = await verifica('con datos');
-    // Esperado literal (ademas del calculado): T10 y T11 en tratamiento, J1 completa, J3, J4 y J5 (bebida)
+    // Esperado literal (ademas del calculado): T7 y T7B vencen hoy, J1 completa, J3, J4 y J5 (bebida)
     const m = al.m;
     const idDe = c => m.jaulas.find(j => j.codigo === c).id;
     comparaLista(lista, [
-        { tipo: 'SALUD', nivel: 'ALTO', titulo: 'Ave en tratamiento prolongado', mensaje: 'El ave AL-T10 lleva 10 días en tratamiento.', entidadId: al.ids.T10, accion: 'DETALLE_AVE', accionDestino: 'DETALLE_AVE' },
-        { tipo: 'SALUD', nivel: 'ALTO', titulo: 'Ave en tratamiento prolongado', mensaje: 'El ave AL-T11 lleva 11 días en tratamiento.', entidadId: al.ids.T11, accion: 'DETALLE_AVE', accionDestino: 'DETALLE_AVE' },
+        { tipo: 'SALUD', nivel: 'ALTO', titulo: 'Ave en tratamiento prolongado', mensaje: 'El ave AL-T7 lleva 7 días en tratamiento.', entidadId: al.ids.T7, accion: 'DETALLE_AVE', accionDestino: 'DETALLE_AVE' },
+        { tipo: 'SALUD', nivel: 'ALTO', titulo: 'Ave en tratamiento prolongado', mensaje: 'El ave AL-T7B lleva 7 días en tratamiento.', entidadId: al.ids.T7B, accion: 'DETALLE_AVE', accionDestino: 'DETALLE_AVE' },
         { tipo: 'JAULA', nivel: 'MEDIO', titulo: 'Sin alimentación registrada', mensaje: 'La jaula AL-J3 no tiene alimentación registrada hoy.', entidadId: idDe('AL-J3'), accion: 'DETALLE_JAULA', accionDestino: 'ALIMENTACION_JAULA' },
         { tipo: 'JAULA', nivel: 'MEDIO', titulo: 'Sin bebida registrada', mensaje: 'La jaula AL-J3 no tiene bebida registrada hoy.', entidadId: idDe('AL-J3'), accion: 'DETALLE_JAULA', accionDestino: 'BEBIDA_JAULA' },
         { tipo: 'JAULA', nivel: 'MEDIO', titulo: 'Sin alimentación registrada', mensaje: 'La jaula AL-J4 no tiene alimentación registrada hoy.', entidadId: idDe('AL-J4'), accion: 'DETALLE_JAULA', accionDestino: 'ALIMENTACION_JAULA' },
@@ -248,17 +254,17 @@ prueba(G, 'debe aislar alertas entre cuentas: B recibe 403 y desde su criadero n
     assert.deepEqual(await a_().obtenerTodasLasAlertas(), soloProd);
     assert.deepEqual(await a_().obtenerResumenAlertas(), { total: 1, criticas: 0, advertencias: 1 });
 
-    // B repite codigos de A: un ave en tratamiento hace 10 dias y una jaula con cuidados de hoy
+    // B repite codigos de A: un ave en tratamiento hace 7 dias y una jaula con cuidados de hoy
     const jB = await jaulas.crearJaula({ codigo: 'AL-J1', nombre: 'Uno', ubicacion: 'Patio', tipo: 'General' });
-    const aveB = await aves.crearAve({ codigo: 'AL-T10', origen: 'COMPRADA', fechaIngreso: '2026-01-10', edadMesesCompra: 6, raza: 'Criolla', sexo: 'HEMBRA' });
-    await saludAve.registrarDiagnostico({ aveId: aveB, enfermedad: 'Coriza', sintomas: '', observacion: '', medicamento: 'Oxitetraciclina', dosis: '1 ml', fecha: controlHace(10) });
+    const aveB = await aves.crearAve({ codigo: 'AL-T7', origen: 'COMPRADA', fechaIngreso: '2026-01-10', edadMesesCompra: 6, raza: 'Criolla', sexo: 'HEMBRA' });
+    await saludAve.registrarDiagnostico({ aveId: aveB, enfermedad: 'Coriza', sintomas: '', observacion: '', medicamento: 'Oxitetraciclina', dosis: '1 ml', fecha: controlHace(7) });
     const cuidado = { tipo: 'Balanceado', cantidad: null, detalle: null };
     await alimentacion.registrarAlimentacion({ jaulaId: jB, fecha: new Date().toISOString(), ...cuidado });
     await bebida.registrarBebida({ jaulaId: jB, fecha: new Date().toISOString(), ...cuidado });
     const lista = await a_().obtenerTodasLasAlertas();
     sinCruzar();
     assert.deepEqual(lista, [
-        { tipo: 'SALUD', nivel: 'ALTO', titulo: 'Ave en tratamiento prolongado', mensaje: 'El ave AL-T10 lleva 10 días en tratamiento.', entidadId: aveB, accion: 'DETALLE_AVE', accionDestino: 'DETALLE_AVE' },
+        { tipo: 'SALUD', nivel: 'ALTO', titulo: 'Ave en tratamiento prolongado', mensaje: 'El ave AL-T7 lleva 7 días en tratamiento.', entidadId: aveB, accion: 'DETALLE_AVE', accionDestino: 'DETALLE_AVE' },
         ...soloProd
     ]);
     const idsA = [...Object.values(al.ids), ...al.m.jaulas.map(j => j.id)];

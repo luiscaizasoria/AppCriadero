@@ -193,41 +193,97 @@ describe("Alertas D1 local (SQLite en memoria)", () => {
     expect(a.map((x) => x.entidadId)).toEqual(["jf-2", "jf-2", "jf-3", "jf-3", "jf-4", "jf-4"]);
   });
 
-  it("debe alertar la salud segun dias, estado y fecha de control (ALE-10..17)", async () => {
+  // Excepcion aprobada a V1 (documents/specs/alertas-del-dia.md): Salud alerta SOLO el dia UTC en que
+  // control + 7 dias = hoy. AHORA = 2026-11-05T15:00Z, asi que el control "de hoy - 7" cae el 2026-10-29.
+  it("debe alertar la salud solo el dia en que control + 7 dias es hoy UTC (SAL-01..05, SAL-10, SAL-11, SAL-12)", async () => {
     await borrarJaulas(A.criaderoId);
     await lote([
       insAve(A.criaderoId, "as-1", "K001", { salud: "EN_TRATAMIENTO", control: hace(8 * DIA) }),
-      insAve(A.criaderoId, "as-2", "K002", { salud: "EN_TRATAMIENTO", control: hace(7.9 * DIA) }),
-      insAve(A.criaderoId, "as-3", "K003", { salud: "EN_TRATAMIENTO", control: hace(7 * DIA - 1000) }),
+      insAve(A.criaderoId, "as-2", "K002", { salud: "EN_TRATAMIENTO", control: hace(7 * DIA) }),
+      insAve(A.criaderoId, "as-3", "K003", { salud: "EN_TRATAMIENTO", control: hace(6 * DIA) }),
       insAve(A.criaderoId, "as-4", "K004", { salud: "EN_TRATAMIENTO", control: null }),
       insAve(A.criaderoId, "as-5", "K005", { salud: "EN_TRATAMIENTO", control: "no es fecha" }),
       insAve(A.criaderoId, "as-6", "K006", { salud: "EN_TRATAMIENTO", control: hace(-3 * DIA) }),
-      insAve(A.criaderoId, "as-7", "K007", { salud: "EN_TRATAMIENTO", control: hace(9 * DIA), estado: "VENDIDA" }),
-      insAve(A.criaderoId, "as-8", "K008", { salud: "EN_TRATAMIENTO", control: hace(9 * DIA), estado: "FALLECIDA" }),
-      insAve(A.criaderoId, "as-9", "K009", { salud: "ENFERMA", control: hace(9 * DIA) }),
-      insAve(A.criaderoId, "as-10", "K010", { salud: "SANA", control: hace(9 * DIA) }),
-      insAve(A.criaderoId, "as-11", "K011", { salud: null, control: hace(9 * DIA) }),
-      insAve(A.criaderoId, "as-12", "K012", { salud: "EN_TRATAMIENTO", control: "2026-10-28 14:00:00" }),
-      insAve(A.criaderoId, "as-13", "K013", { salud: "EN_TRATAMIENTO", control: "2026-10-28T09:00:00-05:00" }),
+      insAve(A.criaderoId, "as-7", "K007", { salud: "EN_TRATAMIENTO", control: hace(7 * DIA), estado: "VENDIDA" }),
+      insAve(A.criaderoId, "as-8", "K008", { salud: "EN_TRATAMIENTO", control: hace(7 * DIA), estado: "FALLECIDA" }),
+      insAve(A.criaderoId, "as-9", "K009", { salud: "ENFERMA", control: hace(7 * DIA) }),
+      insAve(A.criaderoId, "as-10", "K010", { salud: "SANA", control: hace(7 * DIA) }),
+      insAve(A.criaderoId, "as-11", "K011", { salud: null, control: hace(7 * DIA) }),
+      insAve(A.criaderoId, "as-12", "K012", { salud: "EN_TRATAMIENTO", control: "2026-10-29 14:00:00" }),
+      insAve(A.criaderoId, "as-13", "K013", { salud: "EN_TRATAMIENTO", control: "2026-10-29T00:00:00.000Z" }),
+      insAve(A.criaderoId, "as-14", "K014", { salud: "EN_TRATAMIENTO", control: "2026-10-29T23:59:59.999Z" }),
+      insAve(A.criaderoId, "as-15", "K015", { salud: "EN_TRATAMIENTO", control: hace(30 * DIA) }),
       insAve(B.criaderoId, "asb-1", "K001", { salud: "EN_TRATAMIENTO", control: hace(30 * DIA) }),
     ]);
     const a = (await alertas()).filter((x) => x.tipo === "SALUD");
 
+    expect(a.map((x) => x.entidadId)).toEqual(["as-2", "as-12", "as-13", "as-14"]);
     expect(a.map((x) => x.mensaje)).toEqual([
-      "El ave K001 lleva 8 días en tratamiento.",
       "El ave K002 lleva 7 días en tratamiento.",
-      "El ave K012 lleva 8 días en tratamiento.",
-      "El ave K013 lleva 8 días en tratamiento.",
+      "El ave K012 lleva 7 días en tratamiento.",
+      "El ave K013 lleva 7 días en tratamiento.",
+      "El ave K014 lleva 7 días en tratamiento.",
     ]);
-    expect(a.map((x) => x.entidadId)).toEqual(["as-1", "as-2", "as-12", "as-13"]);
+  });
+
+  it("debe alertar la salud un solo dia y no volver al dia siguiente (SAL-06)", async () => {
+    await sql(`DELETE FROM aves WHERE criadero_id IN (?, ?) AND codigo LIKE 'K%'`, A.criaderoId, B.criaderoId).run();
+    await lote([insAve(A.criaderoId, "ad-1", "K101", { salud: "EN_TRATAMIENTO", control: "2026-10-29T15:00:00.000Z" })]);
+    const salud = async () => (await alertas()).filter((x) => x.tipo === "SALUD").map((x) => x.entidadId);
+
+    contador.reloj = "2026-11-04T15:00:00.000Z";
+    expect(await salud()).toEqual([]);
+    contador.reloj = "2026-11-05T15:00:00.000Z";
+    expect(await salud()).toEqual(["ad-1"]);
+    contador.reloj = "2026-11-06T15:00:00.000Z";
+    expect(await salud()).toEqual([]);
+    contador.reloj = "2026-11-30T15:00:00.000Z";
+    expect(await salud()).toEqual([]);
+    contador.reloj = AHORA;
+  });
+
+  it("debe reiniciar el plazo de salud con un control nuevo (SAL-07)", async () => {
+    await sql(`DELETE FROM aves WHERE criadero_id IN (?, ?) AND codigo LIKE 'K%'`, A.criaderoId, B.criaderoId).run();
+    await lote([insAve(A.criaderoId, "ar-1", "K201", { salud: "EN_TRATAMIENTO", control: "2026-10-27T15:00:00.000Z" })]);
+    // diagnostico nuevo el 2026-10-30: el plazo viejo (vencia el 11-03) ya no cuenta
+    await sql(`UPDATE aves SET fecha_ultimo_control_salud = ? WHERE id = 'ar-1'`, "2026-10-30T10:00:00.000Z").run();
+    const salud = async () => (await alertas()).filter((x) => x.tipo === "SALUD").map((x) => x.entidadId);
+
+    contador.reloj = "2026-11-03T15:00:00.000Z";
+    expect(await salud()).toEqual([]);
+    contador.reloj = "2026-11-05T15:00:00.000Z";
+    expect(await salud()).toEqual([]);
+    contador.reloj = "2026-11-06T15:00:00.000Z";
+    expect(await salud()).toEqual(["ar-1"]);
+    contador.reloj = "2026-11-07T15:00:00.000Z";
+    expect(await salud()).toEqual([]);
+    contador.reloj = AHORA;
+  });
+
+  it("debe usar la fecha UTC del control y no la hora local con desplazamiento (SAL-08, SAL-09)", async () => {
+    await sql(`DELETE FROM aves WHERE criadero_id IN (?, ?) AND codigo LIKE 'K%'`, A.criaderoId, B.criaderoId).run();
+    await lote([
+      // = 2026-10-30T01:00Z: el plazo vence el 11-06 UTC, no el 11-05
+      insAve(A.criaderoId, "ao-1", "K301", { salud: "EN_TRATAMIENTO", control: "2026-10-29T20:00:00-05:00" }),
+      // cambio de mes: 2026-10-31 + 7 = 2026-11-07
+      insAve(A.criaderoId, "ao-2", "K302", { salud: "EN_TRATAMIENTO", control: "2026-10-31" }),
+    ]);
+    const salud = async () => (await alertas()).filter((x) => x.tipo === "SALUD").map((x) => x.entidadId);
+
+    expect(await salud()).toEqual([]);
+    contador.reloj = "2026-11-06T10:00:00.000Z";
+    expect(await salud()).toEqual(["ao-1"]);
+    contador.reloj = "2026-11-07T10:00:00.000Z";
+    expect(await salud()).toEqual(["ao-2"]);
+    contador.reloj = AHORA;
   });
 
   it("debe ordenar salud y jaulas por rowid aunque los ids no sean crecientes", async () => {
     await sql(`DELETE FROM aves WHERE criadero_id IN (?, ?) AND codigo LIKE 'K%'`, A.criaderoId, B.criaderoId).run();
     await borrarJaulas(A.criaderoId);
     await lote([
-      insAve(A.criaderoId, "az-9", "Z", { salud: "EN_TRATAMIENTO", control: hace(9 * DIA) }),
-      insAve(A.criaderoId, "az-1", "A", { salud: "EN_TRATAMIENTO", control: hace(9 * DIA) }),
+      insAve(A.criaderoId, "az-9", "Z", { salud: "EN_TRATAMIENTO", control: hace(7 * DIA) }),
+      insAve(A.criaderoId, "az-1", "A", { salud: "EN_TRATAMIENTO", control: hace(7 * DIA) }),
       insJaula(A.criaderoId, "jz-9", "Z01"),
       insJaula(A.criaderoId, "jz-1", "A01"),
     ]);
@@ -292,7 +348,7 @@ describe("Alertas D1 local (SQLite en memoria)", () => {
       insJaula(A.criaderoId, "ia-1", "J01"),
       insJaula(B.criaderoId, "ib-1", "J01"),
       insJaula(B.criaderoId, "ib-2", "J02"),
-      insAve(B.criaderoId, "ib-a1", "K001", { salud: "EN_TRATAMIENTO", control: hace(20 * DIA) }),
+      insAve(B.criaderoId, "ib-a1", "K001", { salud: "EN_TRATAMIENTO", control: hace(7 * DIA) }),
     ]);
     const a = await alertas(A);
     const b = await alertas(B);
@@ -332,7 +388,7 @@ describe("Alertas D1 local (SQLite en memoria)", () => {
       for (let i = 1; i <= 300; i++) {
         const tratamiento = i <= 30;
         st.push(insAve(c, `ga-${i}`, `K${String(i).padStart(4, "0")}`,
-          tratamiento ? { salud: "EN_TRATAMIENTO", control: hace((8 + (i % 5)) * DIA) } : {}));
+          tratamiento ? { salud: "EN_TRATAMIENTO", control: hace((i % 2 === 0 ? 7 : 8) * DIA) } : {}));
       }
       await lote(st);
       const st2: any[] = [];
@@ -353,8 +409,9 @@ describe("Alertas D1 local (SQLite en memoria)", () => {
       console.log("ALERTAS datos grandes (todas las jaulas sin cuidados hoy):", JSON.stringify(muestras));
 
       for (const m of muestras) expect(m.llamadas).toBe(5);
-      // 30 salud + 120 jaula + produccion (huevos solo de dias previos) + finanzas (egresos > ingresos)
-      expect(muestras[0].alertas).toBe(30 + 120 + 1 + 1);
+      // 15 salud (30 en tratamiento, solo los pares con control hace 7 dias) + 120 jaula
+      // + produccion (huevos solo de dias previos) + finanzas (egresos > ingresos)
+      expect(muestras[0].alertas).toBe(15 + 120 + 1 + 1);
 
       // con cuidados hoy en todas las jaulas: sigue en 5 llamadas y quedan menos alertas
       const hoy: any[] = [];
@@ -366,7 +423,7 @@ describe("Alertas D1 local (SQLite en memoria)", () => {
       const r2 = await get(G, c);
       console.log("ALERTAS datos grandes (cuidados hoy):", JSON.stringify({ llamadas: r2.llamadas, ms: Math.round(r2.ms), bytes: r2.texto.length, alertas: r2.body.data.alertas.length }));
       expect(r2.llamadas).toBe(5);
-      expect(r2.body.data.alertas.length).toBe(30 + 1 + 1);
+      expect(r2.body.data.alertas.length).toBe(15 + 1 + 1);
     }, 60000);
   });
 });

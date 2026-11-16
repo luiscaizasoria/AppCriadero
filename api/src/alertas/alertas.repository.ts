@@ -1,4 +1,5 @@
 import type { FilaJaulaAlerta, FilaSaludAlerta, TotalesMes } from './alertas.types';
+import { modificadorPlazoSalud } from './alertas.reglas';
 
 
 export interface AlertasRepository {
@@ -13,11 +14,13 @@ export interface AlertasRepository {
 // 'now' / CURRENT_TIMESTAMP. Parametros posicionales repitiendo el bind. Una llamada a D1 por metodo
 // (sin db.batch, sin bucles): el numero de llamadas no depende de los datos.
 
+// Salud: excepcion aprobada a V1 (alertas.reglas.ts). Solo el dia UTC en que control + plazo = hoy;
+// control NULL, invalido o futuro no coincide (date() devuelve NULL o otra fecha).
 const SQL_SALUD = `
-  SELECT a.id, a.codigo,
-    julianday(?) - julianday(COALESCE(a.fecha_ultimo_control_salud, ?)) AS dias
+  SELECT a.id, a.codigo
   FROM aves a
   WHERE a.criadero_id = ? AND a.estado = 'ACTIVA' AND a.estado_salud = 'EN_TRATAMIENTO'
+    AND date(a.fecha_ultimo_control_salud, ?) = date(?)
   ORDER BY a.rowid ASC`;
 
 const SQL_JAULAS = `
@@ -48,7 +51,7 @@ export class D1AlertasRepository implements AlertasRepository {
   constructor(private db: D1Database) {}
 
   async avesEnTratamiento(criaderoId: string, ahoraIso: string): Promise<FilaSaludAlerta[]> {
-    const r = await this.db.prepare(SQL_SALUD).bind(ahoraIso, ahoraIso, criaderoId).all<FilaSaludAlerta>();
+    const r = await this.db.prepare(SQL_SALUD).bind(criaderoId, modificadorPlazoSalud(), ahoraIso).all<FilaSaludAlerta>();
     return r.results ?? [];
   }
 

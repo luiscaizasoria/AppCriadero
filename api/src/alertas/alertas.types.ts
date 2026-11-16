@@ -18,11 +18,10 @@ export interface Resultado<T> {
   data: T;
 }
 
-/** Fila de aves en tratamiento; `dias` sale de julianday (puede ser null si la fecha no es interpretable). */
+/** Ave en tratamiento cuyo plazo de control se cumple hoy (el filtro de la regla va en SQL). */
 export interface FilaSaludAlerta {
   id: string;
   codigo: string;
-  dias: number | null;
 }
 
 /** Jaula activa con sus dos banderas (0/1) de "sin registro hoy". */

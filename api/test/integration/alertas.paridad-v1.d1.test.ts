@@ -185,9 +185,31 @@ let comparaciones = 0;
 let alertasTotales = 0;
 const tiposVistos = new Set<string>();
 
+/**
+ * EXCEPCION APROBADA a la paridad (documents/specs/alertas-del-dia.md): la alerta de Salud YA NO es paridad con V1.
+ * V1 la repite desde el dia 7 (168 h); V2 solo el dia calendario UTC en que date(control, '+7 days') = date(ahora),
+ * con el texto fijo «lleva 7 días». El esperado de Salud se construye aqui con la forma de V1 (tipo, nivel, titulo,
+ * accion, orden por id de insercion) a partir de un SQLite independiente del servidor; el resto (Jaulas, Produccion,
+ * Finanzas, orden entre tipos) se compara con el V1 REAL en paridad estricta.
+ */
+function saludHoy(e: Entorno): any[] {
+  const filas = e.v1.prepare(
+    `SELECT id, codigo FROM aves WHERE estado = 'ACTIVA' AND estado_salud = 'EN_TRATAMIENTO'
+       AND date(fecha_ultimo_control_salud, '+7 days') = date(?) ORDER BY id ASC`
+  ).all(e.ahora) as Array<{ id: number; codigo: string }>;
+  return filas.map((f) => ({
+    tipo: "SALUD", nivel: "ALTO", titulo: "Ave en tratamiento prolongado",
+    mensaje: `El ave ${f.codigo} lleva 7 días en tratamiento.`,
+    entidadId: f.id, accion: "DETALLE_AVE", accionDestino: "DETALLE_AVE",
+  }));
+}
+
 async function comparar(e: Entorno, escenario: string) {
   holder.db = e.adaptador;
-  const esperado: any[] = await V1.obtenerTodasLasAlertas();
+  const salud = saludHoy(e);
+  const hoy = { size: salud.length };
+  const v1Todas: any[] = await V1.obtenerTodasLasAlertas();
+  const esperado: any[] = [...salud, ...v1Todas.filter((a) => a.tipo !== "SALUD")];
   const r = await e.servicio().obtener(e.A);
   const obtenido = JSON.parse(JSON.stringify(r.data.alertas)).map((a: any) => ({
     ...a,
@@ -209,17 +231,24 @@ async function comparar(e: Entorno, escenario: string) {
   ];
   for (const [fn, tipo] of parciales) {
     comparaciones++;
-    expect(obtenido.filter((a: any) => a.tipo === tipo), `${escenario}: ${fn}`).toStrictEqual(await V1[fn]());
+    const parcialEsperada: any[] = tipo === "SALUD" ? salud : await V1[fn]();
+    expect(obtenido.filter((a: any) => a.tipo === tipo), `${escenario}: ${fn}`).toStrictEqual(parcialEsperada);
   }
 
-  // resumen: V1 vs la formula del cliente REST
+  // resumen: V1 vs la formula del cliente REST (las alertas de Salud de V1 son todas nivel ALTO;
+  // se sustituyen por las que vencen hoy)
   const resumen = await V1.obtenerResumenAlertas();
+  const saludV1 = v1Todas.filter((a) => a.tipo === "SALUD").length;
   comparaciones++;
   expect({
     total: obtenido.length,
     criticas: obtenido.filter((a: any) => a.nivel === "ALTO").length,
     advertencias: obtenido.filter((a: any) => a.nivel === "MEDIO").length,
-  }, `${escenario}: obtenerResumenAlertas`).toStrictEqual(resumen);
+  }, `${escenario}: obtenerResumenAlertas`).toStrictEqual({
+    total: resumen.total - saludV1 + hoy.size,
+    criticas: resumen.criticas - saludV1 + hoy.size,
+    advertencias: resumen.advertencias,
+  });
 
   return esperado;
 }
@@ -249,6 +278,7 @@ describe("Paridad con V1: Alertas", () => {
     await e.ins("a", ave("K3", { estado_salud: "EN_TRATAMIENTO", fecha_ultimo_control_salud: iso(t - 2 * DIA) }));
     await e.ins("a", ave("K7", { estado_salud: "EN_TRATAMIENTO", fecha_ultimo_control_salud: iso(t - 40 * DIA), estado: "FALLECIDA" }));
     await e.ins("a", ave("K2", { estado_salud: "EN_TRATAMIENTO", fecha_ultimo_control_salud: iso(t - 7.9 * DIA) }));
+    await e.ins("a", ave("K8", { estado_salud: "EN_TRATAMIENTO", fecha_ultimo_control_salud: iso(t - 7 * DIA) }));
 
     await e.ins("l", cuidado(jB, iso(t - 1000)), REFS_CUIDADO);
     await e.ins("w", cuidado(jA, iso(t - 2000)), REFS_CUIDADO);
@@ -258,17 +288,15 @@ describe("Paridad con V1: Alertas", () => {
 
     const a = await comparar(e, "principal");
 
-    expect(a.map((x) => x.tipo)).toEqual(["SALUD", "SALUD", "SALUD", "SALUD", "JAULA", "JAULA", "JAULA", "JAULA", "PRODUCCION", "FINANZAS"]);
-    expect(a.slice(0, 4).map((x) => x.mensaje)).toEqual([
-      "El ave K9 lleva 9 días en tratamiento.", "El ave K1 lleva 8 días en tratamiento.",
-      "El ave K5 lleva 30 días en tratamiento.", "El ave K2 lleva 7 días en tratamiento.",
-    ]);
-    expect(a.slice(4, 8).map((x) => `${x.entidadId}:${x.accionDestino}`)).toEqual([
+    // V1 alertaria K9, K1, K5, K2 y K8; con la excepcion aprobada solo K8 (control hace exactamente 7 dias)
+    expect(a.map((x) => x.tipo)).toEqual(["SALUD", "JAULA", "JAULA", "JAULA", "JAULA", "PRODUCCION", "FINANZAS"]);
+    expect(a.slice(0, 1).map((x) => x.mensaje)).toEqual(["El ave K8 lleva 7 días en tratamiento."]);
+    expect(a.slice(1, 5).map((x) => `${x.entidadId}:${x.accionDestino}`)).toEqual([
       `${jZ}:ALIMENTACION_JAULA`, `${jZ}:BEBIDA_JAULA`, `${jB}:BEBIDA_JAULA`, `${jA}:ALIMENTACION_JAULA`,
     ]);
   });
 
-  it("debe coincidir en los bordes del umbral de 7 dias, en varios relojes y formatos de fecha (ALE-11..15)", async () => {
+  it("debe coincidir con la regla de Salud del dia (excepcion aprobada) en los bordes de 7 dias, varios relojes y formatos de fecha (ALE-11..15)", async () => {
     const relojes = [
       "2026-11-05T15:00:00.000Z", "2026-11-05T00:00:00.000Z", "2026-11-05T23:59:59.999Z", "2026-11-05T12:34:56.789Z",
       "2026-11-05T03:07:09.001Z", "2026-03-31T23:59:59.999Z", "2026-12-01T00:00:00.000Z", "2026-11-05T06:30:00.250Z",

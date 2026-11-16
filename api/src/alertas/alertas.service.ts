@@ -1,5 +1,6 @@
 import type { AlertasRepository } from './alertas.repository';
 import type { Alerta, AlertasData, Resultado } from './alertas.types';
+import { DIAS_PLAZO_CONTROL_SALUD } from './alertas.reglas';
 
 
 /**
@@ -24,17 +25,15 @@ export class AlertasService {
     const alertas: Alerta[] = [];
 
     for (const item of tratamiento) {
-      if (Number(item.dias || 0) >= 7) {
-        alertas.push({
-          tipo: 'SALUD',
-          nivel: 'ALTO',
-          titulo: 'Ave en tratamiento prolongado',
-          mensaje: `El ave ${item.codigo} lleva ${Math.floor(item.dias as number)} días en tratamiento.`,
-          entidadId: item.id,
-          accion: 'DETALLE_AVE',
-          accionDestino: 'DETALLE_AVE',
-        });
-      }
+      alertas.push({
+        tipo: 'SALUD',
+        nivel: 'ALTO',
+        titulo: 'Ave en tratamiento prolongado',
+        mensaje: `El ave ${item.codigo} lleva ${DIAS_PLAZO_CONTROL_SALUD} días en tratamiento.`,
+        entidadId: item.id,
+        accion: 'DETALLE_AVE',
+        accionDestino: 'DETALLE_AVE',
+      });
     }
 
     for (const jaula of jaulas) {

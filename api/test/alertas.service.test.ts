@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { AlertasService } from "../src/alertas/alertas.service";
+import { DIAS_PLAZO_CONTROL_SALUD, modificadorPlazoSalud } from "../src/alertas/alertas.reglas";
 import { FakeAlertasRepository } from "./helpers/fake-alertas.repository";
 
 const C = "criadero-1";
@@ -36,14 +37,10 @@ describe("AlertasService", () => {
     expect(await alertas()).toEqual([]);
   });
 
-  it("debe alertar la salud con dias >= 7 y usar Math.floor en el mensaje", async () => {
+  it("debe generar una alerta de salud por cada ave que devuelve el repositorio, con el plazo fijo en el mensaje", async () => {
     repo.sembrar(C, {
       huevosHoy: 1,
-      salud: [
-        { id: "a1", codigo: "K001", dias: 7.9 },
-        { id: "a2", codigo: "K002", dias: 6.999999 },
-        { id: "a3", codigo: "K003", dias: 7 },
-      ],
+      salud: [{ id: "a1", codigo: "K001" }, { id: "a3", codigo: "K003" }],
     });
     const a = await alertas();
 
@@ -57,13 +54,15 @@ describe("AlertasService", () => {
     });
   });
 
-  it("debe ignorar dias null o negativos", async () => {
-    repo.sembrar(C, {
-      huevosHoy: 1,
-      salud: [{ id: "a1", codigo: "K001", dias: null }, { id: "a2", codigo: "K002", dias: -9 }],
-    });
+  it("debe no generar alerta de salud si el repositorio no devuelve aves (la regla del dia vive en SQL)", async () => {
+    repo.sembrar(C, { huevosHoy: 1, salud: [] });
 
     expect(await alertas()).toEqual([]);
+  });
+
+  it("debe fijar el plazo de salud en 7 dias y su modificador de SQLite en un solo lugar", () => {
+    expect(DIAS_PLAZO_CONTROL_SALUD).toBe(7);
+    expect(modificadorPlazoSalud()).toBe("+7 days");
   });
 
   it("debe poner alimentacion antes que bebida en cada jaula y respetar el orden recibido", async () => {
@@ -103,7 +102,7 @@ describe("AlertasService", () => {
 
   it("debe ensamblar salud, jaulas, produccion y finanzas en ese orden", async () => {
     repo.sembrar(C, {
-      salud: [{ id: "a1", codigo: "K001", dias: 8 }],
+      salud: [{ id: "a1", codigo: "K001" }],
       jaulas: [{ id: "j1", codigo: "J01", sin_alimentacion: 1, sin_bebida: 1 }],
       huevosHoy: 0,
       totales: { ingresos: 0, egresos: 5 },
