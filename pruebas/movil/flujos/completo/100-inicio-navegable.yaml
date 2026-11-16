@@ -46,8 +46,9 @@ tags:
     visible:
       id: "buscar-ave"
     timeout: 20000
+# El panel de filtros abierto ocupa la pantalla y «Sin resultados» queda bajo el pliegue: se usa el contador.
 - extendedWaitUntil:
-    visible: "Sin resultados"
+    visible: "0 aves encontradas"
     timeout: 20000
 - assertNotVisible: "AV-IA"
 - takeScreenshot: inicio-nav-tratamiento

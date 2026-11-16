@@ -11,7 +11,7 @@ Rama de trabajo: `trabajo/migracion-nube` (desde `main`; rama única, sin PR; se
 ### Fase 1 — Plataforma base: completada
 
 - Proyecto TypeScript con Cloudflare Workers y Hono en `api/`.
-- D1 con migraciones `0001`–`0004` (hoy el esquema llega a `0011`) y `GET /api/v1/health`.
+- D1 con migraciones `0001`–`0004` (hoy el esquema llega a `0012`) y `GET /api/v1/health`.
 - Arquitectura `routes -> factory -> service -> repository` y composición de `app.ts` inyectable.
 - Pruebas unitarias, HTTP e integración con D1 local.
 
@@ -23,9 +23,11 @@ Completado:
 - Creación de criadero con 42 items de catálogo iniciales (ALIMENTOS con `MORICHILLO` y `BALANCEADO`; BEBIDAS con `AGUA` y `AGUA_VITAMINA`) y configuración.
 - Onboarding: configuración principal, finalizar y consultar estado; control de propiedad y de concurrencia.
 
+Implementado el 2026-11-16 (commits locales, sin push): verificación de cuenta por código (migración `0012`, `/auth/verification/*`, bandera `EMAIL_VERIFICATION_REQUIRED` apagada en todos los entornos) y `POST /api/v1/auth/google` (botón en la app sin la librería instalada; exige development build). Hallazgo IMPORTANTE abierto: no activar Google sin la bandera de verificación encendida. Detalle en `documents/specs/auth-verificacion-google.md`.
+
 Pendiente:
 
-- Google Sign-In (`POST /api/v1/auth/google`).
+- Elegir proveedor de correo, activar la bandera con orden expresa, instalar la librería de Google y probar en dispositivo; recuperación de contraseña.
 - `GET /api/v1/auth/me`.
 - Listado de criaderos del usuario (y detalle, actualización y selección de criadero activo).
 - Decidir el refresh token y el registro (`active` y verificación de correo). Ver "Riesgos y decisiones abiertas" en `arquitectura-v2.md`.
@@ -64,7 +66,8 @@ Estado de los módulos (2026-11-04, rama `trabajo/migracion-nube`):
 - **Huevos, cobertura nueva (2026-11-03):** caso `09b-huevos-formas` y flujo `71-produccion-huevos`.
 - **Alertas**: implementado (2026-11-07), tercer módulo de la fase 6. Sin migración. API de solo lectura en `api/src/alertas/` (un solo `GET /criaderos/:criaderoId/alertas` → `data: { alertas }`; 5 llamadas D1 fijas, sin bucles) y cliente `AlertasRepository.{js,sqlite.js,api.js}` (en modo API solo `obtenerTodasLasAlertas` y `obtenerResumenAlertas`; las cuatro parciales omitidas). Sin excepciones a pantallas V1. Paridad con el código real de V1: 324 comparaciones, 0 diferencias. Probado en integración (167), unitarias/HTTP (333), `/probar datos` 110/110, smoke y flujo `99`; **pendiente:** teléfono; D-2 (orden `rowid` en `expo-sqlite`) y D-3 (punto flotante en bordes) abiertas. Detalle en `documents/specs/alertas.md`.
 - **Inicio**: implementado (2026-11-07), cuarto y último módulo de la fase 6. Sin migración (la siguiente sigue siendo `0012`). API de solo lectura en `api/src/inicio/` (`GET /criaderos/:criaderoId/dashboard`; `data` = objeto del dashboard; 6 llamadas D1 fijas, V1 hacía 12) y cliente `DashboardRepository.{js,sqlite.js,api.js}`. Sin excepciones a pantallas V1. Paridad con el código real de V1: 140 comparaciones, 0 diferencias (desempates: mejor ponedora por `codigo` menor, hora pico por hora mayor). Probado en integración (196), unitarias/HTTP (349), `/probar datos` 115/115, smoke y flujo `94` en ejecución aislada; **pendiente:** teléfono. El `/probar completo` del 2026-11-07 NO es válido (ROJO: regresión del flujo `94` por falta de scroll y tope de 60 min). Detalle en `documents/specs/inicio.md`.
-- **Orden siguiente:** arreglar el scroll del flujo `94`, decidir el tope de tiempo y repetir `/probar completo` una vez; solo con cero regresiones se anota el cierre de la fase 6. Después, comprobación en el teléfono y candidatos R2 (módulo aparte; claves propuestas `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`) y Google Sign-In.
+- **Actualización 2026-11-16:** las alertas de Salud pasaron a mostrarse solo el día UTC en que se cumplen 7 días desde el último control (excepción aprobada a la paridad con V1; `documents/specs/alertas-del-dia.md`). Inicio navegable y colores por estado en jaulas y aves (fase UX: `documents/ux/inicio-navegable.md`, `documents/ux/colores-estado.md`). El último `/probar completo` (2026-11-16) fue ROJO (27 PASO, 5 REGRESION de flujo, ninguna de la app); no hay completo verde del paquete.
+- **Orden siguiente (anterior, 2026-11-07):** arreglar el scroll del flujo `94`, decidir el tope de tiempo y repetir `/probar completo` una vez; solo con cero regresiones se anota el cierre de la fase 6. Después, comprobación en el teléfono y candidatos R2 (módulo aparte; claves propuestas `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`) y Google Sign-In.
 - **Catálogos**: **implementado** en la rama `trabajo/migracion-nube`. Seis endpoints bajo `/api/v1/criaderos/:criaderoId/catalogos` (solo los 7 catálogos básicos), plantilla de criadero de 42 ítems, sin migración nueva y cliente de la app `ConfiguracionRepository.js` (conmutador) con `.sqlite.js` y `.api.js`. Validado con pruebas unitarias, HTTP e integración y con el Worker local. **Pendiente:** validar en el teléfono y redesplegar en el Worker de pruebas. Detalle en `documents/specs/catalogos.md`.
 
 Puerta previa a Aves (actualizada 2026-10-31):

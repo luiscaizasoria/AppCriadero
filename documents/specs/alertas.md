@@ -6,6 +6,8 @@
 
 implementado (2026-11-07)
 
+> **Excepción aprobada a la paridad con V1 (2026-11-16, solo Salud).** La alerta de salud aparece únicamente el día UTC en que `fecha_ultimo_control_salud` + 7 días = hoy (constante `DIAS_PLAZO_CONTROL_SALUD` y `modificadorPlazoSalud()` en `api/src/alertas/alertas.reglas.ts`), con el mensaje «lleva 7 días»; Jaulas, Producción y Finanzas no cambian. Riesgo aceptado: un ave enferma sin control no se recuerda de nuevo. El día se calcula en UTC (en Ecuador cambia a las 19:00 hora local; tarea futura). Lo descrito abajo sobre salud es el comportamiento de V1 anterior a esta excepción; detalle en `documents/specs/alertas-del-dia.md`.
+
 ### Lo implementado (real)
 
 - **API** `api/src/alertas/`: un solo `GET /api/v1/criaderos/:criaderoId/alertas` → `data: { alertas }`. Cinco llamadas D1 fijas (ownership + salud, jaulas, huevos de hoy, totales del mes), sin `batch` ni bucles; las jaulas en UNA consulta con dos `NOT EXISTS` correlacionados. Un único `ahora` ISO por petición con `julianday(?)`/`date(?)`/`strftime(?)`. Orden `[...salud, ...jaulas (alimentación y luego bebida), ...producción, ...finanzas]`, con `ORDER BY rowid ASC` en salud y jaulas. Sin migración. Criadero ajeno o inexistente: 403.

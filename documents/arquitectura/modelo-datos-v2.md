@@ -4,7 +4,7 @@
 
 Este documento registra el modelo de datos de V2 en tres niveles, de mayor a menor autoridad:
 
-1. **Estado real de D1** (migraciones `0001`–`0011`): lo que existe hoy. Si algo no coincide con una decisión posterior, el esquema real y el código prevalecen.
+1. **Estado real de D1** (migraciones `0001`–`0012`): lo que existe hoy. Si algo no coincide con una decisión posterior, el esquema real y el código prevalecen.
 2. **Decisiones y modelos aprobados**: reglas de diseño tomadas de forma incremental.
 3. **Modelo futuro de negocio**: borrador **no aprobado** (sección final), que debe validarse contra el código real de V1 antes de crear migraciones.
 
@@ -16,11 +16,11 @@ Este documento registra el modelo de datos de V2 en tres niveles, de mayor a men
 - **Multi-criadero:** `users 1 — N criaderos 1 — N entidades de negocio`. Los datos se aíslan por `criadero_id`; la propiedad se resuelve por `entidad.criadero_id -> criaderos.user_id`, sin duplicar `user_id` salvo necesidad técnica documentada.
 - **Aves individuales, sin lotes.** El alcance funcional es el de V1.
 - **Fotos:** el binario va a R2; D1 guarda la clave del objeto y metadatos.
-- **El esquema D1 de negocio está parcial.** Hoy están implementadas las tablas descritas en la sección siguiente (hasta `0011`: jaulas, aves, historiales, cuidados de jaula, tratamientos de salud, huevos, bajas, movimientos financieros y su historial); el resto es borrador.
+- **El esquema D1 de negocio está parcial.** Hoy están implementadas las tablas descritas en la sección siguiente (hasta `0012`: jaulas, aves, historiales, cuidados de jaula, tratamientos de salud, huevos, bajas, movimientos financieros y su historial, códigos de verificación de correo y límites de uso); el resto es borrador.
 
 > **Nota sobre la numeración.** Las decisiones #1–#11 se redactaron cuando la arquitectura todavía era offline-first. Se conservan con su numeración porque el código las cita (por ejemplo, `api/src/catalogs/defaultCatalogItems.ts` cita el "Modelo aprobado #11"). Lo que dependía de sincronización fue **reemplazado por online-first** y así se indica en cada caso.
 
-## Estado real de D1 (migraciones 0001–0011)
+## Estado real de D1 (migraciones 0001–0012)
 
 Migraciones aplicadas, en `api/migrations/`:
 
@@ -37,6 +37,7 @@ Migraciones aplicadas, en `api/migrations/`:
 | `0009_huevos.sql` | `huevos` (`codigo` `H`+6 dígitos, `UNIQUE (criadero_id, codigo)` porque el contador es por criadero; `jaula_id` y `observacion` nullable; `estado` por defecto `REGISTRADO`; `fecha_creacion`, sin `version`/`deleted_at`/`CHECK`; FK `RESTRICT` a criaderos, aves y jaulas; índices `ux_huevos_criadero_codigo`, `ix_huevos_ave_fecha`, `ix_huevos_criadero_fecha` e `ix_huevos_jaula`; aplicada en local, integración y base remota de pruebas). El DDL de `huevos` de la sección final (borrador) queda superado por esta migración |
 | `0010_bajas.sql` | `bajas_ave` y `movimientos_financieros` (columnas de V1; `tipo` sin `CHECK`; importes `REAL`; `origen_id TEXT` sin FK, en `VENTA_AVE` es `bajas_ave.id`; `fecha_creacion`, sin `version`/`deleted_at`; FK `RESTRICT` a criaderos y aves; índices `ix_bajas_ave_ave`, `ix_bajas_ave_celular`, `ix_movimientos_criadero_fecha` e `ix_movimientos_origen`; aplicada en local, integración y base remota de pruebas) |
 | `0011_finanzas_historial.sql` | `movimientos_financieros_historial` (auditoría de correcciones; 15 columnas de datos de V1 con su nulabilidad; `accion` sin `CHECK`; `origen_id` sin FK; `id`, `movimiento_id` y `origen_id` `TEXT`; `criadero_id` con FK; FK `RESTRICT` a criaderos y movimientos; sin `fecha_creacion`, `version` ni `deleted_at`; índice `ix_movimientos_historial_movimiento (movimiento_id)`; aplicada en local, integración y base remota de pruebas) |
+| `0012_verificacion_cuenta.sql` | Marca como verificadas (`users.email_verified_at`, columna ya existente desde `0001`) las cuentas existentes; crea `email_verification_codes` (un código activo por cuenta, `UNIQUE(user_id)`, hash con sal, intentos y vigencia; FK `ON DELETE CASCADE` a `users`) y `rate_limits` (ventana fija por `bucket` y `key`, `WITHOUT ROWID`). Aplicada en local, integración y base remota de pruebas. Contrato y DDL en `documents/specs/auth-verificacion-google.md`; el archivo `api/migrations/0012_verificacion_cuenta.sql` prevalece sobre el borrador de la spec |
 
 DDL real de `0011` (`api/migrations/0011_finanzas_historial.sql`, sin los comentarios):
 

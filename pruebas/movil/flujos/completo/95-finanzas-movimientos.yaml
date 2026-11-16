@@ -121,13 +121,14 @@ tags:
     element: ".*Guardar cambios.*"
 - tapOn: ".*Guardar cambios.*"
 # El aviso dura 4 s y el emulador lento puede no verlo: se espera la condición real (vuelta a Finanzas).
+# Finanzas conserva el scroll: el selector «Este mes» puede quedar fuera de pantalla; se espera el saldo nuevo.
 - extendedWaitUntil:
-    visible: "Este mes"
+    visible: ".*\\$16[.]75.*"
     timeout: 30000
 - scrollUntilVisible:
     element: ".*Consolidado por categoría.*"
-- assertVisible: "\\$20[.]00"
-- assertVisible: "\\$16[.]75"
+- assertVisible: ".*\\$20[.]00.*"
+- assertVisible: ".*\\$16[.]75.*"
 - scrollUntilVisible:
     element: ".*Ingreso manual uno.*"
 - assertVisible: ".*\\+\\$20[.]00.*"

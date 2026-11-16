@@ -24,14 +24,16 @@ Ante una contradicción prevalece, de mayor a menor:
 | `src/` | App móvil V1 (React Native + Expo): `screens/`, `repositories/` (acceso a SQLite; se reemplazan uno a uno por clientes REST: `JaulaRepository.js`, `ConfiguracionRepository.js`, `AveRepository.js`, `CicloVidaRepository.js`, `EvolucionAveRepository.js` `EstadoSaludRepository.js`, `SaludRepository.js`, `HuevoRepository.js`, `ProduccionRepository.js`, `ClientesRepository.js`, `ReportesRepository.js`, `AlertasRepository.js` y `DashboardRepository.js` eligen entre `.sqlite.js` y `.api.js`), `api/` (cliente HTTP y sesión del modo API), `screens/acceso/` (registro, inicio de sesión y selección de criadero, solo en modo API), `database/` (migraciones y seeders SQLite V1–V7), `navigation/`, `components/`, `services/` (imágenes), `models/`, `config/` (`dataSource.js`: interruptor SQLite/API) |
 | `App.js`, `index.js`, `app.json`, `eas.json`, `assets/` | Entrada y configuración de la app Expo |
 | `api/src/` | Backend V2 (TypeScript, Cloudflare Workers, Hono): `app.ts` compone los routers, `index.ts` exporta el Worker; módulos `auth/`, `criaderos/`, `jaulas/`, `aves/`, `cuidados/`, `salud/`, `huevos/`, `finanzas/`, `clientes/`, `reportes/`, `alertas/`, `inicio/` y `catalogs/` con el patrón routes → factory → service → repository. Catálogos implementado (2026-10-31): plantilla de criadero de 42 ítems (ALIMENTOS y BEBIDAS con 2 cada uno) |
-| `api/migrations/` | Migraciones D1 `0001`–`0011` (`0011` = movimientos_financieros_historial, aplicada en local, integración y base remota de pruebas; `0010` = bajas_ave y movimientos_financieros, aplicada en local, integración y base remota de pruebas; `0009` = huevos y `0008` = tratamientos_ave, ambas aplicadas en local, integración y base remota de pruebas; `0005` = jaulas, aplicada en local y pruebas; `0006` = aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave, aplicada en local e integración; `0007` = alimentacion_jaula, bebida_jaula y sanidad_jaula, aplicada en local, integración y base remota de pruebas) |
+| `api/migrations/` | Migraciones D1 `0001`–`0012` (`0012` = verificación de cuenta: `email_verification_codes` y `rate_limits`, aplicada en local, integración y base remota de pruebas; `0011` = movimientos_financieros_historial, aplicada en local, integración y base remota de pruebas; `0010` = bajas_ave y movimientos_financieros, aplicada en local, integración y base remota de pruebas; `0009` = huevos y `0008` = tratamientos_ave, ambas aplicadas en local, integración y base remota de pruebas; `0005` = jaulas, aplicada en local y pruebas; `0006` = aves, ave_evolucion, ave_historial, jaula_historial y diagnosticos_ave, aplicada en local e integración; `0007` = alimentacion_jaula, bebida_jaula y sanidad_jaula, aplicada en local, integración y base remota de pruebas) |
 | `api/test/` | Pruebas: unitarias y HTTP (`*.test.ts`), `helpers/` (fakes, adaptador D1 local) e `integration/` (SQLite en memoria con las migraciones aplicadas, vía better-sqlite3) |
 | `.claude/` | Configuración de Claude Code: `settings.json`, `agents/`, `rules/`, `skills/` (ver abajo) |
 | `documents/estado-actual.md` | Resumen de sesión: rama, módulos hechos y pendientes, limitaciones, cómo arrancar y siguiente paso (actualizar al cerrar cada módulo) |
 | `documents/bitacora.md` | Registro de sesiones, la más nueva arriba (lo escribe `/cerrar-dia`); al pasar de 300 líneas se archiva en `historico/bitacora-AAAA-MM.md` |
 | `documents/arquitectura/` | `arquitectura-v2.md` (arquitectura online-first, identidad, riesgos), `modelo-datos-v2.md` (estado real de D1 y borrador del modelo futuro) y `roadmap-v2.md` (siete fases) |
 | `documents/referencia-v1/` | `baseline-v1.md` (funciones y restricciones de V1) y `analisis-v1-mapeo-api.md` (análisis de V1 y mapeo repositorio → endpoint; el Anexo B es literal) |
-| `documents/specs/` | Una spec por módulo (`aves`, `catalogos`, `jaulas`, `cuidados-jaula`, `salud`, `huevos`, `genealogia`, `ciclo-vida`, `bajas`, `finanzas`, `clientes`, `reportes`, `alertas` e `inicio`) y `plantilla-spec.md` (plantilla ligera) |
+| `documents/specs/` | Una spec por módulo (`aves`, `catalogos`, `jaulas`, `cuidados-jaula`, `salud`, `huevos`, `genealogia`, `ciclo-vida`, `bajas`, `finanzas`, `clientes`, `reportes`, `alertas` e `inicio`), `alertas-del-dia.md` (alertas de Salud solo el día del plazo; excepción a la paridad, 2026-11-16), `auth-verificacion-google.md` (verificación de cuenta por código y login con Google) y `plantilla-spec.md` (plantilla ligera) |
+| `documents/ux/inicio-navegable.md` | Fase UX: Inicio navegable, cada tarjeta o métrica abre su destino dentro de la pila de Inicio (2026-11-16) |
+| `documents/ux/colores-estado.md` | Fase UX: colores por estado en tarjetas de jaulas y aves, contraste AA (2026-11-16) |
 | `documents/ux/inventario-actual.md` | Fase UX: inventario de pantallas, componentes y estados de la app antes de los cambios |
 | `documents/ux/diagnostico-navegacion.md` | Fase UX: diagnóstico de los problemas de navegación y orientación |
 | `documents/ux/mapa-navegacion.md` | Fase UX: mapa de navegación de la app |
@@ -106,7 +108,7 @@ El usuario valida en su teléfono con Expo Go (túnel levantado por Claude Code)
 ## Flujo para migrar un módulo
 
 1. Leer la spec del módulo (`documents/specs/<modulo>.md`) y el repositorio V1 con sus pantallas; si no hay spec, pedirla a `analista-codigo-v1` con `plantilla-spec.md`.
-2. Definir los endpoints y la tabla D1 equivalentes (migración nueva `NNNN_*.sql`; jaulas `0005`, aves `0006`; cuidados de jaula `0007`; salud `0008`; huevos `0009`; bajas `0010`; finanzas `0011`; la siguiente, `0012`).
+2. Definir los endpoints y la tabla D1 equivalentes (migración nueva `NNNN_*.sql`; jaulas `0005`, aves `0006`; cuidados de jaula `0007`; salud `0008`; huevos `0009`; bajas `0010`; finanzas `0011`; verificación de cuenta `0012`; la siguiente, `0013`).
 3. Implementar en `api/` siguiendo routes → factory → service → repository.
 4. Crear el cliente REST de la app con la misma interfaz que el repositorio V1 (mismos nombres, mismo objeto devuelto, mismos errores).
 5. Pruebas unitarias, HTTP e integración, más las pruebas de paridad con V1.
@@ -133,6 +135,8 @@ Procedimiento detallado: skill `migrar-repositorio-a-api`.
 - Inicio (sin migración): implementado (2026-11-07), último de la fase 6; un solo `GET /criaderos/:criaderoId/dashboard` en `api/src/inicio/` (6 llamadas D1) y cliente `DashboardRepository.{js,sqlite.js,api.js}`; spec `specs/inicio.md`; pendiente el teléfono. El `/probar completo` del 2026-11-07 no es válido: el cierre de la fase 6 espera uno limpio.
 - Orden siguiente: arreglar el flujo `94`, repetir `/probar completo`; después, a la espera de indicación del usuario (candidatos: teléfono, R2, Google Sign-In).
 - R2 va como módulo aparte; propuesta de claves de objeto: `criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`. Hoy `foto_r2_key` guarda la ruta local.
+
+- Paquete del 2026-11-16 (commits locales): Inicio navegable, colores por estado, alertas de Salud del día, verificación por código (`0012`) y login con Google; detalle en `estado-actual.md`.
 
 ## Pendientes
 
