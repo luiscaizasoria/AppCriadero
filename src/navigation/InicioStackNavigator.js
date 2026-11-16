@@ -13,6 +13,21 @@ import AlertasScreen
 import NuevoMovimientoFinancieroScreen
     from '../screens/NuevoMovimientoFinancieroScreen';
 
+import AvesScreen
+    from '../screens/AvesScreen';
+
+import JaulasScreen
+    from '../screens/JaulasScreen';
+
+import FinanzasScreen
+    from '../screens/FinanzasScreen';
+
+import EditarMovimientoFinancieroScreen
+    from '../screens/EditarMovimientoFinancieroScreen';
+
+import ProduccionHuevosScreen
+    from '../screens/ProduccionHuevosScreen';
+
 import { opcionesPila, SIN_CABECERA } from './opcionesPila';
 import { pantallasAve, pantallasJaula } from './pantallasCompartidas';
 
@@ -48,6 +63,32 @@ export default function InicioStackNavigator() {
             <Stack.Screen
                 name="NuevoMovimientoFinanciero"
                 component={NuevoMovimientoFinancieroScreen}
+            />
+
+            {/* Destinos de las tarjetas de Inicio: se abren dentro de esta pestaña. */}
+            <Stack.Screen
+                name="ListaAves"
+                component={AvesScreen}
+            />
+
+            <Stack.Screen
+                name="ListaJaulas"
+                component={JaulasScreen}
+            />
+
+            <Stack.Screen
+                name="FinanzasInicio"
+                component={FinanzasScreen}
+            />
+
+            <Stack.Screen
+                name="EditarMovimientoFinanciero"
+                component={EditarMovimientoFinancieroScreen}
+            />
+
+            <Stack.Screen
+                name="ProduccionHuevos"
+                component={ProduccionHuevosScreen}
             />
 
             {pantallasAve(Stack)}

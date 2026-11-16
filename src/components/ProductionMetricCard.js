@@ -2,12 +2,24 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing, typography } from '../theme';
 import IconoCirculo from './IconoCirculo';
+import Icono from './Icono';
+import Pulsable from './Pulsable';
 
 // Métrica de producción (Hoy / Este mes): círculo de icono, título y "N huevos".
 // El valor y el sufijo van en un mismo Text ("3 huevos").
-export default function ProductionMetricCard({ icono, indice = 0, title, value, suffix = 'huevos' }) {
-    return (
-        <View style={estilos.contenedor}>
+// Con `onPress` es tocable (efecto de pulsación, chevron y rol de botón).
+export default function ProductionMetricCard({
+    icono,
+    indice = 0,
+    title,
+    value,
+    suffix = 'huevos',
+    onPress,
+    accessibilityLabel,
+    testID
+}) {
+    const contenido = (
+        <>
             <IconoCirculo icono={icono} indice={indice} tamano={40} />
             <View style={estilos.contenido}>
                 <Text style={estilos.titulo}>{title}</Text>
@@ -17,8 +29,24 @@ export default function ProductionMetricCard({ icono, indice = 0, title, value, 
                     <Text style={estilos.sufijo}>{suffix}</Text>
                 </Text>
             </View>
-        </View>
+            {onPress ? <Icono nombre="siguiente" tamano={20} color={colors.primaryDark} /> : null}
+        </>
     );
+    if (onPress) {
+        return (
+            <Pulsable
+                testID={testID}
+                onPress={onPress}
+                accessibilityRole="button"
+                accessibilityLabel={accessibilityLabel}
+                sinMinimo
+                style={estilos.contenedor}
+            >
+                {contenido}
+            </Pulsable>
+        );
+    }
+    return <View style={estilos.contenedor}>{contenido}</View>;
 }
 
 const estilos = StyleSheet.create({

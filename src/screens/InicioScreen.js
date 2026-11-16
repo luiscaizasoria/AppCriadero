@@ -1,5 +1,6 @@
 import React,{
     useCallback,
+    useRef,
     useState
 } from 'react';
 
@@ -34,6 +35,12 @@ import BarraEstado
 
 import Tarjeta
     from '../components/Tarjeta';
+
+import TarjetaEnlace
+    from '../components/TarjetaEnlace';
+
+import Pulsable
+    from '../components/Pulsable';
 
 import TituloSeccion
     from '../components/TituloSeccion';
@@ -98,6 +105,15 @@ import {
 import {
     obtenerDashboard
 } from '../repositories/DashboardRepository';
+
+
+
+// Solo para localizar la ficha de la mejor ponedora por su código (el panel no trae el id).
+import {
+    obtenerAvesActivas,
+    obtenerAvesVendidas,
+    obtenerAvesFallecidas
+} from '../repositories/AveRepository';
 
 
 
@@ -327,6 +343,112 @@ export default function InicioScreen({
 
 
 
+    // Destinos de las tarjetas: todo se abre dentro de la pestaña Inicio (la flecha vuelve aquí).
+    const irAves = params =>
+        navigation.navigate(
+            'ListaAves',
+            params
+        );
+
+    const irJaulas = () =>
+        navigation.navigate(
+            'ListaJaulas'
+        );
+
+    const irFinanzas = () =>
+        navigation.navigate(
+            'FinanzasInicio'
+        );
+
+    const irProduccion = () =>
+        navigation.navigate(
+            'ProduccionHuevos'
+        );
+
+    const irAlertas = () =>
+        navigation.navigate(
+            'Alertas'
+        );
+
+
+    const buscandoPonedora =
+        useRef(false);
+
+    const abrirMejorPonedora = async () => {
+
+        const codigo =
+            data?.mejorPonedora?.codigo;
+
+        if(
+            !codigo
+            ||
+            buscandoPonedora.current
+        ){
+            return;
+        }
+
+        buscandoPonedora.current = true;
+
+        try{
+
+            for(
+                const leer of [
+                    obtenerAvesActivas,
+                    obtenerAvesVendidas,
+                    obtenerAvesFallecidas
+                ]
+            ){
+
+                const lista =
+                    await leer();
+
+                const ave =
+                    lista.find(
+                        item =>
+                            item.codigo === codigo
+                    );
+
+                if(ave){
+
+                    navigation.navigate(
+                        'DetalleAve',
+                        {
+                            aveId:ave.id
+                        }
+                    );
+
+                    return;
+
+                }
+
+            }
+
+        }
+        catch(error){
+
+            console.error(
+                'Error buscando la mejor ponedora:',
+                error
+            );
+
+        }
+        finally{
+
+            buscandoPonedora.current = false;
+
+        }
+
+        // Si no se encontró la ficha, se abre la lista buscando por código.
+        irAves({
+            estado:'ACTIVAS',
+            busqueda:codigo
+        });
+
+    };
+
+
+
+
     if(loading){
 
         return(
@@ -516,6 +638,14 @@ export default function InicioScreen({
                             )
                         }
 
+                        testID="inicio-aves-activas"
+
+                        accessibilityLabel="Ver aves activas"
+
+                        onPress={() =>
+                            irAves({estado:'ACTIVAS'})
+                        }
+
                     />
 
 
@@ -534,6 +664,14 @@ export default function InicioScreen({
                             String(
                                 data?.aves?.vendidas || 0
                             )
+                        }
+
+                        testID="inicio-aves-vendidas"
+
+                        accessibilityLabel="Ver aves vendidas"
+
+                        onPress={() =>
+                            irAves({estado:'VENDIDAS'})
                         }
 
                     />
@@ -560,6 +698,14 @@ export default function InicioScreen({
                             )
                         }
 
+                        testID="inicio-aves-fallecidas"
+
+                        accessibilityLabel="Ver aves fallecidas"
+
+                        onPress={() =>
+                            irAves({estado:'FALLECIDAS'})
+                        }
+
                     />
 
 
@@ -578,6 +724,17 @@ export default function InicioScreen({
                             String(
                                 data?.salud?.tratamiento || 0
                             )
+                        }
+
+                        testID="inicio-aves-tratamiento"
+
+                        accessibilityLabel="Ver aves en tratamiento"
+
+                        onPress={() =>
+                            irAves({
+                                estado:'ACTIVAS',
+                                filtroSalud:'EN_TRATAMIENTO'
+                            })
                         }
 
                     />
@@ -710,7 +867,7 @@ export default function InicioScreen({
                         data.avesPorRaza.map(
                             item => (
 
-                                <View
+                                <Pulsable
 
                                     key={
                                         item.raza
@@ -718,6 +875,25 @@ export default function InicioScreen({
 
                                     style={
                                         styles.razaItem
+                                    }
+
+                                    escala={0.98}
+
+                                    accessibilityRole="button"
+
+                                    accessibilityLabel={
+                                        `Ver aves de la raza ${item.raza}`
+                                    }
+
+                                    testID={
+                                        `inicio-raza-${item.raza}`
+                                    }
+
+                                    onPress={() =>
+                                        irAves({
+                                            estado:'ACTIVAS',
+                                            filtroRaza:item.raza
+                                        })
                                     }
 
                                 >
@@ -758,6 +934,17 @@ export default function InicioScreen({
                                             }
                                         </Text>
 
+                                        <Icono
+                                            nombre="siguiente"
+                                            tamano={20}
+                                            color={
+                                                colors.primaryDark
+                                            }
+                                            style={
+                                                styles.chevronFila
+                                            }
+                                        />
+
                                     </View>
 
 
@@ -778,7 +965,7 @@ export default function InicioScreen({
                                     />
 
 
-                                </View>
+                                </Pulsable>
 
                             )
                         )
@@ -830,6 +1017,12 @@ export default function InicioScreen({
                                 data?.huevos?.hoy || 0
                             }
 
+                            testID="inicio-huevos-hoy"
+
+                            accessibilityLabel="Ver producción de huevos de hoy"
+
+                            onPress={irProduccion}
+
                         />
 
 
@@ -844,6 +1037,12 @@ export default function InicioScreen({
                             value={
                                 data?.huevos?.mes || 0
                             }
+
+                            testID="inicio-huevos-mes"
+
+                            accessibilityLabel="Ver producción de huevos del mes"
+
+                            onPress={irProduccion}
 
                         />
 
@@ -865,6 +1064,20 @@ export default function InicioScreen({
                             'Sin datos'
                         }
 
+                        testID="inicio-mejor-ponedora"
+
+                        accessibilityLabel={
+                            `Abrir ficha de ${data?.mejorPonedora?.codigo}`
+                        }
+
+                        onPress={
+                            data?.mejorPonedora?.codigo
+                            ?
+                            abrirMejorPonedora
+                            :
+                            undefined
+                        }
+
                     />
 
 
@@ -883,6 +1096,18 @@ export default function InicioScreen({
                             `${data.horaPico.hora}:00`
                             :
                             'Sin datos'
+                        }
+
+                        testID="inicio-hora-pico"
+
+                        accessibilityLabel="Ver producción de huevos por hora"
+
+                        onPress={
+                            data?.horaPico?.hora
+                            ?
+                            irProduccion
+                            :
+                            undefined
                         }
 
                     />
@@ -907,45 +1132,89 @@ export default function InicioScreen({
                 <Tarjeta>
 
 
-                    <View style={styles.indicadorFila}>
+                    <Pulsable
+                        testID="inicio-promedio-huevos"
+                        accessibilityRole="button"
+                        accessibilityLabel="Ver producción de huevos"
+                        sinMinimo
+                        escala={0.98}
+                        style={styles.enlaceFila}
+                        onPress={irProduccion}
+                    >
+
+                        <View style={styles.enlaceContenido}>
+
+                            <View style={styles.indicadorFila}>
+
+                                <Icono
+                                    nombre="huevo"
+                                    tamano={20}
+                                    color={colors.primaryDark}
+                                />
+
+                                <Text style={styles.indicadorTexto}>
+                                    Promedio huevos diarios
+                                </Text>
+
+                            </View>
+
+
+                            <Text
+                                style={styles.money}
+                                maxFontSizeMultiplier={1.3}
+                            >
+
+                                {
+                                    data?.promedioHuevos || 0
+                                }
+
+                            </Text>
+
+                        </View>
 
                         <Icono
-                            nombre="huevo"
-                            tamano={20}
+                            nombre="siguiente"
+                            tamano={22}
                             color={colors.primaryDark}
                         />
 
-                        <Text style={styles.indicadorTexto}>
-                            Promedio huevos diarios
-                        </Text>
-
-                    </View>
+                    </Pulsable>
 
 
-                    <Text
-                        style={styles.money}
-                        maxFontSizeMultiplier={1.3}
+
+                    <Pulsable
+                        testID="inicio-ocupacion-indicador"
+                        accessibilityRole="button"
+                        accessibilityLabel="Ver jaulas"
+                        sinMinimo
+                        escala={0.98}
+                        style={styles.enlaceFila}
+                        onPress={irJaulas}
                     >
 
-                        {
-                            data?.promedioHuevos || 0
-                        }
+                        <View style={styles.enlaceContenido}>
 
-                    </Text>
+                            <ProgressBar
 
+                                label="Ocupación de jaulas"
 
+                                value={
+                                    data?.ocupacionJaulas?.porcentaje || 0
+                                }
 
-                    <ProgressBar
+                                suffix="%"
 
-                        label="Ocupación de jaulas"
+                            />
 
-                        value={
-                            data?.ocupacionJaulas?.porcentaje || 0
-                        }
+                        </View>
 
-                        suffix="%"
+                        <Icono
+                            nombre="siguiente"
+                            tamano={22}
+                            color={colors.primaryDark}
+                        />
 
-                    />
+                    </Pulsable>
 
 
                 </Tarjeta>
@@ -964,13 +1233,16 @@ export default function InicioScreen({
 
 
 
-                <Tarjeta>
+                {
+                    data?.produccionSemana?.length > 0
 
+                    ?
 
-                    {
-                        data?.produccionSemana?.length > 0
-
-                        ?
+                    <TarjetaEnlace
+                        testID="inicio-produccion-semana"
+                        accessibilityLabel="Ver producción de huevos"
+                        onPress={irProduccion}
+                    >
 
                         <ProduccionBarChart
 
@@ -980,17 +1252,19 @@ export default function InicioScreen({
 
                         />
 
+                    </TarjetaEnlace>
 
-                        :
+                    :
+
+                    <Tarjeta>
 
                         <Text style={styles.cuerpo}>
                             Sin información de producción.
                         </Text>
 
-                    }
+                    </Tarjeta>
 
-
-                </Tarjeta>
+                }
 
 
 
@@ -1006,21 +1280,32 @@ export default function InicioScreen({
 
 
 
-                <ResumenAlertas
+                <Pulsable
+                    testID="inicio-resumen-alertas"
+                    accessibilityRole="button"
+                    accessibilityLabel="Abrir alertas"
+                    sinMinimo
+                    escala={0.98}
+                    onPress={irAlertas}
+                >
 
-                    criticas={
-                        resumenAlertas.criticas
-                    }
+                    <ResumenAlertas
 
-                    advertencias={
-                        resumenAlertas.advertencias
-                    }
+                        criticas={
+                            resumenAlertas.criticas
+                        }
 
-                    total={
-                        resumenAlertas.total
-                    }
+                        advertencias={
+                            resumenAlertas.advertencias
+                        }
 
-                />
+                        total={
+                            resumenAlertas.total
+                        }
+
+                    />
+
+                </Pulsable>
 
 
 
@@ -1112,7 +1397,11 @@ export default function InicioScreen({
 
 
 
-                <Tarjeta>
+                <TarjetaEnlace
+                    testID="inicio-finanzas"
+                    accessibilityLabel="Abrir finanzas"
+                    onPress={irFinanzas}
+                >
 
 
                     <FinanzasBarChart
@@ -1135,7 +1424,7 @@ export default function InicioScreen({
                     />
 
 
-                </Tarjeta>
+                </TarjetaEnlace>
 
 
 
@@ -1151,7 +1440,11 @@ export default function InicioScreen({
 
 
 
-                <Tarjeta>
+                <TarjetaEnlace
+                    testID="inicio-jaulas"
+                    accessibilityLabel="Abrir jaulas"
+                    onPress={irJaulas}
+                >
 
 
                     <View style={styles.indicadorFila}>
@@ -1211,7 +1504,7 @@ export default function InicioScreen({
                     />
 
 
-                </Tarjeta>
+                </TarjetaEnlace>
 
 
 
@@ -1340,7 +1633,26 @@ StyleSheet.create({
 
     razaNombre:{
         ...typography.cuerpoFuerte,
+        flex:1,
         color:colors.text
+    },
+
+
+    chevronFila:{
+        marginLeft:spacing.xs
+    },
+
+
+    enlaceFila:{
+        flexDirection:'row',
+        alignItems:'center',
+        minHeight:spacing.touchMin
+    },
+
+
+    enlaceContenido:{
+        flex:1,
+        minWidth:0
     },
 
 

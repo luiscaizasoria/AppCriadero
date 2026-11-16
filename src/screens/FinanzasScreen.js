@@ -25,6 +25,8 @@ import {
     obtenerConsolidadoMensual
 } from '../repositories/FinanzasRepository';
 
+import usePantallaApilada from '../navigation/usePantallaApilada';
+
 import FondoPantalla from '../components/FondoPantalla';
 import PantallaHeader from '../components/PantallaHeader';
 import BarraEstado from '../components/BarraEstado';
@@ -84,6 +86,10 @@ export default function FinanzasScreen({
 
     const insets =
         useSafeAreaInsets();
+
+    // Abierta desde Inicio: la cabecera con flecha y migas es la de la pila.
+    const apilada =
+        usePantallaApilada();
 
 
     const [
@@ -1046,16 +1052,24 @@ export default function FinanzasScreen({
 
         <FondoPantalla>
 
-            <BarraEstado
-                estilo="light"
-                navigation={navigation}
-            />
+            {
+                apilada
+                    ? null
+                    : (
+                        <>
+                            <BarraEstado
+                                estilo="light"
+                                navigation={navigation}
+                            />
 
-            <PantallaHeader
-                titulo="Finanzas"
-                insetSuperior={insets.top}
-                testID="finanzas-cabecera"
-            />
+                            <PantallaHeader
+                                titulo="Finanzas"
+                                insetSuperior={insets.top}
+                                testID="finanzas-cabecera"
+                            />
+                        </>
+                    )
+            }
 
             <ScrollView
                 contentContainerStyle={

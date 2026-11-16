@@ -68,6 +68,9 @@ import {
     obtenerAvesFallecidas
 } from '../repositories/AveRepository';
 
+import usePantallaApilada
+    from '../navigation/usePantallaApilada';
+
 import {
     colors,
     radii,
@@ -84,22 +87,37 @@ const TABS = [
 
 
 export default function AvesScreen({
-    navigation
+    navigation,
+    route
 }) {
 
     const insets =
         useSafeAreaInsets();
 
+    // Parámetros opcionales (solo al abrir desde Inicio): estado, filtroSalud, filtroRaza y busqueda.
+    // Sin ellos la pantalla se comporta exactamente igual que antes.
+    const inicial =
+        route?.params || {};
+
+    const apilada =
+        usePantallaApilada();
+
     const [aves, setAves] = useState([]);
-    const [tabActual, setTabActual] = useState('ACTIVAS');
+    const [tabActual, setTabActual] = useState(
+        TABS.some(tab => tab.id === inicial.estado)
+            ? inicial.estado
+            : 'ACTIVAS'
+    );
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [busqueda, setBusqueda] = useState('');
-    const [mostrarFiltros, setMostrarFiltros] = useState(false);
-    const [filtroRaza, setFiltroRaza] = useState('TODAS');
+    const [busqueda, setBusqueda] = useState(inicial.busqueda || '');
+    const [mostrarFiltros, setMostrarFiltros] = useState(
+        !!(inicial.filtroRaza || inicial.filtroSalud)
+    );
+    const [filtroRaza, setFiltroRaza] = useState(inicial.filtroRaza || 'TODAS');
     const [filtroSexo, setFiltroSexo] = useState('TODOS');
-    const [filtroSalud, setFiltroSalud] = useState('TODAS');
+    const [filtroSalud, setFiltroSalud] = useState(inicial.filtroSalud || 'TODAS');
     const [filtroJaula, setFiltroJaula] = useState('TODAS');
     const [edadDesde, setEdadDesde] = useState('');
     const [edadHasta, setEdadHasta] = useState('');
@@ -255,7 +273,7 @@ export default function AvesScreen({
                     if (
                         filtroRaza !== 'TODAS'
                         &&
-                        item.raza !== filtroRaza
+                        !coincideRaza(item.raza, filtroRaza)
                     ) {
                         return false;
                     }
@@ -539,7 +557,15 @@ export default function AvesScreen({
                                 ...razas.map(item => ({
                                     id:item,
                                     label:item
-                                }))
+                                })),
+                                // Raza que llega de Inicio y no está entre las de la lista (p. ej. «Sin raza»)
+                                ...(
+                                    filtroRaza !== 'TODAS'
+                                    &&
+                                    !razas.includes(filtroRaza)
+                                        ? [{id:filtroRaza, label:filtroRaza}]
+                                        : []
+                                )
                             ]}
                             selected={filtroRaza}
                             onSelect={setFiltroRaza}
@@ -639,16 +665,24 @@ export default function AvesScreen({
 
         <FondoPantalla>
 
-            <BarraEstado
-                estilo="light"
-                navigation={navigation}
-            />
+            {
+                apilada
+                    ? null
+                    : (
+                        <>
+                            <BarraEstado
+                                estilo="light"
+                                navigation={navigation}
+                            />
 
-            <PantallaHeader
-                titulo="Aves"
-                insetSuperior={insets.top}
-                testID="aves-cabecera"
-            />
+                            <PantallaHeader
+                                titulo="Aves"
+                                insetSuperior={insets.top}
+                                testID="aves-cabecera"
+                            />
+                        </>
+                    )
+            }
 
             <FlatList
                 data={
@@ -751,6 +785,15 @@ function obtenerEdadMeses(fechaNacimiento){
     }
 
     return Math.max(0, meses);
+}
+
+
+// La distribución por raza de Inicio agrupa por raza sin espacios y llama «Sin raza» a las vacías.
+function coincideRaza(raza, filtro){
+    if(raza === filtro) return true;
+    const limpia = String(raza || '').trim();
+    if(limpia === filtro) return true;
+    return filtro === 'Sin raza' && !limpia;
 }
 
 

@@ -35,6 +35,8 @@ import {
     obtenerJaulasInactivas
 } from '../repositories/JaulaRepository';
 
+import usePantallaApilada from '../navigation/usePantallaApilada';
+
 import {
     colors,
     radii,
@@ -63,6 +65,10 @@ export default function JaulasScreen({
 
     const insets =
         useSafeAreaInsets();
+
+    // Abierta desde Inicio: la cabecera con flecha y migas es la de la pila.
+    const apilada =
+        usePantallaApilada();
 
     const [jaulas, setJaulas] = useState([]);
     const [tabActual, setTabActual] = useState('ACTIVAS');
@@ -121,16 +127,24 @@ export default function JaulasScreen({
 
         <FondoPantalla>
 
-            <BarraEstado
-                estilo="light"
-                navigation={navigation}
-            />
+            {
+                apilada
+                    ? null
+                    : (
+                        <>
+                            <BarraEstado
+                                estilo="light"
+                                navigation={navigation}
+                            />
 
-            <PantallaHeader
-                titulo="Jaulas"
-                insetSuperior={insets.top}
-                testID="jaulas-cabecera"
-            />
+                            <PantallaHeader
+                                titulo="Jaulas"
+                                insetSuperior={insets.top}
+                                testID="jaulas-cabecera"
+                            />
+                        </>
+                    )
+            }
 
             <ScrollView
                 contentContainerStyle={

@@ -1,0 +1,124 @@
+# SEMILLA: --jaulas=JX-1 --aves=AV-IA:MACHO:JX-1,AV-IB:HEMBRA:JX-1 --huevos=AV-IA:JX-1:0,AV-IA:JX-1:0,AV-IB:JX-1:0
+# INICIO NAVEGABLE (UX, Parte 1): cada tarjeta de Inicio abre su pantalla DENTRO de la pila de Inicio; la flecha
+# ("Volver") regresa a Inicio y la pestana activa sigue siendo Inicio. Recorre de arriba abajo para no depender de
+# que el scroll de Inicio se conserve o se reinicie al volver. 2 aves activas, 0 vendidas, 0 en tratamiento, 3 huevos
+# hoy, mejor ponedora AV-IA, 1 jaula. No guarda datos. Esperas solo por condicion.
+# RIESGO: los huevos de hoy se crean al preparar; no ejecutar cerca de las 00:00 UTC.
+appId: host.exp.exponent
+tags:
+  - completo
+  - migrado
+  - inicio
+  - navegacion
+---
+- runFlow:
+    file: ../lib/entrar.yaml
+    env:
+      PUERTO_METRO: ${PUERTO_METRO}
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+      CRIADERO: ${CRIADERO}
+- extendedWaitUntil:
+    visible: "Tus aves registradas"
+    timeout: 25000
+# 1) Aves vendidas -> lista de Aves con la pestana Vendidas (sin ventas: estado vacio de Vendidas)
+- tapOn:
+    id: "inicio-aves-vendidas"
+- extendedWaitUntil:
+    visible:
+      id: "buscar-ave"
+    timeout: 20000
+- extendedWaitUntil:
+    visible: "Aún no hay ventas de aves"
+    timeout: 20000
+- assertNotVisible: "Tus aves registradas"
+- takeScreenshot: inicio-nav-vendidas
+- tapOn:
+    text: "Volver"
+- extendedWaitUntil:
+    visible: "Tus aves registradas"
+    timeout: 20000
+- assertNotVisible: "Aún no hay ventas de aves"
+# 2) Aves en tratamiento -> Aves activas con el filtro Tratamiento preseleccionado (0 en tratamiento: "Sin resultados")
+- tapOn:
+    id: "inicio-aves-tratamiento"
+- extendedWaitUntil:
+    visible:
+      id: "buscar-ave"
+    timeout: 20000
+- extendedWaitUntil:
+    visible: "Sin resultados"
+    timeout: 20000
+- assertNotVisible: "AV-IA"
+- takeScreenshot: inicio-nav-tratamiento
+- tapOn:
+    text: "Volver"
+- extendedWaitUntil:
+    visible: "Tus aves registradas"
+    timeout: 20000
+# 3) Huevos de hoy -> Produccion de huevos
+- scrollUntilVisible:
+    element:
+      id: "inicio-huevos-hoy"
+- tapOn:
+    id: "inicio-huevos-hoy"
+- extendedWaitUntil:
+    visible: "Producción últimos días"
+    timeout: 25000
+- assertNotVisible: "Tus aves registradas"
+- takeScreenshot: inicio-nav-huevos
+- tapOn:
+    text: "Volver"
+- extendedWaitUntil:
+    visible: "Tus aves registradas"
+    timeout: 20000
+# 4) Mejor ponedora -> ficha del ave AV-IA (el panel no trae el id: la app lo busca por codigo)
+- scrollUntilVisible:
+    element:
+      id: "inicio-mejor-ponedora"
+- tapOn:
+    id: "inicio-mejor-ponedora"
+- extendedWaitUntil:
+    visible: "Ficha del ave"
+    timeout: 25000
+- assertVisible: ".*AV-IA.*"
+- takeScreenshot: inicio-nav-mejor-ponedora
+- tapOn:
+    text: "Volver"
+- extendedWaitUntil:
+    visible: "Tus aves registradas"
+    timeout: 20000
+# 5) Finanzas del mes -> pantalla Finanzas (dentro de la pila de Inicio, con boton Nuevo movimiento)
+- scrollUntilVisible:
+    element:
+      id: "inicio-finanzas"
+- tapOn:
+    id: "inicio-finanzas"
+- extendedWaitUntil:
+    visible: ".*Nuevo movimiento.*"
+    timeout: 25000
+- assertNotVisible: "Tus aves registradas"
+- takeScreenshot: inicio-nav-finanzas
+- tapOn:
+    text: "Volver"
+- extendedWaitUntil:
+    visible: "Tus aves registradas"
+    timeout: 20000
+# 6) Jaulas -> lista de Jaulas
+- scrollUntilVisible:
+    element:
+      id: "inicio-jaulas"
+- tapOn:
+    id: "inicio-jaulas"
+- extendedWaitUntil:
+    visible: ".*Nueva jaula.*"
+    timeout: 25000
+- assertVisible: ".*JX-1.*"
+- assertNotVisible: "Tus aves registradas"
+- takeScreenshot: inicio-nav-jaulas
+- tapOn:
+    text: "Volver"
+- extendedWaitUntil:
+    visible: "Tus aves registradas"
+    timeout: 20000
+- takeScreenshot: inicio-nav-vuelta

@@ -457,3 +457,7 @@ Sin cambios de lógica, repositorios, importes, periodos (UTC), exportación CSV
 - Base de pruebas: 3 jaulas, 4 aves y 131 elementos de catálogo creados por el usuario desde el teléfono (no es anomalía); 0 cuentas desechables.
 - Sin verificar: rendimiento en gama baja, scroll al campo con error, foco bajo el Alert nativo, liberación del botón, aviso de Salud en la ficha y su temporizador de 4 s, tarjetas de alertas con fuente grande. Detalle en `pendiente-en-telefono.md`; otras validaciones: `validacion-cierre-total.md`, `validacion-correcciones-usuario.md`, `validacion-ronda2.md`; medición en `rendimiento.md`.
 - Siguiente: prueba final del usuario en el teléfono; luego R2, Google, ambientes y retiro de SQLite con respaldo.
+
+## Inicio navegable (2026-11-16)
+
+Detalle y tabla de destinos en `inicio-navegable.md`. Archivos: `InicioScreen`, `AvesScreen` (parámetros iniciales y filtro de raza «Sin raza»), `JaulasScreen` y `FinanzasScreen` (sin cabecera propia si van apiladas), `InicioStackNavigator` (cinco pantallas registradas), `usePantallaApilada` y `TarjetaEnlace` (nuevos), `MetricCard`, `ProductionMetricCard` y `ProductionInfoCard` (`onPress`). Sin textos visibles cambiados. Revertir: deshacer estos archivos.
