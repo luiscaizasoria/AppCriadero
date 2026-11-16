@@ -21,6 +21,7 @@ export type Env = {
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
   VERIFICATION_BYPASS_SECRET?: string;
+  GOOGLE_CLIENT_IDS?: string;
 };
 
 

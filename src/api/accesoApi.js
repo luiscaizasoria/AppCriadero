@@ -31,6 +31,22 @@ export async function iniciarSesion({
 }
 
 
+export async function loginConGoogle(idToken) {
+
+    const data = await apiFetch(
+        '/api/v1/auth/google',
+        {
+            method: 'POST',
+            auth: false,
+            body: { idToken }
+        }
+    );
+
+    await guardarSesion(data);
+
+}
+
+
 export async function registrarUsuario({
     nombre,
     email,

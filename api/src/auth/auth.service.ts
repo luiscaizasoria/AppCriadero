@@ -2,8 +2,11 @@
  * Service para lógica de negocio de autenticación
  */
 
-import { SignJWT, jwtVerify } from 'jose';
-import type { AuthRepository } from './auth.repository';
+import { SignJWT } from 'jose';
+import type { JWTVerifyGetKey } from 'jose';
+import type { AuthRepository, UserInfo } from './auth.repository';
+import { GoogleTokenError, verificarIdTokenGoogle } from './google-token';
+import type { GoogleIdentity } from './google-token';
 import type {
   RegisterRequest,
   LoginRequest,
@@ -15,6 +18,8 @@ import type {
   RequestContext,
   VerificationRequiredResponse,
   ResendResponse,
+  GoogleLoginRequest,
+  GoogleLoginOutcome,
 } from './auth.types';
 import { CODE_EXPIRES_IN_SECONDS, RESEND_AFTER_SECONDS } from './auth.types';
 import { v7 as uuidv7 } from 'uuid';
@@ -50,6 +55,55 @@ function validationError(message: string): ErrorResponse {
   return { success: false, error: 'VALIDATION_ERROR', message };
 }
 
+const GOOGLE_INVALID_ERROR: ErrorResponse = {
+  success: false,
+  error: 'INVALID_GOOGLE_TOKEN',
+  message: 'No fue posible iniciar sesión con Google.',
+};
+
+const GOOGLE_UNAVAILABLE_ERROR: ErrorResponse = {
+  success: false,
+  error: 'GOOGLE_UNAVAILABLE',
+  message: 'No fue posible validar con Google. Intenta de nuevo.',
+};
+
+const GOOGLE_NOT_CONFIGURED_ERROR: ErrorResponse = {
+  success: false,
+  error: 'GOOGLE_NOT_CONFIGURED',
+  message: 'El acceso con Google no está configurado.',
+};
+
+const GOOGLE_NOT_VERIFIED_ERROR: ErrorResponse = {
+  success: false,
+  error: 'GOOGLE_EMAIL_NOT_VERIFIED',
+  message: 'El correo de tu cuenta de Google no está verificado.',
+};
+
+const GOOGLE_CONFLICT_ERROR: ErrorResponse = {
+  success: false,
+  error: 'GOOGLE_ACCOUNT_CONFLICT',
+  message: 'Esta cuenta de Google no puede vincularse al correo indicado.',
+};
+
+const USER_INACTIVE_ERROR: ErrorResponse = {
+  success: false,
+  error: 'USER_INACTIVE',
+  message: 'El usuario se encuentra inactivo',
+};
+
+/** Dependencias de Google Sign-In; sin ellas (o sin clientIds) el endpoint responde GOOGLE_NOT_CONFIGURED. */
+export interface GoogleDeps {
+  clientIds: string[];
+  jwks: JWTVerifyGetKey;
+  /** Reloj inyectable (epoch ms). */
+  now?: () => number;
+}
+
+type GoogleResolution =
+  | { user: UserInfo; created: boolean }
+  | { error: ErrorResponse }
+  | { retry: true };
+
 export class AuthService {
   private readonly verification: VerificationService | null;
 
@@ -60,7 +114,8 @@ export class AuthService {
   constructor(
     private repository: AuthRepository,
     private jwtSecret: string,
-    verificationDeps?: VerificationDeps
+    verificationDeps?: VerificationDeps,
+    private googleDeps?: GoogleDeps
   ) {
     this.verification = verificationDeps
       ? new VerificationService(verificationDeps, jwtSecret)
@@ -332,6 +387,143 @@ export class AuthService {
         message: 'Error al iniciar sesión',
       };
     }
+  }
+
+  /**
+   * POST /auth/google. Independiente de la bandera de verificacion: Google ya
+   * probo la propiedad del correo. El idToken nunca se registra ni se guarda.
+   */
+  async loginWithGoogle(request: GoogleLoginRequest): Promise<GoogleLoginOutcome> {
+    const fail = (result: ErrorResponse): GoogleLoginOutcome => ({
+      result,
+      created: false,
+    });
+
+    const idToken = request?.idToken;
+    if (typeof idToken !== 'string' || idToken.trim().length === 0) {
+      return fail(validationError('idToken es requerido'));
+    }
+
+    const deps = this.googleDeps;
+    if (!deps || deps.clientIds.length === 0) {
+      return fail(GOOGLE_NOT_CONFIGURED_ERROR);
+    }
+
+    let identity: GoogleIdentity;
+    try {
+      identity = await verificarIdTokenGoogle(idToken.trim(), deps);
+    } catch (error) {
+      if (error instanceof GoogleTokenError && error.kind === 'UNAVAILABLE') {
+        console.error('Google: JWKS no disponible');
+        return fail(GOOGLE_UNAVAILABLE_ERROR);
+      }
+      console.error(
+        'Google: token rechazado',
+        error instanceof Error ? error.message : 'desconocido'
+      );
+      return fail(GOOGLE_INVALID_ERROR);
+    }
+
+    if (!identity.emailVerified) {
+      return fail(GOOGLE_NOT_VERIFIED_ERROR);
+    }
+    if (!identity.email) {
+      return fail(GOOGLE_INVALID_ERROR);
+    }
+
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const resolution = await this.resolveGoogleUser(identity);
+        if ('error' in resolution) {
+          return fail(resolution.error);
+        }
+        if ('retry' in resolution) {
+          continue;
+        }
+        const user = resolution.user;
+        return {
+          result: await this.sessionFor(user.id, user.email, user.nombre),
+          created: resolution.created,
+        };
+      }
+      return fail(GOOGLE_CONFLICT_ERROR);
+    } catch (error) {
+      console.error(
+        'Error en login con Google:',
+        error instanceof Error ? error.message : 'desconocido'
+      );
+      return fail({
+        success: false,
+        error: 'INTERNAL_ERROR',
+        message: 'Error al iniciar sesión con Google',
+      });
+    }
+  }
+
+  private async resolveGoogleUser(identity: GoogleIdentity): Promise<GoogleResolution> {
+    const email = identity.email as string;
+
+    // 1. Identidad estable: google_sub.
+    const bySub = await this.repository.findUserByGoogleSub(identity.sub);
+    if (bySub) {
+      if (bySub.deleted_at !== null) {
+        return { error: GOOGLE_INVALID_ERROR };
+      }
+      if (bySub.active !== 1) {
+        return { error: USER_INACTIVE_ERROR };
+      }
+      return { user: bySub, created: false };
+    }
+
+    // 2. Por correo.
+    const byEmail = await this.repository.findUserByEmail(email);
+    if (!byEmail) {
+      const id = uuidv7();
+      const nombre = identity.name ?? email.split('@')[0];
+      try {
+        await this.repository.createGoogleUser({
+          id,
+          email,
+          nombre,
+          googleSub: identity.sub,
+        });
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('UNIQUE')) {
+          return { retry: true };
+        }
+        throw error;
+      }
+      return {
+        user: {
+          id,
+          email,
+          nombre,
+          password_hash: null,
+          active: 1,
+          deleted_at: null,
+          email_verified_at: 'now',
+          google_sub: identity.sub,
+        },
+        created: true,
+      };
+    }
+
+    if (byEmail.deleted_at !== null) {
+      return { error: EMAIL_TAKEN_ERROR };
+    }
+    if (byEmail.active !== 1) {
+      return { error: USER_INACTIVE_ERROR };
+    }
+    if (byEmail.google_sub) {
+      // Otra cuenta Google con el mismo correo: no se re-vincula.
+      return { error: GOOGLE_CONFLICT_ERROR };
+    }
+
+    const linked = await this.repository.linkGoogle(byEmail.id, identity.sub);
+    if (!linked) {
+      return { retry: true };
+    }
+    return { user: byEmail, created: false };
   }
 
   private async sessionFor(

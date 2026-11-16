@@ -19,6 +19,73 @@ export class FakeAuthRepository implements AuthRepository {
   }
 
 
+  /** Ids de usuario cuyo codigo pendiente se borro al vincular Google. */
+  codigosBorrados: string[] = [];
+
+
+  async findUserByGoogleSub(googleSub: string): Promise<UserInfo | null> {
+
+    return this.users.find(
+      x => x.google_sub === googleSub
+    ) ?? null;
+
+  }
+
+
+  async createGoogleUser(data: {
+    id: string;
+    email: string;
+    nombre: string;
+    googleSub: string;
+  }): Promise<void> {
+
+    await Promise.resolve();
+
+    if(this.users.some(
+      x => x.email === data.email || x.google_sub === data.googleSub
+    )){
+      throw new Error("UNIQUE constraint failed: users");
+    }
+
+    this.users.push({
+      id: data.id,
+      email: data.email,
+      nombre: data.nombre,
+      password_hash: null,
+      active: 1,
+      deleted_at: null,
+      email_verified_at: "2026-01-01 00:00:00",
+      google_sub: data.googleSub
+    });
+
+  }
+
+
+  async linkGoogle(userId: string, googleSub: string): Promise<boolean> {
+
+    await Promise.resolve();
+
+    const user = this.users.find(
+      x => x.id === userId && !x.google_sub
+    );
+
+    if(!user){
+      return false;
+    }
+
+    if(user.email_verified_at === null){
+      user.password_hash = null;
+      user.email_verified_at = "2026-01-01 00:00:00";
+      this.codigosBorrados.push(user.id);
+    }
+
+    user.google_sub = googleSub;
+
+    return true;
+
+  }
+
+
   async emailExists(email: string): Promise<boolean> {
 
     return this.users.some(

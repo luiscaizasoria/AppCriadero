@@ -13,10 +13,25 @@ export interface UserInfo {
   active: number;
   deleted_at: string | null;
   email_verified_at: string | null;
+  google_sub?: string | null;
 }
 
 export interface AuthRepository {
   findUserByEmail(email: string): Promise<UserInfo | null>;
+  findUserByGoogleSub(googleSub: string): Promise<UserInfo | null>;
+  /** Cuenta nueva de Google: sin contraseña y verificada. */
+  createGoogleUser(data: {
+    id: string;
+    email: string;
+    nombre: string;
+    googleSub: string;
+  }): Promise<void>;
+  /**
+   * Vincula `googleSub` solo si la cuenta aun no tiene uno. Marca el correo
+   * verificado; si la cuenta estaba sin verificar anula la contraseña y borra
+   * su codigo pendiente (atomico). Devuelve false si no cambio ninguna fila.
+   */
+  linkGoogle(userId: string, googleSub: string): Promise<boolean>;
   emailExists(email: string): Promise<boolean>;
   /** verified = true escribe email_verified_at = CURRENT_TIMESTAMP; false lo deja en NULL. */
   createUser(data: {
@@ -54,7 +69,8 @@ export class D1AuthRepository implements AuthRepository {
           password_hash,
           active,
           deleted_at,
-          email_verified_at
+          email_verified_at,
+          google_sub
         FROM users
         WHERE email = ?
       `)
@@ -62,6 +78,66 @@ export class D1AuthRepository implements AuthRepository {
       .first<UserInfo>();
 
     return result ?? null;
+  }
+
+  async findUserByGoogleSub(googleSub: string): Promise<UserInfo | null> {
+    const result = await this.db
+      .prepare(`
+        SELECT
+          id,
+          email,
+          nombre,
+          password_hash,
+          active,
+          deleted_at,
+          email_verified_at,
+          google_sub
+        FROM users
+        WHERE google_sub = ?
+      `)
+      .bind(googleSub)
+      .first<UserInfo>();
+
+    return result ?? null;
+  }
+
+  async createGoogleUser(data: {
+    id: string;
+    email: string;
+    nombre: string;
+    googleSub: string;
+  }): Promise<void> {
+    await this.db
+      .prepare(`
+        INSERT INTO users (id, email, nombre, password_hash, google_sub, active, email_verified_at)
+        VALUES (?, ?, ?, NULL, ?, 1, CURRENT_TIMESTAMP)
+      `)
+      .bind(data.id, data.email, data.nombre, data.googleSub)
+      .run();
+  }
+
+  async linkGoogle(userId: string, googleSub: string): Promise<boolean> {
+    const results = await this.db.batch([
+      this.db
+        .prepare(`
+          UPDATE users
+             SET google_sub = ?,
+                 password_hash = CASE WHEN email_verified_at IS NULL THEN NULL ELSE password_hash END,
+                 email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP),
+                 updated_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND google_sub IS NULL
+        `)
+        .bind(googleSub, userId),
+      this.db
+        .prepare(`
+          DELETE FROM email_verification_codes
+           WHERE user_id = ?
+             AND EXISTS (SELECT 1 FROM users WHERE id = ? AND google_sub = ?)
+        `)
+        .bind(userId, userId, googleSub),
+    ]);
+
+    return (results[0]?.meta?.changes ?? 0) > 0;
   }
 
   async emailExists(email: string): Promise<boolean> {

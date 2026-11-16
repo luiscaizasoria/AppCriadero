@@ -8,6 +8,12 @@ import {
   EnvioCorreoHttp,
   EnvioCorreoNoConfigurado,
 } from "./correo/envio-correo-http";
+import type { JWTVerifyGetKey } from "jose";
+import { getGoogleJwks, parseClientIds } from "./google-token";
+
+const noJwks: JWTVerifyGetKey = async () => {
+  throw new Error("JWKS no configurado");
+};
 
 
 export interface AuthFactoryOptions {
@@ -21,6 +27,10 @@ export interface AuthFactoryOptions {
   mailer?: EnvioCorreo;
   now?: () => number;
   generateCode?: () => string;
+  /** GOOGLE_CLIENT_IDS (lista separada por comas); ausente = Google no configurado. */
+  googleClientIds?: string;
+  /** Inyeccion para tests; por defecto el JWKS remoto de Google. */
+  googleJwks?: JWTVerifyGetKey;
 }
 
 
@@ -31,6 +41,8 @@ export function createAuthService(
 ){
 
   const repository = new D1AuthRepository(db);
+
+  const clientIds = parseClientIds(options.googleClientIds);
 
   const mailer: EnvioCorreo =
     options.mailer ??
@@ -51,6 +63,12 @@ export function createAuthService(
       mailer,
       now: options.now,
       generateCode: options.generateCode
+    },
+    {
+      clientIds,
+      // Con la lista vacia no se toca la red: el servicio responde GOOGLE_NOT_CONFIGURED.
+      jwks: options.googleJwks ?? (clientIds.length > 0 ? getGoogleJwks() : noJwks),
+      now: options.now
     }
   );
 

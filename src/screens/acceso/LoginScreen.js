@@ -27,6 +27,8 @@ import {
     MensajeError
 } from './componentesAcceso';
 
+import BotonGoogle from './BotonGoogle';
+
 
 export default function LoginScreen({
     navigation
@@ -158,6 +160,8 @@ export default function LoginScreen({
                 testID="login-ingresar"
                 style={estilos.principal}
             />
+
+            <BotonGoogle onError={setError} />
 
             <View style={estilos.enlace}>
 

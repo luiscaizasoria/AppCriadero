@@ -27,6 +27,8 @@ import {
     MensajeError
 } from './componentesAcceso';
 
+import BotonGoogle from './BotonGoogle';
+
 
 export default function RegistroScreen({
     navigation
@@ -168,6 +170,8 @@ export default function RegistroScreen({
                 testID="registro-crear"
                 style={estilos.principal}
             />
+
+            <BotonGoogle onError={setError} />
 
             <View style={estilos.enlace}>
 

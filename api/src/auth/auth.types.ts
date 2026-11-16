@@ -38,6 +38,18 @@ export interface ErrorResponse {
   data?: Record<string, unknown>;
 }
 
+// --- Google Sign-In ---
+
+export interface GoogleLoginRequest {
+  idToken: string;
+}
+
+export interface GoogleLoginOutcome {
+  result: AuthResponse | ErrorResponse;
+  /** true si la cuenta se creó en esta petición (HTTP 201). */
+  created: boolean;
+}
+
 // --- Verificacion de cuenta por codigo ---
 
 export const CODE_EXPIRES_IN_SECONDS = 600;
