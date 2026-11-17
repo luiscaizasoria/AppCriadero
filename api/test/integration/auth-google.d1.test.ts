@@ -83,14 +83,19 @@ describe("Google Sign-In D1 Local Integration", () => {
   });
 
 
-  it("goo-07 debe vincular una cuenta verificada y conservar su contraseña", async () => {
+  it("goo-07 debe vincular una cuenta verificada por codigo y conservar su contraseña", async () => {
 
-    const apagado = crearServicio(false);
-    await apagado.register({
+    await service.register({
       email: "ana@gmail.com",
       nombre: "Ana",
       password: "Password123!"
     });
+    const verificada = await service.verifyEmail({
+      email: "ana@gmail.com",
+      code: "123456"
+    });
+    expect(verificada.success).toBe(true);
+    expect((await usuarios("ana@gmail.com"))?.email_verified_via).toBe("CODE");
     const antes = await usuarios("ana@gmail.com");
 
     const { result } = await service.loginWithGoogle({
@@ -103,12 +108,68 @@ describe("Google Sign-In D1 Local Integration", () => {
     expect(despues?.google_sub).toBe("google-sub-1");
     expect(despues?.password_hash).toBe(antes?.password_hash);
     expect(despues?.id).toBe(antes?.id);
+    expect(despues?.email_verified_via).toBe("CODE");
 
     const login = await service.login({
       email: "ana@gmail.com",
       password: "Password123!"
     });
     expect(login.success).toBe(true);
+
+  });
+
+
+  it("goo-19 debe rechazar Google con la bandera apagada tras un register sin verificar, sin tocar la cuenta", async () => {
+
+    const apagado = crearServicio(false);
+    await apagado.register({
+      email: "ana@gmail.com",
+      nombre: "Ana",
+      password: "Password123!"
+    });
+    const antes = await usuarios("ana@gmail.com");
+    expect(antes?.email_verified_via).toBeNull();
+
+    const { result } = await apagado.loginWithGoogle({
+      idToken: await google.firmar()
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      error: "GOOGLE_REQUIRES_EMAIL_VERIFICATION"
+    });
+    expect(await usuarios("ana@gmail.com")).toEqual(antes);
+    expect(await contar("users")).toBe(1);
+
+  });
+
+
+  it("goo-21 debe anular la contraseña de una cuenta preexistente con marcador NULL y bandera encendida", async () => {
+
+    await crearServicio(false).register({
+      email: "ana@gmail.com",
+      nombre: "Ana",
+      password: "Password123!"
+    });
+    const antes = await usuarios("ana@gmail.com");
+    expect(antes?.email_verified_at).not.toBeNull();
+    expect(antes?.email_verified_via).toBeNull();
+
+    const { result } = await service.loginWithGoogle({
+      idToken: await google.firmar()
+    });
+    expect(result.success).toBe(true);
+
+    const despues = await usuarios("ana@gmail.com");
+    expect(despues?.password_hash).toBeNull();
+    expect(despues?.email_verified_via).toBe("GOOGLE");
+    expect(despues?.email_verified_at).toBe(antes?.email_verified_at);
+
+    const login = await service.login({
+      email: "ana@gmail.com",
+      password: "Password123!"
+    });
+    expect(login).toMatchObject({ success: false, error: "INVALID_CREDENTIALS" });
 
   });
 
@@ -134,6 +195,7 @@ describe("Google Sign-In D1 Local Integration", () => {
     expect(user?.google_sub).toBe("google-sub-1");
     expect(user?.password_hash).toBeNull();
     expect(user?.email_verified_at).not.toBeNull();
+    expect(user?.email_verified_via).toBe("GOOGLE");
     expect(await contar("email_verification_codes")).toBe(0);
 
     const login = await service.login({
@@ -158,6 +220,7 @@ describe("Google Sign-In D1 Local Integration", () => {
     expect(user?.password_hash).toBeNull();
     expect(user?.google_sub).toBe("google-sub-1");
     expect(user?.email_verified_at).not.toBeNull();
+    expect(user?.email_verified_via).toBe("GOOGLE");
     expect(user?.active).toBe(1);
     expect(await contar("email_verification_codes")).toBe(0);
     expect(mailer.buzon).toHaveLength(0);
@@ -249,6 +312,7 @@ describe("Google Sign-In D1 Local Integration", () => {
     const bindings = {
       DB: db as never,
       JWT_SECRET: jwtSecret,
+      EMAIL_VERIFICATION_REQUIRED: "true",
       GOOGLE_CLIENT_IDS: ` otro.apps , ${CLIENT_ID} `
     };
     // El reloj de la ruta es el real: token con exp lejano.

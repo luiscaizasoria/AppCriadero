@@ -91,6 +91,7 @@ describe("Verificacion de cuenta D1 Local Integration", () => {
 
     const user = await usuario(registro.email);
     expect(user?.email_verified_at).toBeNull();
+    expect(user?.email_verified_via).toBeNull();
 
     const codigo = await db
       .prepare("SELECT * FROM email_verification_codes")
@@ -118,6 +119,8 @@ describe("Verificacion de cuenta D1 Local Integration", () => {
     }
 
     expect((await usuario(registro.email))?.email_verified_at).not.toBeNull();
+    // Bandera apagada: el correo nunca se probo, el marcador queda NULL.
+    expect((await usuario(registro.email))?.email_verified_via).toBeNull();
     expect(await contar("email_verification_codes")).toBe(0);
     expect(mailer.buzon).toHaveLength(0);
 
@@ -152,6 +155,7 @@ describe("Verificacion de cuenta D1 Local Integration", () => {
     }
 
     expect((await usuario(registro.email))?.email_verified_at).not.toBeNull();
+    expect((await usuario(registro.email))?.email_verified_via).toBe("CODE");
     expect(await contar("email_verification_codes")).toBe(0);
 
     const login = await service.login({ email: registro.email, password: registro.password });

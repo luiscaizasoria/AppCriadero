@@ -13,6 +13,8 @@ export interface UserInfo {
   active: number;
   deleted_at: string | null;
   email_verified_at: string | null;
+  /** 'CODE' | 'GOOGLE' | null (sin prueba de propiedad del correo). */
+  email_verified_via?: string | null;
   google_sub?: string | null;
 }
 
@@ -28,7 +30,7 @@ export interface AuthRepository {
   }): Promise<void>;
   /**
    * Vincula `googleSub` solo si la cuenta aun no tiene uno. Marca el correo
-   * verificado; si la cuenta estaba sin verificar anula la contraseña y borra
+   * verificado; si el correo nunca se probo (email_verified_via NULL) anula la contraseña y borra
    * su codigo pendiente (atomico). Devuelve false si no cambio ninguna fila.
    */
   linkGoogle(userId: string, googleSub: string): Promise<boolean>;
@@ -70,6 +72,7 @@ export class D1AuthRepository implements AuthRepository {
           active,
           deleted_at,
           email_verified_at,
+          email_verified_via,
           google_sub
         FROM users
         WHERE email = ?
@@ -91,6 +94,7 @@ export class D1AuthRepository implements AuthRepository {
           active,
           deleted_at,
           email_verified_at,
+          email_verified_via,
           google_sub
         FROM users
         WHERE google_sub = ?
@@ -109,8 +113,8 @@ export class D1AuthRepository implements AuthRepository {
   }): Promise<void> {
     await this.db
       .prepare(`
-        INSERT INTO users (id, email, nombre, password_hash, google_sub, active, email_verified_at)
-        VALUES (?, ?, ?, NULL, ?, 1, CURRENT_TIMESTAMP)
+        INSERT INTO users (id, email, nombre, password_hash, google_sub, active, email_verified_at, email_verified_via)
+        VALUES (?, ?, ?, NULL, ?, 1, CURRENT_TIMESTAMP, 'GOOGLE')
       `)
       .bind(data.id, data.email, data.nombre, data.googleSub)
       .run();
@@ -122,8 +126,9 @@ export class D1AuthRepository implements AuthRepository {
         .prepare(`
           UPDATE users
              SET google_sub = ?,
-                 password_hash = CASE WHEN email_verified_at IS NULL THEN NULL ELSE password_hash END,
+                 password_hash = CASE WHEN email_verified_via IS NULL THEN NULL ELSE password_hash END,
                  email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP),
+                 email_verified_via = COALESCE(email_verified_via, 'GOOGLE'),
                  updated_at = CURRENT_TIMESTAMP
            WHERE id = ? AND google_sub IS NULL
         `)

@@ -37,7 +37,8 @@ async function crear(opciones: {
     users,
     jwtSecret,
     {
-      enabled: opciones.verificacion ?? false,
+      // Google exige la bandera encendida: por defecto, encendida.
+      enabled: opciones.verificacion ?? true,
       codes: new FakeVerificationRepository(users),
       limits: new FakeRateLimitRepository(),
       mailer,
@@ -65,6 +66,7 @@ function fila(email: string, extra: Record<string, unknown> = {}){
     active: 1,
     deleted_at: null as string | null,
     email_verified_at: "2026-01-01 00:00:00" as string | null,
+    email_verified_via: "CODE" as string | null,
     google_sub: null as string | null,
     ...extra
   };
@@ -251,7 +253,7 @@ describe("AuthService Google Sign-In", () => {
 
     const { service, users } = await crear({ verificacion: true });
     const hash = await hashPassword("Password123!");
-    users.users.push(fila("ana@gmail.com", { password_hash: hash, email_verified_at: null }));
+    users.users.push(fila("ana@gmail.com", { password_hash: hash, email_verified_at: null, email_verified_via: null }));
 
     const { result } = await service.loginWithGoogle({
       idToken: await google.firmar()
@@ -502,15 +504,99 @@ describe("AuthService Google Sign-In", () => {
   });
 
 
-  it("goo-19 debe funcionar con la bandera de verificacion apagada y encendida", async () => {
+  it("goo-19 debe responder GOOGLE_REQUIRES_EMAIL_VERIFICATION con la bandera apagada, sin tocar usuarios", async () => {
 
-    for(const verificacion of [false, true]){
-      const { service } = await crear({ verificacion });
-      const { result } = await service.loginWithGoogle({
-        idToken: await google.firmar()
-      });
-      expect(result.success).toBe(true);
-    }
+    const { service, users } = await crear({ verificacion: false });
+    users.users.push(fila("ana@gmail.com", { email_verified_via: null }));
+    const antes = JSON.stringify(users.users);
+
+    const { result, created } = await service.loginWithGoogle({
+      idToken: await google.firmar()
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      error: "GOOGLE_REQUIRES_EMAIL_VERIFICATION",
+      message: "El acceso con Google no está disponible por ahora."
+    });
+    expect(created).toBe(false);
+    expect(JSON.stringify(users.users)).toBe(antes);
+
+  });
+
+
+  it("goo-19 debe comprobar la bandera antes de validar el token de Google", async () => {
+
+    const { service } = await crear({ verificacion: false });
+
+    const { result } = await service.loginWithGoogle({ idToken: "no-es-un-jwt" });
+
+    expect(result).toMatchObject({ error: "GOOGLE_REQUIRES_EMAIL_VERIFICATION" });
+
+  });
+
+
+  it("goo-19 debe responder GOOGLE_NOT_CONFIGURED antes que la bandera si no hay clientes", async () => {
+
+    const { service } = await crear({ clientIds: [], verificacion: false });
+
+    const { result } = await service.loginWithGoogle({ idToken: "x" });
+
+    expect(result).toMatchObject({ error: "GOOGLE_NOT_CONFIGURED" });
+
+  });
+
+
+  it("goo-19 debe funcionar con la bandera encendida", async () => {
+
+    const { service } = await crear({ verificacion: true });
+    const { result } = await service.loginWithGoogle({
+      idToken: await google.firmar()
+    });
+    expect(result.success).toBe(true);
+
+  });
+
+
+  it("goo-21 debe anular la contraseña al vincular una cuenta con marcador NULL aunque tenga email_verified_at", async () => {
+
+    const { service, users } = await crear();
+    const hash = await hashPassword("Password123!");
+    users.users.push(fila("ana@gmail.com", {
+      password_hash: hash,
+      email_verified_via: null
+    }));
+
+    const { result } = await service.loginWithGoogle({
+      idToken: await google.firmar()
+    });
+
+    expect(result.success).toBe(true);
+    expect(users.users[0].password_hash).toBeNull();
+    expect(users.users[0].email_verified_via).toBe("GOOGLE");
+
+    const login = await service.login({
+      email: "ana@gmail.com",
+      password: "Password123!"
+    });
+    expect(login).toMatchObject({ success: false, error: "INVALID_CREDENTIALS" });
+
+  });
+
+
+  it("goo-21 debe conservar la contraseña al vincular una cuenta verificada por CODE", async () => {
+
+    const { service, users } = await crear();
+    const hash = await hashPassword("Password123!");
+    users.users.push(fila("ana@gmail.com", {
+      password_hash: hash,
+      email_verified_via: "CODE"
+    }));
+
+    await service.loginWithGoogle({ idToken: await google.firmar() });
+
+    expect(users.users[0].password_hash).toBe(hash);
+    expect(users.users[0].email_verified_via).toBe("CODE");
 
   });
 

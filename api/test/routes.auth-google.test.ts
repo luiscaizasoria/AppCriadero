@@ -73,7 +73,7 @@ describe("HTTP POST /auth/google", () => {
     const res = await post(
       app,
       { idToken: "eyJhbGciOiJSUzI1NiIsImtpZCI6Imsx" + "In0.e30.c2ln" },
-      { ...env, GOOGLE_CLIENT_IDS: "web-1" }
+      { ...env, GOOGLE_CLIENT_IDS: "web-1", EMAIL_VERIFICATION_REQUIRED: "true" }
     );
 
     expect(res.status).toBe(503);
@@ -87,11 +87,35 @@ describe("HTTP POST /auth/google", () => {
     const res = await post(
       app,
       { idToken: "basura" },
-      { ...env, GOOGLE_CLIENT_IDS: "web-1" }
+      { ...env, GOOGLE_CLIENT_IDS: "web-1", EMAIL_VERIFICATION_REQUIRED: "true" }
     );
 
     expect(res.status).toBe(401);
     expect(await res.json()).toMatchObject({ error: "INVALID_GOOGLE_TOKEN" });
+
+  });
+
+
+  it("debe responder 403 GOOGLE_REQUIRES_EMAIL_VERIFICATION con la bandera apagada o ausente", async () => {
+
+    for(const bandera of [undefined, "false", "TRUE"]){
+      const res = await post(
+        app,
+        { idToken: "basura" },
+        {
+          ...env,
+          GOOGLE_CLIENT_IDS: "web-1",
+          ...(bandera === undefined ? {} : { EMAIL_VERIFICATION_REQUIRED: bandera })
+        }
+      );
+
+      expect(res.status).toBe(403);
+      expect(await res.json()).toMatchObject({
+        success: false,
+        error: "GOOGLE_REQUIRES_EMAIL_VERIFICATION",
+        message: "El acceso con Google no está disponible por ahora."
+      });
+    }
 
   });
 

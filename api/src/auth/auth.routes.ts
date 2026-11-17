@@ -53,6 +53,7 @@ function statusFor(error: string): ErrorStatus {
       return 401;
     case 'USER_INACTIVE':
     case 'EMAIL_NOT_VERIFIED':
+    case 'GOOGLE_REQUIRES_EMAIL_VERIFICATION':
       return 403;
     case 'EMAIL_ALREADY_REGISTERED':
     case 'GOOGLE_ACCOUNT_CONFLICT':

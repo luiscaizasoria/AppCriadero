@@ -55,6 +55,7 @@ export class FakeAuthRepository implements AuthRepository {
       active: 1,
       deleted_at: null,
       email_verified_at: "2026-01-01 00:00:00",
+      email_verified_via: "GOOGLE",
       google_sub: data.googleSub
     });
 
@@ -73,11 +74,15 @@ export class FakeAuthRepository implements AuthRepository {
       return false;
     }
 
-    if(user.email_verified_at === null){
+    // Espejo del SQL: se evalua con los valores antiguos.
+    if(user.email_verified_via == null){
       user.password_hash = null;
-      user.email_verified_at = "2026-01-01 00:00:00";
+    }
+    if(user.email_verified_at === null){
       this.codigosBorrados.push(user.id);
     }
+    user.email_verified_at = user.email_verified_at ?? "2026-01-01 00:00:00";
+    user.email_verified_via = user.email_verified_via ?? "GOOGLE";
 
     user.google_sub = googleSub;
 

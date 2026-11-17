@@ -110,7 +110,7 @@ export class D1VerificationRepository implements VerificationRepository {
       this.db
         .prepare(`
           UPDATE users
-             SET email_verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+             SET email_verified_at = CURRENT_TIMESTAMP, email_verified_via = 'CODE', updated_at = CURRENT_TIMESTAMP
            WHERE id = ? AND email_verified_at IS NULL
         `)
         .bind(userId),

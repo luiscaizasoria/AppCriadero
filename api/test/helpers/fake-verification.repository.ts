@@ -84,6 +84,7 @@ export class FakeVerificationRepository implements VerificationRepository {
 
     if(user && user.email_verified_at === null){
       user.email_verified_at = "2026-01-01 00:00:00";
+      user.email_verified_via = "CODE";
     }
 
     this.codes.delete(userId);

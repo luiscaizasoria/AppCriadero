@@ -73,6 +73,12 @@ const GOOGLE_NOT_CONFIGURED_ERROR: ErrorResponse = {
   message: 'El acceso con Google no está configurado.',
 };
 
+const GOOGLE_REQUIRES_VERIFICATION_ERROR: ErrorResponse = {
+  success: false,
+  error: 'GOOGLE_REQUIRES_EMAIL_VERIFICATION',
+  message: 'El acceso con Google no está disponible por ahora.',
+};
+
 const GOOGLE_NOT_VERIFIED_ERROR: ErrorResponse = {
   success: false,
   error: 'GOOGLE_EMAIL_NOT_VERIFIED',
@@ -390,8 +396,9 @@ export class AuthService {
   }
 
   /**
-   * POST /auth/google. Independiente de la bandera de verificacion: Google ya
-   * probo la propiedad del correo. El idToken nunca se registra ni se guarda.
+   * POST /auth/google. Exige la bandera de verificacion encendida (orden:
+   * idToken requerido, GOOGLE_NOT_CONFIGURED, GOOGLE_REQUIRES_EMAIL_VERIFICATION
+   * y despues el token de Google). El idToken nunca se registra ni se guarda.
    */
   async loginWithGoogle(request: GoogleLoginRequest): Promise<GoogleLoginOutcome> {
     const fail = (result: ErrorResponse): GoogleLoginOutcome => ({
@@ -407,6 +414,11 @@ export class AuthService {
     const deps = this.googleDeps;
     if (!deps || deps.clientIds.length === 0) {
       return fail(GOOGLE_NOT_CONFIGURED_ERROR);
+    }
+    // Sin verificacion por codigo no se puede confiar en el estado de las
+    // cuentas existentes (toma de cuenta al vincular): Google queda cerrado.
+    if (!this.verificationOn) {
+      return fail(GOOGLE_REQUIRES_VERIFICATION_ERROR);
     }
 
     let identity: GoogleIdentity;
@@ -502,6 +514,7 @@ export class AuthService {
           active: 1,
           deleted_at: null,
           email_verified_at: 'now',
+          email_verified_via: 'GOOGLE',
           google_sub: identity.sub,
         },
         created: true,
