@@ -16,11 +16,11 @@ Este documento registra el modelo de datos de V2 en tres niveles, de mayor a men
 - **Multi-criadero:** `users 1 — N criaderos 1 — N entidades de negocio`. Los datos se aíslan por `criadero_id`; la propiedad se resuelve por `entidad.criadero_id -> criaderos.user_id`, sin duplicar `user_id` salvo necesidad técnica documentada.
 - **Aves individuales, sin lotes.** El alcance funcional es el de V1.
 - **Fotos:** el binario va a R2; D1 guarda la clave del objeto y metadatos.
-- **El esquema D1 de negocio está parcial.** Hoy están implementadas las tablas descritas en la sección siguiente (hasta `0012`: jaulas, aves, historiales, cuidados de jaula, tratamientos de salud, huevos, bajas, movimientos financieros y su historial, códigos de verificación de correo y límites de uso); el resto es borrador.
+- **El esquema D1 de negocio está parcial.** Hoy están implementadas las tablas descritas en la sección siguiente (hasta `0013`: jaulas, aves, historiales, cuidados de jaula, tratamientos de salud, huevos, bajas, movimientos financieros y su historial, códigos de verificación de correo y límites de uso); el resto es borrador.
 
 > **Nota sobre la numeración.** Las decisiones #1–#11 se redactaron cuando la arquitectura todavía era offline-first. Se conservan con su numeración porque el código las cita (por ejemplo, `api/src/catalogs/defaultCatalogItems.ts` cita el "Modelo aprobado #11"). Lo que dependía de sincronización fue **reemplazado por online-first** y así se indica en cada caso.
 
-## Estado real de D1 (migraciones 0001–0012)
+## Estado real de D1 (migraciones 0001–0013)
 
 Migraciones aplicadas, en `api/migrations/`:
 
@@ -38,6 +38,7 @@ Migraciones aplicadas, en `api/migrations/`:
 | `0010_bajas.sql` | `bajas_ave` y `movimientos_financieros` (columnas de V1; `tipo` sin `CHECK`; importes `REAL`; `origen_id TEXT` sin FK, en `VENTA_AVE` es `bajas_ave.id`; `fecha_creacion`, sin `version`/`deleted_at`; FK `RESTRICT` a criaderos y aves; índices `ix_bajas_ave_ave`, `ix_bajas_ave_celular`, `ix_movimientos_criadero_fecha` e `ix_movimientos_origen`; aplicada en local, integración y base remota de pruebas) |
 | `0011_finanzas_historial.sql` | `movimientos_financieros_historial` (auditoría de correcciones; 15 columnas de datos de V1 con su nulabilidad; `accion` sin `CHECK`; `origen_id` sin FK; `id`, `movimiento_id` y `origen_id` `TEXT`; `criadero_id` con FK; FK `RESTRICT` a criaderos y movimientos; sin `fecha_creacion`, `version` ni `deleted_at`; índice `ix_movimientos_historial_movimiento (movimiento_id)`; aplicada en local, integración y base remota de pruebas) |
 | `0012_verificacion_cuenta.sql` | Marca como verificadas (`users.email_verified_at`, columna ya existente desde `0001`) las cuentas existentes; crea `email_verification_codes` (un código activo por cuenta, `UNIQUE(user_id)`, hash con sal, intentos y vigencia; FK `ON DELETE CASCADE` a `users`) y `rate_limits` (ventana fija por `bucket` y `key`, `WITHOUT ROWID`). Aplicada en local, integración y base remota de pruebas. Contrato y DDL en `documents/specs/auth-verificacion-google.md`; el archivo `api/migrations/0012_verificacion_cuenta.sql` prevalece sobre el borrador de la spec |
+| `0013_email_verified_via.sql` | `ALTER TABLE users ADD COLUMN email_verified_via TEXT` (marcador de cómo se probó el correo: `NULL` = correo nunca probado; `'CODE'` = verificación por código; `'GOOGLE'` = verificado por Google; las filas existentes quedan `NULL`). Lo usa `linkGoogle` para anular `password_hash` si el marcador es `NULL` y escribir `COALESCE(email_verified_via,'GOOGLE')`; `register` con la bandera apagada deja `NULL`. Aplicada en local, integración y base remota de pruebas; siguiente migración `0014`. Contrato en `documents/specs/auth-verificacion-google.md`; el archivo `api/migrations/0013_email_verified_via.sql` prevalece |
 
 DDL real de `0011` (`api/migrations/0011_finanzas_historial.sql`, sin los comentarios):
 
@@ -137,7 +138,8 @@ Convenciones comunes: `id TEXT PRIMARY KEY`, fechas `TEXT` con `DEFAULT CURRENT_
 | `nombre` | TEXT NOT NULL | |
 | `password_hash` | TEXT | Nulo si solo usa Google. Formato `pbkdf2_sha256$100000${sal}${hash}` (100000 es el máximo que admite workerd) |
 | `google_sub` | TEXT UNIQUE | Preparado para Google Sign-In; hoy sin uso |
-| `email_verified_at` | TEXT | Hoy no se escribe |
+| `email_verified_at` | TEXT | Se escribe desde `0012` (registro con la bandera apagada, verificación por código y Google) |
+| `email_verified_via` | TEXT | Desde `0013`: `NULL` = correo nunca probado, `'CODE'`, `'GOOGLE'` |
 | `active` | INTEGER NOT NULL **DEFAULT 0** | `CHECK (active IN (0,1))`. El registro actual inserta `active = 1` (ver `arquitectura-v2.md`, riesgos) |
 | `created_at`, `updated_at`, `deleted_at`, `version` | | Estándar |
 
