@@ -2,8 +2,8 @@
 // Uso: node pruebas/movil/lib/preparar.mjs [--jaulas=J-01,J-02] [--aves=A-01:MACHO,A-02:HEMBRA] [--huevos=A-01:J-01:0] [--segunda-cuenta]
 // --segunda-cuenta crea otra cuenta desechable con su criadero vacio (email2, password2, criadero2) para flujos de aislamiento.
 // Imprime JSON {email,password,criadero,...}. Nada se escribe en archivos del repositorio.
-import { registrar, crearCriaderoHttp, http } from '../../datos/lib/http.mjs';
-import { claveAleatoria, DOMINIO } from '../../datos/lib/entorno.mjs';
+import { registrar, registrarSinVerificar, crearCriaderoHttp, http } from '../../datos/lib/http.mjs';
+import { claveAleatoria, DOMINIO, secretoVerificacion } from '../../datos/lib/entorno.mjs';
 import { contadorRed } from '../../datos/lib/red.mjs';
 
 // Reintentos (2, espera de 3 s) solo para errores de red en las llamadas por API; el contador lo lee el ejecutor.
@@ -14,6 +14,17 @@ const arg = n => process.argv.find(a => a.startsWith(`--${n}=`))?.split('=')[1];
 const sufijo = Date.now().toString(36);
 const email = `movil-${sufijo}@${DOMINIO}`;
 const password = claveAleatoria();
+// --sin-verificar: cuenta SIN verificar (sin criadero ni datos). Requiere VERIFICATION_BYPASS_SECRET y la bandera ON en el Worker.
+// Sin el secreto el flujo se OMITE (codigo de salida 4, no es un fallo). Imprime {email,password,codigo}.
+if (process.argv.includes('--sin-verificar')) {
+    if (!secretoVerificacion()) {
+        console.error('OMITIDO: falta VERIFICATION_BYPASS_SECRET (entorno o pruebas/.entorno.local); el flujo de verificacion no se ejecuta.');
+        process.exit(4);
+    }
+    const sv = await registrarSinVerificar('Prueba movil', email, password);
+    console.log(JSON.stringify({ email: sv.email, password: sv.password, codigo: sv.codigo }));
+    process.exit(0);
+}
 const cuenta = await registrar('Prueba movil', email, password);
 const nombreCriadero = 'Criadero movil';
 const criaderoId = await crearCriaderoHttp(cuenta.token, nombreCriadero);

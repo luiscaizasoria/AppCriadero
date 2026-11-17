@@ -116,7 +116,13 @@ tags:
 - extendedWaitUntil:
     visible: ".*\\$23[.]35.*"
     timeout: 30000
-- scrollUntilVisible:
-    element: ".*Consolidado por categoría.*"
+# Finanzas conserva el scroll: el título puede quedar arriba de la pantalla; si no se ve, se sube hasta él.
+- runFlow:
+    when:
+      notVisible: ".*Consolidado por categoría.*"
+    commands:
+      - scrollUntilVisible:
+          element: ".*Consolidado por categoría.*"
+          direction: UP
 - assertVisible: ".*\\$23[.]35.*"
 - takeScreenshot: finanzas-tras-correccion

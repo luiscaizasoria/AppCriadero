@@ -1,7 +1,7 @@
 # VERIFICAR CORREO: login con cuenta sin verificar -> "Verifica tu correo" -> codigo incorrecto -> codigo correcto -> "Tu criadero".
 # REQUISITOS: el Worker de pruebas debe tener EMAIL_VERIFICATION_REQUIRED=true y el secreto VERIFICATION_BYPASS_SECRET, y el
-# secreto debe estar en el entorno o en pruebas/.entorno.local del PC. Sin eso el flujo FALLA (no hay mecanismo de omision).
-# Necesita el ejecutor: '# SIN-VERIFICAR' -> pasar '--sin-verificar' a preparar.mjs y -e CODIGO a maestro (ver informe del probador).
+# secreto debe estar en el entorno o en pruebas/.entorno.local del PC. Sin el secreto el flujo se OMITE (preparar.mjs sale con 4; no es fallo).
+# El ejecutor ya cablea '# SIN-VERIFICAR' (pasa '--sin-verificar' a preparar.mjs y -e CODIGO a maestro). Pasa a completo/ cuando corra con el secreto y la bandera ON.
 # SIN-VERIFICAR
 appId: host.exp.exponent
 tags:

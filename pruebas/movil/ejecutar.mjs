@@ -46,7 +46,7 @@ function listarFlujos() {
                 esperadoFallar: tags.includes('esperado-fallar'),
                 modulo: texto.match(/^# ESPERADO FALLAR [(]([^)]+)[)]/m)?.[1] ?? null,
                 // '# SEGUNDA-CUENTA' en el flujo pide una segunda cuenta desechable vacia (EMAIL2, PASSWORD2, CRIADERO2).
-                semilla: [...(texto.match(/^# SEMILLA: (.*)$/m)?.[1] ?? '').split(' ').filter(Boolean), ...(/^# SEGUNDA-CUENTA/m.test(texto) ? ['--segunda-cuenta'] : [])]
+                semilla: [...(texto.match(/^# SEMILLA: (.*)$/m)?.[1] ?? '').split(' ').filter(Boolean), ...(/^# SEGUNDA-CUENTA/m.test(texto) ? ['--segunda-cuenta'] : []), ...(/^# SIN-VERIFICAR/m.test(texto) ? ['--sin-verificar'] : [])]
             });
         }
     }
@@ -249,7 +249,7 @@ function escribirResumen(final) {
         ...(abortarRed ? [`FALLO DE RED: ${abortarRed}. Ejecucion abortada; los flujos restantes no se lanzaron.`, ''] : []),
         ...(abortar ? [`FALLO DE ENTORNO: ${abortar}. Ejecucion abortada; los flujos restantes no se lanzaron.`, ''] : []),
         `Resultado: **${veredicto}** en ${total} min. Entorno: emulador ${entorno.emulador}, Metro ${entorno.metro} (${entorno.metroInfo ?? 'sin datos'}), red desde el emulador: ${entorno.red ?? 'sin datos'}.`,
-        `Paso: ${cuenta('PASO')} | Regresion: ${cuenta('REGRESION')} | Fallo de red: ${cuenta('FALLO DE RED')} | Entorno: ${cuenta('FALLO DE ENTORNO')} | Fallo como se esperaba: ${cuenta('FALLO COMO SE ESPERABA')} | Migrado, quitar etiqueta: ${cuenta('MIGRADO, QUITAR ETIQUETA')}`,
+        `Paso: ${cuenta('PASO')} | Regresion: ${cuenta('REGRESION')} | Fallo de red: ${cuenta('FALLO DE RED')} | Entorno: ${cuenta('FALLO DE ENTORNO')} | Fallo como se esperaba: ${cuenta('FALLO COMO SE ESPERABA')} | Migrado, quitar etiqueta: ${cuenta('MIGRADO, QUITAR ETIQUETA')} | Omitido: ${cuenta('OMITIDO')}`,
         `Reintentos de red: ${reintentosRed} (preparacion por API ${reintentosPreparar}, limpieza ${contadorRed.reintentos})`,
         `Recuperaciones del emulador: ${recuperaciones.length ? recuperaciones.join('; ') : 'ninguna'}. Limites: ${Math.round(FLUJO_MAX_MS / 1000)} s por flujo, ${Math.round(EJECUCION_MAX_MS / 1000)} s por ejecucion.`,
         limpieza ? `Limpieza de cuentas desechables: ${limpieza.ok ? 'hecha' : 'FALLO'}${limpiezaRed ? ' POR RED (ejecutar: node pruebas/datos/ejecutar.mjs --solo-limpiar)' : ''} ${JSON.stringify(limpieza.recuento ?? limpieza.detalle ?? '')}` : 'Limpieza de cuentas desechables: pendiente (la ejecucion no ha terminado)',
@@ -284,6 +284,15 @@ for (const [indice, flujo] of lista.entries()) {
     evento(`inicio ${flujo.nombre} (limite ${Math.round(limite / 1000)} s)`);
     const x = await correrFlujo(flujo, limite);
     const colgado = x.colgado;
+    // Codigo 4 de preparar.mjs: flujo OMITIDO (falta el secreto de verificacion); no es fallo ni regresion.
+    if (x.r.status === 4 && !colgado) {
+        const motivo = x.salida.split('\n').find(l => /OMITIDO/.test(l))?.trim() ?? 'OMITIDO';
+        resultados.push({ flujo: flujo.nombre, modulo: flujo.modulo, estado: 'OMITIDO', seg: x.seg, intentos: x.intentos, falla: motivo.slice(0, 220) });
+        console.log(`${'OMITIDO'.padEnd(26)} ${flujo.nombre}\n   ${motivo}`);
+        evento(`fin ${flujo.nombre}: OMITIDO`);
+        escribirResumen(false);
+        continue;
+    }
     const paso = x.r.status === 0 && !colgado;
     // Fallo al abrir la app (nunca llego a una pantalla de la app): es de entorno, no una regresion.
     const abrirFallo = !paso && !colgado && /abrir-app\.yaml\.\.\. FAILED|"Continue" is visible\.\.\. FAILED/.test(x.salida);

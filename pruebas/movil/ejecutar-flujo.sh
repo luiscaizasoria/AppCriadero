@@ -7,8 +7,12 @@ RAIZ="$(cd "$(dirname "$0")/../.." && pwd)"
 export PATH="$PATH:/c/Android/kikirikis-tools/maestro/maestro/bin"
 export JAVA_TOOL_OPTIONS=-Dfile.encoding=UTF-8
 FLUJO="$1"; shift
-DATOS="$(node "$RAIZ/pruebas/movil/lib/preparar.mjs" "$@")" || exit 3
+DATOS="$(node "$RAIZ/pruebas/movil/lib/preparar.mjs" "$@")"; RC=$?
+# 4 = OMITIDO (p. ej. --sin-verificar sin VERIFICATION_BYPASS_SECRET): no es un fallo.
+[ "$RC" -eq 4 ] && exit 4
+[ "$RC" -ne 0 ] && exit 3
 campo() { echo "$DATOS" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d)['$1']))"; }
 maestro test -e "EMAIL=$(campo email)" -e "PASSWORD=$(campo password)" -e "CRIADERO=$(campo criadero)" \
+  -e "CODIGO=$(campo codigo)" \
   -e "EMAIL2=$(campo email2)" -e "PASSWORD2=$(campo password2)" -e "CRIADERO2=$(campo criadero2)" \
   -e "PUERTO_METRO=${ENLACE_PUERTO_PRUEBA:-${PUERTO_METRO:-8090}}" --test-output-dir "${SALIDA_MAESTRO:-$RAIZ/pruebas/.cache/maestro}" "$FLUJO"
