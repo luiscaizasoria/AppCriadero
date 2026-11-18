@@ -4,26 +4,26 @@ Se carga solo desde `CLAUDE.md` (import). Historial: `documents/bitacora.md`. Ac
 
 ## Rama y reglas de trabajo
 
-- Rama `trabajo/migracion-nube`. Push hecho el 2026-11-17: `c9ea633..354e168` (7 commits ya en remoto). Los cambios de hoy están **sin commit** (el orquestador los confirmará aparte). Push solo con aprobación; sin PR ni fusión a `main`. `documents/specs/auth-verificacion-google.md` está sin añadir a Git.
+- Rama `trabajo/migracion-nube`. Último push `354e168` (7 commits del paquete del 2026-11-16 ya en remoto). Locales sin empujar: `f15a867`, `07f4248` y `f98647c`; la librería de Google está sin commit. Push solo con aprobación; sin PR ni fusión a `main`. `documents/specs/auth-verificacion-google.md` está sin añadir a Git.
 - Cloudflare: solo `--env test` y base de pruebas, con aprobación; nunca la base de desarrollo. Expo por túnel (puerto 8090, URL solo en variables de sesión). Emulador, `/probar smoke` y `/probar completo` solo a petición; typecheck, unitarias y `/probar datos` si se toca API o dinero.
 
-## Paquete del 2026-11-16 (ya empujado)
+## Paquete del 2026-11-16 (en remoto)
 
 - `742fcd4` Inicio navegable (flujo `100`). `70e0bcd` y `16ce103` colores por estado en jaulas y aves; Quemadura en naranja por decisión del usuario (flujo `101`).
-- `8655cf6` Alertas de Salud solo el día UTC en que se cumplen 7 días desde el último control; texto fijo «lleva 7 días». Excepción aprobada a la paridad, solo en Salud.
-- `e475139` Verificación de cuenta por código: migración `0012`; bandera `EMAIL_VERIFICATION_REQUIRED` apagada en todos los entornos; proveedor de correo sin elegir.
-- `86677b6` Login con Google: `POST /api/v1/auth/google` y botón. `354e168` documentación y flujos Maestro corregidos.
+- `8655cf6` Alertas de Salud solo el día UTC en que se cumplen 7 días desde el último control. Excepción aprobada a la paridad, solo en Salud.
+- `e475139` Verificación de cuenta por código (`0012`, bandera apagada). `86677b6` Login con Google. `354e168` documentación y flujos corregidos.
 
-## Cambios del 2026-11-17 (sin commit)
+## Cambios del 2026-11-17
 
-- Valores por defecto de verificación **aceptados por el usuario**: código 10 min, 5 intentos, reenvío 60 s, 5 envíos/h por correo, 5 registros/h por IP, 80/día global, borrado a 24 h sin Cron, cambio de correo con contraseña, `409` al registrar un correo ya verificado.
-- **Hallazgo de Google RESUELTO (decisión A+B).** (A) `POST /auth/google` responde `403 GOOGLE_REQUIRES_EMAIL_VERIFICATION` si `EMAIL_VERIFICATION_REQUIRED` no vale exactamente `"true"`; orden: `idToken` (400) -> `GOOGLE_NOT_CONFIGURED` (503) -> bandera apagada (403) -> validar token. (B) Migración `0013` `users.email_verified_via` (`NULL` = nunca probado, `'CODE'`, `'GOOGLE'`); `linkGoogle` anula `password_hash` si el marcador es `NULL`. Consecuencia: las cuentas previas pierden su contraseña la primera vez que vinculan Google (sin recuperación de contraseña).
-- `0013` aplicada en local, integración y base remota de pruebas; Worker de pruebas desplegado (`--env test`). Bandera apagada en todos los entornos; `GOOGLE_CLIENT_IDS` sin configurar en el Worker de pruebas (`/auth/google` responde `503 GOOGLE_NOT_CONFIGURED`). Siguiente migración: `0014`.
-- Librería `@react-native-google-signin/google-signin` ^17.0.0 aprobada e instalada (`npx expo install`); plugin en `app.json` sin opciones (no verificado en un prebuild real); solo development build, no Expo Go. `require` en `try` en `src/api/googleAuth.js` (comprobación en Expo Go real pendiente). `package.json`/`app.json` quedan sin commit hasta que el usuario vea el diff.
-- Pruebas: typecheck OK; unitarias 419/419; integración 228/228; `git diff --check` limpio; `/probar datos` 122/122 (7 omitidos sin secreto). Flujos `95` y `96` VERDES (Finanzas conserva el scroll y el título «Consolidado por categoría» queda arriba; YAML corregido con scroll condicional). Cableado `--sin-verificar` hecho en `pruebas/movil` (código de salida 4 = OMITIDO); flujo `102` sigue en `esperado-fallar/` (se omite sin `VERIFICATION_BYPASS_SECRET` y necesita la bandera encendida en el Worker). `/probar completo` no se ejecutó: **sigue sin haber completo verde del paquete completo** (último ROJO `2026-11-16-163400-completo`, 27 PASO, 5 REGRESION).
-- Base de pruebas tras limpiar: 3 cuentas, 3 criaderos, 4 jaulas, 5 aves, 0 desechables; la jaula y el ave de más (frente al 2026-11-10) son del usuario, de probar colores por estado.
+- `f15a867` Google exige verificación por código (decisión A+B). Migración `0013` (`users.email_verified_via`: `NULL` = nunca probado, `'CODE'`, `'GOOGLE'`). `POST /auth/google` responde `403 GOOGLE_REQUIRES_EMAIL_VERIFICATION` si la bandera no vale `"true"`; orden: `idToken` (400), `GOOGLE_NOT_CONFIGURED` (503), bandera (403), validar token. `linkGoogle` anula `password_hash` si el marcador es `NULL`: las cuentas previas pierden la contraseña al vincular Google; sin recuperación de contraseña. Hallazgo de Google **resuelto**.
+- `07f4248` `--sin-verificar` cableado en `pruebas/movil`; flujo `102` omitido sin `VERIFICATION_BYPASS_SECRET` (sigue en `esperado-fallar/`, exige bandera encendida); `95` y `96` con scroll hacia arriba (causa: Finanzas conserva el scroll).
+- `f98647c` documentación y CLAUDE.md al 2026-11-17 (migraciones `0001`–`0013`, siguiente `0014`).
+- Sin commit, a la espera del visto bueno del usuario al diff: librería de Google Sign-In (paquete con ámbito `react-native-google-signin`) ^17.0.0 en `package.json` y `package-lock.json`; plugin en `app.json` sin opciones. `require` en `try` en `src/api/googleAuth.js`. Solo development build, no Expo Go; el plugin no está verificado en un prebuild real.
+- Valores por defecto de verificación aceptados por el usuario: código 10 min, 5 intentos, reenvío 60 s, 5 envíos/h por correo, 5 registros/h por IP, 80/día global, borrado a 24 h sin Cron, cambio de correo con contraseña, `409` al registrar un correo verificado.
+- Cloudflare: `0013` aplicada en local, integración y base remota de pruebas; Worker de pruebas desplegado (`--env test`). Bandera apagada en todos los entornos; `GOOGLE_CLIENT_IDS` sin configurar.
+- Pruebas: typecheck OK; unitarias 419/419; integración 228/228; `/probar datos` 122/122 (7 omitidos). Flujos `95` y `96` VERDES. Base de pruebas: 3 cuentas, 3 criaderos, 4 jaulas, 5 aves, 0 desechables. `/probar completo` NO ejecutado: **sin completo verde del paquete** (último ROJO `2026-11-16-163400-completo`).
 
-## Módulos hechos
+## Módulos hechos (migraciones `0001`–`0013` aplicadas en local, integración y pruebas; siguiente `0014`; paridad con V1 salvo alertas de Salud)
 
 | Módulo | API | Cliente app | Probado (Worker de pruebas) | Teléfono |
 |---|---|---|---|---|
@@ -34,20 +34,19 @@ Se carga solo desde `CLAUDE.md` (import). Historial: `documents/bitacora.md`. Ac
 | Bajas (`0010`) y finanzas (`0011`) | sí | `BajaAveRepository`, `FinanzasRepository` | sí (`90`, `91`, `95`, `96`) | no |
 | Clientes, Reportes, Alertas, Inicio (sin migración, solo lectura) | sí | sus repositorios `.api.js` | sí (`98`, `97`, `99`, `94`) | no |
 
-- Migraciones `0001`–`0013` aplicadas en local, integración y base remota de pruebas (siguiente: `0014`). Paridad con V1 sin diferencias, salvo la excepción de alertas de Salud.
-
 ## Próximos pasos (en este orden)
 
-1. Prueba del usuario en el teléfono: 22 puntos del paquete, `documents/ux/pendiente-en-telefono.md` y la fase 6 (Bajas, Finanzas, Clientes, Reportes, Alertas, Inicio).
-2. El usuario revisa el diff de `package.json`/`app.json`; el orquestador confirma los commits de hoy (migración `0013`, bloqueo de Google, librería, cableado `--sin-verificar`, YAML de `95` y `96`).
-3. Decidir proveedor de correo y dominio; ambientes: `vars` de `env.test` en `api/wrangler.jsonc` (`EMAIL_VERIFICATION_REQUIRED`, `EMAIL_FROM`, `GOOGLE_CLIENT_IDS`); secretos por stdin solo con orden expresa; clientes de Google Cloud y development build con EAS (con la bandera encendida Google ya no devuelve 403).
-4. Pruebas: `/probar completo` verde del paquete; mover `102-verificar-correo` a `completo/` cuando la bandera esté encendida en el Worker de pruebas. Notas de variables en `api/.dev.vars.example`, `pruebas/.entorno.local.example` y `pruebas/README.md`; textos de `CLAUDE.md` sin aplicar.
-5. Luego fotos en R2 (`criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`), `/auth/me`, refresh token, recuperación de contraseña, ambientes de producción, zona horaria local (alertas y periodos usan UTC) y retiro de SQLite con respaldo.
+1. El usuario revisa el diff de `package.json`, `package-lock.json` y `app.json`; con su visto bueno, el orquestador hace el commit de la librería. Después, push de los 3 commits locales (con aprobación).
+2. Prueba del usuario en el teléfono: 22 puntos (`documents/ux/pendiente-en-telefono.md`) y fase 6 (Bajas, Finanzas, Clientes, Reportes, Alertas, Inicio).
+3. Google: validar en Expo Go (con la bandera apagada debe dar 403) y en development build con EAS; clientes de Google Cloud (ID web, SHA-1, ID Android) por el usuario.
+4. Ambientes: proveedor de correo, dominio y `EMAIL_FROM`; `vars` de `env.test` en `api/wrangler.jsonc` (`EMAIL_VERIFICATION_REQUIRED`, `EMAIL_FROM`, `GOOGLE_CLIENT_IDS`); secretos por stdin solo con orden expresa.
+5. Pruebas: `/probar completo` verde del paquete; mover `102-verificar-correo` a `completo/` con la bandera encendida en el Worker de pruebas; notas de variables en `api/.dev.vars.example`, `pruebas/.entorno.local.example` y `pruebas/README.md`; `.claude/rules/api-migraciones-d1.md` dice «siguiente 0012» (lo corrige `mantenimiento-claude` a petición).
+6. Luego fotos en R2 (`criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`), `/auth/me`, refresh token, recuperación de contraseña, ambientes de producción, zona horaria local (alertas y periodos usan UTC) y retiro de SQLite con respaldo.
 
 ## Incidencias recurrentes
 
 - Cloudflare error 7403 en `wrangler d1 migrations apply ... --remote`: reintentar; si persiste, `wrangler logout` y `wrangler login`.
-- `/probar completo`: Expo Go «Something went wrong», cortes de red, emulador colgado, `adb` en `Broken pipe`. Si no basta: `adb emu kill` y arrancar el AVD en frío (`-no-snapshot -gpu swiftshader_indirect -dns-server 8.8.8.8,1.1.1.1`) con Start-Process desde PowerShell. Ver `pruebas/README.md`.
+- `/probar completo`: Expo Go «Something went wrong», cortes de red, emulador colgado, `adb` en `Broken pipe`, driver de Maestro con fallos de entorno. Si no basta: `adb emu kill` y arrancar el AVD en frío (`-no-snapshot -gpu swiftshader_indirect -dns-server 8.8.8.8,1.1.1.1`) con Start-Process desde PowerShell. Ver `pruebas/README.md`.
 
 ## Limitaciones conocidas
 
