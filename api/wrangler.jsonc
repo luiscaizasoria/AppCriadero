@@ -13,6 +13,11 @@
   "env": {
     "test": {
       "name": "criadero-kikirikis-api-test",
+      "vars": {
+        "EMAIL_PROVIDER": "gmail-smtp",
+        "EMAIL_FROM_NAME": "Criadero Kikirikis",
+        "EMAIL_VERIFICATION_REQUIRED": "true"
+      },
       "d1_databases": [
         {
           "binding": "DB",
