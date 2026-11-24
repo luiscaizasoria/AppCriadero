@@ -107,7 +107,7 @@ export async function asegurarMetro(urlApi) {
     const salida = fs.openSync(LOG_METRO, 'w');
     // Cabecera propia: el log nunca queda vacio (Expo en modo CI casi no escribe) y deja constancia de quien lo arranco.
     fs.writeSync(salida, `[ejecutor ${new Date().toISOString()}] arrancando Metro en el puerto ${PUERTO_METRO} (pid del ejecutor ${process.pid})\n`);
-    spawn('npx', ['expo', 'start', '--port', PUERTO_METRO, '--offline'], {
+    spawn('npx', ['expo', 'start', '--go', '--port', PUERTO_METRO, '--offline'], {
         cwd: raiz, detached: true, stdio: ['ignore', salida, salida], shell: true,
         env: { ...process.env, CI: '1', EXPO_NO_TELEMETRY: '1', EXPO_NO_TYPESCRIPT_SETUP: '1', EXPO_DEBUG: '1', EXPO_PUBLIC_DATA_SOURCE: 'api', EXPO_PUBLIC_API_URL: urlApi }
     }).unref();
