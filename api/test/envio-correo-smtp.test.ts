@@ -73,7 +73,7 @@ describe("EnvioCorreoSmtp", () => {
     expect(s.datos).toContain("Content-Type: text/html; charset=UTF-8");
     expect(s.datos).toContain("Date: Tue, 24 Nov 2026 10:00:00 GMT");
     expect(s.datos).toMatch(/Message-ID: <[0-9a-f-]+@example\.test>/);
-    expect(s.datos).toContain(`From: "Criadero Kikirikis" <${REMITENTE}>`);
+    expect(s.datos).toContain(`From: "MiCriadero" <${REMITENTE}>`);
 
     const cabeceraAsunto = /Subject: ((?:=\?UTF-8\?B\?[^?]+\?=(?:\r\n )?)+)/.exec(s.datos)?.[1] ?? "";
     const palabras = [...cabeceraAsunto.matchAll(/=\?UTF-8\?B\?([^?]+)\?=/g)];
@@ -81,7 +81,7 @@ describe("EnvioCorreoSmtp", () => {
     const decodificado = palabras
       .map((p) => new TextDecoder().decode(Uint8Array.from(atob(p[1]), (c) => c.charCodeAt(0))))
       .join("");
-    expect(decodificado).toBe("Tu código de verificación de Criadero Kikirikis");
+    expect(decodificado).toBe("Tu código de verificación de MiCriadero");
 
     const [texto, html] = decodificarPartes(s.datos);
     expect(texto).toContain(CODIGO);

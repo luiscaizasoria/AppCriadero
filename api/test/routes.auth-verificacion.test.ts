@@ -99,7 +99,7 @@ describe("Correo y utilidades criptograficas", () => {
     const cuerpo = JSON.parse(llamadas[0].init.body);
 
     expect(cuerpo.to).toEqual(["ana@test.com"]);
-    expect(cuerpo.subject).toBe("Tu código de verificación de Criadero Kikirikis");
+    expect(cuerpo.subject).toBe("Tu código de verificación de MiCriadero");
     expect(cuerpo.text).toContain("654321");
     expect(cuerpo.text).toContain("10 minutos");
     expect(cuerpo.html).toContain("&lt;b&gt;Ana&lt;/b&gt;");
