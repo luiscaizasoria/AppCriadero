@@ -6,11 +6,20 @@
 
 ## Estado
 
-implementada (2026-11-16, commits `e475139` y `86677b6`, ya en remoto tras el push del 2026-11-17); revisor APROBADO. Los cambios del 2026-11-17 (migración `0013`, bloqueo de Google con bandera apagada, librería instalada, cableado `--sin-verificar`) están **sin commit** a la fecha de esta nota. Verificación por código: migraciones `0012` y `0013` aplicadas en local, integración y base remota de pruebas; Worker de pruebas desplegado (`--env test`); bandera `EMAIL_VERIFICATION_REQUIRED` ausente (apagada) en todos los entornos; proveedor de correo sin elegir (la comparación de abajo no está verificada con documentación vigente). Valores por defecto de límites y vigencias **aceptados por el usuario** (2026-11-17): código 10 min, 5 intentos, reenvío 60 s, 5 envíos/h por correo, 5 registros/h por IP, 80 envíos/día global, borrado a las 24 h sin Cron, cambio de correo con contraseña y `409` al registrar un correo ya verificado.
+implementada (2026-11-16, commits `e475139` y `86677b6`, ya en remoto tras el push del 2026-11-17); revisor APROBADO. Los cambios del 2026-11-17 (migración `0013`, bloqueo de Google con bandera apagada, cableado `--sin-verificar`) ya están en commits; la preparación del development build (librería fijada, plugin retirado, `expo-dev-client`, `eas.json`) se hizo hasta el 2026-11-24 (ver «Google (resumen)»). Verificación por código: migraciones `0012` y `0013` aplicadas en local, integración y base remota de pruebas; Worker de pruebas desplegado (`--env test`); bandera `EMAIL_VERIFICATION_REQUIRED` ausente (apagada) en todos los entornos; proveedor de correo sin elegir (la comparación de abajo no está verificada con documentación vigente). Valores por defecto de límites y vigencias **aceptados por el usuario** (2026-11-17): código 10 min, 5 intentos, reenvío 60 s, 5 envíos/h por correo, 5 registros/h por IP, 80 envíos/día global, borrado a las 24 h sin Cron, cambio de correo con contraseña y `409` al registrar un correo ya verificado.
 
 Pruebas del 2026-11-17: typecheck OK; unitarias 419/419; integración 228/228; `git diff --check` limpio; `/probar datos` 122/122 (7 omitidos sin secreto; caso `18-verificacion`). Flujo `102-verificar-correo`: sigue en `esperado-fallar/`; el cableado `--sin-verificar` ya existe en `pruebas/movil` (`preparar.mjs`, `ejecutar.mjs`, `ejecutar-flujo.sh`; código de salida 4 = OMITIDO) y el flujo se omite con mensaje claro si falta `VERIFICATION_BYPASS_SECRET`, pero además necesita la bandera encendida en el Worker (no se enciende), así que no pasa a `completo/` todavía.
 
-Google (resumen): `POST /api/v1/auth/google` y botón «Continuar con Google». Librería `@react-native-google-signin/google-signin` ^17.0.0 aprobada e instalada con `npx expo install` (peerDependencies `expo >=52.0.40`; unpackedSize ~182 KB; solo development build con EAS, no Expo Go). Plugin añadido a `app.json` **sin opciones** (la documentación oficial pide `iosUrlScheme` solo para iOS sin Firebase; la app se construye para Android; no verificado en un prebuild real). `eas.json` ya tiene el perfil `development`. Verificado: `npx expo config --type prebuild` resuelve el plugin y `npx expo export --platform android` compila (bundle 3,6 MB). El `require` de la librería en `src/api/googleAuth.js` va dentro de un `try`, de modo que en Expo Go solo queda el aviso (comprobación en Expo Go real pendiente). El cambio de `package.json` y `app.json` queda sin commit hasta que el usuario vea el diff. `GOOGLE_CLIENT_IDS` sin configurar en el Worker de pruebas (verificado: `/auth/google` responde `503 GOOGLE_NOT_CONFIGURED`). Google sin probar en dispositivo.
+Google (resumen, actualizado 2026-11-24): `POST /api/v1/auth/google` y botón «Continuar con Google».
+- **Librería fijada en `@react-native-google-signin/google-signin` 16.1.5 exacta** (commit `f499654`; validada con Expo 57 y RN 0.86.3 en otro proyecto). Sustituye a la ^17.0.0 instalada el 2026-11-17. `src/api/googleAuth.js` acepta la respuesta de la 16 y de la 17 (`resultado.type` y `resultado.data.idToken`, o `resultado.idToken`) y no usa nada exclusivo de la 17. Solo development build, no Expo Go.
+- **Plugin retirado de `app.json`** (commit `1857e6f`). Sin opciones, el plugin aplica la configuración de Firebase y rompe el build de Android sin `google-services.json` (comprobado por el usuario en otro proyecto con Expo 57). No se añade `googleServicesFile`. La librería se enlaza por autolinking (aparece en `autolinkedModules` de `npx expo config --type prebuild`). Esto sustituye lo dicho antes sobre «plugin sin opciones».
+- **Development build**: `expo-dev-client` ~57.0.22 instalado (commit `467417e`). `eas.json` ya tenía el perfil `development` (`developmentClient`, `internal`, `appVersionSource` remote) y se le añadió `environment: "development"` (commit `8b0aa69`). Arranque en Expo Go: `npx expo start --go --tunnel --port 8090`; en dev client: `npx expo start --dev-client`. Sin `--go`, con `expo-dev-client` instalado, `expo start` pasa a dev client; el ejecutor de pruebas (`pruebas/movil/lib/entorno-movil.mjs`) arranca Metro con `--go`.
+- El `require` de la librería en `src/api/googleAuth.js` va dentro de un `try`: en Expo Go solo queda el aviso (comprobación en Expo Go real pendiente).
+- Backend (`api/src/auth/google-token.ts`, ~líneas 97-102): `jwtVerify` valida `aud` contra la lista `GOOGLE_CLIENT_IDS` e `iss` contra `GOOGLE_ISSUERS`; `azp` no se lee ni se valida. El ID token traerá `aud` = ID de cliente Web y `azp` = ID de cliente Android, así que `GOOGLE_CLIENT_IDS` debe contener el ID del cliente **Web**; el ID Android no hace falta en la lista.
+- Para probar Google en el Worker de pruebas hace falta `EMAIL_VERIFICATION_REQUIRED` activa; mientras esté apagada, `/auth/google` responde `403 GOOGLE_REQUIRES_EMAIL_VERIFICATION` a propósito. `GOOGLE_CLIENT_IDS` sigue sin configurar en el Worker de pruebas (`503 GOOGLE_NOT_CONFIGURED`).
+- `DEVELOPER_ERROR` (código 10) = SHA-1 o paquete mal registrados; si se regenera el keystore hay que registrar la SHA-1 de nuevo.
+- Verificado el 2026-11-24: `expo-doctor` 21/21; `npx expo config --type prebuild` sin errores; bundle Android por el túnel HTTP 200; `/probar smoke` VERDE (3,5 min); typecheck OK; unitarias 418/419 (falló por tiempo la de «80 envíos por día»; pasa suelta en 3,4 s). **Sin verificar**: el build real con EAS, el icono en el launcher y Google en dispositivo.
+- Pendientes: prueba `debe limitar a 80 envios por dia en total` con límite justo de 5 s; consentimiento de Google en modo pruebas; medición de CPU de la verificación de Google en Cloudflare.
 
 **Hallazgo del 2026-11-16: RESUELTO (2026-11-17, decisión del usuario, A y B).** El problema era que, con la bandera apagada, `register` marcaba verificadas las cuentas sin probar el correo (pre-registro y toma de cuenta al vincular Google). Resolución:
 - (A) `POST /auth/google` responde `403 GOOGLE_REQUIRES_EMAIL_VERIFICATION` («El acceso con Google no está disponible por ahora.») si `EMAIL_VERIFICATION_REQUIRED` no vale exactamente `"true"`. Orden de comprobaciones: `idToken` requerido (`400 VALIDATION_ERROR`) -> `GOOGLE_NOT_CONFIGURED` (`503`) -> bandera apagada (`403`) -> validar el token.
@@ -18,7 +27,7 @@ Google (resumen): `POST /api/v1/auth/google` y botón «Continuar con Google». 
 - Consecuencia aceptada: las cuentas previas con marcador `NULL` pierden su contraseña la primera vez que vinculan Google, y no hay recuperación de contraseña (fuera de alcance).
 - Esto sustituye a la parte «Riesgo de vinculación con bandera OFF» y a la regla de vinculación de las secciones de Google de más abajo (diseño original: la vinculación decidía por `email_verified_at`; el código real decide por `email_verified_via`).
 
-Pendientes manuales (orden expresa del usuario): `vars` de `env.test` en `api/wrangler.jsonc` (`EMAIL_VERIFICATION_REQUIRED`, `EMAIL_FROM`, `GOOGLE_CLIENT_IDS`); secretos `RESEND_API_KEY` y `VERIFICATION_BYPASS_SECRET` por stdin; notas de las variables nuevas en `api/.dev.vars.example`, `pruebas/.entorno.local.example` y `pruebas/README.md`; elegir proveedor de correo y dominio; development build con EAS y clientes de Google Cloud. El texto de abajo conserva el diseño original; donde difiera, el código real prevalece.
+Pendientes manuales (orden expresa del usuario): `vars` de `env.test` en `api/wrangler.jsonc` (`EMAIL_VERIFICATION_REQUIRED`, `EMAIL_FROM`, `GOOGLE_CLIENT_IDS`); secretos `RESEND_API_KEY` y `VERIFICATION_BYPASS_SECRET` por stdin; notas de las variables nuevas en `api/.dev.vars.example`, `pruebas/.entorno.local.example` y `pruebas/README.md`; elegir proveedor de correo y dominio; build de desarrollo con EAS y clientes de Google Cloud (orden vigente en la sección 3 de Google). El texto de abajo conserva el diseño original; donde difiera, el código real prevalece.
 
 ## Fuente del código actual
 
@@ -285,6 +294,8 @@ Tocar:
 
 ## Google Sign-In (borrador)
 
+> Nota 2026-11-24: lo que esta sección dice del plugin en `app.json`, de «sin librería de Google» y de `^17` es el diseño original; el estado real (librería 16.1.5 exacta, sin plugin, `expo-dev-client`) está en «Google (resumen)» arriba y prevalece.
+
 Naturaleza: autenticación nueva (excepción técnica de "autenticación"; V1 no tiene cuentas). Con la bandera de verificación en OFF y sin `GOOGLE_CLIENT_IDS` el endpoint responde `503 GOOGLE_NOT_CONFIGURED` y nada cambia. **Aviso general:** sin acceso a la web; todo dato de librerías, Google Cloud y Expo marcado «NV» es *según mi conocimiento (no verificado con documentación vigente en esta sesión)*, y debe confirmarse antes de implementar, sobre todo para Expo SDK 57 (posterior a lo que conozco con seguridad).
 
 ### Estado real del código (base del diseño)
@@ -340,6 +351,17 @@ Cómo cambia la forma de probar: el usuario hoy prueba con **Expo Go por túnel*
 - Fuera de alcance: botón/endpoint para desvincular, "olvidé mi contraseña", fijar contraseña a una cuenta Google, refresh token, `/auth/me`.
 
 ### 3. Pasos manuales del usuario (uno por uno; no los hace el agente)
+
+**Orden vigente (2026-11-24; sustituye al orden de la lista original de más abajo, cuyos detalles de menús siguen sirviendo).** No se escriben valores reales en el repositorio.
+1. Proyecto de Google Cloud nuevo y pantalla de consentimiento (Externo, modo pruebas, usuario de prueba).
+2. Cliente OAuth **Web**.
+3. `eas login`.
+4. Variables públicas en el entorno `development` de EAS: `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` y `EXPO_PUBLIC_DATA_SOURCE=api` (se incrustan al compilar).
+5. Build de desarrollo con EAS (genera el keystore).
+6. SHA-1 con `eas credentials` (comprobar también contra el APK).
+7. Cliente OAuth **Android** con el paquete `com.luiscaizasoria.criaderokikirikis` y esa SHA-1.
+8. Instalar el APK.
+9. Metro con `npx expo start --dev-client` (reiniciar con `--clear` si cambian las variables).
 
 Los nombres de menús de Google Cloud y Expo cambian con frecuencia (NV). Si una pantalla no coincide, guiarse por el término equivalente.
 1. **Proyecto**: entrar a console.cloud.google.com con la cuenta de Google del proyecto. Selector de proyectos (arriba) -> "Proyecto nuevo" -> nombre "Criadero Kikirikis" -> Crear. Debe ver el nombre del proyecto en la barra superior ya seleccionado.
