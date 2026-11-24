@@ -266,6 +266,8 @@ Ver sección 3 (`email_verification_codes`, `rate_limits`, `users.email_verified
 
 ## Casos de paridad
 
+> Nota 2026-11-24: los casos siguen vigentes para entornos con la bandera apagada (desarrollo y producción). La bandera `EMAIL_VERIFICATION_REQUIRED=true` está encendida solo en el Worker de pruebas (`env.test`), donde las pruebas (unitarias 433/433, integración 228/228, `/probar datos` 122/122 sin omitidos, smoke verde) se ejecutan con ella activa. Las líneas de `auth.service.ts` citadas en la columna «evidencia» son del diseño original y pueden haberse movido.
+
 | id | dado | cuando | entonces | evidencia |
 |---|---|---|---|---|
 | par-01 | Bandera OFF | `register` | Igual que hoy: 201 con `accessToken` | `auth.service.ts:91-102` |
@@ -277,6 +279,8 @@ Ver sección 3 (`email_verification_codes`, `rate_limits`, `users.email_verified
 | par-07 | Modo SQLite | Arrancar la app | No se cargan pantallas de acceso | `App.js:58-70` |
 
 ## Archivos a crear o tocar
+
+> Diseño original superado (2026-11-24): la lista es la del plan inicial y ya está ejecutada (`0012` y `0013` creadas y aplicadas). Cambios respecto al plan: el correo ya no se limita a `envio-correo-resend.ts`; se añadió un cliente SMTP propio en `api/src/auth/correo/` (`smtp-client`, `mensaje-mime`, `envio-correo-smtp`, `socket-cloudflare`) con Gmail (contraseña de aplicación de Google, TLS implícito en `smtp.gmail.com:465` por `cloudflare:sockets`), elegido con `EMAIL_PROVIDER=gmail-smtp` (ausente o `simulado` = comportamiento previo: Resend si hay `RESEND_API_KEY` y `EMAIL_FROM`, si no, no configurado). Secretos (solo nombres): `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM`; variables: `EMAIL_PROVIDER`, `EMAIL_FROM_NAME`. Resend con dominio propio queda como mejora futura (con remitente Gmail personal el correo llegó a spam). Probado el 2026-11-24 en el Worker de pruebas, en el plan Free. Los nombres exactos de archivos de pruebas y flujos pueden diferir del plan: el código real manda.
 
 Crear:
 - `api/migrations/0012_verificacion_cuenta.sql`
@@ -298,9 +302,13 @@ Tocar:
 
 > Nota 2026-11-24: lo que esta sección dice del plugin en `app.json`, de «sin librería de Google» y de `^17` es el diseño original; el estado real (librería 16.1.5 exacta, sin plugin, `expo-dev-client`) está en «Google (resumen)» arriba y prevalece.
 
-Naturaleza: autenticación nueva (excepción técnica de "autenticación"; V1 no tiene cuentas). Con la bandera de verificación en OFF y sin `GOOGLE_CLIENT_IDS` el endpoint responde `503 GOOGLE_NOT_CONFIGURED` y nada cambia. **Aviso general:** sin acceso a la web; todo dato de librerías, Google Cloud y Expo marcado «NV» es *según mi conocimiento (no verificado con documentación vigente en esta sesión)*, y debe confirmarse antes de implementar, sobre todo para Expo SDK 57 (posterior a lo que conozco con seguridad).
+> Diseño original superado (2026-11-24), puntos clave: (1) con la bandera apagada el endpoint responde `403 GOOGLE_REQUIRES_EMAIL_VERIFICATION` (decisión A+B del 2026-11-17; orden de comprobación: `idToken` 400, `GOOGLE_NOT_CONFIGURED` 503, bandera 403, validación del token); (2) `POST /auth/google` ya está implementado; (3) `GOOGLE_CLIENT_IDS` sigue sin configurar (falta el ID del cliente Web) y debe contener el ID Web, que es el `aud` del token (`azp` no se valida); (4) se añadió la migración `0013` (`users.email_verified_via`: `CODE`, `GOOGLE` o NULL); (5) las 3 cuentas de la base de pruebas ya están verificadas (`email_verified_via` NULL).
+
+Naturaleza: autenticación nueva (excepción técnica de "autenticación"; V1 no tiene cuentas). *(Original: con la bandera de verificación en OFF y sin `GOOGLE_CLIENT_IDS` el endpoint responde `503 GOOGLE_NOT_CONFIGURED` y nada cambia; hoy, con la bandera apagada, responde 403 antes de consultar `GOOGLE_CLIENT_IDS`.)* **Aviso general:** sin acceso a la web; todo dato de librerías, Google Cloud y Expo marcado «NV» es *según mi conocimiento (no verificado con documentación vigente en esta sesión)*, y debe confirmarse antes de implementar, sobre todo para Expo SDK 57 (posterior a lo que conozco con seguridad).
 
 ### Estado real del código (base del diseño)
+
+> Diseño original superado (2026-11-24): esta lista describe el código antes de implementar Google. Ya no es cierto que «no hace falta migración» (existe `0013`, además de `0012`), que no exista `src/api/googleAuth.js` ni que `package.json` no tenga librería de Google (está `@react-native-google-signin/google-signin` 16.1.5 exacta, y `expo-dev-client`). Las referencias `archivo:línea` son del momento del análisis.
 
 - `users` (`api/migrations/0001_core_schema.sql:10-22`): `google_sub TEXT UNIQUE` y `email_verified_at` **ya existen**; `password_hash TEXT` **es anulable**. No hace falta migración para Google (la `0012_verificacion_cuenta.sql` solo añade códigos y límites).
 - `auth.service.ts:276-300` `login`: busca por correo, `deleted_at` -> `INVALID_CREDENTIALS`, `active !== 1` -> `USER_INACTIVE`, y **ya** devuelve `INVALID_CREDENTIALS` si `!user.password_hash` (`:294-300`) **sin ejecutar PBKDF2** (retorna antes de `verifyPassword`, `:302`). Es decir, el login por contraseña de una cuenta solo-Google ya responde bien; el cambio en `login` es mínimo (ver abajo) y consiste en documentar/probar ese camino y su diferencia de tiempo (ver riesgo).
@@ -310,6 +318,8 @@ Naturaleza: autenticación nueva (excepción técnica de "autenticación"; V1 no
 - App: `src/api/accesoApi.js` (`iniciarSesion`, `registrarUsuario`, `verifyEmail`, `resendCode`, `changeEmail` + `guardarSesion(data)`); `LoginScreen.js:118-173` y `RegistroScreen.js:119-183` con `PantallaAcceso`, `Boton` (variantes `terciario`), `MensajeError`, `useGuardaEnvio`. `app.json` plugins: `expo-sqlite`, `datetimepicker`, `expo-sharing`, `expo-image-picker`; `android.package` = `com.luiscaizasoria.criaderokikirikis`; `extra.eas.projectId` ya presente. `eas.json` ya tiene perfil `development` (`developmentClient: true`, `distribution: internal`), `preview` y `production`. `package.json`: Expo `~57.0.23`, RN `0.86.3`, sin librería de Google. No existe `src/api/googleAuth.js`.
 
 ### 1. Librería para Expo SDK 57 (NV todo; NO se instala sin aprobación del usuario)
+
+> Diseño original superado (2026-11-24): se eligió la opción recomendada (`@react-native-google-signin/google-signin`, fijada en 16.1.5 exacta, no `^17`), instalada con `expo-dev-client`. Se retiró el plugin de `app.json`: sin opciones aplicaría Firebase y rompe el build sin `google-services.json`; la librería se enlaza por autolinking. La aprobación del development build con EAS ya no es duda abierta.
 
 | | `@react-native-google-signin/google-signin` | `expo-auth-session` + `expo-web-browser` (+ `expo-crypto`) | Alternativa: Credential Manager / "Sign in with Google" nativo de Android (envoltorios de terceros) |
 |---|---|---|---|
@@ -326,6 +336,8 @@ Cómo cambia la forma de probar: el usuario hoy prueba con **Expo Go por túnel*
 **Recomendación: `@react-native-google-signin/google-signin` en development build con EAS** (ya existe `eas.json` con el perfil `development` y `projectId`). Razones: el idToken sale directo, sin redirecciones; el flujo es el estándar para apps nativas; el backend solo recibe `idToken`. El botón debe degradarse sin romper Expo Go (sección 4). DUDA PARA EL USUARIO: ¿acepta dejar de depender de Expo Go para probar el acceso (APK de development build con EAS, cuenta de Expo, tiempo de cola del plan gratuito)? Hasta que lo apruebe no se toca `package.json` ni `app.json`.
 
 ### 2. Endpoint `POST /api/v1/auth/google`
+
+> Diseño original superado en parte (2026-11-24): (a) la afirmación «Google no necesita la bandera... aplica con la bandera en ON u OFF» ya no vale: con la bandera distinta de `true` el endpoint devuelve `403 GOOGLE_REQUIRES_EMAIL_VERIFICATION`; (b) la vinculación a una cuenta con marcador `email_verified_via` NULL anula su contraseña (migración `0013`, decisión A+B); (c) `aud` debe estar en `GOOGLE_CLIENT_IDS`, que ha de contener el ID Web, y `azp` no se valida. El resto (validación con `jose`, reglas de cuenta, errores) es el diseño base; el código real manda.
 
 - Sin token (como `login`). Request `{ "idToken": "<jwt de Google>" }`. Respuesta de éxito `200 {success:true, data:{user:{id,email,nombre}, accessToken, expiresIn:3600}}` (idéntica a `login`; `201` si la cuenta se crea, para distinguir; la app solo exige 200/201). El `accessToken` es el **JWT propio** (HS256, `JWT_SECRET`); el token de Google nunca se usa en otras llamadas ni se guarda.
 - Capas: `auth.routes.ts` (parseo y mapeo HTTP; añade `GOOGLE_*` a `statusFor`, hoy lo no mapeado cae en 500), `auth.factory.ts` (inyecta el verificador de Google y el JWKS), `auth.service.ts` o `google-auth.service.ts` (reglas), `auth.repository.ts` (`findUserByGoogleSub`, `linkGoogle`, `createGoogleUser`). `Env` gana `GOOGLE_CLIENT_IDS?: string`.
@@ -375,7 +387,7 @@ Los nombres de menús de Google Cloud y Expo cambian con frecuencia (NV). Si una
 7. **ID de cliente Android**: "Credenciales" -> "Crear credenciales" -> ID de cliente -> **Android** -> nombre de paquete `com.luiscaizasoria.criaderokikirikis` (igual que `app.json`) -> pegar el SHA-1 -> Crear. Un cliente Android por cada SHA-1 (desarrollo/EAS, Play). Su ID **no** se pasa a la librería (usa el web), pero debe existir: sin él aparece el error `DEVELOPER_ERROR` (código 10, NV). Si más adelante se quiere que el backend acepte tokens emitidos con este cliente, se añade su ID a `GOOGLE_CLIENT_IDS`.
 8. **iOS**: solo si se publicará en iPhone (exige cuenta de Apple Developer de pago, NV); entonces cliente iOS con el Bundle ID y el esquema URL inverso. **No aplica ahora** (hay `ios` en `app.json` pero se prueba en Android). DUDA PARA EL USUARIO: ¿hay iPhone en el alcance?
 9. **Variables**: (a) Worker de pruebas: añadir `GOOGLE_CLIENT_IDS` (ID web, y los demás separados por comas) en `vars` de `env.test` de `api/wrangler.jsonc` -> **requiere orden expresa y deploy del Worker de pruebas** (un ID de cliente no es secreto, por eso `vars` y no `secret`); producción solo con orden expresa. (b) App: `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` como variable de entorno de Expo/EAS (`eas env:create` o variable de la sesión local al arrancar Expo), **nunca** en archivos versionados (`app.json`, `.env` ignorado solo si ya lo está); recordar que `EXPO_PUBLIC_*` queda embebido en el APK (es un ID público, no un secreto). Debe ser el mismo ID web que en `GOOGLE_CLIENT_IDS`.
-10. **Build**: tras instalar la librería y añadir el plugin (con aprobación), `eas build --profile development --platform android`; instalar el APK en el teléfono (código QR/enlace de EAS) y arrancar con `npx expo start --dev-client --tunnel`.
+10. **Build** *(superado: la librería ya está instalada y no se añade plugin; ver el orden vigente de 9 pasos arriba y «Google (resumen)»)*: tras instalar la librería y añadir el plugin (con aprobación), `eas build --profile development --platform android`; instalar el APK en el teléfono (código QR/enlace de EAS) y arrancar con `npx expo start --dev-client --tunnel`.
 
 **No se puede automatizar** (el agente no puede ni debe): crear el proyecto, el consentimiento y los clientes (cuenta personal de Google con 2FA), leer el SHA-1 de una firma gestionada en Expo/Play, iniciar sesión en `eas`, el aviso del consentimiento y su publicación, ni instalar el APK en el teléfono. Tampoco se verifica un login real con Google en pruebas automáticas (necesita el selector de cuentas nativo y credenciales reales): solo manual en el teléfono.
 
@@ -383,7 +395,7 @@ Los nombres de menús de Google Cloud y Expo cambian con frecuencia (NV). Si una
 
 - Ubicación: en `LoginScreen` y `RegistroScreen`, bajo el botón principal y sobre el enlace a la otra pantalla, separado por un texto "o". Variante secundaria de `Boton` con el tema vigente (tokens de `src/theme`, toque >= 44, un solo degradado por pantalla ya usado por la pantalla de acceso; sin verde ni amarillo como marca), `testID` `login-google` y `registro-google`; título "Continuar con Google", `tituloGuardando` "Conectando...". Marca de Google: usar el estilo oficial de botón blanco con la «G» (SVG con `react-native-svg`, ya instalada) por las pautas de marca de Google (NV; confirmar).
 - `src/api/googleAuth.js` (nuevo, en `src/api/`): `iniciarSesionConGoogle()` carga la librería **de forma perezosa** (`require` dentro de un `try`; no `import` estático, para que Expo Go no falle al arrancar). Flujo: (1) leer `process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`; si falta -> `Alert` "Google no está configurado en esta versión de la app."; (2) `require('@react-native-google-signin/google-signin')`; si lanza o el módulo nativo no existe (Expo Go) -> `Alert` "Para entrar con Google necesitas la versión instalada de la app (development build). En Expo Go no está disponible. Usa tu correo y contraseña."; (3) `GoogleSignin.configure({webClientId})`, `hasPlayServices()`, `signIn()`, obtener `idToken`; usuario cancela -> no hacer nada (sin Alert); (4) `apiFetch('/api/v1/auth/google', {method:'POST', auth:false, body:{idToken}})` y `guardarSesion(data)` como `iniciarSesion` (mismo patrón que `accesoApi.js:15-31`); errores de la API -> `ApiError` con `message` de la API mostrado en `MensajeError`; errores de red -> `NETWORK_ERROR` ya existente (`apiClient.js:111`). Tras `guardarSesion`, `App.js` pasa solo a `SeleccionCriadero` (sin cambios en `App.js`, `sesion.js`, `apiClient.js`).
-- Modo SQLite: las pantallas de acceso no se cargan; sin cambios. `app.json` solo cambia con aprobación (plugin y, si se usa iOS, esquema).
+- Modo SQLite: las pantallas de acceso no se cargan; sin cambios. `app.json` solo cambia con aprobación (plugin y, si se usa iOS, esquema). *(Nota 2026-11-24: `googleAuth.js` y el botón ya existen; no se usa plugin en `app.json`.)*
 - Se anota en `documents/ux/inventario-cambios.md` (botón nuevo y los flujos Maestro que buscan texto en Login/Registro; el botón no debe interferir con `login-ingresar` ni `registro-crear`).
 
 ### 5. Pruebas
@@ -395,14 +407,18 @@ Los nombres de menús de Google Cloud y Expo cambian con frecuencia (NV). Si una
 
 ### Archivos a crear o tocar (Google)
 
-Crear: `api/src/auth/google-token.ts`, `api/test/unit/auth/google-token.test.ts` (y del servicio, con fakes), `src/api/googleAuth.js`. Tocar: `api/src/auth/auth.routes.ts` (ruta, `statusFor`, `Env.GOOGLE_CLIENT_IDS`), `auth.service.ts`, `auth.repository.ts` (3 métodos y `UserInfo.google_sub`), `auth.factory.ts`, `auth.types.ts`, `api/src/app.ts` (`Env`), `api/wrangler.jsonc` (`vars` de `env.test`; orden expresa), `api/.dev.vars.example` (solo nombre), `src/screens/acceso/LoginScreen.js` y `RegistroScreen.js`, `package.json` y `app.json` (solo con aprobación del usuario). Sin migración nueva (columnas ya existentes en `0001`).
+Crear: `api/src/auth/google-token.ts`, `api/test/unit/auth/google-token.test.ts` (y del servicio, con fakes), `src/api/googleAuth.js`. Tocar: `api/src/auth/auth.routes.ts` (ruta, `statusFor`, `Env.GOOGLE_CLIENT_IDS`), `auth.service.ts`, `auth.repository.ts` (3 métodos y `UserInfo.google_sub`), `auth.factory.ts`, `auth.types.ts`, `api/src/app.ts` (`Env`), `api/wrangler.jsonc` (`vars` de `env.test`; orden expresa), `api/.dev.vars.example` (solo nombre), `src/screens/acceso/LoginScreen.js` y `RegistroScreen.js`, `package.json` y `app.json` (solo con aprobación del usuario). Sin migración nueva (columnas ya existentes en `0001`). *(Superado 2026-11-24: ya hecho; además se creó la migración `0013` (`users.email_verified_via`), `app.json` no lleva plugin de Google y `package.json` fija la librería en 16.1.5.)*
 
 ### Dudas de Google
+
+> Diseño original superado (2026-11-24): la duda (1) quedó resuelta (development build con EAS) y la (2) con la decisión A+B del 2026-11-17. Siguen abiertas la (3) publicar en Google, la (4) iOS y la (5) tolerancia de reloj y mensajes. De las dudas técnicas, la compatibilidad de la librería con Expo SDK 57 se resolvió fijando 16.1.5 sin plugin; falta validar el login real en el development build.
 
 DUDA PARA EL USUARIO: (1) aprobar el development build con EAS y dejar Expo Go sin Google; (2) política ante cuentas con contraseña creadas con la bandera OFF (A, B o C arriba); (3) publicar la app en Google (Testing frente a producción); (4) iOS en el alcance; (5) tolerancia de reloj de 30 s, `201` para cuenta nueva y mensajes de error de Google.
 Dudas técnicas (no verificadas): compatibilidad de `@react-native-google-signin/google-signin` con Expo SDK 57 y RN 0.86 y su plugin; nombres exactos de `createRemoteJWKSet` en `jose` 6 (`cooldownDuration`, `cacheMaxAge`, `timeoutDuration`) y comportamiento ante `kid` desconocido; si `jwtVerify` acepta un arreglo en `issuer`; si Google emite `email_verified` como cadena; coste de CPU real de RS256 en el Worker; menús vigentes de Google Cloud; estado de `expo-auth-session` en SDK 57.
 
 ## Dudas
+
+> Diseño original superado (2026-11-24): el proveedor de correo está elegido provisionalmente (Gmail SMTP con contraseña de aplicación; Resend con dominio propio queda como mejora futura por el spam con remitente personal). Las cifras de límites, `409`, borrado a 24 h y cambio de correo con contraseña fueron aceptados el 2026-11-17 (valores por defecto). La duda 7 quedó resuelta con la decisión A+B y la migración `0013`. Las dudas técnicas de abajo se conservan como registro del diseño.
 
 DUDA PARA EL USUARIO:
 1. Proveedor de correo y dominio propio (sección 4); confirmar cuotas y precios vigentes del elegido.
