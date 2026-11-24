@@ -41,3 +41,33 @@ Lo que el emulador y esbuild no demuestran. Cada punto: qué hacer y qué result
 
 12. Ausencia de LogBox: recorrer las pantallas tocadas.
     Esperado: sin avisos amarillos ni pantallas rojas.
+
+Puntos añadidos el 2026-11-24 (cambios posteriores a la fase UX; no hay evidencia de que se hayan comprobado en el teléfono).
+Arranque de Expo Go: `npx expo start --go --tunnel --port 8090`.
+
+13. Botón «Continuar con Google» en Expo Go.
+    Hacer: en Login o Registro, tocar el botón.
+    Esperado: solo aparece un aviso (Google real exige el development build con EAS); la app no se cierra. Con la bandera de verificación apagada, la API respondería 403 si se llegara a llamar.
+
+14. Inicio navegable.
+    Hacer: tocar los accesos y tarjetas de Inicio.
+    Esperado: cada uno lleva a su pantalla; al volver, Inicio sigue mostrando datos.
+
+15. Colores por estado en Jaulas y Aves.
+    Hacer: recorrer las listas con jaulas y aves en distintos estados (incluida una ave con Quemadura).
+    Esperado: cada estado tiene su color; Quemadura sale en naranja; texto legible.
+
+16. Alertas de Salud.
+    Hacer: abrir Alertas con un ave cuyo último control cumple 7 días.
+    Esperado: la alerta aparece solo el día (UTC) en que se cumplen los 7 días, no los días siguientes.
+
+17. Verificación de cuenta por código (bandera apagada).
+    Hacer: registrar una cuenta nueva.
+    Esperado: entra sin pedir código, igual que antes.
+
+18. Icono cuadrado nuevo.
+    Esperado: solo se ve en el launcher de un build (no en Expo Go); comprobarlo cuando exista el development build.
+
+19. Módulos de la fase 6 (Bajas, Finanzas, Clientes, Reportes, Alertas, Inicio), sin probar aún en teléfono.
+    Hacer: registrar una baja por venta y otra por muerte; revisar Finanzas, Clientes, Reportes (exportar) y Alertas.
+    Esperado: mismos resultados que en V1; con modo avión, las pantallas de lectura muestran error con «Reintentar».

@@ -4,7 +4,7 @@
 
 Este documento registra el modelo de datos de V2 en tres niveles, de mayor a menor autoridad:
 
-1. **Estado real de D1** (migraciones `0001`–`0012`): lo que existe hoy. Si algo no coincide con una decisión posterior, el esquema real y el código prevalecen.
+1. **Estado real de D1** (migraciones `0001`–`0013`): lo que existe hoy. Si algo no coincide con una decisión posterior, el esquema real y el código prevalecen.
 2. **Decisiones y modelos aprobados**: reglas de diseño tomadas de forma incremental.
 3. **Modelo futuro de negocio**: borrador **no aprobado** (sección final), que debe validarse contra el código real de V1 antes de crear migraciones.
 
@@ -398,9 +398,12 @@ La migración futura de datos V1 es un proceso específico y no altera esta regl
 - `POST /api/v1/auth/register`: normaliza el email, exige email, nombre y contraseña (mínimo 8 caracteres), rechaza correos ya registrados (incluso borrados lógicamente) con `EMAIL_ALREADY_REGISTERED` y guarda un hash PBKDF2-SHA-256 (nunca la contraseña).
 - `POST /api/v1/auth/login`: `INVALID_CREDENTIALS` (401) sin revelar si el email existe, `USER_INACTIVE` (403) si la cuenta no está activa.
 - Emite un **JWT propio** de 1 hora. No hay refresh token (decisión abierta).
-- **Pendiente / no implementado:** verificación de correo (el diseño original dejaba la cuenta inactiva hasta verificar; hoy el registro inserta `active = 1`), recuperación de contraseña y `password_reset_tokens`.
+- **Verificación de correo por código (implementada desde `0012`, bandera `EMAIL_VERIFICATION_REQUIRED` apagada en todos los entornos):** tablas `email_verification_codes` y `rate_limits`; endpoints `POST /auth/verification/{verify,resend,change-email}`. No existe `email_verification_tokens`. El registro sigue insertando `active = 1`.
+- **Pendiente / no implementado:** recuperación de contraseña y `password_reset_tokens`, y `GET /auth/me`.
 
-### Autenticación con Google — pendiente
+### Autenticación con Google — implementada con restricciones (`POST /auth/google`)
+
+Hoy `POST /api/v1/auth/google` existe, pero responde `403 GOOGLE_REQUIRES_EMAIL_VERIFICATION` mientras la bandera de verificación no valga `true`, y `GOOGLE_CLIENT_IDS` no está configurado en ningún entorno (sin probar en dispositivo). Al vincular Google a una cuenta con `email_verified_via` nulo se anula su `password_hash`. El flujo y la regla de abajo son el diseño original; el código real y `documents/specs/auth-verificacion-google.md` prevalecen donde difieran.
 
 La identidad externa estable es `google_sub` (el `sub` de Google); no se depende solo del email. Flujo objetivo:
 
@@ -434,10 +437,11 @@ Se realiza en la app: se eliminan las credenciales locales y se vuelve al login.
 ### Fuera del alcance actual / pendientes
 
 - refresh tokens, sesiones activas y revocación;
-- `password_reset_tokens` y `email_verification_tokens`;
+- `password_reset_tokens` y `GET /auth/me`;
 - `oauth_states` y detalles de OAuth;
-- política de vinculación entre cuentas;
-- expiración distinta de la actual y rate limiting.
+- expiración distinta de la actual.
+
+(Verificación por código y límites de uso ya existen desde `0012`; ver arriba.)
 
 ---
 
@@ -735,7 +739,7 @@ La relación con `criaderos` es **uno-a-muchos**. La referencia de pertenencia e
 | nombre | texto | NO | Nombre del usuario |
 | password_hash | texto | Sí | Hash para autenticación correo/contraseña |
 | google_sub | texto | Sí | Identidad externa Google (única cuando existe) |
-| email_verified_at | timestamp | Sí | Fecha de verificación del correo (hoy no se escribe) |
+| email_verified_at | timestamp | Sí | Fecha de verificación del correo (se escribe desde `0012`; `email_verified_via` desde `0013`) |
 | active | entero 0/1 | NO | Estado de la cuenta (`DEFAULT 0` en el esquema; el registro actual inserta 1) |
 | created_at | timestamp | NO | Fecha de creación |
 | updated_at | timestamp | NO | Fecha de actualización |
@@ -744,14 +748,14 @@ La relación con `criaderos` es **uno-a-muchos**. La referencia de pertenencia e
 
 ### Reglas de autenticación
 
-- Correo y contraseña (implementado) y Google (pendiente).
+- Correo y contraseña (implementado) y Google (implementado, bloqueado por la bandera de verificación; sin probar en dispositivo).
 - La existencia de `password_hash` determina la autenticación con contraseña; la de `google_sub`, la vinculación con Google. No se usa `auth_provider`.
 - `email` único globalmente, incluyendo registros borrados lógicamente (el servicio lo comprueba); `google_sub` único cuando existe.
 - El email se normaliza (trim y minúsculas) antes de guardarse y compararse.
 
 ### Pendientes
 
-Quedan para fases posteriores: `refresh_tokens`, sesiones, `password_reset_tokens`, `email_verification_tokens`, `oauth_states`, expiración distinta de la actual y rate limiting.
+Quedan para fases posteriores: `refresh_tokens`, sesiones, `password_reset_tokens`, `oauth_states` y expiración distinta de la actual. La verificación por código y el rate limiting ya existen (`0012`, tablas `email_verification_codes` y `rate_limits`; en lugar de `email_verification_tokens`).
 
 ---
 
