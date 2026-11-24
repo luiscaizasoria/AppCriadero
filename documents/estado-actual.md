@@ -16,7 +16,7 @@ Se carga solo desde `CLAUDE.md` (import). Historial: `documents/bitacora.md`. Ac
 ## Cambios del 2026-11-17
 
 - `f15a867` Google exige verificación por código (decisión A+B). Migración `0013` (`users.email_verified_via`: `NULL` = nunca probado, `'CODE'`, `'GOOGLE'`). `POST /auth/google` responde `403 GOOGLE_REQUIRES_EMAIL_VERIFICATION` si la bandera no vale `"true"`; orden: `idToken` (400), `GOOGLE_NOT_CONFIGURED` (503), bandera (403), validar token. `linkGoogle` anula `password_hash` si el marcador es `NULL`: las cuentas previas pierden la contraseña al vincular Google; sin recuperación de contraseña. Hallazgo de Google **resuelto**.
-- `07f4248` `--sin-verificar` cableado en `pruebas/movil`; flujo `102` omitido sin `VERIFICATION_BYPASS_SECRET` (sigue en `esperado-fallar/`, exige bandera encendida); `95` y `96` con scroll hacia arriba (causa: Finanzas conserva el scroll).
+- `07f4248` `--sin-verificar` cableado en `pruebas/movil`; flujo `102` omitido sin `VERIFICATION_BYPASS_SECRET` (desde el 2026-11-24 está en `completo/`, VERDE con la bandera encendida); `95` y `96` con scroll hacia arriba (causa: Finanzas conserva el scroll).
 - `f98647c` documentación y CLAUDE.md al 2026-11-17 (migraciones `0001`–`0013`, siguiente `0014`).
 - Google Sign-In (ver el bloque del 2026-11-24): la ^17.0.0 y el plugin de este día quedaron reemplazados.
 - Valores por defecto de verificación aceptados por el usuario: código 10 min, 5 intentos, reenvío 60 s, 5 envíos/h por correo, 5 registros/h por IP, 80/día global, borrado a 24 h sin Cron, cambio de correo con contraseña, `409` al registrar un correo verificado.
@@ -54,7 +54,7 @@ Se carga solo desde `CLAUDE.md` (import). Historial: `documents/bitacora.md`. Ac
 2. Prueba del usuario en el teléfono: 22 puntos (`documents/ux/pendiente-en-telefono.md`) y fase 6 (Bajas, Finanzas, Clientes, Reportes, Alertas, Inicio).
 3. Google: validar en Expo Go (con la bandera apagada debe dar 403) y en development build con EAS siguiendo los pasos manuales del bloque del 2026-11-24 (clientes de Google Cloud por el usuario).
 4. Ambientes: dominio propio y Resend (el correo de Gmail llega a spam); medir CPU del SMTP; decidir qué hacer con `api/wrangler.jsonc` sin `--env` (apunta a desarrollo); `GOOGLE_CLIENT_IDS` en `env.test` cuando el usuario dé el ID Web; secretos por stdin solo con orden expresa.
-5. Pruebas: `/probar completo` verde del paquete; decidir si `102-verificar-correo` pasa a `completo/` (secreto y bandera ya existen en el Worker de pruebas); notas de variables en `api/.dev.vars.example`, `pruebas/.entorno.local.example` y `pruebas/README.md`; `.claude/rules/api-migraciones-d1.md` dice «siguiente 0012» (lo corrige `mantenimiento-claude` a petición).
+5. Pruebas: `/probar completo` verde del paquete; `102-verificar-correo` ya está en `completo/` (VERDE el 2026-11-24, 101 s, informe `2026-11-24-180138-completo`); notas de variables en `api/.dev.vars.example`, `pruebas/.entorno.local.example` y `pruebas/README.md` (la regla de migraciones ya dice «siguiente 0014»).
 6. Luego fotos en R2 (`criaderos/{criaderoId}/aves/{aveId}/{evolucionId}.jpg`), `/auth/me`, refresh token, recuperación de contraseña, ambientes de producción, zona horaria local (alertas y periodos usan UTC) y retiro de SQLite con respaldo.
 
 ## Incidencias recurrentes
