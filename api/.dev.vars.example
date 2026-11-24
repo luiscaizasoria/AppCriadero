@@ -3,3 +3,13 @@
 # DO NOT commit .dev.vars
 
 JWT_SECRET=replace-with-a-secure-local-secret-at-least-32-characters
+
+# Envio de correo de verificacion (todo opcional; vacio = envio no configurado)
+# EMAIL_PROVIDER: "simulado" (por defecto) o "gmail-smtp"
+# EMAIL_PROVIDER=
+# EMAIL_FROM_NAME: nombre visible del remitente (por defecto Criadero Kikirikis)
+# EMAIL_FROM_NAME=
+# Secretos de gmail-smtp: en Cloudflare con wrangler secret put (--env test); aqui solo para desarrollo local
+# SMTP_USER=
+# SMTP_PASSWORD=
+# EMAIL_FROM=

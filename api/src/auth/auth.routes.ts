@@ -27,6 +27,11 @@ type Env = {
   EMAIL_VERIFICATION_REQUIRED?: string;
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
+  /** "simulado" | "gmail-smtp"; ausente o desconocido = comportamiento por defecto. */
+  EMAIL_PROVIDER?: string;
+  SMTP_USER?: string;
+  SMTP_PASSWORD?: string;
+  EMAIL_FROM_NAME?: string;
   /** Solo en el Worker de pruebas. Si no está definido, las cabeceras de omisión se ignoran. */
   VERIFICATION_BYPASS_SECRET?: string;
   /** IDs de cliente OAuth de Google admitidos como `aud`, separados por comas. */
@@ -101,12 +106,20 @@ function respondError(c: AuthContext, result: ErrorResponse) {
   return c.json(result, status);
 }
 
-function buildService(c: AuthContext) {
-  return createAuthService(c.env.DB, c.env.JWT_SECRET, {
+function mailOptions(c: AuthContext) {
+  return {
     emailVerificationRequired: c.env.EMAIL_VERIFICATION_REQUIRED,
     resendApiKey: c.env.RESEND_API_KEY,
     emailFrom: c.env.EMAIL_FROM,
-  });
+    emailProvider: c.env.EMAIL_PROVIDER,
+    smtpUser: c.env.SMTP_USER,
+    smtpPassword: c.env.SMTP_PASSWORD,
+    emailFromName: c.env.EMAIL_FROM_NAME,
+  };
+}
+
+function buildService(c: AuthContext) {
+  return createAuthService(c.env.DB, c.env.JWT_SECRET, mailOptions(c));
 }
 
 function missingSecret(c: AuthContext) {
@@ -230,9 +243,7 @@ function googleHandler(googleJwks?: JWTVerifyGetKey) {
     }
 
     const service = createAuthService(c.env.DB, c.env.JWT_SECRET, {
-      emailVerificationRequired: c.env.EMAIL_VERIFICATION_REQUIRED,
-      resendApiKey: c.env.RESEND_API_KEY,
-      emailFrom: c.env.EMAIL_FROM,
+      ...mailOptions(c),
       googleClientIds: c.env.GOOGLE_CLIENT_IDS,
       googleJwks,
     });

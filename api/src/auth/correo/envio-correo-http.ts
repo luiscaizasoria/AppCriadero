@@ -68,9 +68,11 @@ export class EnvioCorreoHttp implements EnvioCorreo {
 
 /** Sin RESEND_API_KEY/EMAIL_FROM: cualquier envio falla de forma explicita. */
 export class EnvioCorreoNoConfigurado implements EnvioCorreo {
+  constructor(
+    private readonly mensaje = 'RESEND_API_KEY o EMAIL_FROM no configurados'
+  ) {}
+
   async enviarCodigoVerificacion(): Promise<void> {
-    throw new EnvioCorreoConfigError(
-      'RESEND_API_KEY o EMAIL_FROM no configurados'
-    );
+    throw new EnvioCorreoConfigError(this.mensaje);
   }
 }

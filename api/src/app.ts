@@ -20,6 +20,10 @@ export type Env = {
   EMAIL_VERIFICATION_REQUIRED?: string;
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
+  EMAIL_PROVIDER?: string;
+  SMTP_USER?: string;
+  SMTP_PASSWORD?: string;
+  EMAIL_FROM_NAME?: string;
   VERIFICATION_BYPASS_SECRET?: string;
   GOOGLE_CLIENT_IDS?: string;
 };

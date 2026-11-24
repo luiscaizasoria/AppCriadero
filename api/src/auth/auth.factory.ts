@@ -8,6 +8,7 @@ import {
   EnvioCorreoHttp,
   EnvioCorreoNoConfigurado,
 } from "./correo/envio-correo-http";
+import { EnvioCorreoSmtp } from "./correo/envio-correo-smtp";
 import type { JWTVerifyGetKey } from "jose";
 import { getGoogleJwks, parseClientIds } from "./google-token";
 
@@ -21,8 +22,15 @@ export interface AuthFactoryOptions {
   emailVerificationRequired?: string;
   /** RESEND_API_KEY (secreto). */
   resendApiKey?: string;
-  /** EMAIL_FROM. */
+  /** EMAIL_FROM (secreto: direccion remitente). */
   emailFrom?: string;
+  /** EMAIL_PROVIDER: "simulado" | "gmail-smtp". */
+  emailProvider?: string;
+  /** SMTP_USER y SMTP_PASSWORD (secretos). */
+  smtpUser?: string;
+  smtpPassword?: string;
+  /** EMAIL_FROM_NAME; por defecto "Criadero Kikirikis". */
+  emailFromName?: string;
   /** Inyeccion para tests. */
   mailer?: EnvioCorreo;
   now?: () => number;
@@ -34,6 +42,32 @@ export interface AuthFactoryOptions {
 }
 
 
+/**
+ * Selecciona el proveedor de correo por EMAIL_PROVIDER. "simulado", ausente o
+ * desconocido = comportamiento previo (Resend si hay claves; si no, no configurado).
+ */
+export function createMailer(options: AuthFactoryOptions): EnvioCorreo {
+  if (options.emailProvider === "gmail-smtp") {
+    if (options.smtpUser && options.smtpPassword && options.emailFrom) {
+      return new EnvioCorreoSmtp({
+        user: options.smtpUser,
+        password: options.smtpPassword,
+        from: options.emailFrom,
+        fromName: options.emailFromName
+      });
+    }
+    return new EnvioCorreoNoConfigurado(
+      "SMTP_USER, SMTP_PASSWORD o EMAIL_FROM no configurados"
+    );
+  }
+  return options.resendApiKey && options.emailFrom
+    ? new EnvioCorreoHttp({
+        apiKey: options.resendApiKey,
+        from: options.emailFrom
+      })
+    : new EnvioCorreoNoConfigurado();
+}
+
 export function createAuthService(
   db: D1Database,
   jwtSecret: string,
@@ -44,14 +78,7 @@ export function createAuthService(
 
   const clientIds = parseClientIds(options.googleClientIds);
 
-  const mailer: EnvioCorreo =
-    options.mailer ??
-    (options.resendApiKey && options.emailFrom
-      ? new EnvioCorreoHttp({
-          apiKey: options.resendApiKey,
-          from: options.emailFrom
-        })
-      : new EnvioCorreoNoConfigurado());
+  const mailer: EnvioCorreo = options.mailer ?? createMailer(options);
 
   return new AuthService(
     repository,
