@@ -10,8 +10,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.luiscaizasoria.criaderokikirikis",
-      "navigationBarColor": "#FFFFFF"
+      "package": "com.luiscaizasoria.criaderokikirikis"
     },
     "web": {
       "favicon": "./assets/icon.png"
