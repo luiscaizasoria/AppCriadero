@@ -100,7 +100,7 @@ export default function BackupScreen(){
             ){
 
                 return (
-                    'El archivo seleccionado no corresponde a un respaldo válido de Criadero Kikirikis.'
+                    'El archivo seleccionado no corresponde a un respaldo válido de MiCriadero.'
                 );
 
             }

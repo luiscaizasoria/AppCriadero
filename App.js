@@ -267,7 +267,7 @@ export default function App() {
         return (
 
             <PantallaEspera
-                mensaje="Preparando Criadero Kikirikis..."
+                mensaje="Preparando MiCriadero..."
             />
 
         );

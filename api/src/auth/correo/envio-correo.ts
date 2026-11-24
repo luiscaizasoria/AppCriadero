@@ -29,7 +29,7 @@ export class EnvioCorreoConfigError extends EnvioCorreoError {
   }
 }
 
-export const ASUNTO_CODIGO = 'Tu código de verificación de Criadero Kikirikis';
+export const ASUNTO_CODIGO = 'Tu código de verificación de MiCriadero';
 
 export function escaparHtml(texto: string): string {
   return texto
@@ -43,7 +43,7 @@ export function escaparHtml(texto: string): string {
 export function construirTextoCodigo(datos: CodigoVerificacionCorreo): string {
   return (
     `Hola ${datos.nombre},\n\n` +
-    `Tu código de verificación de Criadero Kikirikis es: ${datos.codigo}\n\n` +
+    `Tu código de verificación de MiCriadero es: ${datos.codigo}\n\n` +
     `Vence en ${datos.expiraEnMinutos} minutos. ` +
     `Si no creaste esta cuenta, ignora este mensaje.\n`
   );
@@ -52,7 +52,7 @@ export function construirTextoCodigo(datos: CodigoVerificacionCorreo): string {
 export function construirHtmlCodigo(datos: CodigoVerificacionCorreo): string {
   return (
     `<p>Hola ${escaparHtml(datos.nombre)},</p>` +
-    `<p>Tu código de verificación de Criadero Kikirikis es:</p>` +
+    `<p>Tu código de verificación de MiCriadero es:</p>` +
     `<p style="font-size:28px;font-weight:bold;letter-spacing:6px">${escaparHtml(datos.codigo)}</p>` +
     `<p>Vence en ${datos.expiraEnMinutos} minutos. ` +
     `Si no creaste esta cuenta, ignora este mensaje.</p>`

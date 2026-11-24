@@ -11,7 +11,7 @@ import { SmtpClient, type SmtpSocketFactory } from './smtp-client';
 
 export const GMAIL_SMTP_HOST = 'smtp.gmail.com';
 export const GMAIL_SMTP_PORT = 465;
-export const NOMBRE_REMITENTE_POR_DEFECTO = 'Criadero Kikirikis';
+export const NOMBRE_REMITENTE_POR_DEFECTO = 'MiCriadero';
 
 export interface EnvioCorreoSmtpOptions {
   user: string;

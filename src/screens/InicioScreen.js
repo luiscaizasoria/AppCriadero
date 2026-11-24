@@ -529,7 +529,7 @@ export default function InicioScreen({
 
             <PantallaHeader
 
-                titulo="Criadero Kikirikis"
+                titulo="MiCriadero"
 
                 insetSuperior={
                     insets.top

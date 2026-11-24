@@ -88,7 +88,7 @@ export function PantallaAcceso({
                         />
 
                         <Text style={estilos.marca}>
-                            Criadero Kikirikis
+                            MiCriadero
                         </Text>
 
                         {

@@ -29,7 +29,7 @@ export interface AuthFactoryOptions {
   /** SMTP_USER y SMTP_PASSWORD (secretos). */
   smtpUser?: string;
   smtpPassword?: string;
-  /** EMAIL_FROM_NAME; por defecto "Criadero Kikirikis". */
+  /** EMAIL_FROM_NAME; por defecto "MiCriadero". */
   emailFromName?: string;
   /** Inyeccion para tests. */
   mailer?: EnvioCorreo;

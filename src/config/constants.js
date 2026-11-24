@@ -28,7 +28,7 @@ export const COLORS = {
 
 
 export const APP_NAME =
-    'Criadero Kikirikis';
+    'MiCriadero';
 
 
 export const JAULA_SANITARY_STATUS = {
