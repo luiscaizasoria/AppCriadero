@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Criadero Kikirikis",
+    "name": "MiCriadero",
     "slug": "CriaderoKikirikis",
     "version": "1.0.3",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.luiscaizasoria.criaderokikirikis"
+      "package": "com.luiscaizasoria.micriadero"
     },
     "web": {
       "favicon": "./assets/icon.png"

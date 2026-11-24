@@ -15,7 +15,7 @@
       "name": "criadero-kikirikis-api-test",
       "vars": {
         "EMAIL_PROVIDER": "gmail-smtp",
-        "EMAIL_FROM_NAME": "Criadero Kikirikis",
+        "EMAIL_FROM_NAME": "MiCriadero",
         "EMAIL_VERIFICATION_REQUIRED": "true"
       },
       "d1_databases": [
