@@ -16,7 +16,8 @@
       "vars": {
         "EMAIL_PROVIDER": "gmail-smtp",
         "EMAIL_FROM_NAME": "MiCriadero",
-        "EMAIL_VERIFICATION_REQUIRED": "true"
+        "EMAIL_VERIFICATION_REQUIRED": "true",
+        "GOOGLE_CLIENT_IDS": "6235042630-c0m7jo50pu2bafikkb0ieop23jar1rik.apps.googleusercontent.com"
       },
       "d1_databases": [
         {
