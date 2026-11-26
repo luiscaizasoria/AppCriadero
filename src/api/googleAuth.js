@@ -92,6 +92,12 @@ export async function iniciarSesionConGoogle() {
 
     }
 
+    if (__DEV__) {
+
+        console.log('[google] webClientId configurado: sí');
+
+    }
+
     const libreria = cargarLibreria();
 
     const GoogleSignin = libreria?.GoogleSignin;
@@ -126,6 +132,15 @@ export async function iniciarSesionConGoogle() {
     }
     catch (err) {
 
+        if (__DEV__) {
+
+            console.warn(
+                `[google] signIn falló: code=${err?.code} name=${err?.name}`,
+                String(err?.message ?? '').slice(0, 200)
+            );
+
+        }
+
         const codigo = String(err?.code ?? '');
 
         const cancelado =
@@ -146,6 +161,12 @@ export async function iniciarSesionConGoogle() {
 
     }
 
+    if (__DEV__) {
+
+        console.log(`[google] idToken recibido: ${idToken ? 'sí' : 'no'}`);
+
+    }
+
     if (!idToken) {
 
         throw new GoogleNoDisponibleError(
@@ -154,7 +175,24 @@ export async function iniciarSesionConGoogle() {
 
     }
 
-    await loginConGoogle(idToken);
+    try {
+
+        await loginConGoogle(idToken);
+
+    }
+    catch (err) {
+
+        if (__DEV__) {
+
+            console.warn(
+                `[google] Worker respondió: status=${err?.status} code=${err?.code}`
+            );
+
+        }
+
+        throw err;
+
+    }
 
     return true;
 
